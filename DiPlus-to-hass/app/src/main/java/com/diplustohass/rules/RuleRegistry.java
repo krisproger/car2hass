@@ -127,11 +127,18 @@ public class RuleRegistry {
                         }
                         if (r.enabled) {
                             for (int ci = 0; ci < r.conditions.size(); ci++) {
-                                String v = r.conditions.get(ci).value;
+                                RuleCondition cond = r.conditions.get(ci);
+                                String v = cond.value;
                                 if (v == null || v.isEmpty()) {
-                                    com.diplustohass.LogBuffer.w("RuleRegistry",
-                                        "Rule '" + r.name + "': condition #" + (ci + 1)
-                                        + " has empty value — rule will never fire");
+                                    if (cond.sensorKey != null && cond.sensorKey.startsWith("geo_")) {
+                                        com.diplustohass.LogBuffer.i("RuleRegistry",
+                                            "Rule '" + r.name + "': condition #" + (ci + 1)
+                                            + " has empty value — defaults to 'inside' for geofence sensor");
+                                    } else {
+                                        com.diplustohass.LogBuffer.w("RuleRegistry",
+                                            "Rule '" + r.name + "': condition #" + (ci + 1)
+                                            + " has empty value — rule will never fire");
+                                    }
                                 }
                             }
                         }

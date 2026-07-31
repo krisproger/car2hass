@@ -668,7 +668,7 @@ public class CANDataReader {
             String body = readResponseBodyStr(conn);
             if (body == null || body.isEmpty()) return null;
 
-            logRawResponse(url.toString(), body);
+            logRawResponse(context, url.toString(), body);
 
             List<String> values = parseDiParsResponse(body, items.size());
             if (values == null || values.isEmpty()) return null;
@@ -878,7 +878,7 @@ public class CANDataReader {
             String body = readResponseBodyStr(conn);
             if (body == null || body.contains("\"success\":false")) return null;
 
-            String val = parseDiplusValueJson(url.toString(), body);
+            String val = parseDiplusValueJson(context, url.toString(), body);
             if (val == null || val.isEmpty()) return null;
 
             CANDataItem copy = new CANDataItem(item.canId, item.name, item.unit, item.route);
@@ -937,8 +937,8 @@ public class CANDataReader {
      * Tries multiple known field names because diplus firmware variants use
      * different envelopes ({"success":true,"val":"..."}, {"value":"..."}, etc.).
      */
-    private static String parseDiplusValueJson(String url, String json) {
-        logRawResponse(url, json);
+    private static String parseDiplusValueJson(Context context, String url, String json) {
+        logRawResponse(context, url, json);
         try {
             JSONObject obj = new JSONObject(json);
             if (obj.has("success") && !obj.optBoolean("success", false)) {
@@ -1092,8 +1092,11 @@ public class CANDataReader {
 
     // ─── Raw response logging / diagnostics ───
 
-    /** Log a raw server response, truncated if extremely large. */
-    private static void logRawResponse(String url, String body) {
+    /** Log a raw server response, truncated if extremely large.
+     *  Only active when the detailed log setting is on — RAW bodies are the
+     *  bulk of the log volume (a full 137-signal response every few seconds). */
+    private static void logRawResponse(Context context, String url, String body) {
+        if (!AppConfig.isDetailedLogEnabled(context)) return;
         if (body == null) {
             LogBuffer.d("CANReader", "RAW " + url + " → (null body)");
             return;

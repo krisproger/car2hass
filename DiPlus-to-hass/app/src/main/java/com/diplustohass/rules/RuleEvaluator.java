@@ -61,8 +61,17 @@ public class RuleEvaluator {
             String raw = signalLookup.apply(c.sensorKey);
             if (raw == null || "---".equals(raw)) return false;
 
+            // Geofence sensors: an empty condition value defaults to "inside"
+            // so legacy rules saved without a value keep working (EQ "" behaves
+            // as EQ "inside", NEQ "" as NEQ "inside").
+            String expected = c.value;
+            if ((expected == null || expected.isEmpty())
+                    && c.sensorKey != null && c.sensorKey.startsWith("geo_")) {
+                expected = "inside";
+            }
+
             String translated = com.diplustohass.SignalTranslator.translateEnumValue(c.sensorKey, raw);
-            boolean condResult = c.operator.apply(translated, c.value);
+            boolean condResult = c.operator.apply(translated, expected);
             if (c.negated) condResult = !condResult;
 
             if (i == 0) {

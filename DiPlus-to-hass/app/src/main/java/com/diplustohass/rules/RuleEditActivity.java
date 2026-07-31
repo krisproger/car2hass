@@ -403,11 +403,13 @@ public class RuleEditActivity extends BaseLocalizedActivity {
             return;
         }
 
-        // A condition without a value can never fire meaningfully (and for
-        // geo_* sensors it silently breaks the rule) — reject with a hint.
+        // A condition without a value can never fire meaningfully — reject with
+        // a hint. Geofence conditions are exempt: an empty value defaults to
+        // "inside" at evaluation time.
         for (int i = 0; i < rule.conditions.size(); i++) {
             RuleCondition c = rule.conditions.get(i);
-            if (c.value == null || c.value.isEmpty()) {
+            boolean geoSensor = c.sensorKey != null && c.sensorKey.startsWith("geo_");
+            if (!geoSensor && (c.value == null || c.value.isEmpty())) {
                 Toast.makeText(this, getString(R.string.rules_empty_condition_value, i + 1),
                         Toast.LENGTH_LONG).show();
                 return;

@@ -27,7 +27,7 @@
 
 ### Способ B. Вручную (без HACS)
 
-1. Скачайте [diplus2hass-v2.1.3.zip](https://teplitzky.ru/diplus2hass/download.php?file=integration) и распакуйте.
+1. Скачайте [diplus2hass-v2.1.4.zip](https://teplitzky.ru/diplus2hass/download.php?file=integration) и распакуйте.
 2. Скопируйте папку `custom_components/diplus2hass` в `/config/custom_components/`.
 
     ```bash
@@ -51,7 +51,7 @@
 
 ## Шаг 4. Установите приложение DiPlus-to-hass
 
-1. Скачайте [diplus2hass-v2.1.3.apk](https://teplitzky.ru/diplus2hass/download.php?file=app).
+1. Скачайте [diplus2hass-v2.1.4.apk](https://teplitzky.ru/diplus2hass/download.php?file=app).
 2. Установите на ГУ (флешка, мессенджер или `adb install -r`).
 3. При первом запуске выдайте разрешения: местоположение (в т.ч. в фоне) — нужно для трекера и геозон.
 
