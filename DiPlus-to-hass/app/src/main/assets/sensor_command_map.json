@@ -1,0 +1,246 @@
+{
+  "version": 4,
+  "generated_at": "2026-07-22",
+  "mappings": [
+    {
+      "sensor_key": "ac_state",
+      "commands": [
+        { "command_id": "ac_on", "value": "on" },
+        { "command_id": "ac_off", "value": "off" }
+      ]
+    },
+    {
+      "sensor_key": "ac_set_temp",
+      "commands": [
+        { "command_id": "ac_temp", "value_source": "parameter" }
+      ]
+    },
+    {
+      "sensor_key": "fan_speed",
+      "commands": [
+        { "command_id": "ac_fan", "value_source": "parameter" }
+      ]
+    },
+    {
+      "sensor_key": "ac_recirculation",
+      "commands": [
+        { "command_id": "ac_recirc", "value": "recirc" },
+        { "command_id": "ac_recirc", "value": "fresh" }
+      ]
+    },
+    {
+      "sensor_key": "ac_airflow_mode",
+      "commands": [
+        { "command_id": "ac_airflow", "value": "face" },
+        { "command_id": "ac_airflow", "value": "face_feet" },
+        { "command_id": "ac_airflow", "value": "feet" },
+        { "command_id": "ac_airflow", "value": "feet_defrost" },
+        { "command_id": "ac_airflow", "value": "defrost" },
+        { "command_id": "ac_airflow", "value": "face_feet_defrost" },
+        { "command_id": "ac_airflow", "value": "face_defrost" }
+      ]
+    },
+    {
+      "sensor_key": "driver_door_lock",
+      "commands": [
+        { "command_id": "doors_lock", "value": "locked" },
+        { "command_id": "doors_unlock", "value": "unlocked" }
+      ]
+    },
+    {
+      "sensor_key": "passenger_door_lock",
+      "commands": [
+        { "command_id": "doors_lock", "value": "locked" },
+        { "command_id": "doors_unlock", "value": "unlocked" }
+      ]
+    },
+    {
+      "sensor_key": "rear_left_door_lock",
+      "commands": [
+        { "command_id": "doors_lock", "value": "locked" },
+        { "command_id": "doors_unlock", "value": "unlocked" }
+      ]
+    },
+    {
+      "sensor_key": "rear_right_door_lock",
+      "commands": [
+        { "command_id": "doors_lock", "value": "locked" },
+        { "command_id": "doors_unlock", "value": "unlocked" }
+      ]
+    },
+    {
+      "sensor_key": "trunk_lock",
+      "commands": [
+        { "command_id": "doors_lock", "value": "locked" },
+        { "command_id": "doors_unlock", "value": "unlocked" }
+      ]
+    },
+    {
+      "sensor_key": "remote_lock_state",
+      "commands": [
+        { "command_id": "doors_lock", "value": "locked" },
+        { "command_id": "doors_unlock", "value": "unlocked" }
+      ]
+    },
+    {
+      "sensor_key": "window_fl",
+      "commands": [
+        { "command_id": "window_driver", "value_source": "parameter" },
+        { "command_id": "windows_close_all", "value": "0" }
+      ]
+    },
+    {
+      "sensor_key": "window_fr",
+      "commands": [
+        { "command_id": "window_passenger", "value_source": "parameter" },
+        { "command_id": "windows_close_all", "value": "0" }
+      ]
+    },
+    {
+      "sensor_key": "window_rl",
+      "commands": [
+        { "command_id": "window_rear_left", "value_source": "parameter" },
+        { "command_id": "windows_close_all", "value": "0" }
+      ]
+    },
+    {
+      "sensor_key": "window_rr",
+      "commands": [
+        { "command_id": "window_rear_right", "value_source": "parameter" },
+        { "command_id": "windows_close_all", "value": "0" }
+      ]
+    },
+    {
+      "sensor_key": "sunroof",
+      "commands": [
+        { "command_id": "sunroof", "value_source": "parameter" }
+      ]
+    },
+    {
+      "sensor_key": "sunshade",
+      "commands": [
+        { "command_id": "sunshade", "value_source": "parameter" }
+      ]
+    },
+    {
+      "sensor_key": "trunk",
+      "commands": [
+        { "command_id": "trunk_open", "value": "open" },
+        { "command_id": "trunk_close", "value": "close" }
+      ]
+    },
+    {
+      "sensor_key": "rear_left_child_lock",
+      "commands": [
+        { "command_id": "child_lock_left", "value": "on" },
+        { "command_id": "child_lock_left", "value": "off" }
+      ]
+    },
+    {
+      "sensor_key": "rear_right_child_lock",
+      "commands": [
+        { "command_id": "child_lock_right", "value": "on" },
+        { "command_id": "child_lock_right", "value": "off" }
+      ]
+    },
+    {
+      "sensor_key": "hazard",
+      "commands": [
+        { "command_id": "hazard_on", "value": "on" },
+        { "command_id": "hazard_off", "value": "off" }
+      ]
+    },
+    {
+      "sensor_key": "turn_signal",
+      "commands": [
+        { "command_id": "turn_signal", "value": "left" },
+        { "command_id": "turn_signal", "value": "right" }
+      ]
+    },
+    {
+      "sensor_key": "drl",
+      "commands": [
+        { "command_id": "drl_on", "value": "on" },
+        { "command_id": "drl_off", "value": "off" }
+      ]
+    },
+    {
+      "sensor_key": "front_fog",
+      "commands": [
+        { "command_id": "fog_on", "value": "on" },
+        { "command_id": "fog_off", "value": "off" }
+      ]
+    },
+    {
+      "sensor_key": "rear_fog",
+      "commands": [
+        { "command_id": "fog_on", "value": "on" },
+        { "command_id": "fog_off", "value": "off" }
+      ]
+    },
+    {
+      "sensor_key": "footwell_light",
+      "commands": [
+        { "command_id": "interior_light_on", "value": "on" },
+        { "command_id": "interior_light_off", "value": "off" }
+      ]
+    },
+    {
+      "sensor_key": "powertrain_mode",
+      "commands": [
+        { "command_id": "powertrain_mode", "value": "hev" },
+        { "command_id": "powertrain_mode", "value": "ev" },
+        { "command_id": "powertrain_mode", "value": "force_ev" }
+      ]
+    },
+    {
+      "sensor_key": "drive_mode",
+      "commands": [
+        { "command_id": "drive_mode", "value": "eco" },
+        { "command_id": "drive_mode", "value": "sport" },
+        { "command_id": "drive_mode", "value": "normal" },
+        { "command_id": "drive_mode", "value": "snow" }
+      ]
+    },
+    {
+      "sensor_key": "media_volume",
+      "commands": [
+        { "command_id": "volume", "value_source": "parameter" }
+      ]
+    },
+    {
+      "sensor_key": "navigation_volume",
+      "commands": [
+        { "command_id": "nav_volume", "value_source": "parameter" }
+      ]
+    },
+    {
+      "sensor_key": "sentry_state",
+      "commands": [
+        { "command_id": "sentry", "value": "engine_off_on" },
+        { "command_id": "sentry", "value": "time_lapse_on" },
+        { "command_id": "sentry", "value": "engine_off_off" }
+      ]
+    },
+    {
+      "sensor_key": "dashcam_state",
+      "commands": [
+        { "command_id": "dashcam_on", "value": "on" },
+        { "command_id": "dashcam_off", "value": "off" }
+      ]
+    },
+    {
+      "sensor_key": "wireless_adb_switch",
+      "commands": [
+        { "command_id": "adb_on", "value": "on" },
+        { "command_id": "adb_off", "value": "off" }
+      ]
+    },
+    {
+      "sensor_key": "soc",
+      "commands": [
+        { "command_id": "charge_soc", "value_source": "parameter" }
+      ]
+    }
+  ]
+}

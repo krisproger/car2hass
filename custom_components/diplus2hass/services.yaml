@@ -1,0 +1,31 @@
+developer_info:
+  name: Developer Info
+  description: Shows a summary of all configured vehicles, including car name, virtual VIN, firmware version, last seen timestamp and number of received signals.
+  fields: {}
+
+send_command:
+  name: Send command to vehicle
+  description: Enqueues a DiPlus command for the Android app to execute on the vehicle.
+  fields:
+    car_name:
+      name: Car name
+      description: Name of the vehicle as configured in the integration.
+      required: true
+      example: "byd_car"
+      selector:
+        text:
+    command:
+      name: Command
+      description: DiPlus command key from the supported command registry.
+      required: true
+      example: "ac_on"
+      selector:
+        text:
+    params:
+      name: Parameters
+      description: Optional command parameters (for example, target temperature or window percentage).
+      required: false
+      example:
+        value: 24
+      selector:
+        object:

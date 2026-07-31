@@ -1,0 +1,9 @@
+{
+  "hass_host": "",
+  "hass_port": 8123,
+  "hass_token": "",
+  "car_name": "",
+  "hass_https": false,
+  "hass_enabled": false,
+  "boot_auto_start": true
+}

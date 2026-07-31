@@ -1,0 +1,928 @@
+package com.diplustohass.service;
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
+import android.net.Uri;
+import android.os.Binder;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
+import android.os.Looper;
+import android.os.PowerManager;
+import android.net.wifi.WifiManager;
+
+import com.diplustohass.AppConfig;
+import com.diplustohass.AppInfo;
+import com.diplustohass.BackgroundModeManager;
+import com.diplustohass.BuildConfig;
+import com.diplustohass.CANDataItem;
+import com.diplustohass.CANDataReader;
+import com.diplustohass.CommandPoller;
+import com.diplustohass.GeofenceZone;
+import com.diplustohass.HassClient;
+import com.diplustohass.LogBuffer;
+import com.diplustohass.LogExportHelper;
+import com.diplustohass.MainActivity;
+import com.diplustohass.R;
+import com.diplustohass.SensorValueHistory;
+import com.diplustohass.SignalTranslator;
+import com.diplustohass.rules.RuleEngine;
+
+import org.json.JSONObject;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+public class TelemetryService extends Service {
+
+    private static final int NOTIFICATION_ID = 1001;
+    private static final String CHANNEL_ID = "diplus_telemetry_channel";
+    private static final long REFRESH_INTERVAL_MS = 5000;
+    private static final long FLUSH_INTERVAL_MS = 12000;
+
+    private final IBinder binder = new LocalBinder();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private ExecutorService telemetryExecutor;
+    private ExecutorService flushExecutor;
+    private final AtomicBoolean running = new AtomicBoolean(false);
+
+    private List<CANDataItem> knownItems;
+    private LocationListener locationListener;
+    private ConnectivityManager.NetworkCallback networkCallback;
+    private TelemetryCallback callback;
+    private CommandPoller commandPoller;
+    private RuleEngine ruleEngine;
+    private final ConcurrentHashMap<String, String> cachedSignalValues = new ConcurrentHashMap<>();
+
+    public RuleEngine getRuleEngine() {
+        return ruleEngine;
+    }
+
+    private double lastLat = Double.NaN;
+    private double lastLon = Double.NaN;
+    private float lastAccuracy = 0;
+    private long lastLocTime = 0;
+    private volatile long lastNetworkFlushMs = 0;
+    private static final long NETWORK_FLUSH_DEBOUNCE_MS = 30000;
+    private static final long VEHICLE_ASLEEP_INTERVAL_MS = 30000;
+    private static final long LOCATION_MIN_TIME_MS = 3000;
+    private static final float LOCATION_MIN_DISTANCE_M = 10f;
+    private static final long AUTO_LOG_DUMP_DELAY_MS = 5 * 60 * 1000; // 5 minutes after start
+
+    private volatile boolean vehicleAsleep = false;
+    private static volatile boolean explicitStopRequested = false;
+    private final Runnable autoLogDumpRunnable = this::dumpLogAfterBoot;
+    private PendingIntent cachedNotificationIntent;
+    private long lastLocationRetryMs = 0;
+    private static final long LOCATION_RETRY_INTERVAL_MS = 30000;
+    private PowerManager.WakeLock wakeLock;
+    private WifiManager.WifiLock wifiLock;
+
+    public interface TelemetryCallback {
+        void onDataUpdated(List<CANDataItem> items, long timestamp);
+        void onError(String message);
+    }
+
+    public class LocalBinder extends Binder {
+        public TelemetryService getService() {
+            return TelemetryService.this;
+        }
+    }
+
+    public void setCallback(TelemetryCallback callback) {
+        this.callback = callback;
+    }
+
+    public double getLastLatitude() {
+        return lastLat;
+    }
+
+    public double getLastLongitude() {
+        return lastLon;
+    }
+
+    public float getLastAccuracy() {
+        return lastAccuracy;
+    }
+
+    public boolean hasValidLocation() {
+        return !Double.isNaN(lastLat) && !Double.isNaN(lastLon);
+    }
+
+    @Override
+    public void onCreate() {
+        super.onCreate();
+        LogBuffer.init(this);
+        LogBuffer.i("TelemetryService", "DiPlus-to-hass " + AppInfo.getVersionString(this)
+                + " starting, pid=" + android.os.Process.myPid()
+                + " backgroundMode=" + BackgroundModeManager.isEnabled(this));
+        createNotificationChannel();
+        // CRITICAL: startForeground must be the very first call and never be skipped.
+        try {
+            startForeground(NOTIFICATION_ID, buildNotification());
+            LogBuffer.i("TelemetryService", "startForeground called");
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "startForeground failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+        acquireWakeLock();
+        acquireWifiLock();
+        knownItems = CANDataReader.createSignalItems();
+        preregisterGeofenceItems();
+        shutdownExecutors();
+        telemetryExecutor = Executors.newSingleThreadExecutor();
+        flushExecutor = Executors.newSingleThreadExecutor();
+        ruleEngine = new RuleEngine(getApplicationContext(), cachedSignalValues::get);
+        SensorValueHistory.ensureLoaded(AppConfig.getSensorValueHistoryJson(this));
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        explicitStopRequested = false;
+        LogBuffer.i("TelemetryService", "onStartCommand startId=" + startId
+                + " flags=" + flags
+                + " intent=" + (intent != null ? intent.toString() : "null"));
+        // Re-promote to foreground on every restart to satisfy Android 12+ requirements.
+        try {
+            startForeground(NOTIFICATION_ID, buildNotification());
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "startForeground retry failed: " + e.getMessage());
+        }
+        acquireWakeLock();
+        acquireWifiLock();
+        CANDataReader.resetRefreshState();
+        if (!running.get()) {
+            running.set(true);
+            startTelemetryLoop();
+            startFlushLoop();
+            startLocationUpdates();
+            registerNetworkCallback();
+            startCommandPoller();
+            if (ruleEngine != null) ruleEngine.start();
+            mainHandler.postDelayed(autoLogDumpRunnable, AUTO_LOG_DUMP_DELAY_MS);
+            LogBuffer.i("TelemetryService", "Scheduled auto log dump in " + AUTO_LOG_DUMP_DELAY_MS + " ms");
+        } else {
+            LogBuffer.d("TelemetryService", "Service already running, skipped loop restart");
+        }
+        return START_STICKY;
+    }
+
+    private void acquireWakeLock() {
+        try {
+            if (wakeLock != null && wakeLock.isHeld()) {
+                LogBuffer.d("TelemetryService", "WakeLock already held");
+                return;
+            }
+            PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+            if (pm != null) {
+                wakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "diplus2hass:telemetry");
+                wakeLock.acquire(24 * 60 * 60 * 1000L); // 24h, re-acquired on restart
+                LogBuffer.i("TelemetryService", "WakeLock acquired");
+            } else {
+                LogBuffer.w("TelemetryService", "PowerManager is null, cannot acquire wake lock");
+            }
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "acquireWakeLock failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
+
+    private void releaseWakeLock() {
+        try {
+            if (wakeLock != null && wakeLock.isHeld()) {
+                wakeLock.release();
+                LogBuffer.i("TelemetryService", "WakeLock released");
+            } else {
+                LogBuffer.d("TelemetryService", "WakeLock not held, nothing to release");
+            }
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "releaseWakeLock failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
+
+    private void acquireWifiLock() {
+        try {
+            if (wifiLock != null && wifiLock.isHeld()) {
+                LogBuffer.d("TelemetryService", "WifiLock already held");
+                return;
+            }
+            WifiManager wm = (WifiManager) getSystemService(Context.WIFI_SERVICE);
+            if (wm != null) {
+                wifiLock = wm.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "diplus2hass:wifi");
+                wifiLock.acquire();
+                LogBuffer.i("TelemetryService", "WifiLock acquired");
+            } else {
+                LogBuffer.w("TelemetryService", "WifiManager is null, cannot acquire wifi lock");
+            }
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "acquireWifiLock failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
+
+    private void releaseWifiLock() {
+        try {
+            if (wifiLock != null && wifiLock.isHeld()) {
+                wifiLock.release();
+                LogBuffer.i("TelemetryService", "WifiLock released");
+            } else {
+                LogBuffer.d("TelemetryService", "WifiLock not held, nothing to release");
+            }
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "releaseWifiLock failed: " + e.getMessage());
+        }
+    }
+
+    private void shutdownExecutors() {
+        try {
+            if (telemetryExecutor != null) {
+                telemetryExecutor.shutdownNow();
+                telemetryExecutor = null;
+            }
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "shutdown telemetryExecutor failed: " + e.getMessage());
+        }
+        try {
+            if (flushExecutor != null) {
+                flushExecutor.shutdownNow();
+                flushExecutor = null;
+            }
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "shutdown flushExecutor failed: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return binder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        callback = null;
+        return super.onUnbind(intent);
+    }
+
+    @Override
+    public void onDestroy() {
+        LogBuffer.i("TelemetryService", "onDestroy — explicitStop=" + explicitStopRequested);
+        running.set(false);
+        LogBuffer.flush();
+        mainHandler.removeCallbacks(autoLogDumpRunnable);
+        stopLocationUpdates();
+        unregisterNetworkCallback();
+        stopCommandPoller();
+        if (ruleEngine != null) ruleEngine.stop();
+        // Persist any unsaved sensor-value history before shutdown.
+        if (SensorValueHistory.isDirty()) {
+            try {
+                AppConfig.saveSensorValueHistoryJson(this, SensorValueHistory.toJson());
+                SensorValueHistory.markFlushed();
+            } catch (Exception e) {
+                LogBuffer.w("TelemetryService", "value history final flush failed: " + e.getMessage());
+            }
+        }
+        shutdownExecutors();
+        releaseWakeLock();
+        releaseWifiLock();
+        if (!explicitStopRequested) {
+            try {
+                BootReceiver.scheduleRestart(this, 500);
+            } catch (Exception e) {
+                LogBuffer.e("TelemetryService", "scheduleRestart in onDestroy failed: " + e.getMessage());
+            }
+        } else {
+            LogBuffer.i("TelemetryService", "Explicit stop requested — not scheduling restart");
+            explicitStopRequested = false;
+        }
+        super.onDestroy();
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        try {
+            LogBuffer.i("TelemetryService", "onTaskRemoved — user removed task, keeping service alive");
+            BootReceiver.scheduleRestart(this, 1000);
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "onTaskRemoved failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+        super.onTaskRemoved(rootIntent);
+    }
+
+    private void dumpLogAfterBoot() {
+        if (!running.get()) return;
+        LogBuffer.i("TelemetryService", "Auto log dump started");
+        new Thread(() -> {
+            try {
+                byte[] logBytes = LogExportHelper.buildLogBytes(TelemetryService.this);
+                Uri uri = LogExportHelper.saveLogToDownloads(TelemetryService.this, logBytes);
+                if (uri != null) {
+                    LogBuffer.i("TelemetryService", "Auto log dump saved: " + uri);
+                } else {
+                    LogBuffer.w("TelemetryService", "Auto log dump failed to save");
+                }
+            } catch (Exception e) {
+                LogBuffer.e("TelemetryService", "Auto log dump error: " + e.getMessage());
+            }
+        }).start();
+    }
+
+    private void createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm == null) return;
+            NotificationChannel channel = new NotificationChannel(
+                CHANNEL_ID,
+                getString(R.string.notification_title),
+                NotificationManager.IMPORTANCE_LOW
+            );
+            channel.setDescription(getString(R.string.notification_text));
+            nm.createNotificationChannel(channel);
+        }
+    }
+
+    private PendingIntent getNotificationIntent() {
+        if (cachedNotificationIntent != null) return cachedNotificationIntent;
+        Intent intent = new Intent(this, MainActivity.class);
+        cachedNotificationIntent = PendingIntent.getActivity(
+            this, 0, intent,
+            PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE
+        );
+        return cachedNotificationIntent;
+    }
+
+    private Notification buildNotification() {
+        try {
+            return new Notification.Builder(this, CHANNEL_ID)
+                .setContentTitle(getString(R.string.notification_title))
+                .setContentText(getString(R.string.notification_text))
+                .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+                .setContentIntent(getNotificationIntent())
+                .setOngoing(true)
+                .build();
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "buildNotification failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            return new Notification.Builder(this).setSmallIcon(android.R.drawable.ic_menu_mylocation).build();
+        }
+    }
+
+    private void startCommandPoller() {
+        try {
+            if (!AppConfig.isCarControlEnabled(this)) {
+                LogBuffer.i("TelemetryService", "Car control from HA is disabled — not starting command poller");
+                return;
+            }
+            if (commandPoller == null) {
+                commandPoller = new CommandPoller(this);
+                LogBuffer.i("TelemetryService", "CommandPoller instance created");
+            }
+            commandPoller.start();
+            LogBuffer.i("TelemetryService", "Command poller started");
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "startCommandPoller failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
+
+    private void stopCommandPoller() {
+        if (commandPoller != null) {
+            try {
+                commandPoller.stop();
+                LogBuffer.i("TelemetryService", "Command poller stopped");
+            } catch (Exception e) {
+                LogBuffer.e("TelemetryService", "stopCommandPoller failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            }
+            commandPoller = null;
+        } else {
+            LogBuffer.d("TelemetryService", "stopCommandPoller: no poller running");
+        }
+    }
+
+    private void startTelemetryLoop() {
+        telemetryExecutor.execute(() -> {
+            while (running.get()) {
+                if (!vehicleAsleep || BackgroundModeManager.isEnabled(this)) {
+                    refreshData();
+                } else {
+                    LogBuffer.d("TelemetryService", "Vehicle asleep, checking less frequently");
+                }
+                try {
+                    long interval = REFRESH_INTERVAL_MS;
+                    if (vehicleAsleep && !BackgroundModeManager.isEnabled(this)) {
+                        interval = VEHICLE_ASLEEP_INTERVAL_MS;
+                    }
+                    Thread.sleep(interval);
+                } catch (InterruptedException e) {
+                    break;
+                }
+            }
+        });
+    }
+
+    private void startFlushLoop() {
+        flushExecutor.execute(() -> {
+            while (running.get()) {
+                try {
+                    Thread.sleep(FLUSH_INTERVAL_MS);
+                } catch (InterruptedException e) {
+                    break;
+                }
+                if (!running.get()) break;
+                if (AppConfig.isHassEnabled(this)) {
+                    HassClient.flush(this, (success, msg) -> {
+                        if (!success) {
+                            LogBuffer.w("TelemetryService", "HA flush failed: " + msg);
+                        }
+                    });
+                }
+                // Persist the dynamic sensor-value dictionary at most once
+                // per minute when it changed (see SensorValueHistory).
+                if (SensorValueHistory.needsFlush(System.currentTimeMillis())) {
+                    try {
+                        AppConfig.saveSensorValueHistoryJson(this, SensorValueHistory.toJson());
+                        SensorValueHistory.markFlushed();
+                    } catch (Exception e) {
+                        LogBuffer.w("TelemetryService", "value history flush failed: " + e.getMessage());
+                    }
+                }
+            }
+        });
+    }
+
+    private void refreshData() {
+        try {
+            // Defensive copy: CANDataReader creates subList() views that executor
+            // workers iterate, while the main thread may add geofence items via
+            // ensureGeofenceItem — sharing the live list caused CME (build 156+).
+            CANDataReader.refreshData(this, new ArrayList<>(knownItems), CANDataReader.SOURCE_ALL,
+                new CANDataReader.Callback() {
+                    @Override
+                    public void onData(List<CANDataItem> items, long timestamp, int source) {
+                        try {
+                            collectSnapshot(items);
+                            mainHandler.post(() -> {
+                                try {
+                                    updateNotification(getString(R.string.notification_active, items.size()));
+                                    if (callback != null) {
+                                        callback.onDataUpdated(items, timestamp);
+                                    }
+                                } catch (Exception e) {
+                                    LogBuffer.e("TelemetryService", "onData UI post failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+                                }
+                            });
+                        } catch (Exception e) {
+                            LogBuffer.e("TelemetryService", "onData failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+                        }
+                    }
+
+                    @Override
+                    public void onError(String message, int source) {
+                        try {
+                            mainHandler.post(() -> {
+                                try {
+                                    updateNotification(getString(R.string.notification_error, message));
+                                    if (callback != null) {
+                                        callback.onError(message);
+                                    }
+                                } catch (Exception e) {
+                                    LogBuffer.e("TelemetryService", "onError UI post failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+                                }
+                            });
+                        } catch (Exception e) {
+                            LogBuffer.e("TelemetryService", "onError dispatch failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+                        }
+                    }
+                });
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "refreshData failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
+
+    private void collectSnapshot(List<CANDataItem> items) {
+        try {
+            JSONObject sig = new JSONObject();
+            boolean foundPowerState = false;
+            for (CANDataItem item : items) {
+                String key = item.key;
+                if (key == null || key.isEmpty()) continue;
+                if (item.value == null || "---".equals(item.value)) continue;
+
+                // Signals that DiPlus currently reports as unsupported are still
+                // polled (they may become available after a firmware update) but
+                // must not be forwarded to Home Assistant until they return valid data.
+                boolean isPowerState = "power_state".equals(key);
+                if (!isPowerState && CANDataReader.isUnsupportedSignal(this, item.diplusName)) {
+                    continue;
+                }
+
+                // Respect user-defined attribute filter. power_state is always
+                // needed internally for sleep logic, but still respects the filter
+                // when sending to HA.
+                if (!isPowerState && !AppConfig.isSignalEnabled(this, key)) {
+                    continue;
+                }
+
+                // Normalize decimal separator: some DiLink locales use comma as the
+                // decimal point. HA and JSON expect a dot.
+                String rawValue = item.value.replace(',', '.');
+
+                // Check power state for sleep logic
+                if (isPowerState) {
+                    String translated = SignalTranslator.translateEnumValue(key, rawValue);
+                    boolean isOff = SignalTranslator.isOffState(translated);
+                    if (isOff && !vehicleAsleep) {
+                        LogBuffer.i("TelemetryService", "Vehicle off, pausing telemetry");
+                        vehicleAsleep = true;
+                    } else if (!isOff && vehicleAsleep) {
+                        LogBuffer.i("TelemetryService", "Vehicle on, resuming telemetry");
+                        vehicleAsleep = false;
+                    }
+                    foundPowerState = true;
+                }
+
+                try {
+                    boolean isEnum = "enum".equals(item.rawData);
+                    String translated = SignalTranslator.translateEnumValue(key, rawValue);
+                    if (isEnum) {
+                        sig.put(key, translated);
+                    } else {
+                        Object num = parseNumeric(rawValue, translated);
+                        if (num != null) {
+                            sig.put(key, num);
+                        }
+                    }
+                    cachedSignalValues.put(key, translated);
+                    SensorValueHistory.recordValue(key, translated);
+                } catch (Exception e) {
+                    LogBuffer.d("TelemetryService", "Skipping signal " + key + " with value '" + rawValue + "': " + e.getMessage());
+                }
+            }
+
+            // If no power_state in this batch, assume vehicle is active
+            if (!foundPowerState && vehicleAsleep) {
+                vehicleAsleep = false;
+                LogBuffer.i("TelemetryService", "No power_state signal, assuming vehicle active");
+            }
+
+            if (!hasValidLocation()) {
+                long now = System.currentTimeMillis();
+                if (now - lastLocationRetryMs > LOCATION_RETRY_INTERVAL_MS) {
+                    lastLocationRetryMs = now;
+                    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                    if (lm != null) {
+                        updateLastKnownLocation(lm);
+                    }
+                }
+                LogBuffer.d("TelemetryService", "collectSnapshot: no valid GPS fix yet");
+            }
+
+            // Static metadata sensors
+            sig.put("app_version", AppInfo.getVersionString(this));
+            addWifiInfo(sig);
+
+            // Virtual geofence states (inside/outside) are computed locally from
+            // GPS in evaluateGeofences and never pass through the DiPlus CAN
+            // pipeline (their items have no diplusName and are dropped from batch
+            // reads), so inject them into the snapshot directly from the cache.
+            // geo_<id>_name keys carry the zone name for friendly naming in HA.
+            for (Map.Entry<String, String> e : cachedSignalValues.entrySet()) {
+                String key = e.getKey();
+                String value = e.getValue();
+                if (key == null || !key.startsWith("geo_")) continue;
+                if (value == null || value.isEmpty() || "---".equals(value)) continue;
+                sig.put(key, value);
+            }
+
+            HassClient.collectSnapshot(this, lastLat, lastLon, lastAccuracy, sig.toString());
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "collectSnapshot failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
+
+    private Object parseNumeric(String value, String fallback) {
+        if (value == null || value.isEmpty()) return fallback;
+        try {
+            // Preserve integers without a fractional part to avoid "5.0" in HA.
+            if (value.matches("-?\\d+")) {
+                return Integer.parseInt(value);
+            }
+            double d = Double.parseDouble(value);
+            if (Double.isNaN(d) || Double.isInfinite(d)) {
+                return null;
+            }
+            return d;
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+
+    private boolean hasLocationPermission() {
+        return checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED
+            || checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
+    private void startLocationUpdates() {
+        try {
+            if (!hasLocationPermission()) {
+                LogBuffer.w("TelemetryService", "Location permission not granted, skipping GPS updates");
+                return;
+            }
+
+            // Make sure we never register multiple listeners after service restart.
+            stopLocationUpdates();
+
+            LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+            if (lm == null) {
+                LogBuffer.w("TelemetryService", "LocationManager is null");
+                return;
+            }
+
+            locationListener = new LocationListener() {
+                @Override
+                public void onLocationChanged(Location loc) {
+                    if (loc == null) return;
+
+                    long time = loc.getTime();
+                    double lat = loc.getLatitude();
+                    double lon = loc.getLongitude();
+                    float accuracy = loc.getAccuracy();
+                    String provider = loc.getProvider();
+
+                    // Ignore very inaccurate fixes.
+                    if (accuracy > 50) {
+                        LogBuffer.d("TelemetryService", "Ignoring low-accuracy location (±" + accuracy + "m) from " + provider);
+                        return;
+                    }
+
+                    // De-duplicate identical locations delivered twice.
+                    if (Math.abs(time - lastLocTime) < 100
+                            && Math.abs(lat - lastLat) < 1e-6
+                            && Math.abs(lon - lastLon) < 1e-6) {
+                        LogBuffer.d("TelemetryService", "Ignoring duplicate location from " + provider);
+                        return;
+                    }
+
+                    // If we have a recent accurate GPS fix, ignore coarse network updates.
+                    if (LocationManager.NETWORK_PROVIDER.equals(provider)
+                            && lastAccuracy > 0 && lastAccuracy <= 15
+                            && (time - lastLocTime) < 30000) {
+                        LogBuffer.d("TelemetryService", "Ignoring network location, recent GPS is more accurate");
+                        return;
+                    }
+
+                    lastLat = lat;
+                    lastLon = lon;
+                    lastAccuracy = accuracy;
+                    lastLocTime = time;
+                    LogBuffer.i("TelemetryService", "GPS update: " + lastLat + ", " + lastLon
+                            + " (±" + lastAccuracy + "m) from " + provider);
+                    evaluateGeofences(lat, lon);
+                }
+
+                @Override
+                public void onProviderEnabled(String provider) {
+                    LogBuffer.i("TelemetryService", "GPS provider enabled: " + provider);
+                }
+
+                @Override
+                public void onProviderDisabled(String provider) {
+                    LogBuffer.w("TelemetryService", "GPS provider disabled: " + provider);
+                }
+            };
+
+            for (String provider : new String[]{
+                LocationManager.GPS_PROVIDER,
+                LocationManager.NETWORK_PROVIDER,
+                LocationManager.PASSIVE_PROVIDER
+            }) {
+                try {
+                    if (!lm.isProviderEnabled(provider)) continue;
+                    lm.requestLocationUpdates(provider, LOCATION_MIN_TIME_MS, LOCATION_MIN_DISTANCE_M,
+                            locationListener, Looper.getMainLooper());
+                } catch (Exception ignored) {}
+            }
+
+            updateLastKnownLocation(lm);
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "Location start error: " + e.getMessage());
+        }
+    }
+
+    private void updateLastKnownLocation(LocationManager lm) {
+        try {
+            Location loc = null;
+            try {
+                loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+            } catch (Exception ignored) {}
+            if (loc == null) {
+                try {
+                    loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                } catch (Exception ignored) {}
+            }
+            if (loc == null) {
+                try {
+                    loc = lm.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
+                } catch (Exception ignored) {}
+            }
+            if (loc != null) {
+                lastLat = loc.getLatitude();
+                lastLon = loc.getLongitude();
+                lastAccuracy = loc.getAccuracy();
+                lastLocTime = loc.getTime();
+                LogBuffer.i("TelemetryService", "Last known GPS: " + lastLat + ", " + lastLon
+                        + " (±" + lastAccuracy + "m) from " + loc.getProvider());
+            } else {
+                LogBuffer.w("TelemetryService", "No last known GPS location available");
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void stopLocationUpdates() {
+        if (locationListener != null) {
+            try {
+                LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                if (lm != null) {
+                    lm.removeUpdates(locationListener);
+                }
+            } catch (Exception e) {
+                LogBuffer.e("TelemetryService", "Location stop error: " + e.getMessage());
+            }
+            locationListener = null;
+        }
+    }
+
+    private void registerNetworkCallback() {
+        try {
+            ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+            if (cm == null) return;
+            NetworkRequest req = new NetworkRequest.Builder()
+                .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                .build();
+            networkCallback = new ConnectivityManager.NetworkCallback() {
+                @Override
+                public void onAvailable(Network network) {
+                    if (!AppConfig.isHassEnabled(TelemetryService.this)) return;
+                    long now = System.currentTimeMillis();
+                    if (now - lastNetworkFlushMs < NETWORK_FLUSH_DEBOUNCE_MS) {
+                        LogBuffer.d("TelemetryService", "Network available, flush debounced");
+                        return;
+                    }
+                    lastNetworkFlushMs = now;
+                    HassClient.onNetworkAvailable(TelemetryService.this);
+                }
+            };
+            cm.registerNetworkCallback(req, networkCallback);
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "Network callback registration failed: " + e.getMessage());
+        }
+    }
+
+    private void unregisterNetworkCallback() {
+        if (networkCallback != null) {
+            try {
+                ConnectivityManager cm = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                if (cm != null) {
+                    cm.unregisterNetworkCallback(networkCallback);
+                }
+            } catch (Exception e) {
+                LogBuffer.e("TelemetryService", "Network callback unregister failed: " + e.getMessage());
+            }
+            networkCallback = null;
+        }
+    }
+
+    private void updateNotification(String text) {
+        try {
+            NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+            if (nm == null) {
+                LogBuffer.w("TelemetryService", "NotificationManager is null");
+                return;
+            }
+            Notification.Builder builder = new Notification.Builder(this, CHANNEL_ID)
+                .setContentTitle("DiPlus-to-hass")
+                .setContentText(text)
+                .setSmallIcon(android.R.drawable.ic_menu_mylocation)
+                .setContentIntent(getNotificationIntent())
+                .setOngoing(true);
+
+            nm.notify(NOTIFICATION_ID, builder.build());
+            LogBuffer.d("TelemetryService", "Notification updated: " + text);
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "Notification update failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+    }
+
+    private void addWifiInfo(JSONObject sig) {
+        try {
+            WifiManager wm = (WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE);
+            if (wm == null) return;
+            android.net.wifi.WifiInfo info = wm.getConnectionInfo();
+            if (info == null) return;
+            String ssid = info.getSSID();
+            if (ssid != null && !"<unknown ssid>".equals(ssid) && !"0x".equals(ssid)) {
+                sig.put("wifi_ssid", ssid.replace("\"", ""));
+            }
+            String bssid = info.getBSSID();
+            if (bssid != null) {
+                sig.put("wifi_bssid", bssid);
+            }
+            int rssi = info.getRssi();
+            if (rssi != -127 && rssi != Integer.MAX_VALUE) {
+                sig.put("wifi_rssi", rssi);
+            }
+        } catch (Exception e) {
+            LogBuffer.d("TelemetryService", "addWifiInfo failed: " + e.getMessage());
+        }
+    }
+
+    public static void start(Context context) {
+        Intent intent = new Intent(context, TelemetryService.class);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            context.startForegroundService(intent);
+        } else {
+            context.startService(intent);
+        }
+    }
+
+    public static void stop(Context context) {
+        explicitStopRequested = true;
+        Intent intent = new Intent(context, TelemetryService.class);
+        context.stopService(intent);
+    }
+
+    private void evaluateGeofences(double lat, double lon) {
+        try {
+            List<GeofenceZone> zones = AppConfig.loadGeofences(this);
+            boolean visitedChanged = false;
+            long now = System.currentTimeMillis();
+            for (GeofenceZone z : zones) {
+                float[] results = new float[1];
+                android.location.Location.distanceBetween(lat, lon, z.latitude, z.longitude, results);
+                float dist = results[0];
+                String state = dist <= z.radius ? "inside" : "outside";
+                String key = "geo_" + z.id;
+                String prevState = cachedSignalValues.get(key);
+                if (!state.equals(prevState)) {
+                    LogBuffer.i("TelemetryService", "Geofence '" + z.name + "': "
+                        + (prevState != null ? prevState : "unknown") + "→" + state);
+                }
+                if ("inside".equals(state) && "outside".equals(prevState)) {
+                    // outside → inside transition: the car just entered the zone.
+                    z.lastVisitedAtMs = now;
+                    visitedChanged = true;
+                }
+                cachedSignalValues.put(key, state);
+                // Zone name travels alongside the state so Home Assistant can
+                // build a friendly entity name for the dynamic geo_<id> key.
+                cachedSignalValues.put(key + "_name", z.name);
+                ensureGeofenceItem(key);
+            }
+            if (visitedChanged) {
+                AppConfig.saveGeofences(this, zones);
+            }
+        } catch (Exception e) {
+            LogBuffer.w("TelemetryService", "evaluateGeofences error: " + e.getMessage());
+        }
+    }
+
+    // Pre-register one telemetry item per configured geofence zone so the
+    // knownItems list stays stable while CANDataReader workers iterate it.
+    // ensureGeofenceItem remains as a fallback for zones added later.
+    private void preregisterGeofenceItems() {
+        try {
+            for (GeofenceZone z : AppConfig.loadGeofences(this)) {
+                ensureGeofenceItem("geo_" + z.id);
+            }
+        } catch (Exception e) {
+            LogBuffer.w("TelemetryService", "preregisterGeofenceItems failed: " + e.getMessage());
+        }
+    }
+
+    private void ensureGeofenceItem(String key) {
+        for (CANDataItem item : knownItems) {
+            if (key.equals(item.key)) return;
+        }
+        CANDataItem item = new CANDataItem(0, key, "", -1);
+        item.key = key;
+        item.value = cachedSignalValues.getOrDefault(key, "---");
+        knownItems.add(item);
+    }
+}

@@ -1,0 +1,12 @@
+{
+  "domain": "diplus2hass",
+  "name": "DiPlus-to-hass — BYD Vehicle Telemetry",
+  "version": "2.1.2",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": ["@krisproger"],
+  "config_flow": true,
+  "iot_class": "local_push",
+  "documentation": "https://teplitzky.ru/diplus2hass/install.html",
+  "issue_tracker": "https://t.me/bydiplus2hass"
+}

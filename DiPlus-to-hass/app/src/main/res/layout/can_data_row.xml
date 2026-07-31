@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableRow xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="36dp"
+    android:paddingLeft="12dp"
+    android:paddingRight="12dp">
+
+    <CheckBox
+        android:id="@+id/rowCheck"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_vertical"
+        android:minWidth="0dp"
+        android:minHeight="0dp" />
+
+    <TextView
+        android:id="@+id/rowId"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.13"
+        android:gravity="center_vertical"
+        android:textColor="#FFFFFFFF"
+        android:textSize="13sp"
+        android:typeface="monospace" />
+
+    <TextView
+        android:id="@+id/rowName"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.30"
+        android:gravity="center_vertical"
+        android:textColor="#FFFFFFFF"
+        android:textSize="13sp"
+        android:singleLine="true"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/rowValue"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.30"
+        android:gravity="center_vertical|end"
+        android:textColor="#FFB0B0B0"
+        android:textSize="13sp"
+        android:typeface="monospace" />
+
+    <TextView
+        android:id="@+id/rowUnit"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.15"
+        android:gravity="center_vertical|end"
+        android:textColor="#FFB0B0B0"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/rowRoute"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.10"
+        android:gravity="center_vertical"
+        android:paddingLeft="8dp"
+        android:textColor="#FFB0B0B0"
+        android:textSize="11sp" />
+</TableRow>

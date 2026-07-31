@@ -1,0 +1,4 @@
+# Development dependencies for DiPlus-to-hass
+pytest>=7.0
+voluptuous>=0.13
+pyyaml>=6.0

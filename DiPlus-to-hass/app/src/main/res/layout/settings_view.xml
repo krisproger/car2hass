@@ -1,0 +1,600 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    android:padding="12dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- Server section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="14dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_server"
+                android:textColor="@color/primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:orientation="horizontal"
+                android:layout_marginBottom="10dp">
+
+                <EditText
+                    android:id="@+id/editHost"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:background="@color/surfaceVariant"
+                    android:textColor="@color/textPrimary"
+                    android:textColorHint="@color/textTertiary"
+                    android:hint="@string/settings_ha_server_address"
+                    android:inputType="textUri"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp" />
+
+                <CheckBox
+                    android:id="@+id/switchHttps"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:text="@string/settings_https"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp"
+                    android:paddingStart="8dp" />
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/editPort"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:background="@color/surfaceVariant"
+                android:textColor="@color/textPrimary"
+                android:textColorHint="@color/textTertiary"
+                android:hint="8123"
+                android:inputType="number"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp" />
+
+            <TextView
+                android:id="@+id/tvHttpWarning"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="10dp"
+                android:text="@string/settings_http_warning"
+                android:textColor="@color/accentYellow"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="4dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_token"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="13sp" />
+
+                <ImageButton
+                    android:id="@+id/btnTokenHelp"
+                    android:layout_width="32dp"
+                    android:layout_height="32dp"
+                    android:background="?android:attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_menu_info_details"
+                    android:contentDescription="@string/settings_token_help_title" />
+            </LinearLayout>
+
+            <EditText
+                android:id="@+id/editToken"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:background="@color/surfaceVariant"
+                android:textColor="@color/textPrimary"
+                android:textColorHint="@color/textTertiary"
+                android:hint="eyJhbGciOiJIUzI1NiIs..."
+                android:inputType="textVisiblePassword"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:layout_marginBottom="10dp" />
+
+            <EditText
+                android:id="@+id/editCarName"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:background="@color/surfaceVariant"
+                android:textColor="@color/textPrimary"
+                android:textColorHint="@color/textTertiary"
+                android:hint="@string/settings_car_name_hint"
+                android:inputType="text"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp" />
+        </LinearLayout>
+
+        <!-- Behaviour section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="14dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_behaviour"
+                android:textColor="@color/primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_send_to_ha"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <android.widget.Switch
+                    android:id="@+id/switchEnabled"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_boot_auto_start"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <android.widget.Switch
+                    android:id="@+id/switchBootAutoStart"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_car_control"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <android.widget.Switch
+                    android:id="@+id/switchCarControl"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_detailed_log"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <android.widget.Switch
+                    android:id="@+id/switchDetailedLog"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical"
+                android:layout_marginTop="6dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_offline_queue"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <android.widget.Switch
+                    android:id="@+id/switchQueueEnabled"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_queue_max_mb"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/editQueueMaxMb"
+                    android:layout_width="80dp"
+                    android:layout_height="36dp"
+                    android:background="@color/surfaceVariant"
+                    android:textColor="@color/textPrimary"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_queue_max_days"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/editQueueMaxDays"
+                    android:layout_width="80dp"
+                    android:layout_height="36dp"
+                    android:background="@color/surfaceVariant"
+                    android:textColor="@color/textPrimary"
+                    android:gravity="center"
+                    android:inputType="number"
+                    android:textSize="14sp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Background mode section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="14dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_background_mode"
+                android:textColor="@color/primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="4dp" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_background_mode_summary"
+                android:textColor="@color/textTertiary"
+                android:textSize="12sp"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_background_mode"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <android.widget.Switch
+                    android:id="@+id/switchBackgroundMode"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_adb_host"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/editAdbHost"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:background="@color/surfaceVariant"
+                    android:textColor="@color/textPrimary"
+                    android:textColorHint="@color/textTertiary"
+                    android:hint="@string/settings_adb_host_hint"
+                    android:inputType="textUri"
+                    android:gravity="center"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_adb_port"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/editAdbPort"
+                    android:layout_width="80dp"
+                    android:layout_height="36dp"
+                    android:background="@color/surfaceVariant"
+                    android:textColor="@color/textPrimary"
+                    android:textColorHint="@color/textTertiary"
+                    android:hint="@string/settings_adb_port_hint"
+                    android:inputType="number"
+                    android:gravity="center"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="10dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/settings_diplus_auth"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="14sp" />
+
+                <EditText
+                    android:id="@+id/editDiplusAuth"
+                    android:layout_width="0dp"
+                    android:layout_height="36dp"
+                    android:layout_weight="1"
+                    android:background="@color/surfaceVariant"
+                    android:textColor="@color/textPrimary"
+                    android:textColorHint="@color/textTertiary"
+                    android:hint="@string/settings_diplus_auth_hint"
+                    android:inputType="text"
+                    android:gravity="center"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnApplyBackgroundMode"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@color/surfaceVariant"
+                android:textColor="@color/textPrimary"
+                android:textSize="14sp"
+                android:text="@string/settings_apply_background_mode" />
+        </LinearLayout>
+
+        <!-- System section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="14dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_system"
+                android:textColor="@color/primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginBottom="10dp">
+
+                <Button
+                    android:id="@+id/btnOpenAutoStart"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@color/surfaceVariant"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="13sp"
+                    android:text="@string/settings_auto_start_byd" />
+
+                <Button
+                    android:id="@+id/btnOpenRapidMode"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:background="@color/surfaceVariant"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="13sp"
+                    android:text="@string/settings_background_work" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Service section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_card"
+            android:padding="14dp"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/settings_service"
+                android:textColor="@color/primary"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp" />
+
+            <Button
+                android:id="@+id/btnTest"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@color/surfaceVariant"
+                android:textColor="@color/accentGreen"
+                android:textSize="14sp"
+                android:text="@string/settings_test_connection"
+                android:layout_marginBottom="10dp" />
+
+            <Button
+                android:id="@+id/btnLanguage"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@color/surfaceVariant"
+                android:textColor="@color/textPrimary"
+                android:textSize="14sp"
+                android:text="@string/settings_language"
+                android:layout_marginBottom="10dp" />
+
+            <Button
+                android:id="@+id/btnGeofences"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:background="@color/surfaceVariant"
+                android:textColor="@color/textPrimary"
+                android:textSize="14sp"
+                android:text="@string/nav_geofences"
+                android:layout_marginBottom="10dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="10dp">
+
+                <Button
+                    android:id="@+id/btnRefreshPresets"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:background="@color/surfaceVariant"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="14sp"
+                    android:text="@string/settings_refresh_presets" />
+
+                <TextView
+                    android:id="@+id/tvPresetVersion"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="10dp"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/btnImportConfig"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="4dp"
+                    android:background="@color/surfaceVariant"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="14sp"
+                    android:text="@string/settings_import_config" />
+
+                <Button
+                    android:id="@+id/btnExportConfig"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginStart="4dp"
+                    android:background="@color/surfaceVariant"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="14sp"
+                    android:text="@string/settings_export_config" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tvTestResult"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textColor="@color/textSecondary"
+            android:textSize="12sp"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+    </LinearLayout>
+</ScrollView>

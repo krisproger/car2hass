@@ -1,0 +1,678 @@
+{
+  "version": 3,
+  "generated_at": "2026-07-29",
+  "presets": [
+    {
+      "id": "ac",
+      "label": "A/C",
+      "label_ru": "Климат",
+      "icon": "air-conditioner",
+      "behavior": "toggle",
+      "sensors": ["ac_state", "cabin_temp", "ac_set_temp", "fan_speed", "ac_airflow_mode"],
+      "state": {
+        "primary_sensor": "ac_state",
+        "truthy": ["on", "open", "true", "1", "running", "started"],
+        "display": {
+          "on":  { "label": "On",  "label_ru": "Вкл",  "sub": "{cabin_temp}°C" },
+          "off": { "label": "Off", "label_ru": "Выкл", "sub": null }
+        },
+        "alert": { "on": false, "off": true }
+      },
+      "commands": {
+        "on":  { "id": "ac_on",  "value": "on" },
+        "off": { "id": "ac_off", "value": "off" }
+      },
+      "params": [
+        { "id": "temp", "label": "Temperature", "label_ru": "Температура", "command": "ac_temp", "sensor": "ac_set_temp", "min": 16, "max": 30, "step": 0.5, "unit": "°C" },
+        { "id": "fan",  "label": "Fan speed",   "label_ru": "Вентилятор",  "command": "ac_fan",  "sensor": "fan_speed",      "min": 1,  "max": 9,  "step": 1,    "unit": "" }
+      ]
+    },
+    {
+      "id": "doors",
+      "label": "Doors",
+      "label_ru": "Двери",
+      "icon": "car-door",
+      "behavior": "composite",
+      "sensors": ["driver_door", "passenger_door", "rear_left_door", "rear_right_door", "trunk", "bonnet"],
+      "state": {
+        "source": "binary_any",
+        "truthy": ["open", "on", "true", "1"],
+        "display": {
+          "ok":    { "label": "All closed",      "label_ru": "Все закрыты",          "sub": null },
+          "alert": { "label": "{open_n}/{total} open", "label_ru": "{open_n}/{total} открыто", "sub": "{open_list}" }
+        },
+        "alert": { "ok": false, "alert": true }
+      },
+      "actions": [
+        { "id": "doors_lock",   "label": "Lock",   "label_ru": "Заблокировать",   "icon": "lock",      "command": "doors_lock" },
+        { "id": "doors_unlock", "label": "Unlock", "label_ru": "Разблокировать", "icon": "lock-open", "command": "doors_unlock" }
+      ]
+    },
+    {
+      "id": "door_locks",
+      "label": "Door locks",
+      "label_ru": "Замки дверей",
+      "icon": "lock",
+      "behavior": "toggle",
+      "sensors": ["driver_door_lock", "passenger_door_lock", "rear_left_door_lock", "rear_right_door_lock"],
+      "state": {
+        "primary_sensor": "driver_door_lock",
+        "truthy": ["locked", "on", "true", "1"],
+        "display": {
+          "on":  { "label": "Locked",   "label_ru": "Заблокировано",  "sub": null },
+          "off": { "label": "Unlocked", "label_ru": "Разблокировано", "sub": null, "alert": true }
+        }
+      },
+      "commands": {
+        "on":  { "id": "doors_lock",   "value": null },
+        "off": { "id": "doors_unlock", "value": null }
+      }
+    },
+    {
+      "id": "trunk",
+      "label": "Trunk",
+      "label_ru": "Багажник",
+      "icon": "car-hatchback",
+      "behavior": "toggle",
+      "sensors": ["trunk", "trunk_lock"],
+      "state": {
+        "primary_sensor": "trunk",
+        "truthy": ["open", "on", "true", "1"],
+        "display": {
+          "on":  { "label": "Open",   "label_ru": "Открыт", "sub": null, "alert": true },
+          "off": { "label": "Closed", "label_ru": "Закрыт", "sub": null }
+        }
+      },
+      "commands": {
+        "on":  { "id": "trunk_open",  "value": null },
+        "off": { "id": "trunk_close", "value": null }
+      }
+    },
+    {
+      "id": "windows",
+      "label": "Windows",
+      "label_ru": "Окна",
+      "icon": "window-open",
+      "behavior": "composite",
+      "sensors": ["window_fl", "window_fr", "window_rl", "window_rr", "sunroof", "sunshade"],
+      "state": {
+        "source": "binary_any",
+        "truthy": [1, "1", 2, "2", 3, "3", 4, "4", 5, "5", 6, "6", 7, "7", 8, "8", 9, "9", 10, "10"],
+        "truthy_mode": "numeric_gt_0",
+        "display": {
+          "ok":    { "label": "All closed",   "label_ru": "Все закрыты",    "sub": null },
+          "alert": { "label": "{open_n} open", "label_ru": "{open_n} открыто", "sub": null }
+        },
+        "alert": { "ok": false, "alert": true }
+      },
+      "actions": [
+        { "id": "windows_close_all", "label": "Close all", "label_ru": "Закрыть все", "icon": "window-closed", "command": "windows_close_all", "value": null },
+        { "id": "windows_vent",      "label": "Vent",      "label_ru": "Проветрить",  "icon": "window-open-variant", "command": "windows_vent",      "value": null }
+      ],
+      "params": [
+        { "id": "driver",   "label": "Driver window",    "label_ru": "Окно водителя",      "command": "window_driver",    "sensor": "window_fl", "min": 0, "max": 100, "step": 1, "unit": "%" },
+        { "id": "passenger","label": "Passenger window", "label_ru": "Окно пассажира",     "command": "window_passenger", "sensor": "window_fr", "min": 0, "max": 100, "step": 1, "unit": "%" },
+        { "id": "rear_left", "label": "Rear-left window","label_ru": "Заднее левое окно",  "command": "window_rear_left", "sensor": "window_rl", "min": 0, "max": 100, "step": 1, "unit": "%" },
+        { "id": "rear_right","label": "Rear-right window","label_ru": "Заднее правое окно","command": "window_rear_right","sensor": "window_rr", "min": 0, "max": 100, "step": 1, "unit": "%" },
+        { "id": "sunroof",   "label": "Sunroof",         "label_ru": "Люк",                "command": "sunroof",          "sensor": "sunroof",   "min": 0, "max": 100, "step": 1, "unit": "%" },
+        { "id": "sunshade",  "label": "Sunshade",        "label_ru": "Шторка люка",        "command": "sunshade",         "sensor": "sunshade",  "min": 0, "max": 100, "step": 1, "unit": "%" }
+      ]
+    },
+    {
+      "id": "tyre_pressure",
+      "label": "Tyre pressure",
+      "label_ru": "Давление в шинах",
+      "icon": "tire",
+      "behavior": "composite",
+      "sensors": ["tyre_pressure_fl", "tyre_pressure_fr", "tyre_pressure_rl", "tyre_pressure_rr"],
+      "state": {
+        "source": "numeric_list",
+        "display": {
+          "ok":    { "label": "FL {tyre_pressure_fl} FR {tyre_pressure_fr}", "sub": "RL {tyre_pressure_rl} RR {tyre_pressure_rr}" },
+          "alert": { "label": "Low pressure", "label_ru": "Низкое давление", "sub": "{min} kPa" }
+        },
+        "alert": { "ok": false, "alert": true },
+        "thresholds": [
+          { "op": "lt", "value": 180, "state": "alert" }
+        ]
+      }
+    },
+    {
+      "id": "lights",
+      "label": "Lights",
+      "label_ru": "Свет",
+      "icon": "lightbulb",
+      "behavior": "composite",
+      "sensors": ["low_beam", "high_beam", "sidelights", "front_fog", "rear_fog", "drl"],
+      "state": {
+        "source": "binary_any",
+        "truthy": ["on", "open", "true", "1"],
+        "display": {
+          "ok":    { "label": "Off", "label_ru": "Выкл", "sub": null },
+          "alert": { "label": "On",  "label_ru": "Вкл",  "sub": "{open_list}" }
+        },
+        "alert": { "ok": false, "alert": true }
+      },
+      "actions": [
+        { "id": "fog_on",  "label": "Fog on",  "label_ru": "Туманки вкл",  "icon": "lightbulb-on",  "command": "fog_on",  "value": "on" },
+        { "id": "fog_off", "label": "Fog off", "label_ru": "Туманки выкл", "icon": "lightbulb-off", "command": "fog_off", "value": "off" }
+      ]
+    },
+    {
+      "id": "hazard",
+      "label": "Hazard lights",
+      "label_ru": "Аварийка",
+      "icon": "alert",
+      "behavior": "toggle",
+      "sensors": ["hazard"],
+      "state": {
+        "primary_sensor": "hazard",
+        "truthy": ["on", "open", "true", "1"],
+        "display": {
+          "on":  { "label": "On",  "label_ru": "Вкл",  "sub": null, "alert": true },
+          "off": { "label": "Off", "label_ru": "Выкл", "sub": null }
+        }
+      },
+      "commands": {
+        "on":  { "id": "hazard_on",  "value": "on" },
+        "off": { "id": "hazard_off", "value": "off" }
+      }
+    },
+    {
+      "id": "volume",
+      "label": "Volume",
+      "label_ru": "Громкость",
+      "icon": "volume-high",
+      "behavior": "dual_action_toggle",
+      "sensors": ["media_volume"],
+      "state": {
+        "primary_sensor": "media_volume",
+        "truthy": [],
+        "truthy_mode": "numeric_gt_0",
+        "display": {
+          "value": "{value}%"
+        }
+      },
+      "commands": {
+        "on":  { "id": "volume", "value": "50" },
+        "off": { "id": "volume", "value": "0" }
+      },
+      "zones": [
+        { "side": "left",  "icon": "minus", "command": "volume_down", "value": null },
+        { "side": "right", "icon": "plus",  "command": "volume_up",   "value": null }
+      ]
+    },
+    {
+      "id": "fan",
+      "label": "Fan",
+      "label_ru": "Вентилятор",
+      "icon": "fan",
+      "behavior": "dual_action_toggle",
+      "sensors": ["fan_speed", "ac_state"],
+      "state": {
+        "primary_sensor": "fan_speed",
+        "truthy_sensor": "ac_state",
+        "truthy": ["on", "open", "true", "1"],
+        "display": {
+          "value": "Level {value}",
+          "value_ru": "Уровень {value}"
+        }
+      },
+      "commands": {
+        "on":  { "id": "ac_on",  "value": "on" },
+        "off": { "id": "ac_off", "value": "off" }
+      },
+      "zones": [
+        { "side": "left",  "icon": "minus", "command": "ac_fan_down", "value": null },
+        { "side": "right", "icon": "plus",  "command": "ac_fan_up",   "value": null }
+      ]
+    },
+    {
+      "id": "temp",
+      "label": "Temperature",
+      "label_ru": "Температура",
+      "icon": "thermometer",
+      "behavior": "dual_action_toggle",
+      "sensors": ["ac_set_temp", "ac_state"],
+      "state": {
+        "primary_sensor": "ac_set_temp",
+        "truthy_sensor": "ac_state",
+        "truthy": ["on", "open", "true", "1"],
+        "display": {
+          "value": "{value}°C"
+        }
+      },
+      "commands": {
+        "on":  { "id": "ac_on",  "value": "on" },
+        "off": { "id": "ac_off", "value": "off" }
+      },
+      "zones": [
+        { "side": "left",  "icon": "minus", "command": "ac_temp_down", "value": null },
+        { "side": "right", "icon": "plus",  "command": "ac_temp_up",   "value": null }
+      ]
+    },
+    {
+      "id": "drive_mode",
+      "label": "Drive mode",
+      "label_ru": "Режим движения",
+      "icon": "car-settings",
+      "behavior": "select",
+      "sensors": ["drive_mode"],
+      "state": {
+        "primary_sensor": "drive_mode"
+      },
+      "options": [
+        { "value": "eco",    "label": "ECO",    "command": "drive_mode", "command_value": "eco" },
+        { "value": "sport",  "label": "SPORT",  "command": "drive_mode", "command_value": "sport" },
+        { "value": "normal", "label": "NORMAL", "command": "drive_mode", "command_value": "normal" },
+        { "value": "snow",   "label": "Snow",   "label_ru": "Снег", "command": "drive_mode", "command_value": "snow" }
+      ]
+    },
+    {
+      "id": "powertrain_mode",
+      "label": "Drive type",
+      "label_ru": "Тип привода",
+      "icon": "car-engine",
+      "behavior": "select",
+      "sensors": ["powertrain_mode"],
+      "state": {
+        "primary_sensor": "powertrain_mode"
+      },
+      "options": [
+        { "value": "hev",       "label": "HEV",      "command": "powertrain_mode", "command_value": "hev" },
+        { "value": "ev",        "label": "EV",       "command": "powertrain_mode", "command_value": "ev" },
+        { "value": "force_ev",  "label": "Force EV", "label_ru": "Принуд. EV", "command": "powertrain_mode", "command_value": "force_ev" }
+      ]
+    },
+    {
+      "id": "ac_airflow",
+      "label": "A/C airflow",
+      "label_ru": "Обдув",
+      "icon": "fan",
+      "behavior": "select",
+      "sensors": ["ac_airflow_mode"],
+      "state": {
+        "primary_sensor": "ac_airflow_mode"
+      },
+      "options": [
+        { "value": "face",           "label": "Face",         "label_ru": "Лицо",         "command": "ac_airflow", "command_value": "face" },
+        { "value": "face_feet",      "label": "Face+Feet",    "label_ru": "Лицо+ноги",    "command": "ac_airflow", "command_value": "face_feet" },
+        { "value": "feet",           "label": "Feet",         "label_ru": "Ноги",         "command": "ac_airflow", "command_value": "feet" },
+        { "value": "feet_defrost",   "label": "Feet+Defrost", "label_ru": "Ноги+стекло",  "command": "ac_airflow", "command_value": "feet_defrost" },
+        { "value": "defrost",        "label": "Defrost",      "label_ru": "Стекло",       "command": "ac_airflow", "command_value": "defrost" }
+      ]
+    },
+    {
+      "id": "ac_recirc",
+      "label": "A/C recirculation",
+      "label_ru": "Рециркуляция",
+      "icon": "air-recirculator",
+      "behavior": "toggle",
+      "sensors": ["ac_recirculation"],
+      "state": {
+        "primary_sensor": "ac_recirculation",
+        "truthy": ["recirc", "recirculation", "on", "true", "1"],
+        "display": {
+          "on":  { "label": "Recirc", "label_ru": "Рецирк", "sub": null, "alert": false },
+          "off": { "label": "Fresh",  "label_ru": "Свежий", "sub": null }
+        }
+      },
+      "commands": {
+        "on":  { "id": "ac_recirc", "value": "recirc" },
+        "off": { "id": "ac_recirc", "value": "fresh" }
+      }
+    },
+    {
+      "id": "battery",
+      "label": "Battery",
+      "label_ru": "Батарея",
+      "icon": "battery",
+      "behavior": "composite",
+      "sensors": ["soc", "battery_charge", "charging_state", "charge_gun_state"],
+      "state": {
+        "source": "primary_numeric",
+        "primary_sensor": "soc",
+        "display": {
+          "ok":    { "label": "{soc}%",   "sub": null },
+          "alert": { "label": "{soc}%",   "sub": "Low battery", "sub_ru": "Низкий заряд" }
+        },
+        "alert": { "ok": false, "alert": true },
+        "thresholds": [
+          { "op": "lt", "value": 20, "state": "alert" }
+        ]
+      }
+    },
+    {
+      "id": "charge_gun",
+      "label": "Charge port",
+      "label_ru": "Порт зарядки",
+      "icon": "ev-plug",
+      "behavior": "composite",
+      "sensors": ["charge_gun_state", "charging_state"],
+      "state": {
+        "source": "binary_any",
+        "primary_sensor": "charge_gun_state",
+        "truthy": ["connected", "charging", "started"],
+        "display": {
+          "ok":    { "label": "Disconnected", "label_ru": "Отключён",  "sub": null },
+          "alert": { "label": "Connected",    "label_ru": "Подключён", "sub": null }
+        },
+        "alert": { "ok": false, "alert": true }
+      }
+    },
+    {
+      "id": "close_windows",
+      "label": "Close windows",
+      "label_ru": "Закрыть окна",
+      "icon": "window-closed",
+      "behavior": "command",
+      "sensors": ["window_fl", "window_fr", "window_rl", "window_rr"],
+      "state": {
+        "source": "binary_all",
+        "truthy": ["closed", 0, "0"],
+        "truthy_mode": "numeric_eq_0",
+        "display": {
+          "ok":    { "label": "Closed", "label_ru": "Закрыты", "sub": null, "alert": false },
+          "alert": { "label": "Open",   "label_ru": "Открыты", "sub": "{open_n} open", "sub_ru": "{open_n} открыто", "alert": true }
+        }
+      },
+      "commands": {
+        "action": { "id": "windows_close_all", "value": null }
+      }
+    },
+    {
+      "id": "steering_heat",
+      "label": "Steering heat",
+      "label_ru": "Подогрев руля",
+      "icon": "steering",
+      "behavior": "composite",
+      "sensors": [],
+      "state": {
+        "source": "binary_any",
+        "truthy": [],
+        "display": {
+          "ok":    { "label": "Steering heat", "label_ru": "Подогрев руля", "sub": null },
+          "alert": { "label": "Steering heat", "label_ru": "Подогрев руля", "sub": null }
+        }
+      },
+      "actions": [
+        { "id": "steering_heat_on",  "label": "On",  "label_ru": "Вкл",  "icon": "steering", "command": "steering_heat_on",  "value": null },
+        { "id": "steering_heat_off", "label": "Off", "label_ru": "Выкл", "icon": "steering", "command": "steering_heat_off", "value": null }
+      ]
+    },
+    {
+      "id": "mirror_heat",
+      "label": "Mirror heat",
+      "label_ru": "Подогрев зеркал",
+      "icon": "mirror",
+      "behavior": "composite",
+      "sensors": [],
+      "state": {
+        "source": "binary_any",
+        "truthy": [],
+        "display": {
+          "ok":    { "label": "Mirror heat", "label_ru": "Подогрев зеркал", "sub": null },
+          "alert": { "label": "Mirror heat", "label_ru": "Подогрев зеркал", "sub": null }
+        }
+      },
+      "actions": [
+        { "id": "mirror_heat_on",  "label": "On",  "label_ru": "Вкл",  "icon": "mirror", "command": "mirror_heat_on",  "value": null },
+        { "id": "mirror_heat_off", "label": "Off", "label_ru": "Выкл", "icon": "mirror", "command": "mirror_heat_off", "value": null }
+      ]
+    },
+    {
+      "id": "front_defrost",
+      "label": "Front defrost",
+      "label_ru": "Обогрев лобового",
+      "icon": "car-windshield",
+      "behavior": "composite",
+      "sensors": [],
+      "state": {
+        "source": "binary_any",
+        "truthy": [],
+        "display": {
+          "ok":    { "label": "Front defrost", "label_ru": "Обогрев лобового", "sub": null },
+          "alert": { "label": "Front defrost", "label_ru": "Обогрев лобового", "sub": null }
+        }
+      },
+      "actions": [
+        { "id": "front_defrost_on",  "label": "On",  "label_ru": "Вкл",  "icon": "car-windshield", "command": "front_defrost_on",  "value": null },
+        { "id": "front_defrost_off", "label": "Off", "label_ru": "Выкл", "icon": "car-windshield", "command": "front_defrost_off", "value": null }
+      ]
+    },
+    {
+      "id": "dashcam",
+      "label": "Dashcam",
+      "label_ru": "Видеорегистратор",
+      "icon": "camera",
+      "behavior": "toggle",
+      "sensors": ["dashcam_state"],
+      "state": {
+        "primary_sensor": "dashcam_state",
+        "truthy": ["running", "on", "true", "1", "recording"],
+        "display": {
+          "on":  { "label": "On",  "label_ru": "Вкл",  "sub": null, "alert": false },
+          "off": { "label": "Off", "label_ru": "Выкл", "sub": null }
+        }
+      },
+      "commands": {
+        "on":  { "id": "dashcam_on",  "value": null },
+        "off": { "id": "dashcam_off", "value": null }
+      }
+    },
+    {
+      "id": "ambilight",
+      "label": "Ambilight",
+      "label_ru": "Подсветка салона",
+      "icon": "led-strip",
+      "behavior": "composite",
+      "sensors": [],
+      "state": {
+        "source": "binary_any",
+        "truthy": [],
+        "display": {
+          "ok":    { "label": "Ambilight", "label_ru": "Подсветка салона", "sub": null },
+          "alert": { "label": "Ambilight", "label_ru": "Подсветка салона", "sub": null }
+        }
+      },
+      "actions": [
+        { "id": "ambilight_on",  "label": "On",  "label_ru": "Вкл",  "icon": "led-strip", "command": "ambilight_on",  "value": null },
+        { "id": "ambilight_off", "label": "Off", "label_ru": "Выкл", "icon": "led-strip", "command": "ambilight_off", "value": null }
+      ]
+    },
+    {
+      "id": "interior_light",
+      "label": "Interior light",
+      "label_ru": "Свет в салоне",
+      "icon": "car-light-dim",
+      "behavior": "toggle",
+      "sensors": ["footwell_light"],
+      "state": {
+        "primary_sensor": "footwell_light",
+        "truthy": ["on", "open", "true", "1"],
+        "display": {
+          "on":  { "label": "On",  "label_ru": "Вкл",  "sub": null },
+          "off": { "label": "Off", "label_ru": "Выкл", "sub": null }
+        }
+      },
+      "commands": {
+        "on":  { "id": "interior_light_on",  "value": null },
+        "off": { "id": "interior_light_off", "value": null }
+      }
+    },
+    {
+      "id": "drl",
+      "label": "DRL",
+      "label_ru": "ДХО",
+      "icon": "car-light-high",
+      "behavior": "toggle",
+      "sensors": ["drl"],
+      "state": {
+        "primary_sensor": "drl",
+        "truthy": ["on", "open", "true", "1"],
+        "display": {
+          "on":  { "label": "On",  "label_ru": "Вкл",  "sub": null },
+          "off": { "label": "Off", "label_ru": "Выкл", "sub": null }
+        }
+      },
+      "commands": {
+        "on":  { "id": "drl_on",  "value": "on" },
+        "off": { "id": "drl_off", "value": "off" }
+      }
+    },
+    {
+      "id": "auto_high_beam",
+      "label": "Auto high beam",
+      "label_ru": "Авто-дальний",
+      "icon": "car-light-high",
+      "behavior": "toggle",
+      "sensors": [],
+      "state": {
+        "primary_sensor": null,
+        "truthy": [],
+        "display": {
+          "on":  { "label": "On",  "label_ru": "Вкл",  "sub": null },
+          "off": { "label": "Off", "label_ru": "Выкл", "sub": null }
+        }
+      },
+      "commands": {
+        "on":  { "id": "auto_high_beam_on",  "value": null },
+        "off": { "id": "auto_high_beam_off", "value": null }
+      }
+    },
+    {
+      "id": "sentry",
+      "label": "Sentry mode",
+      "label_ru": "Режим охраны",
+      "icon": "car-sentry",
+      "behavior": "select",
+      "sensors": ["sentry_state"],
+      "state": {
+        "primary_sensor": "sentry_state"
+      },
+      "options": [
+        { "value": "engine_off_on",  "label": "Engine-off sentry ON",  "label_ru": "Охрана (дв. выкл) вкл",  "command": "sentry", "command_value": "engine_off_on" },
+        { "value": "time_lapse_on",  "label": "Timelapse sentry ON",   "label_ru": "Таймлапс-охрана вкл",    "command": "sentry", "command_value": "time_lapse_on" },
+        { "value": "engine_off_off", "label": "Engine-off sentry OFF", "label_ru": "Охрана (дв. выкл) выкл", "command": "sentry", "command_value": "engine_off_off" }
+      ]
+    },
+    {
+      "id": "ha_status",
+      "label": "HA status",
+      "label_ru": "Статус HA",
+      "icon": "home-assistant",
+      "behavior": "composite",
+      "sensors": [],
+      "state": {
+        "source": "ha_status",
+        "display": {
+          "ok":    { "label": "ON",  "sub": null },
+          "alert": { "label": "OFF", "sub": null }
+        },
+        "alert": { "ok": false, "alert": true }
+      }
+    },
+    {
+      "id": "speed",
+      "label": "Speed",
+      "label_ru": "Скорость",
+      "icon": "speedometer",
+      "behavior": "composite",
+      "sensors": ["speed"],
+      "state": {
+        "source": "single_numeric",
+        "primary_sensor": "speed",
+        "display": {
+          "value": "{value} km/h",
+          "value_ru": "{value} км/ч"
+        }
+      }
+    },
+    {
+      "id": "range",
+      "label": "Range",
+      "label_ru": "Запас хода",
+      "icon": "map-marker-distance",
+      "behavior": "composite",
+      "sensors": ["range"],
+      "state": {
+        "source": "single_numeric",
+        "primary_sensor": "range",
+        "display": {
+          "value": "{value} km",
+          "value_ru": "{value} км"
+        }
+      }
+    },
+    {
+      "id": "cabin_temp",
+      "label": "Cabin temp",
+      "label_ru": "Темп. салона",
+      "icon": "thermometer",
+      "behavior": "composite",
+      "sensors": ["cabin_temp"],
+      "state": {
+        "source": "single_numeric",
+        "primary_sensor": "cabin_temp",
+        "display": {
+          "value": "{value}°C"
+        }
+      }
+    },
+    {
+      "id": "outside_temp",
+      "label": "Outside temp",
+      "label_ru": "Темп. снаружи",
+      "icon": "thermometer",
+      "behavior": "composite",
+      "sensors": ["outside_temp"],
+      "state": {
+        "source": "single_numeric",
+        "primary_sensor": "outside_temp",
+        "display": {
+          "value": "{value}°C"
+        }
+      }
+    },
+    {
+      "id": "child_lock_left",
+      "label": "Child lock L",
+      "label_ru": "Детский замок Л",
+      "icon": "car-child-seat",
+      "behavior": "toggle",
+      "sensors": ["rear_left_child_lock"],
+      "state": {
+        "primary_sensor": "rear_left_child_lock",
+        "truthy": ["locked", "on", "true", "1"],
+        "display": {
+          "on":  { "label": "Locked",   "label_ru": "Заблокирован",  "sub": null },
+          "off": { "label": "Unlocked", "label_ru": "Разблокирован", "sub": null }
+        }
+      },
+      "commands": {
+        "on":  { "id": "child_lock_left", "value": "on" },
+        "off": { "id": "child_lock_left", "value": "off" }
+      }
+    },
+    {
+      "id": "child_lock_right",
+      "label": "Child lock R",
+      "label_ru": "Детский замок П",
+      "icon": "car-child-seat",
+      "behavior": "toggle",
+      "sensors": ["rear_right_child_lock"],
+      "state": {
+        "primary_sensor": "rear_right_child_lock",
+        "truthy": ["locked", "on", "true", "1"],
+        "display": {
+          "on":  { "label": "Locked",   "label_ru": "Заблокирован",  "sub": null },
+          "off": { "label": "Unlocked", "label_ru": "Разблокирован", "sub": null }
+        }
+      },
+      "commands": {
+        "on":  { "id": "child_lock_right", "value": "on" },
+        "off": { "id": "child_lock_right", "value": "off" }
+      }
+    }
+  ]
+}

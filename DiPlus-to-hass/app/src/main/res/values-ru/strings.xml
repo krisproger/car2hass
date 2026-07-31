@@ -1,0 +1,627 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DiPlus-to-hass</string>
+    <string name="no_data">Нет данных CAN</string>
+    <string name="connecting">Подключение…</string>
+    <string name="error">Ошибка</string>
+
+    <!-- Main screen -->
+    <string name="status_idle">● ожидание</string>
+    <string name="status_active_ha">● Активно — отправка в HA</string>
+    <string name="status_active_no_ha">● Активно — HA отключён</string>
+    <string name="status_error">● Ошибка: %1$s</string>
+    <string name="location_no_gps">Нет GPS</string>
+    <string name="send_to_ha">Отправлять в HA</string>
+    <string name="tab_telemetry">Телеметрия</string>
+    <string name="tab_commands">Команды</string>
+    <string name="column_id">ID</string>
+    <string name="column_parameter">Параметр</string>
+    <string name="column_value">Значение</string>
+    <string name="column_unit">Ед.</string>
+    <string name="column_route">Маршрут</string>
+    <string name="vvin_prefix">VVIN: %1$s</string>
+    <string name="fw_prefix">ПО: %1$s</string>
+    <string name="app_version">Приложение: v%1$s</string>
+    <string name="updated_prefix">Обновлено: %1$s</string>
+    <string name="send_log">Отправить лог</string>
+    <string name="copied_to_clipboard">Скопировано</string>
+
+    <!-- Menu -->
+    <string name="menu_title">Меню</string>
+    <string name="menu_settings">Настройки</string>
+    <string name="menu_about">О приложении / Поддержать автора</string>
+    <string name="menu_probe_api">Проверить HTTP API diplus</string>
+    <string name="menu_cancel">Отмена</string>
+
+    <!-- Permissions / log -->
+    <string name="toast_grant_storage">Разрешите доступ к хранилищу, затем нажмите Отправить</string>
+    <string name="toast_permission_granted">Разрешение получено, нажмите Отправить повторно</string>
+    <string name="toast_permission_denied">Разрешение отклонено, лог будет отправлен как текст</string>
+    <string name="log_saved">Лог сохранён (%1$d байт)</string>
+    <string name="log_shared_text">Лог отправлен как текст (%1$d байт)</string>
+    <string name="log_export_title">Экспорт лога</string>
+    <string name="log_export_share">Отправить</string>
+    <string name="log_export_save">Сохранить в загрузки</string>
+    <string name="log_save_failed">Не удалось сохранить лог</string>
+    <string name="log_share_truncated">... (лог обрезан, полный лог по возможности сохранён в Загрузки) ...\n</string>
+    <string name="permission_requesting">Запрашивается %1$d разрешений</string>
+    <string name="permission_all_granted">Все разрешения уже получены</string>
+    <string name="permission_runtime_prefix">Разрешения:</string>
+    <string name="permission_granted">ПОЛУЧЕНО</string>
+    <string name="permission_denied">ОТКЛОНЕНО</string>
+
+    <!-- Commands tab -->
+    <string name="clear">Очистить</string>
+    <string name="commands_advanced_title">Расширенная команда</string>
+    <string name="commands_category">Категория</string>
+    <string name="commands_command">Команда</string>
+    <string name="commands_value">Значение</string>
+    <string name="commands_send">Отправить команду</string>
+    <string name="commands_ready">Готов к отправке</string>
+    <string name="commands_invalid_value">Некорректное значение</string>
+    <string name="commands_sending">Отправка: %1$s</string>
+    <string name="commands_result_ok">Успешно (%1$d мс)</string>
+    <string name="commands_result_error">Ошибка: %1$s</string>
+    <string name="commands_result_ok_short">OK</string>
+    <string name="commands_result_fail">FAIL</string>
+    <string name="commands_empty_command">пустая команда</string>
+    <string name="commands_unknown_command">неизвестная или некорректная команда: %1$s value=%2$s</string>
+    <string name="commands_journal_empty">(журнал пуст)</string>
+    <string name="commands_journal_title">Журнал команд</string>
+    <string name="command_verify_ok">подтверждено</string>
+    <string name="command_verify_mismatch">несоответствие состояния</string>
+    <string name="command_verify_no_link">нет связанного сенсора</string>
+    <string name="command_verify_send_failed">ошибка отправки</string>
+    <string name="command_verify_pending">ожидание проверки</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Настройки</string>
+    <string name="settings_behaviour">Поведение</string>
+    <string name="settings_system">Система</string>
+    <string name="settings_service">Сервис</string>
+    <string name="settings_refresh_presets">Обновить пресеты</string>
+    <string name="settings_preset_version">Версия пресетов: %1$d</string>
+    <string name="settings_presets_updated">Пресеты обновлены</string>
+    <string name="settings_presets_latest">Пресеты уже актуальны</string>
+    <string name="settings_presets_failed">Не удалось проверить обновления пресетов</string>
+    <string name="settings_server">Сервер (host:port)</string>
+    <string name="settings_ha_server_address">Адрес сервера HA</string>
+    <string name="settings_port">Порт</string>
+    <string name="settings_https">HTTPS</string>
+    <string name="settings_token">Токен (Long-Lived Access Token)</string>
+    <string name="settings_token_help_title">Токен длительного действия</string>
+    <string name="settings_token_help_text">В Home Assistant откройте профиль, создайте токен длительного действия и вставьте его сюда.</string>
+    <string name="settings_car_name">Имя автомобиля</string>
+    <string name="settings_car_name_hint">По умолчанию VVIN</string>
+    <string name="settings_send_to_ha">Отправлять данные в HA</string>
+    <string name="settings_use_https">Использовать HTTPS</string>
+    <string name="settings_http_warning">HTTP без шифрования — только для локальной сети. Для удалённого доступа включите HTTPS.</string>
+    <string name="settings_boot_auto_start">Автозапуск при загрузке</string>
+    <string name="settings_car_control">Управление авто из HA</string>
+    <string name="settings_detailed_log">Писать подробный лог</string>
+    <string name="settings_background_mode">Работать при выключенном авто</string>
+    <string name="settings_background_mode_summary">Сохраняет сбор телеметрии и опрос команд после выключения ACC. Требует дополнительных разрешений.</string>
+    <string name="settings_adb_host">ADB хост</string>
+    <string name="settings_adb_host_hint">127.0.0.1</string>
+    <string name="settings_adb_port">ADB порт</string>
+    <string name="settings_adb_port_hint">5555</string>
+    <string name="settings_diplus_auth">Токен авторизации DiPlus (необязательно)</string>
+    <string name="settings_diplus_auth_hint">Только если DiPlus требует авторизацию</string>
+    <string name="settings_apply_background_mode">Применить режим фона</string>
+    <string name="background_mode_disabled">Режим фона отключён</string>
+    <string name="background_mode_applied">Режим фона применён</string>
+    <string name="background_mode_failed">Не удалось настроить режим фона. Приложение покажет команды ADB ниже — выполните их с компьютера. Чтобы использовать беспроводной ADB, сначала выполните "adb tcpip 5555", затем указанные команды.</string>
+    <string name="background_mode_manual_intro">Выполните эти команды с компьютера:</string>
+    <string name="background_mode_copied">Команда ADB скопирована</string>
+    <string name="settings_offline_queue">Офлайн-очередь</string>
+    <string name="settings_queue_max_mb">Макс. размер (МБ)</string>
+    <string name="settings_queue_max_days">Макс. срок (дни)</string>
+    <string name="settings_export_log">Экспорт лога</string>
+    <string name="settings_auto_start_byd">Автозапуск (BYD)</string>
+    <string name="settings_background_work">Фоновая работа</string>
+    <string name="settings_test_connection">Тест подключения</string>
+    <string name="settings_save">Сохранить</string>
+    <string name="settings_import_config">Импорт конфига</string>
+    <string name="settings_export_config">Экспорт конфига</string>
+    <string name="settings_language">Язык</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_language_ru">Русский</string>
+    <string name="settings_test_fill_host_token">Укажите host и token</string>
+    <string name="settings_test_testing">Тестируем…</string>
+    <string name="settings_test_ok">Подключение успешно (HTTP %1$d)</string>
+    <string name="settings_test_api_ok">Подключение успешно. Endpoint /api/byd_diplus отвечает (HTTP %1$d)</string>
+    <string name="settings_test_not_found">Сервер HA доступен, но /api/byd_diplus не найден (установите интеграцию)</string>
+    <string name="settings_test_endpoint_http">Endpoint ответил HTTP %1$d</string>
+    <string name="settings_test_api_error">API OK, /api/byd_diplus: %1$s</string>
+    <string name="settings_test_error">Ошибка: %1$s</string>
+    <string name="settings_invalid_port">Некорректный порт</string>
+    <string name="settings_enter_host">Укажите адрес сервера</string>
+    <string name="settings_enter_token">Укажите токен</string>
+    <string name="settings_saved">Сохранено</string>
+    <string name="settings_export_to">Куда экспортировать конфиг?</string>
+    <string name="settings_import_from">Откуда импортировать конфиг?</string>
+    <string name="settings_select_config">Выберите конфиг для импорта</string>
+    <string name="settings_exported">Экспортировано:\n%1$s</string>
+    <string name="settings_exported_download">Экспортировано в Download (MediaStore)</string>
+    <string name="settings_export_failed">Экспорт не удался: %1$s</string>
+    <string name="settings_imported">Импортировано: %1$s</string>
+    <string name="settings_import_failed">Импорт не удался: %1$s</string>
+    <string name="settings_permission_granted">Разрешение получено, повторите действие</string>
+    <string name="settings_permission_denied">Без разрешения используется только app-private хранилище</string>
+    <string name="folder_download">Загрузки</string>
+    <string name="folder_sdcard_download">/sdcard/Download</string>
+    <string name="folder_app_private">Приватное хранилище</string>
+
+    <!-- Attribute filter -->
+    <string name="filter_title">Фильтр атрибутов для HA</string>
+    <string name="filter_description">Отмеченные атрибуты передаются в Home Assistant. По умолчанию выбраны все.</string>
+    <string name="filter_select_all">Выбрать все</string>
+    <string name="filter_deselect_all">Снять все</string>
+    <string name="filter_count">Выбрано: %1$d / %2$d</string>
+    <string name="filter_key">Ключ</string>
+    <string name="filter_saved">Фильтр сохранён</string>
+    <string name="filter_save">Сохранить</string>
+
+    <!-- About -->
+    <string name="about_version">Версия: %1$s</string>
+    <string name="about_developer">Разработчик</string>
+    <string name="about_project_url">Страница проекта</string>
+    <string name="about_telegram_url">Группа в Telegram</string>
+    <string name="about_site">Сайт</string>
+    <string name="about_telegram">@BYDiPlus2HASS</string>
+    <string name="donate_crypto_title">Криптовалюта</string>
+    <string name="donate_usdt_trc20">USDT (TRC20)</string>
+    <string name="donate_bitcoin">Bitcoin (BTC)</string>
+    <string name="donate_ethereum">Ethereum (ETH)</string>
+    <string name="donate_cloudtips">CloudTips (все карты РФ)</string>
+    <string name="donate_tbank">Т-Банк</string>
+    <string name="donate_alfa">Альфа-Банк</string>
+    <string name="donate_sber">СберБанк</string>
+    <string name="donate_vtb">ВТБ</string>
+    <string name="donate_open_link">Открыть</string>
+    <string name="donate_banks_title">Банковские карты</string>
+    <string name="donate_aggregator_title">Платежный агрегатор</string>
+    <string name="about_purpose">Назначение</string>
+    <string name="about_purpose_text">Читает телеметрию BYD и отправляет команды через DiPlus HTTP API в Home Assistant. 132 сигнала: ходовая часть, батарея, климат, двери, свет, ADAS и др.</string>
+    <string name="about_support">Поддержать автора</string>
+    <string name="about_support_text">Разработка и поддержка приложения и интеграции требуют времени. Буду благодарен за любую поддержку!</string>
+    <string name="about_stack">Стек: Android (Java) + Home Assistant (Python)\nДанные предоставляются diplus (com.van.diplus) через HTTP API localhost:8988</string>
+    <string name="donate_copied">Скопировано</string>
+
+    <!-- Notification / boot -->
+    <string name="boot_auto_start_toast">DiPlus-to-hass: автозапуск</string>
+    <string name="notification_title">DiPlus-to-hass</string>
+    <string name="notification_text">Сбор телеметрии BYD</string>
+    <string name="notification_active">Активно — %1$d сигналов</string>
+    <string name="notification_error">Ошибка: %1$s</string>
+
+    <!-- Service -->
+    <string name="service_bound">TelemetryService подключен</string>
+    <string name="service_unbound">TelemetryService отключен</string>
+
+    <!-- Auto-start / rapid mode -->
+    <string name="auto_start_opened">Открыты настройки BYD AppStartManagement</string>
+    <string name="auto_start_app_manager">Открыт системный менеджер приложений для автозапуска: %1$s/%2$s</string>
+    <string name="auto_start_battery">Открыт запрос на игнорирование оптимизации батареи (фоновая работа)</string>
+    <string name="auto_start_app_details">Открыты настройки приложения для проверки автозапуска</string>
+    <string name="auto_start_failed">Не удалось открыть настройки приложения: %1$s</string>
+    <string name="rapid_mode_launched">Запущен com.byd.rapidmode.RapidModeActivity</string>
+    <string name="rapid_mode_failed">Не удалось запустить rapidmode: %1$s</string>
+    <string name="rapid_mode_toast_failed">Не удалось запустить RapidMode: %1$s</string>
+    <string name="toast_auto_start_failed">Не удалось открыть настройки: %1$s</string>
+
+    <!-- Command categories -->
+    <string name="cmd_category_climate">Климат</string>
+    <string name="cmd_category_windows">Окна</string>
+    <string name="cmd_category_doors">Двери</string>
+    <string name="cmd_category_lights">Свет</string>
+    <string name="cmd_category_modes">Режимы</string>
+    <string name="cmd_category_charging">Зарядка</string>
+    <string name="cmd_category_volume">Громкость</string>
+    <string name="cmd_category_sentry">Охрана</string>
+    <string name="cmd_category_comfort">Комфорт</string>
+    <string name="cmd_category_system">Система</string>
+
+    <!-- Command names (Climate) -->
+    <string name="cmd_ac_on">Кондиционер включить</string>
+    <string name="cmd_ac_off">Кондиционер выключить</string>
+    <string name="cmd_ac_auto">Кондиционер авто</string>
+    <string name="cmd_ac_temp">Температура кондиционера</string>
+    <string name="cmd_ac_temp_up">Температура +</string>
+    <string name="cmd_ac_temp_down">Температура -</string>
+    <string name="cmd_ac_fan">Скорость вентилятора</string>
+    <string name="cmd_ac_fan_up">Вентилятор +</string>
+    <string name="cmd_ac_fan_down">Вентилятор -</string>
+    <string name="cmd_ac_airflow">Режим обдува</string>
+    <string name="cmd_ac_recirc">Рециркуляция</string>
+    <string name="cmd_driver_seat_heat">Подогрев водительского сиденья</string>
+    <string name="cmd_passenger_seat_heat">Подогрев пассажирского сиденья</string>
+    <string name="cmd_driver_seat_vent">Вентиляция водительского сиденья</string>
+    <string name="cmd_passenger_seat_vent">Вентиляция пассажирского сиденья</string>
+    <string name="cmd_steering_heat_on">Подогрев руля включить</string>
+    <string name="cmd_steering_heat_off">Подогрев руля выключить</string>
+    <string name="cmd_mirror_heat_on">Обогрев зеркал включить</string>
+    <string name="cmd_mirror_heat_off">Обогрев зеркал выключить</string>
+    <string name="cmd_front_defrost_on">Обогрев лобового включить</string>
+    <string name="cmd_front_defrost_off">Обогрев лобового выключить</string>
+
+    <!-- Windows -->
+    <string name="cmd_window_driver">Окно водителя</string>
+    <string name="cmd_window_passenger">Окно пассажира</string>
+    <string name="cmd_window_rear_left">Левое заднее окно</string>
+    <string name="cmd_window_rear_right">Правое заднее окно</string>
+    <string name="cmd_sunroof">Люк</string>
+    <string name="cmd_sunshade">Шторка</string>
+    <string name="cmd_windows_close_all">Закрыть все окна</string>
+    <string name="cmd_windows_vent">Проветривание</string>
+
+    <!-- Doors -->
+    <string name="cmd_doors_unlock">Открыть двери</string>
+    <string name="cmd_doors_lock">Закрыть двери</string>
+    <string name="cmd_trunk_open">Открыть багажник</string>
+    <string name="cmd_trunk_close">Закрыть багажник</string>
+    <string name="cmd_child_lock_left">Детский замок слева</string>
+    <string name="cmd_child_lock_right">Детский замок справа</string>
+
+    <!-- Lights -->
+    <string name="cmd_hazard_on">Аварийка включить</string>
+    <string name="cmd_hazard_off">Аварийка выключить</string>
+    <string name="cmd_turn_signal">Поворотники</string>
+    <string name="cmd_fog_on">Противотуманки включить</string>
+    <string name="cmd_fog_off">Противотуманки выключить</string>
+    <string name="cmd_drl_on">ДХО включить</string>
+    <string name="cmd_drl_off">ДХО выключить</string>
+    <string name="cmd_interior_light_on">Подсветка салона включить</string>
+    <string name="cmd_interior_light_off">Подсветка салона выключить</string>
+    <string name="cmd_ambilight_on">Подсветка ambiance включить</string>
+    <string name="cmd_ambilight_off">Подсветка ambiance выключить</string>
+    <string name="cmd_auto_high_beam_on">Автоматический дальний свет включить</string>
+    <string name="cmd_auto_high_beam_off">Автоматический дальний свет выключить</string>
+
+    <!-- Modes -->
+    <string name="cmd_powertrain_mode">Режим HEV/EV</string>
+    <string name="cmd_drive_mode">Режим вождения</string>
+    <string name="cmd_charge_save">Сохранение заряда</string>
+    <string name="cmd_regen">Регенерация</string>
+    <string name="cmd_steering_assist">Рулевое усилие</string>
+    <string name="cmd_brake_assist">Тормозное усилие</string>
+    <string name="cmd_active_brake">Активное торможение</string>
+
+    <!-- Charging -->
+    <string name="cmd_charge_soc">Целевой SOC зарядки</string>
+    <string name="cmd_charge_schedule">Плановая зарядка</string>
+
+    <!-- Volume -->
+    <string name="cmd_volume">Общая громкость</string>
+    <string name="cmd_volume_up">Громкость +</string>
+    <string name="cmd_volume_down">Громкость -</string>
+    <string name="cmd_nav_volume">Громкость навигации</string>
+    <string name="cmd_ext_volume">Громкость внешнего звука</string>
+
+    <!-- Sentry -->
+    <string name="cmd_sentry">Режим охраны</string>
+    <string name="cmd_dashcam_on">Панорамный регистратор включить</string>
+    <string name="cmd_dashcam_off">Панорамный регистратор выключить</string>
+
+    <!-- Comfort / system -->
+    <string name="cmd_headlight_level">Высота фар</string>
+    <string name="cmd_comfort_mode">Комфортный режим</string>
+    <string name="cmd_adb_on">Беспроводной ADB включить</string>
+    <string name="cmd_adb_off">Беспроводной ADB выключить</string>
+    <string name="cmd_theme">Тема</string>
+    <string name="cmd_hud">HUD</string>
+
+    <!-- Enum values -->
+    <string name="enum_off">Выкл</string>
+    <string name="enum_on">Вкл</string>
+    <string name="enum_low">Слабый</string>
+    <string name="enum_high">Сильный</string>
+    <string name="enum_face">В лицо</string>
+    <string name="enum_face_feet">В лицо + в ноги</string>
+    <string name="enum_feet">В ноги</string>
+    <string name="enum_feet_defrost">В ноги + обогрев</string>
+    <string name="enum_defrost">Обогрев</string>
+    <string name="enum_face_feet_defrost">В лицо + ноги + обогрев</string>
+    <string name="enum_face_defrost">В лицо + обогрев</string>
+    <string name="enum_recirc">Рециркуляция</string>
+    <string name="enum_fresh">Приток</string>
+    <string name="enum_hev">HEV</string>
+    <string name="enum_ev">EV</string>
+    <string name="enum_force_ev">Принудительный EV</string>
+    <string name="enum_eco">ECO</string>
+    <string name="enum_sport">SPORT</string>
+    <string name="enum_normal">NORMAL</string>
+    <string name="enum_snow">Снег</string>
+    <string name="enum_smart">Умный</string>
+    <string name="enum_force">Принудительный</string>
+    <string name="enum_standard">Стандарт</string>
+    <string name="enum_comfort">Комфорт</string>
+    <string name="enum_long_trip">Дальняя поездка</string>
+    <string name="enum_city">Город</string>
+    <string name="enum_sleep">Сон</string>
+    <string name="enum_screen_off">Выключить экран</string>
+    <string name="enum_dark">Тёмная</string>
+    <string name="enum_light">Светлая</string>
+    <string name="enum_left">Левый</string>
+    <string name="enum_right">Правый</string>
+    <string name="enum_engine_off_on">Охрана при выключенном ДВС вкл</string>
+    <string name="enum_time_lapse_on">Таймлапс-охрана вкл</string>
+    <string name="enum_engine_off_off">Охрана при выключенном ДВС выкл</string>
+
+    <!-- Units / hints -->
+    <string name="unit_celsius">°C</string>
+    <string name="unit_percent">%</string>
+    <string name="hint_range_0_100">0–100</string>
+    <string name="hint_celsius">16–30</string>
+    <string name="hint_fan">1–9</string>
+    <string name="hint_headlight">0–5</string>
+    <string name="hint_nav_volume">0–10</string>
+    <string name="hint_schedule">22:00–08:00</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">Панель</string>
+    <string name="nav_telemetry">Телеметрия</string>
+    <string name="nav_commands">Команды</string>
+    <string name="nav_rules">Правила</string>
+    <string name="nav_settings">Настройки</string>
+    <string name="nav_about">О программе</string>
+
+    <!-- Dashboard tiles -->
+    <string name="dash_speed">Скорость</string>
+    <string name="dash_battery">Батарея</string>
+    <string name="dash_range">Запас хода</string>
+    <string name="dash_charge_gun">Зарядка</string>
+    <string name="dash_cabin_temp">В салоне</string>
+    <string name="dash_outside_temp">На улице</string>
+    <string name="dash_doors">Двери</string>
+    <string name="dash_tyre_pressure">Давление в шинах</string>
+    <string name="dash_lights">Свет</string>
+    <string name="dash_gps">GPS</string>
+    <string name="dash_ha_status">HA статус</string>
+    <string name="dash_unknown">—</string>
+    <string name="dash_all_closed">Закрыто</string>
+    <string name="dash_open">Открыто</string>
+    <string name="dashboard_done">Готово</string>
+    <string name="dashboard_edit_mode_hint">Нажмите + чтобы добавить, 🗑️ чтобы удалить</string>
+    <string name="dashboard_add_tile_title">Добавить плитку</string>
+    <string name="dashboard_no_tile_settings">Настроек у этой плитки нет</string>
+    <string name="dashboard_category_sensors">Сенсоры</string>
+    <string name="dashboard_type_sensor">Сенсор</string>
+    <string name="dashboard_type_command">Команда</string>
+    <string name="dashboard_type_preset">Пресет</string>
+    <string name="dashboard_configure">Настроить плитки</string>
+    <string name="dashboard_config_title">Плитки панели</string>
+    <string name="dashboard_config_description">Выберите датчики и быстрые команды для отображения на панели.</string>
+    <string name="dashboard_config_sensor_section">Датчики</string>
+    <string name="dashboard_config_command_section">Быстрые команды</string>
+    <string name="dashboard_config_saved">Панель сохранена</string>
+    <string name="dashboard_config_none_selected">Выберите хотя бы один пункт</string>
+    <string name="dashboard_config_select_all">Выбрать все</string>
+    <string name="dashboard_config_sensors">Сенсоры</string>
+    <string name="dashboard_config_commands">Команды</string>
+    <string name="dashboard_config_linked_commands">Связанное управление</string>
+    <string name="dashboard_config_value_title">Значение команды</string>
+    <string name="dashboard_config_name">Название</string>
+    <string name="dashboard_config_key">Ключ</string>
+    <string name="dashboard_config_category">Категория</string>
+
+    <!-- Rules / Automation -->
+    <string name="rules_title">Правила автоматизации</string>
+    <string name="rules_empty">Правил пока нет. Нажмите +, чтобы добавить.</string>
+    <string name="rules_add">Добавить правило</string>
+    <string name="rules_save">Сохранить</string>
+    <string name="rules_cancel">Отмена</string>
+    <string name="rules_edit_title">Редактировать правило</string>
+    <string name="rules_create_title">Новое правило</string>
+    <string name="rules_field_name">Имя правила</string>
+    <string name="rules_field_sensor">Датчик</string>
+    <string name="rules_field_operator">Условие</string>
+    <string name="rules_field_value">Ожидаемое значение</string>
+    <string name="rules_field_command">Команда</string>
+    <string name="rules_field_command_value">Значение команды</string>
+    <string name="rules_field_min_interval">Мин. интервал (сек)</string>
+    <string name="rules_hint_min_interval_edge">Не используется для правил по фронту — фронт сам ограничивает срабатывания</string>
+    <string name="rules_field_anti_loop">Анти-луп (сек)</string>
+    <string name="rules_field_hold_seconds">Удерживать условие (сек, 0 = сразу)</string>
+    <string name="rules_empty_condition_value">Условие %1$d: значение не должно быть пустым</string>
+    <string name="rules_field_rising_edge">Только при изменении</string>
+    <string name="rules_export">Экспорт правил</string>
+    <string name="rules_import">Импорт правил</string>
+    <string name="rules_export_success">Правила экспортированы в %s</string>
+    <string name="rules_import_success">Правила импортированы</string>
+    <string name="rules_import_error">Ошибка импорта правил</string>
+    <string name="rules_export_share">Поделиться</string>
+    <string name="rules_export_file">В файл</string>
+    <string name="rules_delete">Удалить</string>
+    <string name="rules_delete_confirm">Удалить правило \"%s\"?</string>
+    <string name="rules_deleted">Правило удалено</string>
+    <string name="rules_section_conditions">Условия</string>
+    <string name="rules_section_actions">Действия</string>
+    <string name="rules_add_condition">Добавить условие</string>
+    <string name="rules_add_action">Добавить действие</string>
+    <string name="rules_need_condition">Необходимо хотя бы одно условие</string>
+    <string name="rules_need_action">Необходимо хотя бы одно действие</string>
+    <string name="rules_connector_and">И</string>
+    <string name="rules_connector_or">ИЛИ</string>
+    <string name="rules_condition_not">НЕ</string>
+    <string-array name="rules_connector_options">
+        <item>@string/rules_connector_and</item>
+        <item>@string/rules_connector_or</item>
+    </string-array>
+
+    <!-- Rules editor: operator labels -->
+    <string name="rules_operator_eq">= равно</string>
+    <string name="rules_operator_neq">≠ не равно</string>
+    <string name="rules_operator_gt">&gt; больше</string>
+    <string name="rules_operator_lt">&lt; меньше</string>
+    <string name="rules_operator_gte">≥ больше или равно</string>
+    <string name="rules_operator_lte">≤ меньше или равно</string>
+
+    <!-- Rules editor: fire once per session -->
+    <string name="rules_field_fire_once">Один раз за поездку</string>
+
+    <!-- Rules editor: else actions -->
+    <string name="rules_enable_else">Действие при ложном условии</string>
+    <string name="rules_add_else_action">Добавить действие при лжи</string>
+    <string name="rules_section_else_actions">Действия при лжи</string>
+
+    <!-- Rules list: last fired timestamps -->
+    <string name="rules_last_fired">сработало: %s</string>
+    <string name="rules_last_fired_else">иначе сработало: %s</string>
+
+    <!-- Geofences -->
+    <string name="nav_geofences">Геозоны</string>
+    <string name="geofence_list_title">Геозоны</string>
+    <string name="geofence_list_empty">Геозон пока нет. Нажмите +, чтобы создать.</string>
+    <string name="geofence_edit_title">Геозона</string>
+    <string name="geofence_field_name">Название зоны</string>
+    <string name="geofence_field_radius">Радиус (метры)</string>
+    <string name="geofence_save">Сохранить</string>
+    <string name="geofence_delete">Удалить</string>
+    <string name="geofence_delete_confirm">Удалить зону \"%s\"?</string>
+    <string name="geofence_inside">внутри</string>
+    <string name="geofence_outside">снаружи</string>
+    <string name="geofence_map_hint">Коснитесь карты или перетащите маркер, чтобы указать центр зоны</string>
+    <string name="geofence_field_lat">Широта</string>
+    <string name="geofence_field_lng">Долгота</string>
+    <string name="geofence_use_car_position">Текущая позиция авто</string>
+    <string name="geofence_no_position">Позиция авто недоступна</string>
+    <string name="geofence_last_visited">Последний визит: %1$s</string>
+    <string name="geofence_last_visited_never">никогда</string>
+    <string name="geofence_last_visited_today">сегодня %1$s</string>
+    <string name="geofence_last_visited_yesterday">вчера %1$s</string>
+
+    <!-- Sensor display names for rule editor -->
+    <string name="sensor_power_state">Состояние питания</string>
+    <string name="sensor_speed">Скорость (км/ч)</string>
+    <string name="sensor_range">Пробег</string>
+    <string name="sensor_gear">Передача</string>
+    <string name="sensor_engine_rpm">Обороты двигателя</string>
+    <string name="sensor_brake_pedal">Глубина педали тормоза</string>
+    <string name="sensor_accel_pedal">Глубина педали газа</string>
+    <string name="sensor_front_motor_rpm">Обороты переднего мотора</string>
+    <string name="sensor_rear_motor_rpm">Обороты заднего мотора</string>
+    <string name="sensor_engine_power">Мощность двигателя</string>
+    <string name="sensor_front_motor_torque">Момент переднего мотора</string>
+    <string name="sensor_charge_gun_state">Состояние зарядного пистолета</string>
+    <string name="sensor_energy_per_100km">Расход на 100 км</string>
+    <string name="sensor_battery_temp_max">Макс. температура батареи</string>
+    <string name="sensor_battery_temp_avg">Сред. температура батареи</string>
+    <string name="sensor_battery_temp_min">Мин. температура батареи</string>
+    <string name="sensor_cell_voltage_max">Макс. напряжение ячейки</string>
+    <string name="sensor_cell_voltage_min">Мин. напряжение ячейки</string>
+    <string name="sensor_last_wiper_time">Время последних дворников</string>
+    <string name="sensor_weather">Погода</string>
+    <string name="sensor_driver_seatbelt">Ремень безопасности водителя</string>
+    <string name="sensor_remote_lock_state">Дистанционная блокировка</string>
+    <string name="sensor_cabin_temp">Температура в салоне</string>
+    <string name="sensor_outside_temp">Наружная температура</string>
+    <string name="sensor_ac_set_temp">Уставка кондиционера</string>
+    <string name="sensor_temp_unit">Единица температуры</string>
+    <string name="sensor_battery_capacity">Ёмкость батареи</string>
+    <string name="sensor_steering_angle">Угол поворота руля</string>
+    <string name="sensor_steering_rate">Скорость вращения руля</string>
+    <string name="sensor_total_energy">Общее потребление энергии</string>
+    <string name="sensor_battery_charge">Заряд батареи (%)</string>
+    <string name="sensor_fuel_level">Уровень топлива (%)</string>
+    <string name="sensor_total_fuel">Общий расход топлива</string>
+    <string name="sensor_lane_curvature">Кривизна полосы</string>
+    <string name="sensor_right_lane_distance">Дистанция до правой полосы</string>
+    <string name="sensor_left_lane_distance">Дистанция до левой полосы</string>
+    <string name="sensor_battery_voltage">Напряжение АКБ 12В</string>
+    <string name="sensor_radar_fl">Радар передний-левый</string>
+    <string name="sensor_radar_fr">Радар передний-правый</string>
+    <string name="sensor_radar_rl">Радар задний-левый</string>
+    <string name="sensor_radar_rr">Радар задний-правый</string>
+    <string name="sensor_radar_left">Радар левый</string>
+    <string name="sensor_radar_flc">Радар передний центр-левый</string>
+    <string name="sensor_radar_frc">Радар передний центр-правый</string>
+    <string name="sensor_radar_rc">Радар задний центр</string>
+    <string name="sensor_front_wiper_speed">Скорость передних дворников</string>
+    <string name="sensor_wiper_mode">Режим дворников</string>
+    <string name="sensor_cruise_switch">Круиз-контроль</string>
+    <string name="sensor_distance_to_car_ahead">Дистанция до впереди идущего</string>
+    <string name="sensor_charging_state">Состояние зарядки</string>
+    <string name="sensor_tyre_pressure_fl">Давление в шине ПЛ</string>
+    <string name="sensor_tyre_pressure_fr">Давление в шине ПП</string>
+    <string name="sensor_tyre_pressure_rl">Давление в шине ЗЛ</string>
+    <string name="sensor_tyre_pressure_rr">Давление в шине ЗП</string>
+    <string name="sensor_left_turn">Левый поворотник</string>
+    <string name="sensor_right_turn">Правый поворотник</string>
+    <string name="sensor_driver_door_lock">Блокировка двери водителя</string>
+    <string name="sensor_window_fl">Стекло ПЛ (%)</string>
+    <string name="sensor_window_fr">Стекло ПП (%)</string>
+    <string name="sensor_window_rl">Стекло ЗЛ (%)</string>
+    <string name="sensor_window_rr">Стекло ЗП (%)</string>
+    <string name="sensor_sunroof">Люк (%)</string>
+    <string name="sensor_sunshade">Шторка люка (%)</string>
+    <string name="sensor_powertrain_mode">Режим силовой установки</string>
+    <string name="sensor_drive_mode">Режим движения</string>
+    <string name="sensor_month">Месяц</string>
+    <string name="sensor_day">День</string>
+    <string name="sensor_hour">Час</string>
+    <string name="sensor_minute">Минута</string>
+    <string name="sensor_passenger_seatbelt_warning">Предупреждение о ремне пассажира</string>
+    <string name="sensor_seatbelt_2nd_left">Ремень 2-го ряда левый</string>
+    <string name="sensor_seatbelt_2nd_right">Ремень 2-го ряда правый</string>
+    <string name="sensor_seatbelt_2nd_center">Ремень 2-го ряда центр</string>
+    <string name="sensor_ac_state">Состояние кондиционера</string>
+    <string name="sensor_fan_speed">Скорость вентилятора</string>
+    <string name="sensor_ac_recirculation">Рециркуляция</string>
+    <string name="sensor_ac_airflow_mode">Режим обдува</string>
+    <string name="sensor_driver_door">Дверь водителя</string>
+    <string name="sensor_passenger_door">Дверь пассажира</string>
+    <string name="sensor_rear_left_door">Задняя левая дверь</string>
+    <string name="sensor_rear_right_door">Задняя правая дверь</string>
+    <string name="sensor_bonnet">Капот</string>
+    <string name="sensor_trunk">Багажник</string>
+    <string name="sensor_fuel_charge_flap">Лючок топлива/зарядки</string>
+    <string name="sensor_auto_hold">Автоудержание</string>
+    <string name="sensor_acc_cruise_state">Состояние ACC</string>
+    <string name="sensor_rear_left_approach_warning">Предупреждение сзади слева</string>
+    <string name="sensor_rear_right_approach_warning">Предупреждение сзади справа</string>
+    <string name="sensor_lane_keep_state">Состояние удержания полосы</string>
+    <string name="sensor_rear_left_door_lock">Блокировка задней левой двери</string>
+    <string name="sensor_passenger_door_lock">Блокировка двери пассажира</string>
+    <string name="sensor_rear_right_door_lock">Блокировка задней правой двери</string>
+    <string name="sensor_trunk_lock">Блокировка багажника</string>
+    <string name="sensor_rear_left_child_lock">Детский замок сзади слева</string>
+    <string name="sensor_rear_right_child_lock">Детский замок сзади справа</string>
+    <string name="sensor_sidelights">Габаритные огни</string>
+    <string name="sensor_low_beam">Ближний свет</string>
+    <string name="sensor_high_beam">Дальний свет</string>
+    <string name="sensor_front_fog">Передние противотуманки</string>
+    <string name="sensor_rear_fog">Задние противотуманки</string>
+    <string name="sensor_footwell_light">Подсветка ног</string>
+    <string name="sensor_drl">ДХО</string>
+    <string name="sensor_engine_coolant_temp">Температура ОЖ</string>
+    <string name="sensor_hazard">Аварийная сигнализация</string>
+    <string name="sensor_slope">Уклон</string>
+    <string name="sensor_rain_amount">Интенсивность дождя</string>
+    <string name="sensor_passenger_seatbelt">Ремень пассажира</string>
+    <string name="sensor_second">Секунда</string>
+    <string name="sensor_soc">SOC батареи (%)</string>
+    <string name="sensor_turn_signal">Поворотник</string>
+    <string name="sensor_surround_view_state">Круговой обзор</string>
+    <string name="sensor_ui_config_version">Версия конфигурации UI</string>
+    <string name="sensor_sentry_state">Sentry режим</string>
+    <string name="sensor_parked_recording_switch">Парковочная запись</string>
+    <string name="sensor_parked_sentry_alarm">Sentry сигнализация</string>
+    <string name="sensor_wifi_state">Состояние Wi-Fi</string>
+    <string name="sensor_bluetooth_state">Состояние Bluetooth</string>
+    <string name="sensor_bluetooth_signal">Сигнал Bluetooth</string>
+    <string name="sensor_sway_magnitude">Амплитуда раскачивания</string>
+    <string name="sensor_vibration_magnitude">Амплитуда вибрации</string>
+    <string name="sensor_screen_width">Ширина экрана</string>
+    <string name="sensor_screen_height">Высота экрана</string>
+    <string name="sensor_dashcam_state">Состояние видеорегистратора</string>
+    <string name="sensor_wireless_adb_switch">Беспроводной ADB</string>
+    <string name="sensor_media_volume">Громкость медиа</string>
+    <string name="sensor_navigation_volume">Громкость навигации</string>
+    <string name="sensor_ai_person_confidence">AI обнаружение человека</string>
+    <string name="sensor_ai_vehicle_confidence">AI обнаружение ТС</string>
+    <string name="sensor_last_sentry_trigger_time">Время последнего срабатывания Sentry</string>
+    <string name="sensor_last_clip_start_time">Время начала последнего клипа</string>
+    <string name="sensor_last_clip_end_time">Время конца последнего клипа</string>
+    <string name="sensor_lead_car_start_state">Старт впереди идущего авто</string>
+</resources>

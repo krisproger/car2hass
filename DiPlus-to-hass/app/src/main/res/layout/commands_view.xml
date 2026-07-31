@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background">
+
+    <!-- Advanced command panel -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="6"
+        android:layout_margin="12dp"
+        android:background="@drawable/bg_card"
+        android:padding="12dp"
+        android:orientation="vertical">
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbars="vertical">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginBottom="8dp"
+                    android:text="@string/commands_advanced_title"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/commands_category"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="12sp" />
+
+                <Spinner
+                    android:id="@+id/spinnerCommandCategory"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:background="@color/surfaceVariant"
+                    android:popupBackground="@color/surfaceVariant"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="10dp" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/commands_command"
+                    android:textColor="@color/textSecondary"
+                    android:textSize="12sp" />
+
+                <Spinner
+                    android:id="@+id/spinnerCommand"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:background="@color/surfaceVariant"
+                    android:popupBackground="@color/surfaceVariant"
+                    android:layout_marginTop="4dp"
+                    android:layout_marginBottom="10dp" />
+
+                <LinearLayout
+                    android:id="@+id/valueInputLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:id="@+id/textValueLabel"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/commands_value"
+                        android:textColor="@color/textSecondary"
+                        android:textSize="12sp" />
+
+                    <EditText
+                        android:id="@+id/editCommandValue"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:background="@color/surfaceVariant"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="14sp"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="10dp"
+                        android:inputType="numberDecimal"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginBottom="10dp" />
+
+                    <Spinner
+                        android:id="@+id/spinnerCommandEnum"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:background="@color/surfaceVariant"
+                        android:popupBackground="@color/surfaceVariant"
+                        android:visibility="gone" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnSendCommand"
+                    android:layout_width="match_parent"
+                    android:layout_height="46dp"
+                    android:layout_marginTop="4dp"
+                    android:background="@color/primary"
+                    android:textColor="@color/onPrimary"
+                    android:textSize="14sp"
+                    android:text="@string/commands_send" />
+
+                <TextView
+                    android:id="@+id/textCommandResult"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:minHeight="42dp"
+                    android:background="@drawable/bg_card"
+                    android:padding="10dp"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="13sp"
+                    android:text="@string/commands_ready" />
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <!-- Command journal (compact, expandable) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="4"
+        android:layout_marginStart="12dp"
+        android:layout_marginEnd="12dp"
+        android:layout_marginBottom="12dp"
+        android:background="@drawable/bg_card"
+        android:padding="12dp"
+        android:orientation="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="@string/commands_journal_title"
+                android:textColor="@color/primary"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnExpandJournal"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:background="@android:color/transparent"
+                android:src="@drawable/ic_expand"
+                android:contentDescription="@string/commands_journal_title"
+                android:scaleType="fitCenter" />
+        </LinearLayout>
+
+        <ScrollView
+            android:id="@+id/scrollCommandJournal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_marginTop="8dp"
+            android:background="@color/surfaceVariant"
+            android:padding="10dp">
+
+            <TextView
+                android:id="@+id/textCommandJournal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:minHeight="80dp"
+                android:textColor="@color/textSecondary"
+                android:textSize="11sp"
+                android:fontFamily="monospace"
+                android:text="@string/commands_journal_empty" />
+        </ScrollView>
+    </LinearLayout>
+</LinearLayout>
