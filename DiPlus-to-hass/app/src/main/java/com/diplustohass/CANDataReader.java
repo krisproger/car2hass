@@ -95,6 +95,12 @@ public class CANDataReader {
     private static final List<String> supportedNames = new CopyOnWriteArrayList<>();
     // Cache of Chinese names that diplus explicitly does not support (thread-safe)
     private static final List<String> unsupportedNames = new CopyOnWriteArrayList<>();
+    // Unsupported signals are polled at a reduced cadence: their support status
+    // changes only with firmware updates, so a per-second poll is wasted traffic.
+    private static final long UNSUPPORTED_POLL_INTERVAL_MS = 60_000;
+    private static long lastUnsupportedPollMs = 0;
+    // Rate-limit for DiPlus connect-error logging (first E, then D for 60 s).
+    private static long lastConnectErrorLogMs = 0;
 
     // Latest raw values received from DiPlus, keyed by stable HA signal key.
     // Used for command verification without blocking on another telemetry cycle.
@@ -492,12 +498,17 @@ public class CANDataReader {
         // the unsupported names cost a single failed request per cycle.
         List<CANDataItem> supported = new ArrayList<>();
         List<CANDataItem> unsupported = new ArrayList<>();
+        boolean pollUnsupported =
+            System.currentTimeMillis() - lastUnsupportedPollMs >= UNSUPPORTED_POLL_INTERVAL_MS;
         for (CANDataItem item : items) {
             if (isUnsupportedSignal(context, item.diplusName)) {
-                unsupported.add(item);
+                if (pollUnsupported) unsupported.add(item);
             } else {
                 supported.add(item);
             }
+        }
+        if (pollUnsupported && !unsupported.isEmpty()) {
+            lastUnsupportedPollMs = System.currentTimeMillis();
         }
 
         List<CANDataItem> result = new ArrayList<>();
@@ -703,7 +714,18 @@ public class CANDataReader {
             }
             return result.isEmpty() ? null : result;
         } catch (Exception e) {
-            LogBuffer.e("CANReader", "getDiPars group error: " + e.getMessage());
+            // When DiPlus is down every group fails with a connect error each
+            // cycle (~90 E-lines in half a minute). Log the first one as E,
+            // throttle repeats to D for a minute.
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            long now = System.currentTimeMillis();
+            boolean connectError = msg.contains("Failed to connect") || msg.contains("Connection refused");
+            if (connectError && now - lastConnectErrorLogMs < 60_000) {
+                LogBuffer.d("CANReader", "getDiPars group error: " + msg);
+            } else {
+                if (connectError) lastConnectErrorLogMs = now;
+                LogBuffer.e("CANReader", "getDiPars group error: " + msg);
+            }
             return null;
         } finally {
             if (conn != null) conn.disconnect();

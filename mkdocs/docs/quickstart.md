@@ -13,8 +13,22 @@
 
 ## Шаг 2. Установите интеграцию Home Assistant
 
-1. Скачайте [diplus2hass-v2.1.2.zip](https://teplitzky.ru/diplus2hass/download.php?file=integration) и распакуйте.
-2. Скопируйте папку `custom_components/diplus2hass` в `/config/custom_components/` на сервере HA.
+Есть два способа — через HACS (рекомендуется) или вручную.
+
+### Способ A. Через HACS (рекомендуется)
+
+1. Убедитесь, что в HA установлен [HACS](https://hacs.xyz/).
+2. **HACS → Integrations → меню ⋮ (вверху справа) → Custom repositories**.
+3. В поле Repository вставьте `https://github.com/krisproger/diplustohass`, категория — **Integration** → **Add**.
+4. Найдите в HACS **DiPlus-to-hass — BYD Vehicle Telemetry** и нажмите **Download**.
+5. Перезапустите Home Assistant.
+
+Обновления интеграции будут приходить через HACS автоматически.
+
+### Способ B. Вручную (без HACS)
+
+1. Скачайте [diplus2hass-v2.1.3.zip](https://teplitzky.ru/diplus2hass/download.php?file=integration) и распакуйте.
+2. Скопируйте папку `custom_components/diplus2hass` в `/config/custom_components/`.
 
     ```bash
     cp -r custom_components/diplus2hass /config/custom_components/
@@ -24,8 +38,11 @@
         Сначала **полностью удалите** старую папку `/config/custom_components/diplus2hass/`, затем копируйте новую. Перезапись поверх оставляет смешанный набор файлов и приводит к ошибкам импорта при запуске.
 
 3. Перезапустите Home Assistant.
-4. **Настройки → Устройства и службы → Добавить интеграцию** → найдите **DiPlus-to-hass — BYD Vehicle Telemetry**.
-5. Введите имя автомобиля (латиницей, без пробелов — например, `BYDSongPRO`). Оно станет префиксом всех сущностей.
+
+### Добавление интеграции
+
+1. **Настройки → Устройства и службы → Добавить интеграцию** → найдите **DiPlus-to-hass — BYD Vehicle Telemetry**.
+2. Введите имя автомобиля (латиницей, без пробелов — например, `BYDSongPRO`). Оно станет префиксом всех сущностей.
 
 ## Шаг 3. Создайте Long-Lived Access Token
 
@@ -34,7 +51,7 @@
 
 ## Шаг 4. Установите приложение DiPlus-to-hass
 
-1. Скачайте [diplus2hass-v2.1.2.apk](https://teplitzky.ru/diplus2hass/download.php?file=app).
+1. Скачайте [diplus2hass-v2.1.3.apk](https://teplitzky.ru/diplus2hass/download.php?file=app).
 2. Установите на ГУ (флешка, мессенджер или `adb install -r`).
 3. При первом запуске выдайте разрешения: местоположение (в т.ч. в фоне) — нужно для трекера и геозон.
 

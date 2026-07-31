@@ -103,6 +103,11 @@ public class RuleRegistry {
         return out;
     }
 
+    // Rule ids for which one-time load notices were already logged this
+    // process — the 1s engine tick reloads rules constantly and the notices
+    // must not spam the log.
+    private static final java.util.Set<String> loadNoticesLogged = new java.util.HashSet<>();
+
     public static synchronized List<Rule> load(Context ctx) {
         String json = com.diplustohass.AppConfig.getRulesJson(ctx);
         if (json == null || json.isEmpty()) {
@@ -115,9 +120,21 @@ public class RuleRegistry {
                 JSONObject obj = arr.optJSONObject(i);
                 if (obj != null) {
                     Rule r = Rule.fromJson(obj);
-                    if (r.fireOnRisingEdge && r.minIntervalSec >= 1800) {
-                        com.diplustohass.LogBuffer.i("RuleRegistry",
-                            "Rule '" + r.name + "': minInterval ignored (rising-edge rule)");
+                    if (r.id != null && loadNoticesLogged.add(r.id)) {
+                        if (r.fireOnRisingEdge && r.minIntervalSec >= 1800) {
+                            com.diplustohass.LogBuffer.i("RuleRegistry",
+                                "Rule '" + r.name + "': minInterval ignored (rising-edge rule)");
+                        }
+                        if (r.enabled) {
+                            for (int ci = 0; ci < r.conditions.size(); ci++) {
+                                String v = r.conditions.get(ci).value;
+                                if (v == null || v.isEmpty()) {
+                                    com.diplustohass.LogBuffer.w("RuleRegistry",
+                                        "Rule '" + r.name + "': condition #" + (ci + 1)
+                                        + " has empty value — rule will never fire");
+                                }
+                            }
+                        }
                     }
                     rules.add(r);
                 }
