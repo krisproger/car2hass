@@ -12,6 +12,22 @@
 
 ### 2. Установите интеграцию Home Assistant
 
+Есть два способа — через HACS (рекомендуется) или вручную.
+
+#### Способ A. Через HACS (рекомендуется)
+
+1. Убедитесь, что в HA установлен [HACS](https://hacs.xyz/).
+2. **HACS → Integrations → меню ⋮ (вверху справа) → Custom repositories**.
+3. В поле Repository вставьте `https://github.com/krisproger/diplustohass`, категория — **Integration** → **Add**.
+4. Найдите в HACS **DiPlus-to-hass — BYD Vehicle Telemetry** и нажмите **Download**.
+5. Перезапустите Home Assistant.
+6. **Настройки → Устройства и службы → Добавить интеграцию** → **DiPlus-to-hass — BYD Vehicle Telemetry**.
+7. Введите имя автомобиля латиницей без пробелов (например, `BYDSongPRO`) — оно станет префиксом сущностей.
+
+Обновления интеграции будут приходить через HACS автоматически.
+
+#### Способ B. Вручную (без HACS)
+
 1. Скачайте [diplus2hass-v2.1.2.zip](https://teplitzky.ru/diplus2hass/download.php?file=integration) и распакуйте.
 2. Скопируйте папку `custom_components/diplus2hass` в `/config/custom_components/`.
 
@@ -69,6 +85,22 @@ The **DiPlus** app is the mandatory data source — DiPlus-to-hass will not work
 3. Confirm DiPlus shows live vehicle data.
 
 ### 2. Install the Home Assistant integration
+
+Two methods — via HACS (recommended) or manually.
+
+#### Method A. Via HACS (recommended)
+
+1. Make sure [HACS](https://hacs.xyz/) is installed in your HA.
+2. **HACS → Integrations → ⋮ menu (top right) → Custom repositories**.
+3. Paste `https://github.com/krisproger/diplustohass` into Repository, choose category **Integration** → **Add**.
+4. Find **DiPlus-to-hass — BYD Vehicle Telemetry** in HACS and click **Download**.
+5. Restart Home Assistant.
+6. **Settings → Devices & Services → Add integration** → **DiPlus-to-hass — BYD Vehicle Telemetry**.
+7. Enter a car name (latin, no spaces — e.g. `BYDSongPRO`); it becomes the entity prefix.
+
+Integration updates will arrive via HACS automatically.
+
+#### Method B. Manually (no HACS)
 
 1. Download [diplus2hass-v2.1.2.zip](https://teplitzky.ru/diplus2hass/download.php?file=integration) and extract it.
 2. Copy `custom_components/diplus2hass` into `/config/custom_components/`.

@@ -54,8 +54,10 @@ Previous releases and the version archive: [project site](https://teplitzky.ru/d
 Detailed guide: [install.html](https://teplitzky.ru/diplus2hass/install.html) · full manual: [manual](https://teplitzky.ru/diplus2hass/manual/).
 
 1. Install **DiPlus** on the head unit (mandatory).
-2. Install the HA integration: copy `custom_components/diplus2hass` to `/config/custom_components/` and restart HA.
-3. Add the **DiPlus-to-hass — BYD Vehicle Telemetry** integration in HA, set a car name.
+2. Install the HA integration — one of two ways:
+   - **HACS (recommended):** HACS → ⋮ → Custom repositories → add `https://github.com/krisproger/diplustohass` (Integration) → Download.
+   - **Manually:** copy `custom_components/diplus2hass` to `/config/custom_components/`.
+3. Restart HA and add the **DiPlus-to-hass — BYD Vehicle Telemetry** integration, set a car name.
 4. Install the Android app, enter HA address, Long-Lived Access Token and the same car name.
 5. Enable **Send data to HA** on the main screen and pick the signals to transmit.
 6. Allow auto-start and background activity for the app in the BYD system settings.
@@ -143,8 +145,10 @@ MIT — see [LICENSE](LICENSE).
 Подробная инструкция: [install.html](https://teplitzky.ru/diplus2hass/install.html) · руководство: [manual](https://teplitzky.ru/diplus2hass/manual/).
 
 1. Установите **DiPlus** на головное устройство (обязательно).
-2. Установите интеграцию HA: скопируйте `custom_components/diplus2hass` в `/config/custom_components/` и перезапустите HA.
-3. Добавьте интеграцию **DiPlus-to-hass — BYD Vehicle Telemetry**, задайте имя автомобиля.
+2. Установите интеграцию HA — одним из двух способов:
+   - **Через HACS (рекомендуется):** HACS → ⋮ → Custom repositories → добавьте `https://github.com/krisproger/diplustohass` (Integration) → Download.
+   - **Вручную:** скопируйте `custom_components/diplus2hass` в `/config/custom_components/`.
+3. Перезапустите HA и добавьте интеграцию **DiPlus-to-hass — BYD Vehicle Telemetry**, задайте имя автомобиля.
 4. Установите Android-приложение, укажите адрес HA, Long-Lived Access Token и то же имя автомобиля.
 5. Включите **Отправлять в HA** на главном экране и отметьте нужные сигналы.
 6. Разрешите автозапуск и фоновую работу приложения в системных настройках BYD.
