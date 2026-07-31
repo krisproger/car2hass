@@ -35,3 +35,6 @@ Thumbs.db
 
 # MkDocs build output (build with mkdocs/build.sh)
 site/
+# Caches from test runs
+.pytest_cache/
+DiPlus-to-hass/.pytest_cache/
