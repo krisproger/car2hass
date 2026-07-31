@@ -7,6 +7,6 @@
   "codeowners": ["@krisproger"],
   "config_flow": true,
   "iot_class": "local_push",
-  "documentation": "https://teplitzky.ru/diplus2hass/install.html",
-  "issue_tracker": "https://t.me/bydiplus2hass"
+  "documentation": "https://github.com/krisproger/diplus2hass",
+  "issue_tracker": "https://github.com/krisproger/diplus2hass/issues"
 }
