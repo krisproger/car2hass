@@ -134,7 +134,6 @@ public class CommandPoller {
         String token = AppConfig.getHassToken(appContext);
         String carName = AppConfig.getCarName(appContext);
         boolean https = AppConfig.isHassHttps(appContext);
-        boolean detailedLog = AppConfig.isDetailedLogEnabled(appContext);
 
         if (host.isEmpty() || token.isEmpty() || carName.isEmpty()) {
             return true; // not an error; just not configured yet
@@ -155,15 +154,11 @@ public class CommandPoller {
         try {
             response = httpGet(pollUrl, token);
         } catch (Exception e) {
-            if (detailedLog) {
-                LogBuffer.d("CommandPoller", "Poll failed: " + e.getMessage());
-            }
+            LogBuffer.d("CommandPoller", "Poll failed: " + e.getMessage());
             return false;
         }
 
-        if (detailedLog) {
-            LogBuffer.d("CommandPoller", "Poll response: " + response);
-        }
+        LogBuffer.d("CommandPoller", "Poll response: " + response);
 
         JSONArray commands;
         try {

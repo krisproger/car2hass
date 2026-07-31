@@ -1,7 +1,7 @@
 {
   "domain": "diplus2hass",
   "name": "DiPlus-to-hass — BYD Vehicle Telemetry",
-  "version": "2.1.4",
+  "version": "2.1.5",
   "requirements": [],
   "dependencies": [],
   "codeowners": ["@krisproger"],

@@ -6,7 +6,7 @@ plugins {
 // versionName from the VERSION_NAME environment variable (default 1.9.5).
 val buildCounterFile = rootProject.file("build_counter.txt")
 val buildNum = if (buildCounterFile.exists()) buildCounterFile.readText().trim().toInt() else 1
-val appVersionName = System.getenv("VERSION_NAME") ?: "2.1.4"
+val appVersionName = System.getenv("VERSION_NAME") ?: "2.1.5"
 
 android {
     namespace = "com.diplustohass"

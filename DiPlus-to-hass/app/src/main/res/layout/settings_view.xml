@@ -218,12 +218,12 @@
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:text="@string/settings_detailed_log"
+                    android:text="@string/settings_file_log_mode"
                     android:textColor="@color/textSecondary"
                     android:textSize="14sp" />
 
-                <android.widget.Switch
-                    android:id="@+id/switchDetailedLog"
+                <Spinner
+                    android:id="@+id/spinnerFileLogMode"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
             </LinearLayout>

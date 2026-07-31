@@ -42,21 +42,18 @@ public class DiPlusCommandSender {
         if (chineseCommand == null || chineseCommand.trim().isEmpty()) {
             return new Result(false, null, context.getString(R.string.commands_empty_command), 0);
         }
-        boolean detailedLog = AppConfig.isDetailedLogEnabled(context);
         long start = System.currentTimeMillis();
         try {
             String encoded = URLEncoder.encode(chineseCommand, "UTF-8");
             String url = DiplusApi.withAuth(DIPLUS_BASE + "/api/sendCmd?cmd=" + encoded, AppConfig.getDiplusAuth(context));
-            if (detailedLog) {
-                LogBuffer.i("DiPlusCmd", "Sending: " + chineseCommand);
-                LogBuffer.i("DiPlusCmd", "URL: " + url);
-            }
+            // Details always go to the in-memory buffer (always detailed);
+            // the on-disk log includes them only in detailed mode.
+            LogBuffer.d("DiPlusCmd", "Sending: " + chineseCommand);
+            LogBuffer.d("DiPlusCmd", "URL: " + url);
             String response = CANDataReader.sendRequestSync("GET", url, null);
             long elapsed = System.currentTimeMillis() - start;
             boolean ok = response != null && !response.contains("\"success\":false");
-            if (detailedLog) {
-                LogBuffer.i("DiPlusCmd", "Result in " + elapsed + "ms: " + response);
-            }
+            LogBuffer.d("DiPlusCmd", "Result in " + elapsed + "ms: " + response);
             return new Result(ok, response, null, elapsed);
         } catch (Exception e) {
             long elapsed = System.currentTimeMillis() - start;

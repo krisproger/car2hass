@@ -37,10 +37,19 @@ public class LogBuffer {
 
     private static Context appContext;
     private static volatile boolean fileEnabled = false;
+    /** What reaches the on-disk log: 0=off (export only), 1=basic (I/W/E), 2=detailed (all). */
+    private static volatile int fileLogMode = 1;
+
+    public static void setFileLogMode(int mode) {
+        fileLogMode = mode;
+    }
 
     /**
      * Initialize file logging. Safe to call multiple times; only the first
-     * non-null context is kept.
+     * non-null context is kept. The file log mode is applied by the caller
+     * via {@link #setFileLogMode(int)} — LogBuffer must stay free of
+     * AppConfig/Android-prefs dependencies (the plain-JVM test harness
+     * compiles this class standalone).
      */
     public static synchronized void init(Context context) {
         if (context == null) return;
@@ -79,7 +88,12 @@ public class LogBuffer {
             currentBytes = Math.max(0, currentBytes - old.getBytes().length);
         }
 
-        appendToFile(line);
+        // Memory always holds the full detailed stream. The file gets lines
+        // according to the configured mode: off (export only), basic (no D),
+        // detailed (everything incl. RAW bodies).
+        if (fileLogMode != 0 && (fileLogMode == 2 || !"D".equals(level))) {
+            appendToFile(line);
+        }
 
         switch (level) {
             case "E": android.util.Log.e(tag, msg); break;

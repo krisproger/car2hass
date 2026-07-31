@@ -98,7 +98,13 @@
     <string name="settings_http_warning">HTTP без шифрования — только для локальной сети. Для удалённого доступа включите HTTPS.</string>
     <string name="settings_boot_auto_start">Автозапуск при загрузке</string>
     <string name="settings_car_control">Управление авто из HA</string>
+    <string name="settings_file_log_mode">Запись лога в файл</string>
     <string name="settings_detailed_log">Писать подробный лог</string>
+    <string-array name="file_log_modes">
+        <item>Выкл (только экспорт)</item>
+        <item>Базовый</item>
+        <item>Подробный (с RAW)</item>
+    </string-array>
     <string name="settings_background_mode">Работать при выключенном авто</string>
     <string name="settings_background_mode_summary">Сохраняет сбор телеметрии и опрос команд после выключения ACC. Требует дополнительных разрешений.</string>
     <string name="settings_adb_host">ADB хост</string>

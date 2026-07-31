@@ -1093,10 +1093,9 @@ public class CANDataReader {
     // ─── Raw response logging / diagnostics ───
 
     /** Log a raw server response, truncated if extremely large.
-     *  Only active when the detailed log setting is on — RAW bodies are the
-     *  bulk of the log volume (a full 137-signal response every few seconds). */
+     *  Always recorded to the in-memory buffer (which is always detailed);
+     *  the on-disk log includes these lines only in detailed mode. */
     private static void logRawResponse(Context context, String url, String body) {
-        if (!AppConfig.isDetailedLogEnabled(context)) return;
         if (body == null) {
             LogBuffer.d("CANReader", "RAW " + url + " → (null body)");
             return;

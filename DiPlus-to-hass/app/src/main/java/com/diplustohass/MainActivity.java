@@ -24,6 +24,7 @@ import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.graphics.Typeface;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -122,7 +123,8 @@ public class MainActivity extends BaseLocalizedActivity {
     private EditText editHost, editPort, editToken, editCarName;
     private Switch switchEnabled;
     private CompoundButton switchHttps;
-    private Switch switchBootAutoStart, switchCarControl, switchDetailedLog, switchQueueEnabled, switchBackgroundMode;
+    private Switch switchBootAutoStart, switchCarControl, switchQueueEnabled, switchBackgroundMode;
+    private Spinner spinnerFileLogMode;
     private EditText editQueueMaxMb, editQueueMaxDays;
     private EditText editAdbHost, editAdbPort, editDiplusAuth;
     private TextView tvTestResult;
@@ -2354,7 +2356,7 @@ public class MainActivity extends BaseLocalizedActivity {
         switchHttps = settingsView.findViewById(R.id.switchHttps);
         switchBootAutoStart = settingsView.findViewById(R.id.switchBootAutoStart);
         switchCarControl = settingsView.findViewById(R.id.switchCarControl);
-        switchDetailedLog = settingsView.findViewById(R.id.switchDetailedLog);
+        spinnerFileLogMode = settingsView.findViewById(R.id.spinnerFileLogMode);
         switchBackgroundMode = settingsView.findViewById(R.id.switchBackgroundMode);
         switchQueueEnabled = settingsView.findViewById(R.id.switchQueueEnabled);
         editQueueMaxMb = settingsView.findViewById(R.id.editQueueMaxMb);
@@ -2449,9 +2451,18 @@ public class MainActivity extends BaseLocalizedActivity {
         switchHttps.setOnCheckedChangeListener(listener);
         switchBootAutoStart.setOnCheckedChangeListener(listener);
         switchCarControl.setOnCheckedChangeListener(listener);
-        switchDetailedLog.setOnCheckedChangeListener(listener);
         switchBackgroundMode.setOnCheckedChangeListener(listener);
         switchQueueEnabled.setOnCheckedChangeListener(listener);
+        ArrayAdapter<CharSequence> fileLogAdapter = ArrayAdapter.createFromResource(this,
+                R.array.file_log_modes, android.R.layout.simple_spinner_item);
+        fileLogAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerFileLogMode.setAdapter(fileLogAdapter);
+        spinnerFileLogMode.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                AppConfig.saveFileLogMode(MainActivity.this, position);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
         editQueueMaxMb.addTextChangedListener(autoSaveWatcher);
         editQueueMaxDays.addTextChangedListener(autoSaveWatcher);
         editAdbHost.addTextChangedListener(autoSaveWatcher);
@@ -2496,7 +2507,8 @@ public class MainActivity extends BaseLocalizedActivity {
         boolean https = switchHttps.isChecked();
         boolean bootAutoStart = switchBootAutoStart.isChecked();
         boolean carControl = switchCarControl.isChecked();
-        boolean detailedLog = switchDetailedLog.isChecked();
+        int fileLogMode = spinnerFileLogMode.getSelectedItemPosition();
+        boolean detailedLog = fileLogMode == AppConfig.FILE_LOG_DETAILED;
         boolean backgroundMode = switchBackgroundMode.isChecked();
         boolean queueEnabled = switchQueueEnabled.isChecked();
         int queueMaxMb;
@@ -2513,6 +2525,7 @@ public class MainActivity extends BaseLocalizedActivity {
         }
 
         AppConfig.save(this, host, port, token, carName, enabled, https, bootAutoStart, carControl, detailedLog);
+        AppConfig.saveFileLogMode(this, fileLogMode);
         BackgroundModeManager.setEnabled(this, backgroundMode);
         AppConfig.saveQueueEnabled(this, queueEnabled);
         AppConfig.saveQueueMaxMb(this, queueMaxMb);
@@ -2606,7 +2619,7 @@ public class MainActivity extends BaseLocalizedActivity {
         switchHttps.setChecked(savedHttps);
         switchBootAutoStart.setChecked(AppConfig.isBootAutoStartEnabled(this));
         switchCarControl.setChecked(savedCarControl);
-        switchDetailedLog.setChecked(AppConfig.isDetailedLogEnabled(this));
+        spinnerFileLogMode.setSelection(AppConfig.getFileLogMode(this));
         switchBackgroundMode.setChecked(BackgroundModeManager.isEnabled(this));
         switchQueueEnabled.setChecked(AppConfig.isQueueEnabled(this));
         editQueueMaxMb.setText(String.valueOf(AppConfig.getQueueMaxMb(this)));
@@ -2727,6 +2740,7 @@ public class MainActivity extends BaseLocalizedActivity {
         cfg.put("boot_auto_start", AppConfig.isBootAutoStartEnabled(this));
         cfg.put("car_control_enabled", AppConfig.isCarControlEnabled(this));
         cfg.put("detailed_log_enabled", AppConfig.isDetailedLogEnabled(this));
+        cfg.put("file_log_mode", AppConfig.getFileLogMode(this));
         cfg.put("queue_enabled", AppConfig.isQueueEnabled(this));
         cfg.put("queue_max_mb", AppConfig.getQueueMaxMb(this));
         cfg.put("queue_max_days", AppConfig.getQueueMaxDays(this));
@@ -2749,9 +2763,15 @@ public class MainActivity extends BaseLocalizedActivity {
         boolean enabled = cfg.optBoolean("hass_enabled", false);
         boolean bootAutoStart = cfg.optBoolean("boot_auto_start", true);
         boolean carControl = cfg.optBoolean("car_control_enabled", false);
-        boolean detailedLog = cfg.optBoolean("detailed_log_enabled", false);
+        // file_log_mode wins when present; legacy detailed_log_enabled maps to detailed/basic.
+        int fileLogMode = cfg.has("file_log_mode")
+            ? cfg.optInt("file_log_mode", AppConfig.FILE_LOG_BASIC)
+            : (cfg.optBoolean("detailed_log_enabled", false)
+                ? AppConfig.FILE_LOG_DETAILED : AppConfig.FILE_LOG_BASIC);
+        boolean detailedLog = fileLogMode == AppConfig.FILE_LOG_DETAILED;
 
         AppConfig.save(this, host, port, token, carName, enabled, https, bootAutoStart, carControl, detailedLog);
+        AppConfig.saveFileLogMode(this, fileLogMode);
         AppConfig.saveQueueEnabled(this, cfg.optBoolean("queue_enabled", true));
         AppConfig.saveQueueMaxMb(this, cfg.optInt("queue_max_mb", 100));
         AppConfig.saveQueueMaxDays(this, cfg.optInt("queue_max_days", 7));

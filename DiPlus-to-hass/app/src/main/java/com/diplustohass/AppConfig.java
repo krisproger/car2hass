@@ -124,7 +124,32 @@ public class AppConfig {
      * responses is enabled. Default is off to reduce memory use.
      */
     public static boolean isDetailedLogEnabled(Context ctx) {
-        return prefs(ctx).getBoolean(KEY_DETAILED_LOG_ENABLED, false);
+        return getFileLogMode(ctx) == FILE_LOG_DETAILED;
+    }
+
+    /** File logging modes: what reaches the on-disk log continuously. */
+    public static final int FILE_LOG_OFF = 0;
+    public static final int FILE_LOG_BASIC = 1;
+    public static final int FILE_LOG_DETAILED = 2;
+
+    private static final String KEY_FILE_LOG_MODE = "file_log_mode";
+
+    /**
+     * File log mode: OFF (file written only on user export), BASIC (I/W/E
+     * lines continuously), DETAILED (everything incl. RAW/D lines).
+     * Default BASIC. Migrates from the legacy detailed_log_enabled boolean.
+     */
+    public static int getFileLogMode(Context ctx) {
+        if (!prefs(ctx).contains(KEY_FILE_LOG_MODE)) {
+            return prefs(ctx).getBoolean(KEY_DETAILED_LOG_ENABLED, false)
+                ? FILE_LOG_DETAILED : FILE_LOG_BASIC;
+        }
+        return prefs(ctx).getInt(KEY_FILE_LOG_MODE, FILE_LOG_BASIC);
+    }
+
+    public static void saveFileLogMode(Context ctx, int mode) {
+        prefs(ctx).edit().putInt(KEY_FILE_LOG_MODE, mode).apply();
+        LogBuffer.setFileLogMode(mode);
     }
 
     /**

@@ -98,7 +98,13 @@
     <string name="settings_http_warning">HTTP without encryption — only for local network. Enable HTTPS for remote access.</string>
     <string name="settings_boot_auto_start">Auto-start on boot</string>
     <string name="settings_car_control">Control car from HA</string>
+    <string name="settings_file_log_mode">File log mode</string>
     <string name="settings_detailed_log">Write detailed log</string>
+    <string-array name="file_log_modes">
+        <item>Off (export only)</item>
+        <item>Basic</item>
+        <item>Detailed (with RAW)</item>
+    </string-array>
     <string name="settings_background_mode">Work when car is off</string>
     <string name="settings_background_mode_summary">Keeps telemetry and command polling alive after ACC off. Requires extra permissions.</string>
     <string name="settings_adb_host">ADB host</string>
