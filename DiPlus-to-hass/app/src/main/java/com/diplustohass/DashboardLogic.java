@@ -71,4 +71,22 @@ public final class DashboardLogic {
         }
         return isStateTruthy(state, truthy);
     }
+
+    /**
+     * Normalized select-option comparison: case-insensitive, ignores separators
+     * {@code + _ - / :} and spaces so option values like "face_feet" still match
+     * translated sensor values like "face+feet" or "face/feet".
+     */
+    public static boolean selectOptionMatches(String optionValue, String currentValue) {
+        if (optionValue == null || currentValue == null) return false;
+        String a = normalizeMatch(optionValue);
+        String b = normalizeMatch(currentValue);
+        return !a.isEmpty() && a.equals(b);
+    }
+
+    private static String normalizeMatch(String s) {
+        return s.toLowerCase(java.util.Locale.US)
+                .replace("+", "").replace("_", "").replace("-", "")
+                .replace("/", "").replace(":", "").replace(" ", "");
+    }
 }

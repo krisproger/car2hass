@@ -56,6 +56,9 @@ public class DashboardTile {
     /** True for placeholder empty cells shown while editing the dashboard. */
     public boolean isEmptyCell = false;
 
+    /** Display type for sensor tiles: "text", "gauge", or "graph". */
+    public String displayType = "text";
+
     public DashboardTile(String key, String icon, String label) {
         this(Type.SENSOR, key, icon, label);
     }
@@ -95,6 +98,9 @@ public class DashboardTile {
                 o.put("key", key);
                 if (type == Type.COMMAND && commandValue != null && !commandValue.isEmpty()) {
                     o.put("value", commandValue);
+                }
+                if (type == Type.SENSOR && displayType != null && !"text".equals(displayType)) {
+                    o.put("displayType", displayType);
                 }
             }
         } catch (Exception e) {

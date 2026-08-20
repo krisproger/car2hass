@@ -218,10 +218,6 @@ public class ConfigStorageHelper {
         return refs;
     }
 
-    private static void queryMediaStoreDownloads(Context context, List<ConfigRef> refs) {
-        queryMediaStoreDownloads(context, refs, PREFIX);
-    }
-
     private static void queryMediaStoreDownloads(Context context, List<ConfigRef> refs, String prefix) {
         ContentResolver resolver = context.getContentResolver();
         Uri collection = MediaStore.Downloads.EXTERNAL_CONTENT_URI;

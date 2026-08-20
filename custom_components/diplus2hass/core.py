@@ -36,6 +36,16 @@ def validate_batch(batch: list) -> list:
             raise BatchValidationError("batch item must be an object")
         if not isinstance(snapshot.get("s", {}), dict) or not isinstance(snapshot.get("g", {}), dict):
             raise BatchValidationError("snapshot s and g must be objects")
+        # t (epoch seconds) must sort numerically; tolerate a malformed string
+        # instead of letting the sorted() below raise a raw TypeError.
+        t = snapshot.get("t", 0)
+        if isinstance(t, str):
+            try:
+                snapshot = {**snapshot, "t": float(t)}
+            except ValueError:
+                raise BatchValidationError("snapshot t must be numeric")
+        elif not isinstance(t, (int, float)) or isinstance(t, bool):
+            raise BatchValidationError("snapshot t must be numeric")
         valid.append(snapshot)
     return sorted(valid, key=lambda s: s.get("t", 0))
 
@@ -51,6 +61,7 @@ def aggregate_batch(sorted_batch: list) -> dict:
     last_lon = None
     last_accuracy = 0
     last_timestamp = 0
+    last_fix_time = 0
     for snapshot in sorted_batch:
         timestamp = snapshot.get("t", 0)
         gps = snapshot.get("g", {})
@@ -66,7 +77,17 @@ def aggregate_batch(sorted_batch: list) -> dict:
         if lat is not None and lon is not None:
             last_lat = lat
             last_lon = lon
-            last_accuracy = gps.get("a", 0)
+            try:
+                last_accuracy = float(gps.get("a", 0))
+            except (ValueError, TypeError):
+                last_accuracy = 0
+            # The app reports the GPS fix time as g.t; fall back to the snapshot
+            # collection time for payloads from older app versions.
+            try:
+                fix_time = gps.get("t", timestamp)
+                last_fix_time = float(fix_time) if fix_time is not None else float(timestamp)
+            except (ValueError, TypeError):
+                last_fix_time = float(timestamp)
 
         if timestamp > last_timestamp:
             last_timestamp = timestamp
@@ -79,6 +100,7 @@ def aggregate_batch(sorted_batch: list) -> dict:
         "longitude": last_lon,
         "accuracy": last_accuracy,
         "timestamp": last_timestamp,
+        "fix_timestamp": last_fix_time,
     }
 
 
@@ -152,24 +174,46 @@ def check_rate_limit(buckets: dict, key: str, now: float, window: float, max_req
     return True
 
 
+# The ``timestamp`` argument of ``hass.states.async_set`` was introduced in
+# Home Assistant 2024.6. Older versions cannot backfill history points.
+ASYNC_SET_TIMESTAMP_MIN_VERSION = (2024, 6)
+
+
+def supports_async_set_timestamp(major: int, minor: int) -> bool:
+    """Return True when hass.states.async_set accepts a timestamp.
+
+    Determined purely from the Home Assistant (major, minor) version so the
+    caller can fall back to the plain async_write_ha_state behavior on older
+    releases.
+    """
+    return (major, minor) >= ASYNC_SET_TIMESTAMP_MIN_VERSION
+
+
 def build_signal_index(sorted_batch: list) -> dict:
-    """Map each signal key to its chronological list of non-None values.
+    """Map each signal key to its chronological list of (timestamp, value).
 
     Lets entities replay only the values relevant to them instead of
-    scanning the entire batch. Intermediate values are preserved, so HA
-    history granularity is unchanged.
+    scanning the entire batch. Each entry carries the snapshot timestamp so
+    entities can write the state into HA history at the original collection
+    time instead of collapsing the batch into the current time.
     """
     index: dict = {}
     for snapshot in sorted_batch:
+        timestamp = snapshot.get("t", 0)
         for key, value in snapshot.get("s", {}).items():
             if value is None:
                 continue
-            index.setdefault(key, []).append(value)
+            index.setdefault(key, []).append((timestamp, value))
     return index
 
 
 def build_gps_track(sorted_batch: list) -> list:
-    """Chronological list of (lat, lon, accuracy) for snapshots with valid GPS."""
+    """Chronological list of (timestamp, lat, lon, accuracy) for valid GPS.
+
+    Each point is attributed to the GPS fix time (``g.t``) when the app
+    provided one, falling back to the snapshot collection time so older
+    payloads keep working.
+    """
     track = []
     for snapshot in sorted_batch:
         gps = snapshot.get("g", {})
@@ -178,7 +222,20 @@ def build_gps_track(sorted_batch: list) -> list:
             lon = gps.get("lon")
             if lat is None or lon is None:
                 continue
-            track.append((float(lat), float(lon), float(gps.get("a", 0) or 0)))
+            fix_time = gps.get("t")
+            snap_time = snapshot.get("t", 0)
+            try:
+                t = float(fix_time) if fix_time is not None else float(snap_time)
+            except (ValueError, TypeError):
+                t = float(snap_time)
+            track.append(
+                (
+                    t,
+                    float(lat),
+                    float(lon),
+                    float(gps.get("a", 0) or 0),
+                )
+            )
         except (ValueError, TypeError):
             continue
     return track

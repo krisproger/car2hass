@@ -138,22 +138,28 @@ public class RuleEngine {
 
         long now = System.currentTimeMillis();
 
-        // Skip the rule until at least one referenced sensor has data.
-        // Without this guard, the first ticks after startup run with an empty
-        // signal cache, overwrite a persisted prev=true state with false, and
-        // later produce a false rising edge (and wrong trigger) when data arrives.
-        boolean hasSensorData = false;
+        // Require data for ALL referenced sensors before evaluating.
+        // If any sensor is missing, skip evaluation to prevent overwriting
+        // persisted prev=true with a false from evaluateConditionGroup()
+        // (which returns false when any sensor value is null).
+        boolean allSensorsHaveData = true;
         for (RuleCondition c : rule.conditions) {
             if (c.sensorKey == null || c.sensorKey.isEmpty()) continue;
-            if (signalLookup.apply(c.sensorKey) != null) {
-                hasSensorData = true;
+            if (signalLookup.apply(c.sensorKey) == null) {
+                allSensorsHaveData = false;
                 break;
             }
         }
-        if (!hasSensorData) {
-            LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': skip (no sensor data yet)");
+        if (!allSensorsHaveData) {
+            // Rate-limit: log only on first miss per session (not every tick).
+            if (!firedOncePerSession.contains(rule.id + "_nostate")) {
+                LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': skip (missing sensor data)");
+                firedOncePerSession.add(rule.id + "_nostate");
+            }
             return;
         }
+        // Reset the "nostate" flag so we re-log if sensors go missing again.
+        firedOncePerSession.remove(rule.id + "_nostate");
 
         boolean groupResult = RuleEvaluator.evaluateConditionGroup(rule.conditions, signalLookup);
 

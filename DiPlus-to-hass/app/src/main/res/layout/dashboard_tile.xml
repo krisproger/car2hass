@@ -76,27 +76,23 @@
             android:visibility="gone" />
     </LinearLayout>
 
-    <TextView
+    <ImageView
         android:id="@+id/tileZoneLeft"
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_gravity="start|center_vertical"
         android:layout_marginStart="2dp"
-        android:gravity="center"
-        android:text="➖"
-        android:textSize="20sp"
+        android:importantForAccessibility="no"
         android:alpha="0.6"
         android:visibility="gone" />
 
-    <TextView
+    <ImageView
         android:id="@+id/tileZoneRight"
         android:layout_width="32dp"
         android:layout_height="32dp"
         android:layout_gravity="end|center_vertical"
         android:layout_marginEnd="2dp"
-        android:gravity="center"
-        android:text="➕"
-        android:textSize="20sp"
+        android:importantForAccessibility="no"
         android:alpha="0.6"
         android:visibility="gone" />
 

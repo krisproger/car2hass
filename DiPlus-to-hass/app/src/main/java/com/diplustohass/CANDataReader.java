@@ -18,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,6 +41,7 @@ public class CANDataReader {
     private static final AtomicInteger requestCounter = new AtomicInteger(0);
 
     public static final int SOURCE_HTTP = 0;
+    public static final int SOURCE_NATIVE = 3;
     public static final int SOURCE_DUMPSYS = 4;
     public static final int SOURCE_ALL = 99;
 
@@ -99,6 +101,11 @@ public class CANDataReader {
     // changes only with firmware updates, so a per-second poll is wasted traffic.
     private static final long UNSUPPORTED_POLL_INTERVAL_MS = 60_000;
     private static long lastUnsupportedPollMs = 0;
+    // Consecutive failed probes of the known-unsupported trailing group.
+    // Every REISOLATE_EVERY_FAILURES failures the group is re-isolated once
+    // (allowSplit=true) so signals that became available again are re-marked
+    // supported instead of being stuck as unsupported forever.
+    private static int unsupportedFailStreak = 0;
     // Rate-limit for DiPlus connect-error logging (first E, then D for 60 s).
     private static long lastConnectErrorLogMs = 0;
 
@@ -200,22 +207,14 @@ public class CANDataReader {
                     case SOURCE_HTTP:
                         result = tryHttpApi(context, knownItems);
                         break;
+                    case SOURCE_NATIVE:
+                        result = tryNative(context, knownItems);
+                        break;
                     case SOURCE_DUMPSYS:
                         result = tryDumpsys(knownItems);
                         break;
                     case SOURCE_ALL:
-                        result = tryHttpApi(context, knownItems);
-                        if (result == null) result = new ArrayList<>();
-                        // Also run dumpsys to get VVIN/FW/props, merge with signal list
-                        List<CANDataItem> sys = tryDumpsys(knownItems);
-                        if (sys != null) {
-                            for (CANDataItem si : sys) {
-                                String n = si.name;
-                                if (!n.equals("VVIN (virtual VIN)") && !n.equals("FW (firmware)")) {
-                                    result.add(si);
-                                }
-                            }
-                        }
+                        result = refreshSelected(context, knownItems);
                         break;
                 }
                 if (result != null && !result.isEmpty()) {
@@ -232,6 +231,217 @@ public class CANDataReader {
                         + (System.currentTimeMillis() - cycleStartMs) + " ms");
             }
         });
+    }
+
+    /**
+     * Picks the telemetry source for a full cycle based on the app settings:
+     * {@code diplus} (HTTP as before), {@code native} (ADB only) or
+     * {@code auto} (default, mutual fallback: whichever source answers first —
+     * DiPlus, then native when DiPlus fails, then DiPlus again when native
+     * fails, and so on). With {@code debug_compare} enabled and source
+     * diplus/auto both branches are read and their overlapping signals logged
+     * side by side.
+     */
+    private static List<CANDataItem> refreshSelected(Context context, List<CANDataItem> knownItems) {
+        String source = AppConfig.getTelemetrySource(context);
+        boolean debug = AppConfig.isDebugCompareEnabled(context);
+
+        if (debug && ("diplus".equals(source) || "auto".equals(source))) {
+            return refreshSelectedDebug(context, knownItems);
+        }
+
+        if ("native".equals(source)) {
+            return tryNative(context, knownItems);
+        }
+
+        if ("auto".equals(source)) {
+            return refreshSelectedAuto(context, knownItems);
+        }
+
+        // diplus (default)
+        List<CANDataItem> httpResult = tryHttpApi(context, knownItems);
+        return mergeWithDumpsys(knownItems, httpResult);
+    }
+
+    /**
+     * Computes the last successful telemetry source so the auto mode starts
+     * each cycle with the source that has been answering, avoiding a needless
+     * round of failures on a healthy setup.
+     */
+    private static volatile boolean lastNativeWasOk = false;
+
+    /**
+     * Auto mode with mutual fallback: try DiPlus, fall back to native when
+     * DiPlus fails, fall back to DiPlus again when native fails — repeating
+     * until one source yields live data for this cycle.
+     */
+    private static List<CANDataItem> refreshSelectedAuto(Context context, List<CANDataItem> knownItems) {
+        for (int attempt = 0; attempt < 2; attempt++) {
+            if (!lastNativeWasOk) {
+                // First try DiPlus (the proven primary path), then native.
+                List<CANDataItem> httpResult = tryHttpApi(context, knownItems);
+                if (httpResult != null && !httpResult.isEmpty()) {
+                    lastNativeWasOk = false;
+                    return mergeWithDumpsys(knownItems, httpResult);
+                }
+                LogBuffer.i("CANReader", "auto: DiPlus unavailable, trying native");
+                List<CANDataItem> nativeResult = tryNativeOnce(context, knownItems);
+                if (nativeResult != null) {
+                    lastNativeWasOk = true;
+                    return nativeResult;
+                }
+            } else {
+                // Native was healthy last cycle — keep it primary, DiPlus is the fallback.
+                List<CANDataItem> nativeResult = tryNativeOnce(context, knownItems);
+                if (nativeResult != null) {
+                    return nativeResult;
+                }
+                LogBuffer.i("CANReader", "auto: native unavailable, trying DiPlus");
+                List<CANDataItem> httpResult = tryHttpApi(context, knownItems);
+                if (httpResult != null && !httpResult.isEmpty()) {
+                    lastNativeWasOk = false;
+                    return mergeWithDumpsys(knownItems, httpResult);
+                }
+            }
+        }
+        // Neither source produced data across both rounds — report the cycle as failed.
+        LogBuffer.w("CANReader", "auto: neither DiPlus nor native yielded data");
+        return null;
+    }
+
+    /** Runs the native reader once; returns the merged result or null when nothing decoded. */
+    private static List<CANDataItem> tryNativeOnce(Context context, List<CANDataItem> knownItems) {
+        NativeReader nativeReader = runNativeReader(context, knownItems);
+        if (nativeReader.getLastOk() <= 0) {
+            LogBuffer.i("CANReader", "auto: native unavailable");
+            return null;
+        }
+        LogBuffer.i("CANReader", "auto: native yielded " + nativeReader.getLastOk() + " ok signals");
+        return mergeWithDumpsys(knownItems, new ArrayList<>(knownItems));
+    }
+
+    /** debug_compare: read both sources, log per-signal comparison, prefer DiPlus as reference. */
+    private static List<CANDataItem> refreshSelectedDebug(Context context, List<CANDataItem> knownItems) {
+        NativeReader nativeReader = runNativeReader(context, knownItems);
+        List<CANDataItem> httpResult = tryHttpApi(context, knownItems);
+
+        Map<String, CANDataItem> diplusByKey = new HashMap<>();
+        if (httpResult != null) {
+            for (CANDataItem item : httpResult) {
+                if (item.key != null && item.value != null && !"---".equals(item.value)) {
+                    diplusByKey.put(item.key, item);
+                }
+            }
+        }
+
+        int match = 0;
+        int mismatch = 0;
+        StringBuilder mismatchKeys = new StringBuilder();
+        for (NativeSignalMap.FidEntry e : NativeSignalMap.allEntries()) {
+            String key = e.key;
+            CANDataItem nativeItem = findItem(knownItems, key);
+            CANDataItem diplusItem = diplusByKey.get(key);
+            if (nativeItem == null || diplusItem == null) continue;
+            String nativeValue = nativeItem.value == null ? "---" : nativeItem.value;
+            String diplusValue = diplusItem.value == null ? "---" : diplusItem.value;
+            boolean equal = compareValues(key, nativeValue, diplusValue);
+            if (equal) {
+                match++;
+            } else {
+                mismatch++;
+                if (mismatchKeys.length() > 0) mismatchKeys.append(", ");
+                mismatchKeys.append(key);
+            }
+            LogBuffer.i("CANReader", "NativeCompare: " + key + " native=" + nativeValue
+                    + " diplus=" + diplusValue + (equal ? " MATCH" : " MISMATCH"));
+        }
+        LogBuffer.i("CANReader", "NativeCompare: summary " + (match + mismatch) + " signals, "
+                + match + " MATCH, " + mismatch + " MISMATCH"
+                + (mismatch > 0 ? " (keys: " + mismatchKeys + ")" : ""));
+
+        // DiPlus value is the reference for HA; native stays visible in logs.
+        return httpResult != null ? httpResult : knownItems;
+    }
+
+    private static boolean compareValues(String key, String nativeValue, String diplusValue) {
+        // Enum: exact string match.
+        try {
+            double n = Double.parseDouble(nativeValue);
+            double d = Double.parseDouble(diplusValue);
+            double delta = Math.abs(n - d);
+            double tolerance = key.contains("temp") ? 1.0 : 0.5;
+            return delta <= tolerance;
+        } catch (NumberFormatException nfe) {
+            return nativeValue.equals(diplusValue);
+        }
+    }
+
+    private static CANDataItem findItem(List<CANDataItem> items, String key) {
+        if (items == null || key == null) return null;
+        for (CANDataItem item : items) {
+            if (key.equals(item.key)) return item;
+        }
+        return null;
+    }
+
+    /** Runs the native reader once against the ADB daemon, updating knownItems in place. */
+    private static NativeReader runNativeReader(Context context, List<CANDataItem> knownItems) {
+        AdbShellExecutor.init(context);
+        String host = AppConfig.getAdbHost(context);
+        int port = AppConfig.getAdbPort(context);
+        boolean debug = AppConfig.isDebugCompareEnabled(context);
+        NativeReader nativeReader = new NativeReader(
+                (h, p, cmd) -> AdbShellExecutor.executeSync(h, p, cmd), host, port, debug);
+        nativeReader.readAll(knownItems);
+        return nativeReader;
+    }
+
+    private static List<CANDataItem> tryNative(Context context, List<CANDataItem> knownItems) {
+        runNativeReader(context, knownItems);
+        return mergeWithDumpsys(knownItems, new ArrayList<>(knownItems));
+    }
+
+    /** Merges the dumpsys props (VVIN/FW) with the DiPlus result, as SOURCE_ALL used to. */
+    private static List<CANDataItem> mergeWithDumpsys(List<CANDataItem> knownItems, List<CANDataItem> httpResult) {
+        if (httpResult == null) httpResult = new ArrayList<>();
+        List<CANDataItem> sys = tryDumpsys(knownItems);
+        if (sys != null) {
+            for (CANDataItem si : sys) {
+                httpResult.add(si);
+            }
+        }
+        return httpResult;
+    }
+
+    /** Снимок данных DiPlus (HTTP) для зондирования каналов. */
+    public static List<CANDataItem> readHttpSnapshot(Context context) {
+        List<CANDataItem> items = new ArrayList<>();
+        try {
+            return tryHttpApi(context, items);
+        } catch (Exception e) {
+            LogBuffer.w("CANReader", "readHttpSnapshot: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /** Снимок данных native (ADB) для зондирования каналов. */
+    public static List<CANDataItem> readNativeSnapshot(Context context) {
+        try {
+            return tryNative(context, new ArrayList<CANDataItem>());
+        } catch (Exception e) {
+            LogBuffer.w("CANReader", "readNativeSnapshot: " + e.getMessage());
+            return null;
+        }
+    }
+
+    /** Чтение системных свойств (getprop) для канала SysProps. */
+    public static List<CANDataItem> readSysProps(Context context, List<CANDataItem> knownItems) {
+        try {
+            return tryDumpsys(knownItems);
+        } catch (Exception e) {
+            LogBuffer.w("CANReader", "readSysProps: " + e.getMessage());
+            return null;
+        }
     }
 
     /** Ensure executors are alive; recreate them if a previous shutdown left them terminated. */
@@ -389,9 +599,9 @@ public class CANDataReader {
         {"转向信号", "Turn signal", "turn_signal", "enum"},
         {"全景状态", "Surround-view state", "surround_view_state", "enum"},
         {"配置UI版本", "UI config version", "ui_config_version", "enum"},
-        {"哨兵状态", "Sentry state", "sentry_state", "num"},
-        {"熄火录像配置开关", "Parked-recording switch", "parked_recording_switch", "num"},
-        {"熄火哨兵报警", "Parked sentry alarm", "parked_sentry_alarm", "num"},
+        {"哨兵状态", "Sentry state", "sentry_state", "enum"},
+        {"熄火录像配置开关", "Parked-recording switch", "parked_recording_switch", "enum"},
+        {"熄火哨兵报警", "Parked sentry alarm", "parked_sentry_alarm", "enum"},
         {"WIFI状态", "Wi-Fi state", "wifi_state", "enum"},
         {"蓝牙状态", "Bluetooth state", "bluetooth_state", "enum"},
         {"蓝牙信号强度", "Bluetooth signal", "bluetooth_signal", "num"},
@@ -408,7 +618,7 @@ public class CANDataReader {
         {"上次哨兵触发时间", "Last sentry trigger time", "last_sentry_trigger_time", "num"},
         {"上次录像文件开始时间", "Last clip start time", "last_clip_start_time", "num"},
         {"上次录像文件结束时间", "Last clip end time", "last_clip_end_time", "num"},
-        {"前车起步状态", "Lead-car start state", "lead_car_start_state", "num"}
+        {"前车起步状态", "Lead-car start state", "lead_car_start_state", "enum"}
     };
 
     /** Find a signal by its stable HA key. */
@@ -441,7 +651,7 @@ public class CANDataReader {
 
     // ─── DiPlus clean API ───
 
-    private static boolean isDiplusAlive() {
+    public static boolean isDiplusAlive() {
         long now = System.currentTimeMillis();
         if (now - lastPingSuccess < PING_CACHE_TTL_MS) return true;
         if (now - lastPingFailure < PING_CACHE_TTL_MS / 2) return false;
@@ -495,12 +705,20 @@ public class CANDataReader {
         // {"success":false} for any group containing an unknown name) and force
         // the recursive splitter to re-isolate the bad names every cycle. With
         // a dedicated group the working groups succeed in one request each and
-        // the unsupported names cost a single failed request per cycle.
+        // the unsupported names cost a single failed probe request per cycle
+        // (no recursive split — every member is already cached as unsupported).
         List<CANDataItem> supported = new ArrayList<>();
         List<CANDataItem> unsupported = new ArrayList<>();
         boolean pollUnsupported =
             System.currentTimeMillis() - lastUnsupportedPollMs >= UNSUPPORTED_POLL_INTERVAL_MS;
+        boolean reisolateUnsupported = pollUnsupported
+                && UnsupportedRecoveryGate.shouldReisolate(unsupportedFailStreak);
         for (CANDataItem item : items) {
+            // Virtual items (e.g. geofence states computed locally from GPS) carry
+            // no DiPlus name and must never be sent to the API. Defensive guard on
+            // top of TelemetryService.ensureGeofenceItem leaving diplusName null:
+            // even a regression there must not resurrect "0x000" batch requests.
+            if (item.diplusName == null || item.diplusName.isEmpty()) continue;
             if (isUnsupportedSignal(context, item.diplusName)) {
                 if (pollUnsupported) unsupported.add(item);
             } else {
@@ -513,11 +731,13 @@ public class CANDataReader {
 
         List<CANDataItem> result = new ArrayList<>();
         List<Future<List<CANDataItem>>> futures = new ArrayList<>();
+        List<Boolean> groupIsUnsupported = new ArrayList<>();
         int groupCount = 0;
         for (int start = 0; start < supported.size(); start += GETDIPARS_GROUP_SIZE) {
             int end = Math.min(start + GETDIPARS_GROUP_SIZE, supported.size());
             final List<CANDataItem> group = supported.subList(start, end);
             groupCount++;
+            groupIsUnsupported.add(false);
             futures.add(executor.submit(new Callable<List<CANDataItem>>() {
                 @Override
                 public List<CANDataItem> call() {
@@ -525,26 +745,35 @@ public class CANDataReader {
                 }
             }));
         }
+        final boolean allowSplit = reisolateUnsupported;
         for (int start = 0; start < unsupported.size(); start += GETDIPARS_GROUP_SIZE) {
             int end = Math.min(start + GETDIPARS_GROUP_SIZE, unsupported.size());
             final List<CANDataItem> group = unsupported.subList(start, end);
             groupCount++;
+            groupIsUnsupported.add(true);
             futures.add(executor.submit(new Callable<List<CANDataItem>>() {
                 @Override
                 public List<CANDataItem> call() {
-                    return fetchBatchRecursive(context, group);
+                    // Normally a single probe request (allowSplit=false): every
+                    // member is already cached as unsupported, splitting would
+                    // just multiply failed requests. Every 5th failure the group
+                    // is re-isolated once so recovered signals are re-marked.
+                    return fetchBatchRecursive(context, group, allowSplit);
                 }
             }));
         }
-        int total = items.size();
+        int total = supported.size() + unsupported.size();
         int failedGroups = 0;
-        for (Future<List<CANDataItem>> future : futures) {
+        for (int i = 0; i < futures.size(); i++) {
+            Future<List<CANDataItem>> future = futures.get(i);
             try {
                 List<CANDataItem> groupResult = future.get(READ_TIMEOUT_MS * 2L, TimeUnit.MILLISECONDS);
                 if (groupResult != null) {
                     result.addAll(groupResult);
+                    if (groupIsUnsupported.get(i)) unsupportedFailStreak = 0;
                 } else {
                     failedGroups++;
+                    if (groupIsUnsupported.get(i)) unsupportedFailStreak++;
                 }
             } catch (Exception e) {
                 LogBuffer.e("CANReader", "getDiPars group task failed: " + e.getMessage());
@@ -608,6 +837,11 @@ public class CANDataReader {
      * getVal and cache unsupported names so they are skipped in future batches.
      */
     private static List<CANDataItem> fetchBatchRecursive(Context context, List<CANDataItem> items) {
+        return fetchBatchRecursive(context, items, true);
+    }
+
+    private static List<CANDataItem> fetchBatchRecursive(Context context, List<CANDataItem> items,
+                                                         boolean allowSplit) {
         if (items == null || items.isEmpty()) return null;
 
         List<CANDataItem> batchResult = diplusGetDiParsGroup(context, items);
@@ -615,17 +849,37 @@ public class CANDataReader {
             return batchResult;
         }
 
+        // Known-unsupported trailing group: probe with a single request only. Every
+        // member is already cached as unsupported, so splitting would just multiply
+        // failed requests without telling us anything new. If the batch suddenly
+        // succeeds (firmware update), diplusGetDiParsGroup has already re-marked
+        // every item as supported via cacheSupported.
+        if (!allowSplit) {
+            return null;
+        }
+
         if (items.size() == 1) {
             CANDataItem item = items.get(0);
-            CANDataItem single = readSingleSignal(context, item);
+            CANDataItem single;
+            try {
+                single = readSingleSignal(context, item);
+            } catch (DiplusUnavailableException e) {
+                // DiPlus is down — transient, do NOT cache the signal as
+                // unsupported (that would hide it from telemetry for good).
+                LogBuffer.d("CANReader", "getVal skipped for '" + item.diplusName
+                        + "': DiPlus unavailable");
+                return null;
+            }
             if (single != null) {
                 List<CANDataItem> r = new ArrayList<>();
                 r.add(single);
                 return r;
             }
-            // Mark as unsupported so future batches skip it.
-            cacheUnsupported(context, item.diplusName);
-            LogBuffer.i("CANReader", "Unsupported signal cached: " + item.diplusName);
+            // DiPlus answered (HTTP 200) and the signal is genuinely unsupported.
+            if (!unsupportedNames.contains(item.diplusName)) {
+                cacheUnsupported(context, item.diplusName);
+                LogBuffer.i("CANReader", "Unsupported signal cached: " + item.diplusName);
+            }
             return null;
         }
 
@@ -719,7 +973,7 @@ public class CANDataReader {
             // throttle repeats to D for a minute.
             String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
             long now = System.currentTimeMillis();
-            boolean connectError = msg.contains("Failed to connect") || msg.contains("Connection refused");
+            boolean connectError = DiplusErrorClassifier.isConnectError(msg);
             if (connectError && now - lastConnectErrorLogMs < 60_000) {
                 LogBuffer.d("CANReader", "getDiPars group error: " + msg);
             } else {
@@ -874,9 +1128,16 @@ public class CANDataReader {
             URL url = new URL(DiplusApi.withAuth(DIPLUS_BASE + "/api/getVal?name=" + encoded + "&status=true", AppConfig.getDiplusAuth(context)));
             conn = openConnection(url, "GET", CONNECT_TIMEOUT_MS, READ_TIMEOUT_MS);
             int code = conn.getResponseCode();
-            if (code != 200) return null;
+            if (DiplusErrorClassifier.isNonOkHttp(code)) {
+                // Server returned an error (DiPlus down / wrong port) — not a
+                // signal property. Let the caller skip unsupported-caching.
+                throw new DiplusUnavailableException("getVal HTTP " + code + " for '" + chineseName + "'");
+            }
             String body = readResponseBodyStr(conn);
-            if (body == null || body.contains("\"success\":false")) return null;
+            if (body == null) {
+                throw new DiplusUnavailableException("getVal empty body for '" + chineseName + "'");
+            }
+            if (body.contains("\"success\":false")) return null;
 
             String val = parseDiplusValueJson(context, url.toString(), body);
             if (val == null || val.isEmpty()) return null;
@@ -891,8 +1152,15 @@ public class CANDataReader {
                 lastKnownRawValues.put(copy.key, val);
             }
             return copy;
+        } catch (DiplusUnavailableException e) {
+            LogBuffer.d("CANReader", "getVal unavailable for '" + chineseName + "': " + e.getMessage());
+            throw e;
         } catch (Exception e) {
-            LogBuffer.d("CANReader", "getVal failed for '" + chineseName + "': " + e.getMessage());
+            String msg = e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName();
+            if (DiplusErrorClassifier.isConnectError(msg)) {
+                throw new DiplusUnavailableException("getVal connect error for '" + chineseName + "': " + msg, e);
+            }
+            LogBuffer.d("CANReader", "getVal failed for '" + chineseName + "': " + msg);
             return null;
         } finally {
             if (conn != null) conn.disconnect();
@@ -1096,15 +1364,17 @@ public class CANDataReader {
      *  Always recorded to the in-memory buffer (which is always detailed);
      *  the on-disk log includes these lines only in detailed mode. */
     private static void logRawResponse(Context context, String url, String body) {
+        // Never log the raw URL: it carries the DiPlus auth token (review #5).
+        String maskedUrl = DiplusApi.maskAuth(url);
         if (body == null) {
-            LogBuffer.d("CANReader", "RAW " + url + " → (null body)");
+            LogBuffer.d("CANReader", "RAW " + maskedUrl + " → (null body)");
             return;
         }
         int maxLen = 2000;
         String preview = body.length() > maxLen
                 ? body.substring(0, maxLen) + "... [" + body.length() + " bytes total]"
                 : body;
-        LogBuffer.d("CANReader", "RAW " + url + " → " + preview);
+        LogBuffer.d("CANReader", "RAW " + maskedUrl + " → " + preview);
     }
 
     /**
@@ -1169,10 +1439,12 @@ public class CANDataReader {
             }
             int code = conn.getResponseCode();
             String body = readResponseBodyStr(conn);
-            LogBuffer.i("CANReader", "PROBE " + method + " " + urlString + " → HTTP " + code
+            String maskedUrl = DiplusApi.maskAuth(urlString);
+            LogBuffer.i("CANReader", "PROBE " + method + " " + maskedUrl + " → HTTP " + code
                     + " body=" + (body != null ? body.substring(0, Math.min(body.length(), 300)) : "null"));
         } catch (Exception e) {
-            LogBuffer.i("CANReader", "PROBE " + method + " " + urlString + " → ERROR: " + e.getMessage());
+            LogBuffer.i("CANReader", "PROBE " + method + " " + DiplusApi.maskAuth(urlString)
+                    + " → ERROR: " + e.getMessage());
         } finally {
             if (conn != null) conn.disconnect();
         }

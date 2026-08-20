@@ -18,6 +18,7 @@ public class DashboardLogicTest {
         testJoinStrings();
         testIsStateTruthy();
         testIsStateTruthyNumericModes();
+        testSelectOptionMatches();
 
         System.out.println("All DashboardLogic tests passed.");
     }
@@ -76,6 +77,20 @@ public class DashboardLogicTest {
         assertTrue(DashboardLogic.isStateTruthy("on", Arrays.asList("on"), "list"), "list mode membership");
         assertTrue(!DashboardLogic.isStateTruthy("off", Arrays.asList("on"), "list"), "list mode no match");
         assertTrue(DashboardLogic.isStateTruthy("on", Arrays.asList("on"), "weird_mode"), "unknown mode falls back");
+    }
+
+    private static void testSelectOptionMatches() {
+        assertTrue(DashboardLogic.selectOptionMatches("face", "face"), "exact");
+        assertTrue(DashboardLogic.selectOptionMatches("ECO", "eco"), "case-insensitive");
+        assertTrue(DashboardLogic.selectOptionMatches("face_feet", "face+feet"), "underscore vs plus");
+        assertTrue(DashboardLogic.selectOptionMatches("face_feet", "face/feet"), "underscore vs slash (Chinese 吹面/吹脚)");
+        assertTrue(DashboardLogic.selectOptionMatches("face+feet", "face/feet"), "plus vs slash");
+        assertTrue(DashboardLogic.selectOptionMatches("feet-defrost", "feet_defrost"), "hyphen vs underscore");
+        assertTrue(DashboardLogic.selectOptionMatches("a:b", "a_b"), "colon vs underscore");
+        assertTrue(!DashboardLogic.selectOptionMatches("face", "feet"), "different words");
+        assertTrue(!DashboardLogic.selectOptionMatches(null, "face"), "null option");
+        assertTrue(!DashboardLogic.selectOptionMatches("face", null), "null current");
+        assertTrue(!DashboardLogic.selectOptionMatches("", "face"), "empty option");
     }
 
     private static void assertEquals(String expected, String actual, String message) {

@@ -11,7 +11,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import DOMAIN, CONF_CAR_NAME, INTEGRATION_VERSION
-from . import SIGNAL_VEHICLE_DATA_UPDATED
+from . import SIGNAL_VEHICLE_DATA_UPDATED, async_replay_state
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -31,6 +31,7 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
         self._latitude = None
         self._longitude = None
         self._accuracy = 0
+        self._last_fix_time = None
         self._attr_available = False
         self._sw_version = INTEGRATION_VERSION
 
@@ -85,7 +86,8 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
             written = False
 
             # Replay the chronological batch so the map shows the actual path
-            # instead of jumping straight to the latest coordinate.
+            # with each point at its collection time instead of jumping straight
+            # to the latest coordinate.
             # Prefer the pre-built gps_track; fall back to scanning the batch
             # for payloads stored before the track existed.
             gps_track = data.get("gps_track")
@@ -98,12 +100,27 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
                     lat = gps.get("lat")
                     lon = gps.get("lon")
                     if lat is not None and lon is not None:
-                        points.append((lat, lon, gps.get("a", 0)))
-            for lat, lon, acc in points:
+                        points.append(
+                            (snapshot.get("t", 0), lat, lon, gps.get("a", 0))
+                        )
+            for t, lat, lon, acc in points:
                 self._latitude = float(lat)
                 self._longitude = float(lon)
-                self._accuracy = float(acc)
+                try:
+                    self._accuracy = float(acc)
+                except (ValueError, TypeError):
+                    self._accuracy = 0
                 self._attr_available = True
+                async_replay_state(self, t)
+                written = True
+
+            # History points above were written at their (past) fix times.
+            # ALSO advance the LIVE state with a current-time write: zones and
+            # automations key off the tracker's state, and without this write
+            # the entity stays stamped at the last fix time (in the past), which
+            # is exactly the "map is correct but the zone is stale" symptom.
+            if points:
+                self._last_fix_time = points[-1][0]
                 self.async_write_ha_state()
                 written = True
 
@@ -112,9 +129,13 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
                 lat = data.get("latitude")
                 lon = data.get("longitude")
                 if lat is not None and lon is not None:
-                    self._latitude = lat
-                    self._longitude = lon
-                    self._accuracy = data.get("accuracy", 0)
+                    self._latitude = float(lat)
+                    self._longitude = float(lon)
+                    try:
+                        self._accuracy = float(data.get("accuracy", 0))
+                    except (ValueError, TypeError):
+                        self._accuracy = 0
+                    self._last_fix_time = data.get("fix_timestamp")
                     self._attr_available = True
 
             av = store.get("app_version", "")
@@ -124,6 +145,8 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
             if last_seen:
                 extra = dict(getattr(self, "_attr_extra_state_attributes", {}))
                 extra["last_seen"] = last_seen
+                if self._last_fix_time is not None:
+                    extra["fix_time"] = self._last_fix_time
                 raw_speed = data.get("signals", {}).get("speed")
                 if raw_speed is not None:
                     try:

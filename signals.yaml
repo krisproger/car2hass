@@ -15,15 +15,18 @@ value_trans:
   开启缩时哨兵: timelapse sentry on
   开启中: starting
   无报警: no alarm
+  开启熄火录制: parked recording on
+  开启熄火哨兵: engine-off sentry on
+  报警中: alarming
+  无目标: no target
+  未移动: not moving
   晴天: sunny
   摄氏度: °C
   华氏度: °F
   外循环: external
   内循环: recirculation
   吹面: face
-  吹面/吹脚: face/feet
   吹脚: feet
-  吹脚/除霜: feet/defrost
   未生效: inactive
   禁用: disabled
   正常: normal
@@ -68,6 +71,28 @@ value_trans:
   M: M
   S: S
   有车接近: car approaching
+  交流枪: AC gun
+  转换枪: adapter gun
+  放电枪: discharge gun
+  开始: started
+  完成: done
+  终止: aborted
+  激活1: active1
+  错误: error
+  状态3: state3
+  取消或无效: cancelled
+  状态4: state4
+  主动起步: auto-start
+  除霜: defrost
+  吹脚除霜: feet+defrost
+  吹面+吹脚+除霜: face+feet+defrost
+  吹面+除霜: face+defrost
+  存储异常: storage error
+  左转2: left2
+  右转2: right2
+  紧急: emergency
+  后闪灯: rear flash
+  闪灯: flash
 signals:
 - id: 1
   name: 电源状态
@@ -599,8 +624,10 @@ signals:
   ha_type: binary_sensor
   device_class: battery_charging
   truthy:
-  - charging
+  - Ready
   - started
+  - charging
+  - full
 - id: 53
   name: 左前轮气压
   description: Tyre pressure FL
@@ -1372,7 +1399,7 @@ signals:
 - id: 1003
   name: 哨兵状态
   description: Sentry state
-  type: num
+  type: enum
   key: sentry_state
   labels: {}
   ha_type: sensor
@@ -1381,7 +1408,7 @@ signals:
 - id: 1004
   name: 熄火录像配置开关
   description: Parked-recording switch
-  type: num
+  type: enum
   key: parked_recording_switch
   labels: {}
   ha_type: sensor
@@ -1390,7 +1417,7 @@ signals:
 - id: 1006
   name: 熄火哨兵报警
   description: Parked sentry alarm
-  type: num
+  type: enum
   key: parked_sentry_alarm
   labels: {}
   ha_type: sensor
@@ -1564,7 +1591,7 @@ signals:
 - id: 2008
   name: 前车起步状态
   description: Lead-car start state
-  type: num
+  type: enum
   key: lead_car_start_state
   labels: {}
   ha_type: sensor

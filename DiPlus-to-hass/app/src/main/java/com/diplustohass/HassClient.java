@@ -29,10 +29,14 @@ public class HassClient {
     private static final int MAX_BUFFER = 1000;
 
     private static final ArrayList<Snapshot> buffer = new ArrayList<>();
+    // Guards only the in-memory buffer. Disk I/O (SnapshotQueue) and the HTTP
+    // send never hold it, so a long flush cannot block collectSnapshot or
+    // onNetworkAvailable (previously all of these shared the class monitor).
+    private static final Object bufferLock = new Object();
     private static final AtomicBoolean flushInProgress = new AtomicBoolean(false);
     private static final ExecutorService flushExecutor = Executors.newSingleThreadExecutor();
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private static boolean initialized = false;
+    private static volatile boolean initialized = false;
 
     // Hosts we already warned about for cleartext HTTP to a public address.
     private static final Set<String> warnedCleartextHosts =
@@ -50,13 +54,19 @@ public class HassClient {
         public final double lat;
         public final double lon;
         public final float accuracy;
+        /** GPS fix time in epoch seconds (0 when unknown — falls back to timestamp). */
+        public final long fixTimeSec;
         public final String signalJson;  // JSON object of all signal key:value pairs
+        /** Database row id when this snapshot came from the queue (-1 for in-memory). */
+        public long queueId = -1;
 
-        public Snapshot(long timestamp, double lat, double lon, float accuracy, String signalJson) {
+        public Snapshot(long timestamp, double lat, double lon, float accuracy,
+                        long fixTimeSec, String signalJson) {
             this.timestamp = timestamp;
             this.lat = lat;
             this.lon = lon;
             this.accuracy = accuracy;
+            this.fixTimeSec = fixTimeSec;
             this.signalJson = signalJson;
         }
 
@@ -70,6 +80,11 @@ public class HassClient {
                 gps.put("lat", lat);
                 gps.put("lon", lon);
                 gps.put("a", accuracy);
+                // Time of the actual GPS fix; the integration attributes the point
+                // to this moment instead of the (later) snapshot collection time.
+                if (fixTimeSec > 0) {
+                    gps.put("t", fixTimeSec);
+                }
                 obj.put("g", gps);
             }
             obj.put("s", new JSONObject(signalJson));
@@ -81,16 +96,19 @@ public class HassClient {
             double lat = Double.NaN;
             double lon = Double.NaN;
             float accuracy = 0;
+            long fixTimeSec = 0;
             if (gps != null) {
                 lat = gps.optDouble("lat", Double.NaN);
                 lon = gps.optDouble("lon", Double.NaN);
                 accuracy = (float) gps.optDouble("a", 0);
+                fixTimeSec = gps.optLong("t", 0);
             }
             return new Snapshot(
                 obj.getLong("t"),
                 lat,
                 lon,
                 accuracy,
+                fixTimeSec,
                 obj.getJSONObject("s").toString()
             );
         }
@@ -106,20 +124,23 @@ public class HassClient {
         LogBuffer.i("HassClient", "Initialized, queued snapshots: " + SnapshotQueue.getCount(ctx));
     }
 
-    public static synchronized void collectSnapshot(Context ctx, double lat, double lon,
-                                                     float accuracy, String signalJson) {
+    public static void collectSnapshot(Context ctx, double lat, double lon,
+                                       float accuracy, long fixTimeSec, String signalJson) {
         try {
-            Snapshot snap = new Snapshot(System.currentTimeMillis() / 1000, lat, lon, accuracy, signalJson);
-            buffer.add(snap);
-            if (buffer.size() > MAX_BUFFER) {
-                buffer.remove(0);
+            Snapshot snap = new Snapshot(System.currentTimeMillis() / 1000, lat, lon,
+                    accuracy, fixTimeSec, signalJson);
+            synchronized (bufferLock) {
+                buffer.add(snap);
+                if (buffer.size() > MAX_BUFFER) {
+                    buffer.remove(0);
+                }
             }
         } catch (Exception e) {
             LogBuffer.e("HassClient", "collectSnapshot failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 
-    public static synchronized void flush(Context ctx, FlushCallback callback) {
+    public static void flush(Context ctx, FlushCallback callback) {
         try {
             if (!AppConfig.isHassEnabled(ctx)) {
                 LogBuffer.d("HassClient", "HA disabled — not flushing");
@@ -128,7 +149,7 @@ public class HassClient {
             }
 
             long now = System.currentTimeMillis();
-            if (now - lastFlushAttemptMs < currentFlushBackoffMs && SnapshotQueue.getCount(ctx) == 0 && buffer.isEmpty()) {
+            if (now - lastFlushAttemptMs < currentFlushBackoffMs && SnapshotQueue.getCount(ctx) == 0 && isBufferEmpty()) {
                 LogBuffer.d("HassClient", "flush backed off (" + currentFlushBackoffMs + " ms)");
                 if (callback != null) callback.onResult(false, "backed off");
                 return;
@@ -141,18 +162,37 @@ public class HassClient {
                 return;
             }
 
-            if (buffer.isEmpty() && SnapshotQueue.getCount(ctx) == 0) {
+            if (isBufferEmpty() && SnapshotQueue.getCount(ctx) == 0) {
                 flushInProgress.set(false);
                 if (callback != null) callback.onResult(true, "nothing to send");
                 return;
             }
 
-            // Build a chronologically ordered batch:
-            // 1) previously queued snapshots from failed flushes,
-            // 2) fresh snapshots collected in memory.
-            List<Snapshot> batch = SnapshotQueue.dequeueAll(ctx);
-            batch.addAll(buffer);
-            buffer.clear();
+            // Build a chronologically ordered batch, never exceeding the HA batch
+            // limit. Queued rows are read WITHOUT deletion — they are removed only
+            // after a confirmed send (deleteUpTo), so a crash mid-flush loses nothing.
+            List<Snapshot> queueBatch = SnapshotQueue.dequeueChunk(ctx, SnapshotQueue.DEQUEUE_CHUNK_SIZE);
+            int room = SnapshotQueue.DEQUEUE_CHUNK_SIZE - queueBatch.size();
+
+            // Copy the in-memory buffer out from under bufferLock only. collectSnapshot
+            // keeps appending while we talk to the SQLite queue — that is fine, the
+            // next flush picks up whatever lands here.
+            List<Snapshot> bufferBatch;
+            synchronized (bufferLock) {
+                bufferBatch = new ArrayList<>(buffer);
+                buffer.clear();
+            }
+            List<Snapshot> batch = new ArrayList<>(queueBatch);
+            if (room > 0 && !bufferBatch.isEmpty()) {
+                int take = Math.min(room, bufferBatch.size());
+                batch.addAll(bufferBatch.subList(0, take));
+                // Keep the unwritten remainder of the in-memory buffer for next flush.
+                if (take < bufferBatch.size()) {
+                    synchronized (bufferLock) {
+                        buffer.addAll(0, bufferBatch.subList(take, bufferBatch.size()));
+                    }
+                }
+            }
 
             if (batch.isEmpty()) {
                 flushInProgress.set(false);
@@ -174,8 +214,24 @@ public class HassClient {
             sendBatch(ctx, batch, (success, msg) -> {
                 try {
                     flushInProgress.set(false);
-                    if (!success) {
-                        SnapshotQueue.enqueueAll(ctx, batch);
+                    if (success) {
+                        // Remove only rows confirmed sent. In-memory snapshots have
+                        // queueId < 0 and are never touched.
+                        long maxQueuedId = -1;
+                        for (Snapshot s : batch) {
+                            if (s.queueId > maxQueuedId) maxQueuedId = s.queueId;
+                        }
+                        if (maxQueuedId >= 0) {
+                            SnapshotQueue.deleteUpTo(ctx, maxQueuedId);
+                        }
+                    } else {
+                        // Re-enqueue only in-memory snapshots; queued rows were never
+                        // deleted, so re-inserting them would duplicate telemetry.
+                        List<Snapshot> toRequeue = new ArrayList<>();
+                        for (Snapshot s : batch) {
+                            if (s.queueId < 0) toRequeue.add(s);
+                        }
+                        SnapshotQueue.enqueueAll(ctx, toRequeue);
                     }
                     if (callback != null) callback.onResult(success, msg);
                 } catch (Exception e) {
@@ -191,13 +247,21 @@ public class HassClient {
         }
     }
 
-    public static synchronized int getBufferSize() {
-        return buffer.size();
+    private static boolean isBufferEmpty() {
+        synchronized (bufferLock) {
+            return buffer.isEmpty();
+        }
+    }
+
+    public static int getBufferSize() {
+        synchronized (bufferLock) {
+            return buffer.size();
+        }
     }
 
     // ─── Network restore ───
 
-    public static synchronized void onNetworkAvailable(final Context ctx) {
+    public static void onNetworkAvailable(final Context ctx) {
         if (flushInProgress.get()) {
             LogBuffer.d("HassClient", "Network restored, but flush already in progress — retry in " + NETWORK_RETRY_DELAY_MS + " ms");
             mainHandler.removeCallbacksAndMessages(null);

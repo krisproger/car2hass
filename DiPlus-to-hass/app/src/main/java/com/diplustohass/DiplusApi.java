@@ -34,4 +34,29 @@ public final class DiplusApi {
             return url; // UTF-8 is always available
         }
     }
+
+    /**
+     * Replace the DiPlus {@code auth} token value in a URL with "***" for
+     * safe logging (review #5). Returns the input unchanged when no auth
+     * parameter is present.
+     */
+    public static String maskAuth(String url) {
+        if (url == null) {
+            return null;
+        }
+        // The token is URL-encoded when appended, so it can be percent-encoded
+        // characters, but never an '&' — matching on (?|&)auth=<non-&> is safe.
+        int idx = url.indexOf("&auth=");
+        if (idx < 0) {
+            idx = url.indexOf("?auth=");
+        }
+        if (idx < 0) {
+            return url;
+        }
+        int end = url.indexOf('&', idx + "&auth=".length());
+        if (end < 0) {
+            end = url.length();
+        }
+        return url.substring(0, idx + "&auth=".length()) + "***" + url.substring(end);
+    }
 }

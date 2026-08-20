@@ -70,6 +70,15 @@ def _parse_const():
     }
 
 
+def _parse_value_trans():
+    """Parse Chinese → English value translations from SignalTranslator.java."""
+    text = SIGNAL_TRANSLATOR.read_text(encoding="utf-8")
+    trans = {}
+    for m in re.finditer(r'VALUE_TRANS\.put\("([^"]+)",\s*"([^"]+)"\);', text):
+        trans[m.group(1)] = m.group(2)
+    return trans
+
+
 def _parse_signals_md():
     text = SIGNALS_MD.read_text(encoding="utf-8")
     rows = []

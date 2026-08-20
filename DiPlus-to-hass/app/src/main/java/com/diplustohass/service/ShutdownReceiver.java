@@ -23,8 +23,12 @@ public class ShutdownReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (intent == null || intent.getAction() == null) return;
         String action = intent.getAction();
-        if (!Intent.ACTION_SHUTDOWN.equals(action)
-                && !"android.intent.action.QUICKBOOT_POWEROFF".equals(action)) {
+        if (Intent.ACTION_SHUTDOWN.equals(action)) {
+            // protected broadcast — system only
+        } else if ("android.intent.action.QUICKBOOT_POWEROFF".equals(action)) {
+            // QUICKBOOT_POWEROFF is NOT protected; only trust system/shell senders.
+            if (!isSystemSender(intent)) return;
+        } else {
             return;
         }
 
@@ -65,6 +69,28 @@ public class ShutdownReceiver extends BroadcastReceiver {
             }
         } catch (Exception e) {
             LogBuffer.e("ShutdownReceiver", "Failed to cancel AlarmManager intent: " + e.getMessage());
+        }
+    }
+
+    /**
+     * QUICKBOOT_POWEROFF is not a protected broadcast, so only accept it from
+     * the system/shell to stop third-party apps from stopping our service.
+     * getCreatorUid() is a hidden API — call it via reflection. On newer Android
+     * the call may be blocked; then we accept the broadcast so QUICKBOOT-based
+     * shutdown handling keeps working on OEM devices (the action is already
+     * validated above).
+     */
+    private static boolean isSystemSender(Intent intent) {
+        if (intent == null) return false;
+        try {
+            java.lang.reflect.Method m = Intent.class.getMethod("getCreatorUid");
+            int uid = (Integer) m.invoke(intent);
+            return uid == android.os.Process.SYSTEM_UID
+                    || uid == android.os.Process.SHELL_UID
+                    || uid == android.os.Process.ROOT_UID;
+        } catch (Exception e) {
+            LogBuffer.d("ShutdownReceiver", "getCreatorUid unavailable, accepting QUICKBOOT_POWEROFF");
+            return true;
         }
     }
 }

@@ -31,7 +31,7 @@ public class BootReceiver extends BroadcastReceiver {
         String action = intent.getAction();
         if (Intent.ACTION_BOOT_COMPLETED.equals(action)
                 || Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(action)
-                || QUICKBOOT_ACTION.equals(action)) {
+                || (QUICKBOOT_ACTION.equals(action) && isSystemSender(intent))) {
 
             LogBuffer.i("BootReceiver", action + " received, sdk=" + Build.VERSION.SDK_INT
                     + " autoStart=" + AppConfig.isBootAutoStartEnabled(context));
@@ -103,6 +103,28 @@ public class BootReceiver extends BroadcastReceiver {
                     wl.release();
                 }
             }
+        }
+    }
+
+    /**
+     * QUICKBOOT_* are not protected broadcasts, so any app can spoof them.
+     * Accept them only when the sender is the system/shell (UID 1000/2000/0).
+     * getCreatorUid() is a hidden API — call it via reflection. On newer Android
+     * the call may be blocked; then we accept the broadcast so QUICKBOOT-based
+     * boot detection keeps working on OEM devices (the action is already
+     * validated above).
+     */
+    private static boolean isSystemSender(Intent intent) {
+        if (intent == null) return false;
+        try {
+            java.lang.reflect.Method m = Intent.class.getMethod("getCreatorUid");
+            int uid = (Integer) m.invoke(intent);
+            return uid == android.os.Process.SYSTEM_UID
+                    || uid == android.os.Process.SHELL_UID
+                    || uid == android.os.Process.ROOT_UID;
+        } catch (Exception e) {
+            LogBuffer.d("BootReceiver", "getCreatorUid unavailable, accepting QUICKBOOT");
+            return true;
         }
     }
 

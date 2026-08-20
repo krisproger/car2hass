@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 /**
  * Registry of DiPlus commands that can be triggered from Home Assistant.
@@ -97,17 +97,19 @@ public class CommandRegistry {
 
     private static final List<CommandEntry> COMMANDS = new ArrayList<>();
 
+    private static final Pattern CHARGE_SCHEDULE = Pattern.compile("\\d{1,2}:\\d{1,2}-\\d{1,2}");
+
     static {
         // ─── Climate ───
-        add("ac_on", R.string.cmd_ac_on, R.string.cmd_category_climate, "迪加打开空调", ValueType.NONE);
+        add("ac_on", R.string.cmd_ac_on, R.string.cmd_category_climate, "迪加空调自动", ValueType.NONE);
         add("ac_off", R.string.cmd_ac_off, R.string.cmd_category_climate, "迪加关空调", ValueType.NONE);
         add("ac_auto", R.string.cmd_ac_auto, R.string.cmd_category_climate, "迪加空调自动", ValueType.NONE);
         add("ac_temp", R.string.cmd_ac_temp, R.string.cmd_category_climate, "迪加设置温度{value}",
-            ValueType.NUMBER, 16, 30, null, R.string.unit_celsius, R.string.hint_celsius);
+            ValueType.NUMBER, 17, 30, null, R.string.unit_celsius, R.string.hint_celsius);
         add("ac_temp_up", R.string.cmd_ac_temp_up, R.string.cmd_category_climate, "迪加空调升温", ValueType.NONE);
         add("ac_temp_down", R.string.cmd_ac_temp_down, R.string.cmd_category_climate, "迪加空调降温", ValueType.NONE);
         add("ac_fan", R.string.cmd_ac_fan, R.string.cmd_category_climate, "迪加设置风速{value}",
-            ValueType.NUMBER, 1, 9, null, R.string.unit_percent, R.string.hint_fan);
+            ValueType.NUMBER, 1, 7, null, R.string.unit_percent, R.string.hint_fan);
         add("ac_fan_up", R.string.cmd_ac_fan_up, R.string.cmd_category_climate, "迪加升风速", ValueType.NONE);
         add("ac_fan_down", R.string.cmd_ac_fan_down, R.string.cmd_category_climate, "迪加降风速", ValueType.NONE);
         addEnum("ac_airflow", R.string.cmd_ac_airflow, R.string.cmd_category_climate, "迪加空调{value}",
@@ -215,7 +217,7 @@ public class CommandRegistry {
 
         // ─── Charging ───
         add("charge_soc", R.string.cmd_charge_soc, R.string.cmd_category_charging, "迪加设置SOC{value}",
-            ValueType.NUMBER, 0, 100, null, R.string.unit_percent, R.string.hint_range_0_100);
+            ValueType.NUMBER, 15, 70, null, R.string.unit_percent, R.string.hint_range_0_100);
         add("charge_schedule", R.string.cmd_charge_schedule, R.string.cmd_category_charging, "迪加预约充电{value}",
             ValueType.STRING, 0, 0, null, 0, R.string.hint_schedule);
 
@@ -227,7 +229,7 @@ public class CommandRegistry {
         add("nav_volume", R.string.cmd_nav_volume, R.string.cmd_category_volume, "迪加设置导航音量{value}",
             ValueType.NUMBER, 0, 10, null, 0, R.string.hint_nav_volume);
         add("ext_volume", R.string.cmd_ext_volume, R.string.cmd_category_volume, "迪加设置车外音量{value}",
-            ValueType.NUMBER, 0, 100, null, R.string.unit_percent, R.string.hint_range_0_100);
+            ValueType.NUMBER, 0, 99, null, R.string.unit_percent, R.string.hint_range_0_100);
 
         // ─── Sentry / dashcam ───
         addEnum("sentry", R.string.cmd_sentry, R.string.cmd_category_sentry, "迪加{value}",
@@ -246,7 +248,6 @@ public class CommandRegistry {
                 "sleep", R.string.enum_sleep, "一键舒睡",
                 "screen_off", R.string.enum_screen_off, "屏幕关闭"));
         add("adb_on", R.string.cmd_adb_on, R.string.cmd_category_system, "迪加打开ADB", ValueType.NONE);
-        add("adb_off", R.string.cmd_adb_off, R.string.cmd_category_system, "迪加关闭ADB", ValueType.NONE);
         addEnum("theme", R.string.cmd_theme, R.string.cmd_category_system, "迪加{value}模式",
             map("dark", R.string.enum_dark, "深色",
                 "light", R.string.enum_light, "浅色"));
@@ -344,11 +345,12 @@ public class CommandRegistry {
                     if (d < entry.minValue || d > entry.maxValue) {
                         return null;
                     }
-                    // Remove trailing .0 for cleaner Chinese command text.
-                    String text = (d == Math.floor(d))
-                        ? String.valueOf((int) d)
-                        : String.format(Locale.US, "%.1f", d);
-                    return entry.commandTemplate.replace("{value}", text);
+                    // DiPlus expects integer values; any fraction throws in its
+                    // Integer.parseInt and opens NaviActivity instead of applying.
+                    if (d != Math.floor(d)) {
+                        return null;
+                    }
+                    return entry.commandTemplate.replace("{value}", String.valueOf((int) d));
                 } catch (NumberFormatException e) {
                     return null;
                 }
@@ -361,6 +363,10 @@ public class CommandRegistry {
                 return entry.commandTemplate.replace("{value}", suffix);
             case STRING:
             default:
+                if ("charge_schedule".equals(entry.id)
+                        && !CHARGE_SCHEDULE.matcher(v).matches()) {
+                    return null;
+                }
                 return entry.commandTemplate.replace("{value}", v);
         }
     }

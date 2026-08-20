@@ -31,6 +31,9 @@ public final class PresetIconResolver {
     /** User-override cache keyed by name, invalidated on file mtime change. */
     private static final Map<String, Bitmap> overrideCache = new HashMap<>();
     private static final Map<String, Long> overrideMtime = new HashMap<>();
+    /** Override mtimes whose decode failed (known-broken PNG), so a broken file
+     *  is not re-decoded on every bind until it actually changes. */
+    private static final Map<String, Long> overrideBrokenMtime = new HashMap<>();
 
     private PresetIconResolver() {}
 
@@ -44,20 +47,36 @@ public final class PresetIconResolver {
         return resolveAsset(ctx, name);
     }
 
+    /**
+     * True when a cached decode result is still valid for this exact file
+     * mtime: either a successfully cached bitmap or a known-broken marker.
+     * With no cached result the file must be decoded again.
+     */
+    static boolean overrideResultCached(long mtime, Long cachedMtime, Long brokenMtime) {
+        return (cachedMtime != null && cachedMtime == mtime)
+                || (brokenMtime != null && brokenMtime == mtime);
+    }
+
     private static synchronized Bitmap resolveOverride(Context ctx, String name) {
         try {
             File f = overrideFileFor(ctx.getFilesDir(), name);
             if (f == null || !f.isFile()) return null;
             long mtime = f.lastModified();
             Long cachedMtime = overrideMtime.get(name);
-            Bitmap cached = overrideCache.get(name);
-            if (cached != null && cachedMtime != null && cachedMtime == mtime) {
-                return cached;
+            Long brokenMtime = overrideBrokenMtime.get(name);
+            if (overrideResultCached(mtime, cachedMtime, brokenMtime)) {
+                return overrideCache.get(name); // null when the file is known-broken
             }
             Bitmap bmp = BitmapFactory.decodeFile(f.getAbsolutePath());
             if (bmp != null) {
                 overrideCache.put(name, bmp);
                 overrideMtime.put(name, mtime);
+                overrideBrokenMtime.remove(name);
+            } else {
+                // Cache the failure so a broken PNG is not re-decoded on every
+                // bind; the cache is invalidated by the mtime when the user
+                // replaces the file.
+                overrideBrokenMtime.put(name, mtime);
             }
             return bmp;
         } catch (Exception e) {
@@ -104,12 +123,5 @@ public final class PresetIconResolver {
     static File overrideFileFor(File filesDir, String name) {
         if (filesDir == null || name == null) return null;
         return new File(new File(filesDir, ICONS_DIR), name + EXT);
-    }
-
-    /** Drops cached bitmaps (e.g. after the user replaces override icons). */
-    public static synchronized void clearCache() {
-        assetCache.clear();
-        overrideCache.clear();
-        overrideMtime.clear();
     }
 }

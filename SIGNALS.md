@@ -132,9 +132,9 @@ GET http://127.0.0.1:8988/api/getVal?name=车速&status=true   →  {"success":t
 |---:|---|---|---|---|
 | 1001 | `全景状态` | Surround-view state | enum | 0=hidden, 1=shown |
 | 1002 | `配置UI版本` | UI config version | enum | 0=UI3, 1=UI4 |
-| 1003 | `哨兵状态` | Sentry state | num |  |
-| 1004 | `熄火录像配置开关` | Parked-recording switch | num |  |
-| 1006 | `熄火哨兵报警` | Parked sentry alarm | num |  |
+| 1003 | `哨兵状态` | Sentry state | enum |  |
+| 1004 | `熄火录像配置开关` | Parked-recording switch | enum |  |
+| 1006 | `熄火哨兵报警` | Parked sentry alarm | enum |  |
 | 1007 | `WIFI状态` | Wi-Fi state | enum | 0=disconnected, 1=connected |
 | 1008 | `蓝牙状态` | Bluetooth state | enum | 0=disconnected, 1=connected |
 | 1009 | `蓝牙信号强度` | Bluetooth signal | num |  |
@@ -156,7 +156,7 @@ GET http://127.0.0.1:8988/api/getVal?name=车速&status=true   →  {"success":t
 | 2003 | `上次哨兵触发时间` | Last sentry trigger time | num |  |
 | 2005 | `上次录像文件开始时间` | Last clip start time | num |  |
 | 2006 | `上次录像文件结束时间` | Last clip end time | num |  |
-| 2008 | `前车起步状态` | Lead-car start state | num |  |
+| 2008 | `前车起步状态` | Lead-car start state | enum |  |
 
 ## Прочие
 

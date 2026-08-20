@@ -18,10 +18,12 @@ from .const import (
     CONF_CAR_NAME,
     INTEGRATION_VERSION,
     GEOFENCE_KEY_PREFIX,
+    GEOFENCE_NAME_SUFFIX,
     GEOFENCE_ON_VALUES,
+    ONLINE_OFFLINE_SECONDS,
 )
 from . import core
-from . import SIGNAL_VEHICLE_DATA_UPDATED
+from . import SIGNAL_VEHICLE_DATA_UPDATED, async_replay_state
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -73,8 +75,16 @@ class DiplusBinarySensor(BinarySensorEntity, RestoreEntity):
         self._attr_should_poll = False
         self._attr_is_on = None
         self._attr_available = False
+        self._attr_extra_state_attributes = {}
         self._sw_version = INTEGRATION_VERSION
         self._unsub_timer = None
+        # Zone name for dynamic geofence entities; re-checked on each update so a
+        # rename in the app propagates to the entity name without a reload.
+        self._zone_name = None
+        self._is_geofence = (
+            signal_key.startswith(GEOFENCE_KEY_PREFIX)
+            and not signal_key.endswith(GEOFENCE_NAME_SUFFIX)
+        )
 
     @property
     def device_info(self):
@@ -101,13 +111,26 @@ class DiplusBinarySensor(BinarySensorEntity, RestoreEntity):
             batch = data.get("batch", [])
             written = False
 
+            # Dynamic geofence entities: keep the friendly name in sync when the
+            # zone is renamed in the app — geo_<id>_name changes arrive live in
+            # the batch, so update the entity name without a reload.
+            if self._is_geofence:
+                name_val = data.get("signals", {}).get(
+                    self._signal_key + GEOFENCE_NAME_SUFFIX
+                )
+                if isinstance(name_val, str) and name_val.strip():
+                    new_name = f"{self._car_name} Geofence {name_val.strip()}"
+                    if new_name != self._attr_name:
+                        self._attr_name = new_name
+                        written = True
+
             if self._signal_key == "online":
                 last_seen_raw = store.get("last_seen")
                 if last_seen_raw:
                     last_seen = dt_util.parse_datetime(last_seen_raw)
                     if last_seen:
                         age = (utcnow() - last_seen).total_seconds()
-                        self._attr_is_on = age < 10
+                        self._attr_is_on = age < ONLINE_OFFLINE_SECONDS
                         self._attr_available = True
                         self._schedule_online_timeout()
                     else:
@@ -124,18 +147,29 @@ class DiplusBinarySensor(BinarySensorEntity, RestoreEntity):
                     values = signal_index.get(self._signal_key, ())
                 elif batch:
                     values = (
-                        snapshot.get("s", {}).get(self._signal_key)
+                        (snapshot.get("t", 0), snapshot.get("s", {}).get(self._signal_key))
                         for snapshot in batch
                     )
                 else:
-                    values = (data.get("signals", {}).get(self._signal_key),)
-                for raw in values:
+                    values = ((0, data.get("signals", {}).get(self._signal_key)),)
+                for t, raw in values:
                     if raw is not None:
+                        raw_lower = str(raw).lower()
+                        if raw_lower == "invalid":
+                            # DiPlus reports "invalid" (无效) when there is no
+                            # data for this signal. Mark the entity unavailable
+                            # instead of mapping to OFF, which would look like a
+                            # disengaged lock / unbuckled belt.
+                            if self._attr_available or self._attr_is_on is not None:
+                                self._attr_is_on = None
+                                self._attr_available = False
+                                written = True
+                            continue
                         self._attr_available = True
-                        new_state = self._value_to_bool(str(raw).lower())
+                        new_state = self._value_to_bool(raw_lower)
                         if new_state != self._attr_is_on:
                             self._attr_is_on = new_state
-                            self.async_write_ha_state()
+                            async_replay_state(self, t)
                             written = True
 
             av = store.get("app_version", "")
@@ -143,10 +177,9 @@ class DiplusBinarySensor(BinarySensorEntity, RestoreEntity):
                 self._sw_version = av
             last_seen = store.get("last_seen")
             if last_seen:
-                self._attr_extra_state_attributes = {
-                    **self._attr_extra_state_attributes,
-                    "last_seen": last_seen,
-                }
+                extra = dict(getattr(self, "_attr_extra_state_attributes", {}))
+                extra["last_seen"] = last_seen
+                self._attr_extra_state_attributes = extra
             if not written:
                 self.async_write_ha_state()
 
@@ -163,7 +196,7 @@ class DiplusBinarySensor(BinarySensorEntity, RestoreEntity):
             last_seen = dt_util.parse_datetime(last_seen_raw)
             if last_seen:
                 age = (utcnow() - last_seen).total_seconds()
-                self._attr_is_on = age < 10
+                self._attr_is_on = age < ONLINE_OFFLINE_SECONDS
             else:
                 self._attr_is_on = False
         else:
@@ -175,7 +208,7 @@ class DiplusBinarySensor(BinarySensorEntity, RestoreEntity):
             self._unsub_timer()
             self._unsub_timer = None
         self._unsub_timer = async_track_point_in_utc_time(
-            self.hass, self._online_timeout, utcnow() + timedelta(seconds=10)
+            self.hass, self._online_timeout, utcnow() + timedelta(seconds=ONLINE_OFFLINE_SECONDS)
         )
 
     async def async_will_remove_from_hass(self):

@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_card"
+    android:padding="14dp"
+    android:layout_marginBottom="12dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_vehicle"
+        android:textColor="@color/primary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="10dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_vehicle_producer"
+        android:textColor="@color/textSecondary"
+        android:textSize="13sp" />
+
+    <Spinner
+        android:id="@+id/spinnerVehicleProducer"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginBottom="10dp" />
+
+    <EditText
+        android:id="@+id/editVehicleMake"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:hint="@string/settings_vehicle_make_hint"
+        android:background="@color/surfaceVariant"
+        android:textColor="@color/textPrimary"
+        android:textColorHint="@color/textTertiary"
+        android:inputType="text"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:layout_marginBottom="10dp" />
+
+    <EditText
+        android:id="@+id/editVehicleYear"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:hint="@string/settings_vehicle_year_hint"
+        android:background="@color/surfaceVariant"
+        android:textColor="@color/textPrimary"
+        android:textColorHint="@color/textTertiary"
+        android:inputType="number"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:layout_marginBottom="10dp" />
+
+    <TextView
+        android:id="@+id/tvVehicleChannels"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/textSecondary"
+        android:textSize="12sp"
+        android:layout_marginBottom="10dp" />
+
+    <TextView
+        android:id="@+id/tvVehicleCommandsDisabled"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_vehicle_commands_disabled"
+        android:textColor="@color/accentYellow"
+        android:textSize="12sp"
+        android:visibility="gone"
+        android:layout_marginBottom="10dp" />
+
+    <Button
+        android:id="@+id/btnVehicleResearch"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@color/surfaceVariant"
+        android:textColor="@color/accentGreen"
+        android:textSize="14sp"
+        android:text="@string/settings_vehicle_research"
+        android:visibility="gone" />
+</LinearLayout>

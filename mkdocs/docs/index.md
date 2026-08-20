@@ -11,14 +11,16 @@
 
 | Что | Файл | Ссылка |
 |-----|------|--------|
-| Android-приложение (текущая версия) | `diplus2hass-v2.1.5.apk` | [скачать](https://teplitzky.ru/diplus2hass/download.php?file=app) |
-| Интеграция HA (текущая версия) | `diplus2hass-v2.1.5.zip` | [скачать](https://teplitzky.ru/diplus2hass/download.php?file=integration) |
+| Android-приложение (текущая версия) | `diplus2hass-v2.3.1.apk` | [скачать](https://teplitzky.ru/diplus2hass/download.php?file=app) |
+| Интеграция HA (текущая версия) | `diplus2hass-v2.3.1.zip` | [скачать](https://teplitzky.ru/diplus2hass/download.php?file=integration) |
 | Приложение DiPlus (обязательно) | `diplus.1.3.8-beta18.apk` | [скачать](https://teplitzky.ru/diplus2hass/download.php?file=diplus) |
 
 ??? note "Архив предыдущих версий"
 
     | Версия | APK | Интеграция |
     |--------|-----|------------|
+    | v2.1.6 | [diplus2hass-v2.1.6.apk](https://teplitzky.ru/diplus2hass/diplus2hass-v2.1.6.apk) | [diplus2hass-v2.1.6.zip](https://teplitzky.ru/diplus2hass/diplus2hass-v2.1.6.zip) |
+    | v2.1.5 | [diplus2hass-v2.1.5.apk](https://teplitzky.ru/diplus2hass/diplus2hass-v2.1.5.apk) | [diplus2hass-v2.1.5.zip](https://teplitzky.ru/diplus2hass/diplus2hass-v2.1.5.zip) |
     | v2.1.4 | [diplus2hass-v2.1.4.apk](https://teplitzky.ru/diplus2hass/diplus2hass-v2.1.4.apk) | [diplus2hass-v2.1.4.zip](https://teplitzky.ru/diplus2hass/diplus2hass-v2.1.4.zip) |
     | v2.1.3 | [diplus2hass-v2.1.3.apk](https://teplitzky.ru/diplus2hass/diplus2hass-v2.1.3.apk) | [diplus2hass-v2.1.3.zip](https://teplitzky.ru/diplus2hass/diplus2hass-v2.1.3.zip) |
     | v2.1.2 | [diplus2hass-v2.1.2.apk](https://teplitzky.ru/diplus2hass/diplus2hass-v2.1.2.apk) | [diplus2hass-v2.1.2.zip](https://teplitzky.ru/diplus2hass/diplus2hass-v2.1.2.zip) |

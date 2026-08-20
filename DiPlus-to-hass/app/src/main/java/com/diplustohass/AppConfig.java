@@ -2,6 +2,10 @@ package com.diplustohass;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.os.Build;
+
+import com.diplustohass.vehicle.VehicleProducer;
+import com.diplustohass.vehicle.VehicleProfile;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
@@ -13,6 +17,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 public class AppConfig {
     static final String PREF_NAME = "hass_config";
@@ -20,6 +25,8 @@ public class AppConfig {
     private static final String KEY_PORT = "hass_port";
     private static final String KEY_ADB_HOST = "adb_host";
     private static final String KEY_ADB_PORT = "adb_port";
+    private static final String KEY_TELEMETRY_SOURCE = "telemetry_source";
+    private static final String KEY_DEBUG_COMPARE = "debug_compare";
     private static final String KEY_DIPLUS_AUTH = "diplus_auth";
     // Token is stored encrypted via SecureStorage; legacy key kept for migration.
     static final String KEY_TOKEN = "hass_token";
@@ -41,10 +48,15 @@ public class AppConfig {
     private static final String KEY_REGISTRY_VERSION = "registry_version";
     private static final String KEY_REGISTRY_LAST_CHECK = "registry_last_check";
     private static final String KEY_GEOFENCES = "geofences";
+    private static final String KEY_PRESET_PARAM_VALUES = "preset_param_values";
+    private static final String KEY_VEHICLE_PRODUCER = "vehicle_producer";
+    private static final String KEY_VEHICLE_MAKE = "vehicle_make";
+    private static final String KEY_VEHICLE_YEAR = "vehicle_year";
     private static final String CACHED_REGISTRY_FILE = "sensor_command_map.json";
     private static final String CACHED_REGISTRY_META = "sensor_command_map.meta.json";
 
     private static String cachedCarName = null;
+    private static String cachedAutoCarName = null;
     private static SecureStorage secureStorage = null;
 
     private static synchronized SecureStorage getSecureStorage(Context ctx) {
@@ -197,31 +209,6 @@ public class AppConfig {
     }
 
     /**
-     * Returns the set of signal keys explicitly enabled for HA transmission.
-     * When {@link #isUseEnabledFilter(Context)} is false, an empty set means
-     * "all signals enabled" (backward compatible default). When the filter is
-     * active, only keys contained in this set are transmitted.
-     *
-     * @deprecated This enabled-list model is replaced by the disabled-signals
-     * list in v1.8. Kept only for one-time migration.
-     */
-    @Deprecated
-    public static Set<String> getEnabledSignals(Context ctx) {
-        return new HashSet<>(prefs(ctx).getStringSet(KEY_ENABLED_SIGNALS, Collections.emptySet()));
-    }
-
-    /**
-     * Returns true when the user has explicitly narrowed the signal list.
-     * In this mode only {@link #getEnabledSignals(Context)} are sent to HA.
-     *
-     * @deprecated Replaced by the disabled-signals list in v1.8.
-     */
-    @Deprecated
-    public static boolean isUseEnabledFilter(Context ctx) {
-        return prefs(ctx).getBoolean(KEY_USE_ENABLED_FILTER, false);
-    }
-
-    /**
      * Returns the set of signal keys explicitly disabled for HA transmission.
      * An empty set means "all signals enabled".
      */
@@ -291,7 +278,7 @@ public class AppConfig {
         }
 
         boolean useEnabled = prefs(ctx).getBoolean(KEY_USE_ENABLED_FILTER, false);
-        Set<String> enabled = getEnabledSignals(ctx);
+        Set<String> enabled = new HashSet<>(prefs(ctx).getStringSet(KEY_ENABLED_SIGNALS, Collections.emptySet()));
 
         Set<String> disabled = new HashSet<>();
         if (useEnabled) {
@@ -305,20 +292,6 @@ public class AppConfig {
         prefs(ctx).edit()
             .remove(KEY_USE_ENABLED_FILTER)
             .remove(KEY_ENABLED_SIGNALS)
-            .apply();
-    }
-
-    /**
-     * Persist the selected signal set and whether the filter is active.
-     * Passing {@code useFilter=false} means "send all signals".
-     *
-     * @deprecated Use {@link #setDisabledSignals(Context, Set)} instead.
-     */
-    @Deprecated
-    public static void saveEnabledSignals(Context ctx, Set<String> keys, boolean useFilter) {
-        prefs(ctx).edit()
-            .putStringSet(KEY_ENABLED_SIGNALS, keys != null ? keys : Collections.emptySet())
-            .putBoolean(KEY_USE_ENABLED_FILTER, useFilter)
             .apply();
     }
 
@@ -369,17 +342,100 @@ public class AppConfig {
         prefs(ctx).edit().putString(KEY_ADB_PORT, String.valueOf(port)).apply();
     }
 
+    /** Telemetry source: "auto" (default), "native" or "diplus". */
+    public static String getTelemetrySource(Context ctx) {
+        return prefs(ctx).getString(KEY_TELEMETRY_SOURCE, "auto");
+    }
+
+    public static void saveTelemetrySource(Context ctx, String source) {
+        prefs(ctx).edit().putString(KEY_TELEMETRY_SOURCE, source != null ? source : "auto").apply();
+    }
+
+    public static String getVehicleProducer(Context ctx) {
+        return prefs(ctx).getString(KEY_VEHICLE_PRODUCER, "BYD");
+    }
+
+    public static String getVehicleMake(Context ctx) {
+        return prefs(ctx).getString(KEY_VEHICLE_MAKE, "");
+    }
+
+    public static String getVehicleYear(Context ctx) {
+        return prefs(ctx).getString(KEY_VEHICLE_YEAR, "");
+    }
+
+    public static VehicleProfile getVehicleProfile(Context ctx) {
+        String p = getVehicleProducer(ctx);
+        VehicleProducer producer = "UNIVERSAL".equals(p) ? VehicleProducer.UNIVERSAL : VehicleProducer.BYD;
+        return new VehicleProfile(producer, getVehicleMake(ctx), getVehicleYear(ctx));
+    }
+
+    public static void saveVehicleProfile(Context ctx, VehicleProducer producer, String make, String year) {
+        prefs(ctx).edit()
+                .putString(KEY_VEHICLE_PRODUCER, producer != null ? producer.name() : "BYD")
+                .putString(KEY_VEHICLE_MAKE, make != null ? make : "")
+                .putString(KEY_VEHICLE_YEAR, year != null ? year : "")
+                .apply();
+    }
+
+    public static void saveVehicleProducer(Context ctx, VehicleProducer producer) {
+        prefs(ctx).edit()
+                .putString(KEY_VEHICLE_PRODUCER, producer != null ? producer.name() : "BYD")
+                .apply();
+    }
+
+    private static final String KEY_FIRST_RUN_VERSION = "first_run_version";
+    private static final String PREFS_FIRST_RUN = "app_first_run";
+
+    public static String getFirstRunVersion(Context ctx) {
+        return ctx.getSharedPreferences(PREFS_FIRST_RUN, Context.MODE_PRIVATE)
+                .getString(KEY_FIRST_RUN_VERSION, "");
+    }
+
+    public static void setFirstRunVersion(Context ctx, String version) {
+        ctx.getSharedPreferences(PREFS_FIRST_RUN, Context.MODE_PRIVATE)
+                .edit().putString(KEY_FIRST_RUN_VERSION, version).apply();
+    }
+
+    /** When enabled, both sources are read each tick and compared in the log. */
+    public static boolean isDebugCompareEnabled(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_DEBUG_COMPARE, false);
+    }
+
+    public static void saveDebugCompareEnabled(Context ctx, boolean enabled) {
+        prefs(ctx).edit().putBoolean(KEY_DEBUG_COMPARE, enabled).apply();
+    }
+
     public static String autoGenerateCarName(Context ctx) {
+        if (cachedAutoCarName != null) return cachedAutoCarName;
         String vin = CANDataReader.sVin;
         if ("---".equals(vin)) vin = "";
 
         String defaultName = "";
         try {
             Process p = Runtime.getRuntime().exec(new String[]{"getprop", "persist.sys.byd.default_name"});
-            BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
-            defaultName = br.readLine();
-            br.close();
-            p.waitFor();
+            // waitFor() may hang indefinitely if getprop blocks; cap the wait so
+            // this method can never stall the UI thread (review #18). The timed
+            // waitFor/destroyForcibly variants need API 26; on API 24-25 fall back
+            // to the plain waitFor (still never touches the network).
+            boolean done;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                done = p.waitFor(2, TimeUnit.SECONDS);
+            } else {
+                p.waitFor();
+                done = true;
+            }
+            if (done) {
+                BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+                defaultName = br.readLine();
+                br.close();
+            } else {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    p.destroyForcibly();
+                } else {
+                    p.destroy();
+                }
+                LogBuffer.d("AppConfig", "getprop persist.sys.byd.default_name timed out");
+            }
         } catch (Exception e) {
             LogBuffer.d("AppConfig", "getprop persist.sys.byd.default_name failed: " + e.getMessage());
         }
@@ -392,7 +448,7 @@ public class AppConfig {
         String carName = safeName + (shortVin.isEmpty() ? "" : "_" + shortVin);
         if (carName.isEmpty()) carName = "byd_car";
 
-        cachedCarName = carName;
+        cachedAutoCarName = carName;
         return carName;
     }
 
@@ -434,8 +490,9 @@ public class AppConfig {
                 String typeStr = obj.optString("type", "sensor");
                 String key = obj.optString("key", "");
                 String value = obj.optString("value", null);
+                String displayType = obj.optString("displayType", null);
                 if (key.isEmpty()) continue;
-                tiles.add(DashboardTileFactory.create(ctx, typeStr, key, value));
+                tiles.add(DashboardTileFactory.create(ctx, typeStr, key, value, displayType));
             }
         } catch (Exception e) {
             LogBuffer.e("AppConfig", "loadDashboardTiles error: " + e.getMessage());
@@ -525,6 +582,33 @@ public class AppConfig {
         Set<String> denied = new HashSet<>(getDeniedPermissions(ctx));
         denied.add(permission);
         prefs(ctx).edit().putStringSet(KEY_DENIED_PERMISSIONS, denied).apply();
+    }
+
+    /**
+     * Remember parameter values entered for a preset (per command id), e.g.
+     * window percentages or AC temperature/fan. {@code null}/empty map removes
+     * the preset entry. Stored as one JSON object for all presets.
+     */
+    public static void savePresetParamValues(Context ctx, String presetId, java.util.Map<String, String> values) {
+        java.util.Map<String, java.util.Map<String, String>> all =
+                PresetParamValues.fromJson(prefs(ctx).getString(KEY_PRESET_PARAM_VALUES, null));
+        if (values == null || values.isEmpty()) {
+            all.remove(presetId);
+        } else {
+            all.put(presetId, new java.util.LinkedHashMap<>(values));
+        }
+        prefs(ctx).edit().putString(KEY_PRESET_PARAM_VALUES, PresetParamValues.toJson(all)).apply();
+    }
+
+    /**
+     * Load remembered parameter values for a preset (command id → value).
+     * Empty map when nothing was saved.
+     */
+    public static java.util.Map<String, String> getPresetParamValues(Context ctx, String presetId) {
+        java.util.Map<String, java.util.Map<String, String>> all =
+                PresetParamValues.fromJson(prefs(ctx).getString(KEY_PRESET_PARAM_VALUES, null));
+        java.util.Map<String, String> map = all.get(presetId);
+        return map != null ? map : java.util.Collections.emptyMap();
     }
 
     private static SharedPreferences prefs(Context ctx) {

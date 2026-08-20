@@ -43,16 +43,24 @@ public class SensorCommandRegistry {
     /**
      * Reverse mapping entry: which sensor can be used to verify that a command
      * actually changed the vehicle state, and what value is expected.
+     *
+     * <p>{@code value} is the command value (used to select the right link and
+     * to pre-fill dashboard commands). {@code expectedValue} is the sensor state
+     * that should be observed after the command runs (falls back to {@code value}
+     * when the map does not provide an explicit {@code expected}). For
+     * parameter-driven commands both are {@code null}.</p>
      */
     public static class SensorLink {
         public final String sensorKey;
-        public final String expectedValue;
+        public final String value;
         public final boolean needsParameter;
+        public final String expectedValue;
 
-        SensorLink(String sensorKey, String expectedValue, boolean needsParameter) {
+        SensorLink(String sensorKey, String value, boolean needsParameter, String expectedValue) {
             this.sensorKey = sensorKey;
-            this.expectedValue = expectedValue;
+            this.value = value;
             this.needsParameter = needsParameter;
+            this.expectedValue = expectedValue;
         }
     }
 
@@ -131,12 +139,13 @@ public class SensorCommandRegistry {
                 if (id.isEmpty()) continue;
                 boolean param = "parameter".equals(c.optString("value_source"));
                 String value = param ? null : c.optString("value");
+                String expected = value == null ? null : c.optString("expected", value);
                 List<SensorLink> list = commandToSensors.get(id);
                 if (list == null) {
                     list = new ArrayList<>();
                     commandToSensors.put(id, list);
                 }
-                list.add(new SensorLink(sensorKey, value, param));
+                list.add(new SensorLink(sensorKey, value, param, expected));
             }
         }
     }

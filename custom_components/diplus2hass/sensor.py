@@ -7,7 +7,7 @@ from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import DOMAIN, NUMERIC_SENSORS, ENUM_SENSORS, CONF_CAR_NAME, INTEGRATION_VERSION
-from . import SIGNAL_VEHICLE_DATA_UPDATED
+from . import SIGNAL_VEHICLE_DATA_UPDATED, async_replay_state
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -52,7 +52,7 @@ class DiplusSensor(SensorEntity, RestoreEntity):
         raw_value attribute. Enum sensors keep the raw string.
         """
         try:
-            return float(raw)
+            value = float(raw)
         except (ValueError, TypeError):
             if self._is_numeric:
                 attrs = dict(self._attr_extra_state_attributes)
@@ -60,6 +60,13 @@ class DiplusSensor(SensorEntity, RestoreEntity):
                 self._attr_extra_state_attributes = attrs
                 return None
             return raw
+        # A numeric value arrived again — drop the stale raw_value so it no
+        # longer misleads (see review #10).
+        if self._is_numeric and "raw_value" in self._attr_extra_state_attributes:
+            attrs = dict(self._attr_extra_state_attributes)
+            attrs.pop("raw_value", None)
+            self._attr_extra_state_attributes = attrs
+        return value
 
     def _restore_value(self, state_str):
         """Try to restore a numeric/string value from a saved state."""
@@ -98,7 +105,8 @@ class DiplusSensor(SensorEntity, RestoreEntity):
             written = False
 
             # Replay the chronological batch so intermediate values are recorded
-            # in HA history instead of being collapsed into the final value.
+            # in HA history at their collection time instead of being collapsed
+            # into the final value.
             # Prefer the pre-grouped per-signal index (O(1) lookup); fall back
             # to scanning the batch for payloads stored before the index existed.
             signal_index = data.get("signal_index")
@@ -106,16 +114,16 @@ class DiplusSensor(SensorEntity, RestoreEntity):
                 values = signal_index.get(self._signal_key, ())
             else:
                 values = (
-                    snapshot.get("s", {}).get(self._signal_key)
+                    (snapshot.get("t", 0), snapshot.get("s", {}).get(self._signal_key))
                     for snapshot in batch
                 )
-            for raw in values:
+            for t, raw in values:
                 if raw is not None:
                     self._attr_available = True
                     new_value = self._coerce_value(raw)
                     if new_value != self._attr_native_value:
                         self._attr_native_value = new_value
-                        self.async_write_ha_state()
+                        async_replay_state(self, t)
                         written = True
 
             # Fallback for non-batch updates (compatibility / empty batch).

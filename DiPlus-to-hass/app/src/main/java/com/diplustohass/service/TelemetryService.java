@@ -45,9 +45,12 @@ import com.diplustohass.rules.RuleEngine;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -57,7 +60,12 @@ public class TelemetryService extends Service {
 
     private static final int NOTIFICATION_ID = 1001;
     private static final String CHANNEL_ID = "diplus_telemetry_channel";
-    private static final long REFRESH_INTERVAL_MS = 5000;
+    // Native refresh cycles took 4500–5500 ms at a 5000 ms interval, so the
+    // async refresh almost never finished before the next tick and the cycle
+    // was regularly skipped (up to ~120/session, log analysis 2026-08-17 §2.5).
+    // Raised to 7000 ms to leave a comfortable margin once write-phase
+    // fallbacks add extra latency to a cycle.
+    private static final long REFRESH_INTERVAL_MS = 7000;
     private static final long FLUSH_INTERVAL_MS = 12000;
 
     private final IBinder binder = new LocalBinder();
@@ -609,7 +617,11 @@ public class TelemetryService extends Service {
                 sig.put(key, value);
             }
 
-            HassClient.collectSnapshot(this, lastLat, lastLon, lastAccuracy, sig.toString());
+            // Fix time (ms) is only meaningful when we have a fix; pass it in
+            // epoch seconds so HA can attribute the location to the real
+            // measurement moment instead of the snapshot collection time.
+            long fixTimeSec = hasValidLocation() ? lastLocTime / 1000 : 0;
+            HassClient.collectSnapshot(this, lastLat, lastLon, lastAccuracy, fixTimeSec, sig.toString());
         } catch (Exception e) {
             LogBuffer.e("TelemetryService", "collectSnapshot failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
@@ -873,7 +885,10 @@ public class TelemetryService extends Service {
             List<GeofenceZone> zones = AppConfig.loadGeofences(this);
             boolean visitedChanged = false;
             long now = System.currentTimeMillis();
+            // Collect all active zone ids to clean up stale keys.
+            Set<String> activeZoneIds = new HashSet<>();
             for (GeofenceZone z : zones) {
+                activeZoneIds.add(z.id);
                 float[] results = new float[1];
                 android.location.Location.distanceBetween(lat, lon, z.latitude, z.longitude, results);
                 float dist = results[0];
@@ -894,6 +909,19 @@ public class TelemetryService extends Service {
                 // build a friendly entity name for the dynamic geo_<id> key.
                 cachedSignalValues.put(key + "_name", z.name);
                 ensureGeofenceItem(key);
+            }
+            // Remove stale geo_ keys for zones that no longer exist.
+            for (Iterator<Map.Entry<String, String>> it = cachedSignalValues.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry<String, String> entry = it.next();
+                String k = entry.getKey();
+                if (k.startsWith("geo_") && !k.endsWith("_name")) {
+                    String zoneId = k.substring("geo_".length());
+                    if (!activeZoneIds.contains(zoneId)) {
+                        it.remove();
+                        cachedSignalValues.remove(k + "_name");
+                        LogBuffer.i("TelemetryService", "Removed stale geo_ keys for deleted zone: " + zoneId);
+                    }
+                }
             }
             if (visitedChanged) {
                 AppConfig.saveGeofences(this, zones);
@@ -922,6 +950,12 @@ public class TelemetryService extends Service {
         }
         CANDataItem item = new CANDataItem(0, key, "", -1);
         item.key = key;
+        // Geofence states are virtual (computed locally from GPS) and never read
+        // via the DiPlus getDiPars/getVal pipeline. Leave diplusName null so the
+        // item is skipped when building batch request templates; otherwise the
+        // "0x000" fallback name is sent to DiPlus, which answers
+        // {"success":false} and bloats the logs with group errors.
+        item.diplusName = null;
         item.value = cachedSignalValues.getOrDefault(key, "---");
         knownItems.add(item);
     }

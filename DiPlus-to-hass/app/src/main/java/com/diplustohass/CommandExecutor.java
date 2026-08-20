@@ -33,10 +33,22 @@ public class CommandExecutor {
         public final String verificationMessage;
         public final String expectedValue;
         public final String actualValue;
+        /** Interface that produced the final outcome: "native", "diplus" or null. */
+        public final String usedInterface;
+        /** Number of interface attempts before the final one (0/1/2). */
+        public final int fallbacks;
 
         public Result(boolean success, String response, String error, long elapsedMs,
                       boolean verified, String verificationMessage,
                       String expectedValue, String actualValue) {
+            this(success, response, error, elapsedMs, verified, verificationMessage,
+                    expectedValue, actualValue, null, 0);
+        }
+
+        public Result(boolean success, String response, String error, long elapsedMs,
+                      boolean verified, String verificationMessage,
+                      String expectedValue, String actualValue,
+                      String usedInterface, int fallbacks) {
             this.success = success;
             this.response = response;
             this.error = error;
@@ -45,11 +57,25 @@ public class CommandExecutor {
             this.verificationMessage = verificationMessage;
             this.expectedValue = expectedValue;
             this.actualValue = actualValue;
+            this.usedInterface = usedInterface;
+            this.fallbacks = fallbacks;
         }
     }
 
     /**
+     * Memory of the last successful write interface, used by the auto source to
+     * start with the interface that has been working (mirrors the read-side
+     * {@code CANDataReader.lastNativeWasOk}).
+     */
+    private static volatile boolean lastNativeWriteWasOk = false;
+
+    /**
      * Execute a command and verify the result when a linked sensor is known.
+     *
+     * <p>Delegates to {@link CommandWriter}, which applies the command through
+     * the native (autoservice) and/or DiPlus HTTP interfaces with mutual
+     * fallback, then verifies against the vehicle state when a linked sensor
+     * exists.
      *
      * @param ctx       application context
      * @param commandId stable command id from {@link CommandRegistry}
@@ -67,7 +93,7 @@ public class CommandExecutor {
                 + " value=" + (value != null && !value.isEmpty() ? value : "-")
                 + " chinese=" + (chineseCommand != null ? chineseCommand : "INVALID"));
 
-        if (chineseCommand == null) {
+        if (chineseCommand == null && !NativeCommandMap.hasNative(commandId)) {
             String msg = ctx.getString(R.string.commands_unknown_command, commandId,
                 value != null ? value : "");
             LogBuffer.w("CommandExecutor", "Unknown or invalid command: " + commandId + " value=" + value);
@@ -75,42 +101,59 @@ public class CommandExecutor {
                 ctx.getString(R.string.command_verify_no_link), null, null);
         }
 
-        DiPlusCommandSender.Result sendResult;
-        try {
-            sendResult = DiPlusCommandSender.send(ctx, chineseCommand);
-        } catch (Exception e) {
-            String msg = e.getClass().getSimpleName() + ": " + e.getMessage();
-            LogBuffer.e("CommandExecutor", "Send failed for " + chineseCommand + ": " + msg);
-            return new Result(false, null, msg, System.currentTimeMillis() - start,
-                false, ctx.getString(R.string.command_verify_send_failed), null, null);
-        }
+        NativeCommandMap.load(ctx);
 
-        long elapsed = System.currentTimeMillis() - start;
+        CommandWriter writer = new CommandWriter(
+            new NativeCommandWriter(
+                AdbShellExecutor::executeSync,
+                AppConfig.getAdbHost(ctx), AppConfig.getAdbPort(ctx)),
+            chinese -> {
+                DiPlusCommandSender.Result r = DiPlusCommandSender.send(ctx, chinese);
+                return new CommandWriter.SendResult(r.success, r.response, r.error);
+            },
+            (cid, v) -> {
+                Verification ver = verifyCommand(ctx, cid, v);
+                boolean noLink = ver.message != null
+                    && ver.message.equals(ctx.getString(R.string.command_verify_no_link));
+                return new CommandWriter.Verification(
+                    ver.verified, noLink, ver.message, ver.expectedValue, ver.actualValue);
+            },
+            new CommandWriter.Messages() {
+                @Override public String unknownCommand(String commandId, String value) {
+                    return ctx.getString(R.string.commands_unknown_command, commandId, value);
+                }
+                @Override public String verifyNoLink() {
+                    return ctx.getString(R.string.command_verify_no_link);
+                }
+                @Override public String commandsResultOk() {
+                    return ctx.getString(R.string.commands_result_ok_short);
+                }
+                @Override public String commandsResultFail() {
+                    return ctx.getString(R.string.commands_result_fail);
+                }
+            },
+            AppConfig.getTelemetrySource(ctx),
+            lastNativeWriteWasOk);
+
+        CommandWriter.Result r = writer.dispatch(commandId, value);
+        lastNativeWriteWasOk = CommandWriter.IFACE_NATIVE.equals(r.usedInterface);
         LogBuffer.i("CommandExecutor",
-            "DiPlus response success=" + sendResult.success
-                + " elapsed=" + sendResult.elapsedMs + "ms response=" + sendResult.response);
+            "[" + source + "] command id=" + commandId
+                + " result success=" + r.success
+                + " iface=" + (r.usedInterface != null ? r.usedInterface : "-")
+                + " fallbacks=" + r.fallbacks
+                + " verified=" + r.verified
+                + " elapsed=" + (System.currentTimeMillis() - start) + "ms"
+                + (r.error != null ? " msg=" + r.error : ""));
 
-        if (!sendResult.success) {
-            String error = sendResult.error != null ? sendResult.error
-                : ctx.getString(R.string.commands_result_fail);
-            return new Result(false, sendResult.response, error, elapsed,
-                false, ctx.getString(R.string.command_verify_send_failed), null, null);
-        }
-
-        // Verification: try to confirm the command really changed the vehicle state.
-        Verification verification = verifyCommand(ctx, commandId, value);
-        LogBuffer.i("CommandExecutor",
-            "Verification for " + commandId + ": " + verification.message
-                + (verification.actualValue != null ? " (actual=" + verification.actualValue + ")" : "")
-                + (verification.expectedValue != null ? " (expected=" + verification.expectedValue + ")" : ""));
-
-        String message = ctx.getString(R.string.commands_result_ok_short);
-        return new Result(true, sendResult.response, message, elapsed,
-            verification.verified, verification.message,
-            verification.expectedValue, verification.actualValue);
+        return new Result(r.success, r.response, r.error,
+            Math.max(r.elapsedMs, System.currentTimeMillis() - start),
+            r.verified, r.verificationMessage,
+            r.expectedValue, r.actualValue,
+            r.usedInterface, r.fallbacks);
     }
 
-    private static class Verification {
+    static class Verification {
         final boolean verified;
         final String message;
         final String expectedValue;
@@ -124,7 +167,7 @@ public class CommandExecutor {
         }
     }
 
-    private static Verification verifyCommand(Context ctx, String commandId, String value) {
+    static Verification verifyCommand(Context ctx, String commandId, String value) {
         List<SensorCommandRegistry.SensorLink> links =
             SensorCommandRegistry.getInstance(ctx).getSensorsForCommand(commandId);
         if (links == null || links.isEmpty()) {
@@ -139,7 +182,7 @@ public class CommandExecutor {
                 if (chosen == null) chosen = link;
                 continue;
             }
-            if (value != null && value.equals(link.expectedValue)) {
+            if (value != null && value.equals(link.value)) {
                 chosen = link;
                 break;
             }
@@ -149,7 +192,8 @@ public class CommandExecutor {
             return new Verification(false, ctx.getString(R.string.command_verify_no_link), null, null);
         }
 
-        String expected = chosen.needsParameter ? value : chosen.expectedValue;
+        String expected = chosen.needsParameter ? value
+                : (chosen.expectedValue != null ? chosen.expectedValue : chosen.value);
         if (expected == null || expected.isEmpty()) {
             return new Verification(false, ctx.getString(R.string.command_verify_no_link), null, null);
         }
@@ -174,7 +218,8 @@ public class CommandExecutor {
 
             if (actual != null) {
                 String translatedActual = SignalTranslator.translateEnumValue(chosen.sensorKey, actual);
-                if (valuesMatch(expected, translatedActual, chosen.sensorKey)) {
+                if (valuesMatch(expected, translatedActual, chosen.sensorKey)
+                        || isAcceptableInactiveState(chosen.sensorKey, translatedActual)) {
                     return new Verification(true,
                         ctx.getString(R.string.command_verify_ok),
                         expected, translatedActual);
@@ -209,6 +254,17 @@ public class CommandExecutor {
         } catch (NumberFormatException e) {
             return expected.equalsIgnoreCase(actual.trim());
         }
+    }
+
+    /**
+     * For sensors that report {@code invalid} when a feature is not applicable
+     * (child locks, hazard, DRL, door locks), accept {@code invalid} as a live
+     * reading rather than a verification mismatch.
+     */
+    private static boolean isAcceptableInactiveState(String sensorKey, String translatedActual) {
+        if (sensorKey == null || translatedActual == null) return false;
+        if (!"invalid".equalsIgnoreCase(translatedActual.trim())) return false;
+        return SignalTranslator.hasInvalidState(sensorKey);
     }
 
     private static double getNumericTolerance(String sensorKey) {

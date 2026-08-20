@@ -17,6 +17,8 @@ public class DashboardAdapter extends BaseAdapter {
 
     private static final int VIEW_TYPE_STANDARD = 0;
     private static final int VIEW_TYPE_ZONES = 1;
+    private static final int VIEW_TYPE_GAUGE = 2;
+    private static final int VIEW_TYPE_GRAPH = 3;
 
     private final Context context;
     private final List<DashboardTile> tiles;
@@ -93,10 +95,14 @@ public class DashboardAdapter extends BaseAdapter {
     @Override public Object getItem(int position) { return tiles.get(position); }
     @Override public long getItemId(int position) { return position; }
 
-    @Override public int getViewTypeCount() { return 2; }
+    @Override public int getViewTypeCount() { return 4; }
 
     @Override public int getItemViewType(int position) {
-        return hasZones(tiles.get(position)) ? VIEW_TYPE_ZONES : VIEW_TYPE_STANDARD;
+        DashboardTile tile = tiles.get(position);
+        if (hasZones(tile)) return VIEW_TYPE_ZONES;
+        if (tile.type == DashboardTile.Type.SENSOR && "gauge".equals(tile.displayType)) return VIEW_TYPE_GAUGE;
+        if (tile.type == DashboardTile.Type.SENSOR && "graph".equals(tile.displayType)) return VIEW_TYPE_GRAPH;
+        return VIEW_TYPE_STANDARD;
     }
 
     /** True when the tile is a preset with tap zones (e.g. volume/fan/temperature −/+). */
@@ -115,8 +121,22 @@ public class DashboardAdapter extends BaseAdapter {
     public View getView(int position, View convertView, ViewGroup parent) {
         ViewHolder vh;
         if (convertView == null) {
-            int layoutRes = getItemViewType(position) == VIEW_TYPE_ZONES
-                    ? R.layout.dashboard_tile_zones : R.layout.dashboard_tile;
+            int viewType = getItemViewType(position);
+            int layoutRes;
+            switch (viewType) {
+                case VIEW_TYPE_ZONES:
+                    layoutRes = R.layout.dashboard_tile_zones;
+                    break;
+                case VIEW_TYPE_GAUGE:
+                    layoutRes = R.layout.dashboard_tile_gauge;
+                    break;
+                case VIEW_TYPE_GRAPH:
+                    layoutRes = R.layout.dashboard_tile_graph;
+                    break;
+                default:
+                    layoutRes = R.layout.dashboard_tile;
+                    break;
+            }
             convertView = LayoutInflater.from(context).inflate(layoutRes, parent, false);
             vh = new ViewHolder();
             vh.icon = convertView.findViewById(R.id.tileIcon);
@@ -128,6 +148,9 @@ public class DashboardAdapter extends BaseAdapter {
             vh.deleteBadge = convertView.findViewById(R.id.tileDelete);
             vh.zoneLeft = convertView.findViewById(R.id.tileZoneLeft);
             vh.zoneRight = convertView.findViewById(R.id.tileZoneRight);
+            vh.gaugeArc = convertView.findViewById(R.id.tileGaugeArc);
+            vh.gaugeNeedle = convertView.findViewById(R.id.tileGaugeNeedle);
+            vh.graphCanvas = convertView.findViewById(R.id.tileGraphCanvas);
             convertView.setTag(vh);
         } else {
             vh = (ViewHolder) convertView.getTag();
@@ -161,19 +184,50 @@ public class DashboardAdapter extends BaseAdapter {
         }
 
         boolean showZones = !editMode && hasZones(tile);
-        if (vh.zoneLeft != null) vh.zoneLeft.setVisibility(showZones ? View.VISIBLE : View.GONE);
-        if (vh.zoneRight != null) vh.zoneRight.setVisibility(showZones ? View.VISIBLE : View.GONE);
+        if (vh.zoneLeft != null) {
+            Bitmap minus = showZones ? PresetIconResolver.resolve(context, "minus") : null;
+            vh.zoneLeft.setImageBitmap(minus);
+            vh.zoneLeft.setVisibility(showZones ? View.VISIBLE : View.GONE);
+        }
+        if (vh.zoneRight != null) {
+            Bitmap plus = showZones ? PresetIconResolver.resolve(context, "plus") : null;
+            vh.zoneRight.setImageBitmap(plus);
+            vh.zoneRight.setVisibility(showZones ? View.VISIBLE : View.GONE);
+        }
+
+        // Gauge-specific: rotate needle based on value.
+        if (vh.gaugeNeedle != null && "gauge".equals(tile.displayType)) {
+            vh.gaugeNeedle.setVisibility(View.VISIBLE);
+            float fraction = parseValueFraction(tile.value);
+            float angle = -90 + fraction * 180; // -90 to +90 degrees
+            vh.gaugeNeedle.setRotation(angle);
+        } else if (vh.gaugeNeedle != null) {
+            vh.gaugeNeedle.setVisibility(View.GONE);
+        }
+        if (vh.gaugeArc != null && "gauge".equals(tile.displayType)) {
+            vh.gaugeArc.setVisibility(View.VISIBLE);
+        } else if (vh.gaugeArc != null) {
+            vh.gaugeArc.setVisibility(View.GONE);
+        }
+
+        // Graph-specific: draw sparkline.
+        if (vh.graphCanvas != null && "graph".equals(tile.displayType)) {
+            vh.graphCanvas.setVisibility(View.VISIBLE);
+            drawSparkline(vh.graphCanvas, tile);
+        } else if (vh.graphCanvas != null) {
+            vh.graphCanvas.setVisibility(View.GONE);
+        }
 
         convertView.setOnTouchListener((v, event) -> {
             int action = event.getAction();
             if (action == MotionEvent.ACTION_DOWN) {
                 vh.lastTouchX = event.getX();
                 vh.lastTouchY = event.getY();
-                // Prevent GridView from intercepting the gesture so that clicks
-                // and long-clicks on tiles are handled by the item itself.
-                if (v.getParent() != null) {
-                    v.getParent().requestDisallowInterceptTouchEvent(true);
-                }
+                // Do NOT requestDisallowInterceptTouchEvent here: the GridView must
+                // stay free to take over the gesture once it turns into a scroll
+                // (touch slop exceeded) — otherwise swipes starting on a tile never
+                // scroll the dashboard. Clicks/long-clicks still reach the tile
+                // because the grid only intercepts real scrolls.
             } else if (action == MotionEvent.ACTION_UP) {
                 vh.lastTouchX = event.getX();
                 vh.lastTouchY = event.getY();
@@ -200,8 +254,29 @@ public class DashboardAdapter extends BaseAdapter {
     }
 
     static class ViewHolder {
-        TextView icon, label, value, unit, sub, deleteBadge, zoneLeft, zoneRight;
-        ImageView iconImage;
+        TextView icon, label, value, unit, sub, deleteBadge;
+        ImageView iconImage, zoneLeft, zoneRight;
+        View gaugeArc, gaugeNeedle, graphCanvas;
         float lastTouchX, lastTouchY;
+    }
+
+    /** Parse a numeric value string to a 0-1 fraction for gauge needle rotation. */
+    private static float parseValueFraction(String value) {
+        if (value == null || value.isEmpty() || value.equals("—")) return 0.5f;
+        try {
+            float v = Float.parseFloat(value.replace(",", "."));
+            // Assume range 0-100 for most sensors; clamp.
+            return Math.max(0f, Math.min(1f, v / 100f));
+        } catch (NumberFormatException e) {
+            return 0.5f;
+        }
+    }
+
+    /** Draw a simple sparkline on the graph canvas view. */
+    private static void drawSparkline(View canvas, DashboardTile tile) {
+        // Use a simple approach: set a background drawable with a sparkline.
+        // For now, just show the current value — a full sparkline would need
+        // a custom View with onDraw().
+        // TODO: Replace with a custom SparklineView in a future iteration.
     }
 }

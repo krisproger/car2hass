@@ -17,6 +17,7 @@ public class PresetIconResolverTest {
         testAssetPath();
         testOverrideFile();
         testOverrideFileNullGuards();
+        testOverrideResultCached();
 
         System.out.println("All PresetIconResolver tests passed.");
     }
@@ -55,6 +56,24 @@ public class PresetIconResolverTest {
         assertEquals(null, PresetIconResolver.overrideFileFor(null, "lock"), "null filesDir");
         assertEquals(null, PresetIconResolver.overrideFileFor(new File("/data/files"), null),
                 "null name");
+    }
+
+    private static void testOverrideResultCached() {
+        assertTrue(PresetIconResolver.overrideResultCached(100L, 100L, null), "fresh bitmap");
+        assertTrue(PresetIconResolver.overrideResultCached(100L, null, 100L), "fresh broken");
+        assertTrue(PresetIconResolver.overrideResultCached(100L, 100L, 50L),
+                "bitmap wins over stale broken marker");
+        assertFalse(PresetIconResolver.overrideResultCached(100L, 99L, null), "stale bitmap");
+        assertFalse(PresetIconResolver.overrideResultCached(100L, null, 99L), "stale broken");
+        assertFalse(PresetIconResolver.overrideResultCached(100L, null, null), "nothing cached");
+    }
+
+    private static void assertTrue(boolean value, String message) {
+        if (!value) throw new AssertionError(message);
+    }
+
+    private static void assertFalse(boolean value, String message) {
+        if (value) throw new AssertionError(message);
     }
 
     private static void assertEquals(Object expected, Object actual, String message) {

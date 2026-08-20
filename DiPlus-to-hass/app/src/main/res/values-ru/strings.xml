@@ -79,7 +79,14 @@
     <string name="settings_behaviour">Поведение</string>
     <string name="settings_system">Система</string>
     <string name="settings_service">Сервис</string>
+    <string name="settings_section_car">Авто</string>
+    <string name="settings_section_protocols">Сервисы / источники данных</string>
+    <string name="settings_section_smarthome">Умный дом</string>
+    <string name="settings_section_tech">Опции</string>
+    <string name="settings_section_misc">Прочее</string>
+    <string name="settings_section_about">О программе</string>
     <string name="settings_refresh_presets">Обновить пресеты</string>
+    <string name="settings_presets_checking">Проверка обновлений…</string>
     <string name="settings_preset_version">Версия пресетов: %1$d</string>
     <string name="settings_presets_updated">Пресеты обновлены</string>
     <string name="settings_presets_latest">Пресеты уже актуальны</string>
@@ -114,6 +121,21 @@
     <string name="settings_diplus_auth">Токен авторизации DiPlus (необязательно)</string>
     <string name="settings_diplus_auth_hint">Только если DiPlus требует авторизацию</string>
     <string name="settings_apply_background_mode">Применить режим фона</string>
+    <string name="settings_vehicle">Авто</string>
+    <string name="settings_vehicle_producer">Производитель</string>
+    <string name="settings_vehicle_make_hint">Марка / модель (например, Voyah FREE)</string>
+    <string name="settings_vehicle_year_hint">Год выпуска</string>
+    <string name="settings_vehicle_producer_byd">BYD</string>
+    <string name="settings_vehicle_producer_universal">Универсальный авто с Android</string>
+    <string name="settings_vehicle_channels_byd">Каналы: DiPlus → ADB (native) → системные свойства. Управление командами активно.</string>
+    <string name="settings_vehicle_channels_universal">Каналы: системные свойства + экспериментальные; DiPlus/ADB зондируются для анализа.</string>
+    <string name="settings_vehicle_commands_disabled">Управление командами недоступно для выбранного авто.</string>
+    <string name="settings_vehicle_research">Исследование каналов</string>
+    <string name="settings_vehicle_research_progress">Проверяем каналы: %1$d/%2$d</string>
+    <string-array name="vehicle_producers">
+        <item>@string/settings_vehicle_producer_byd</item>
+        <item>@string/settings_vehicle_producer_universal</item>
+    </string-array>
     <string name="background_mode_disabled">Режим фона отключён</string>
     <string name="background_mode_applied">Режим фона применён</string>
     <string name="background_mode_failed">Не удалось настроить режим фона. Приложение покажет команды ADB ниже — выполните их с компьютера. Чтобы использовать беспроводной ADB, сначала выполните "adb tcpip 5555", затем указанные команды.</string>
@@ -150,6 +172,9 @@
     <string name="settings_exported">Экспортировано:\n%1$s</string>
     <string name="settings_exported_download">Экспортировано в Download (MediaStore)</string>
     <string name="settings_export_failed">Экспорт не удался: %1$s</string>
+    <string name="settings_export_include_token">Включить токен доступа Home Assistant</string>
+    <string name="settings_export_token_warning">Внимание: Long-Lived Access Token даёт полный доступ к вашему Home Assistant. Не включайте галочку без необходимости.</string>
+    <string name="settings_export">Экспорт</string>
     <string name="settings_imported">Импортировано: %1$s</string>
     <string name="settings_import_failed">Импорт не удался: %1$s</string>
     <string name="settings_permission_granted">Разрешение получено, повторите действие</string>
@@ -313,7 +338,6 @@
     <string name="cmd_headlight_level">Высота фар</string>
     <string name="cmd_comfort_mode">Комфортный режим</string>
     <string name="cmd_adb_on">Беспроводной ADB включить</string>
-    <string name="cmd_adb_off">Беспроводной ADB выключить</string>
     <string name="cmd_theme">Тема</string>
     <string name="cmd_hud">HUD</string>
 
@@ -391,6 +415,13 @@
     <string name="dashboard_edit_mode_hint">Нажмите + чтобы добавить, 🗑️ чтобы удалить</string>
     <string name="dashboard_add_tile_title">Добавить плитку</string>
     <string name="dashboard_no_tile_settings">Настроек у этой плитки нет</string>
+    <string name="preset_save_apply">Сохранить и применить</string>
+    <string name="preset_custom_values">Свои значения</string>
+    <string name="preset_windows_open">Открыть</string>
+    <string name="preset_windows_close">Закрыть</string>
+    <string name="preset_windows_vent">Проветрить</string>
+    <string name="preset_turn_on">Вкл</string>
+    <string name="preset_turn_off">Выкл</string>
     <string name="dashboard_category_sensors">Сенсоры</string>
     <string name="dashboard_type_sensor">Сенсор</string>
     <string name="dashboard_type_command">Команда</string>
@@ -479,6 +510,7 @@
     <string name="nav_geofences">Геозоны</string>
     <string name="geofence_list_title">Геозоны</string>
     <string name="geofence_list_empty">Геозон пока нет. Нажмите +, чтобы создать.</string>
+    <string name="geofence_add">Добавить геозону</string>
     <string name="geofence_edit_title">Геозона</string>
     <string name="geofence_field_name">Название зоны</string>
     <string name="geofence_field_radius">Радиус (метры)</string>

@@ -55,7 +55,9 @@ class Diplus2HassConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return OptionsFlow(config_entry)
+        # The base OptionsFlow no longer accepts a config_entry argument
+        # (HA >= 2024.11); self.config_entry is set by the framework.
+        return OptionsFlow()
 
     def _get_schema(self):
         return vol.Schema(

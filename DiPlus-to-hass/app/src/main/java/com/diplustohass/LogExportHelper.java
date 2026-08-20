@@ -9,6 +9,7 @@ import android.provider.MediaStore;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
@@ -39,11 +40,18 @@ public class LogExportHelper {
         fullLog.append("Time: ").append(new Date().toString()).append("\n");
         fullLog.append("Source: All signals (merged)\n\n");
 
+        // In-memory buffer and persistent file log overlap (same events
+        // replayed into both sections). Dedup by full line text (timestamp
+        // included): a repeated timestamp line is the same event seen again.
+        // Legitimate repeats carry different timestamps and survive.
+        java.util.List<String> memoryLines = LogDedup.dedupeLines(LogBuffer.getText());
         fullLog.append("--- In-memory App Log ---\n");
-        fullLog.append(LogBuffer.getText()).append("\n");
+        appendLines(fullLog, memoryLines);
+        fullLog.append("\n");
 
         fullLog.append("--- Persistent File Log ---\n");
-        fullLog.append(LogBuffer.getFileLogText()).append("\n");
+        appendLines(fullLog, LogDedup.dedupeLines(LogBuffer.getFileLogText(), memoryLines));
+        fullLog.append("\n");
 
         fullLog.append("--- Logcat (DiPlus-to-hass) ---\n");
         try {
@@ -62,6 +70,34 @@ public class LogExportHelper {
         }
 
         return fullLog.toString().getBytes();
+    }
+
+    /**
+     * Collect the log bytes like {@link #buildLogBytes(Context)} and, when a
+     * vehicle research report path is given, append its contents.
+     */
+    public static byte[] buildLogBytes(Context context, String researchPath) {
+        byte[] base = buildLogBytes(context);
+        if (researchPath == null) return base;
+        File f = new File(researchPath);
+        if (!f.isFile()) return base;
+        try (FileInputStream in = new FileInputStream(f)) {
+            StringBuilder sb = new StringBuilder(new String(base, "UTF-8"));
+            sb.append("\n--- Research Report ---\n");
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0) sb.append(new String(buf, 0, n, "UTF-8"));
+            return sb.toString().getBytes("UTF-8");
+        } catch (Exception e) {
+            LogBuffer.w("LogExportHelper", "research attach fail: " + e.getMessage());
+            return base;
+        }
+    }
+
+    private static void appendLines(StringBuilder sb, java.util.List<String> lines) {
+        for (String line : lines) {
+            sb.append(line).append('\n');
+        }
     }
 
     /**

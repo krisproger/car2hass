@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.diplustohass"
-    android:versionCode="12"
-    android:versionName="2.0.0">
+    package="com.diplustohass">
 
     <!-- Network: HTTP to DiPlus loopback and Home Assistant -->
     <uses-permission android:name="android.permission.INTERNET" />
@@ -21,18 +19,18 @@
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
-    <!-- Background-mode / car-off operation -->
+    <!-- Background-mode / car-off operation.
+         WRITE_SECURE_SETTINGS: granted via "pm grant" in BackgroundModeManager to
+         keep the car network online while the car is off.
+         SCHEDULE_EXACT_ALARM: used by BootReceiver's AlarmManager fallback for
+         restarting the telemetry service; falls back to inexact alarms on API 31+
+         when the permission is not granted.
+         SYSTEM_ALERT_WINDOW / WRITE_SETTINGS were considered but are not used by
+         any code path and are deliberately not declared. -->
     <uses-permission android:name="android.permission.WRITE_SECURE_SETTINGS" />
-    <uses-permission android:name="android.permission.DEVICE_POWER" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
-
-    <!-- Removed: SCHEDULE_EXACT_ALARM / USE_EXACT_ALARM / START_ACTIVITIES_FROM_BACKGROUND
-         / SYSTEM_ALERT_WINDOW / WRITE_SETTINGS / WRITE_SECURE_SETTINGS — not required
-         for core telemetry or unavailable to regular apps. Keep-alive falls back to
-         inexact alarms when exact alarms are not allowed. -->
 
     <!-- BYD platform permissions (signature-level). Kept for rooted/system installs. -->
     <uses-permission android:name="android.permission.BYD" />

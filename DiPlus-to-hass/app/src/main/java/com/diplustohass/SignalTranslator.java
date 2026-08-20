@@ -37,15 +37,18 @@ public class SignalTranslator {
         VALUE_TRANS.put("开启缩时哨兵", "timelapse sentry on");
         VALUE_TRANS.put("开启中", "starting");
         VALUE_TRANS.put("无报警", "no alarm");
+        VALUE_TRANS.put("开启熄火录制", "parked recording on");
+        VALUE_TRANS.put("开启熄火哨兵", "engine-off sentry on");
+        VALUE_TRANS.put("报警中", "alarming");
+        VALUE_TRANS.put("无目标", "no target");
+        VALUE_TRANS.put("未移动", "not moving");
         VALUE_TRANS.put("晴天", "sunny");
         VALUE_TRANS.put("摄氏度", "°C");
         VALUE_TRANS.put("华氏度", "°F");
         VALUE_TRANS.put("外循环", "external");
         VALUE_TRANS.put("内循环", "recirculation");
         VALUE_TRANS.put("吹面", "face");
-        VALUE_TRANS.put("吹面/吹脚", "face/feet");
         VALUE_TRANS.put("吹脚", "feet");
-        VALUE_TRANS.put("吹脚/除霜", "feet/defrost");
         VALUE_TRANS.put("未生效", "inactive");
         VALUE_TRANS.put("禁用", "disabled");
         VALUE_TRANS.put("正常", "normal");
@@ -90,6 +93,28 @@ public class SignalTranslator {
         VALUE_TRANS.put("M", "M");
         VALUE_TRANS.put("S", "S");
         VALUE_TRANS.put("有车接近", "car approaching");
+        VALUE_TRANS.put("交流枪", "AC gun");
+        VALUE_TRANS.put("转换枪", "adapter gun");
+        VALUE_TRANS.put("放电枪", "discharge gun");
+        VALUE_TRANS.put("开始", "started");
+        VALUE_TRANS.put("完成", "done");
+        VALUE_TRANS.put("终止", "aborted");
+        VALUE_TRANS.put("激活1", "active1");
+        VALUE_TRANS.put("错误", "error");
+        VALUE_TRANS.put("状态3", "state3");
+        VALUE_TRANS.put("取消或无效", "cancelled");
+        VALUE_TRANS.put("状态4", "state4");
+        VALUE_TRANS.put("主动起步", "auto-start");
+        VALUE_TRANS.put("除霜", "defrost");
+        VALUE_TRANS.put("吹脚除霜", "feet+defrost");
+        VALUE_TRANS.put("吹面+吹脚+除霜", "face+feet+defrost");
+        VALUE_TRANS.put("吹面+除霜", "face+defrost");
+        VALUE_TRANS.put("存储异常", "storage error");
+        VALUE_TRANS.put("左转2", "left2");
+        VALUE_TRANS.put("右转2", "right2");
+        VALUE_TRANS.put("紧急", "emergency");
+        VALUE_TRANS.put("后闪灯", "rear flash");
+        VALUE_TRANS.put("闪灯", "flash");
         // AUTO-GENERATED VALUE TRANS END
     }
 
@@ -288,6 +313,25 @@ public class SignalTranslator {
         String lower = translatedValue.toLowerCase(Locale.US);
         return lower.equals("off") || lower.equals("offline") || lower.equals("inactive")
                 || lower.equals("disabled") || lower.equals("stopped");
+    }
+
+    /**
+     * Return true when {@code "invalid"} is a defined enum state for the sensor.
+     *
+     * <p>Sensors that report {@code invalid} when the feature is simply not
+     * applicable (child locks, hazard, DRL, door locks) should not make command
+     * verification fail — the sensor is alive but the state is not applicable.</p>
+     */
+    public static boolean hasInvalidState(String sensorKey) {
+        String labels = ENUM_LABELS.get(sensorKey);
+        if (labels == null || labels.isEmpty()) return false;
+        for (String part : labels.split(",")) {
+            String[] kv = part.split(":", 2);
+            if (kv.length == 2 && "invalid".equals(kv[1].trim())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     // Package-private helper used by the generator.

@@ -1,6 +1,7 @@
 package com.diplustohass;
 
 import android.app.AlertDialog;
+import android.app.ProgressDialog;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ComponentName;
@@ -23,6 +24,8 @@ import android.text.InputType;
 import android.text.TextUtils;
 import android.text.TextWatcher;
 import android.graphics.Typeface;
+import android.view.DragEvent;
+import android.view.Gravity;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
@@ -30,11 +33,13 @@ import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
+import android.widget.GridLayout;
 import android.widget.GridView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RadioGroup;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.Switch;
@@ -45,6 +50,15 @@ import com.diplustohass.rules.Rule;
 import com.diplustohass.rules.RuleRegistry;
 import com.diplustohass.rules.RulesListAdapter;
 import com.diplustohass.service.TelemetryService;
+import com.diplustohass.vehicle.ChannelResult;
+import com.diplustohass.vehicle.DataChannel;
+import com.diplustohass.vehicle.DiPlusChannel;
+import com.diplustohass.vehicle.ExperimentalChannel;
+import com.diplustohass.vehicle.NativeChannel;
+import com.diplustohass.vehicle.SysPropsChannel;
+import com.diplustohass.vehicle.VehicleProducer;
+import com.diplustohass.vehicle.VehicleProfile;
+import com.diplustohass.vehicle.VehicleResearch;
 
 import org.json.JSONObject;
 
@@ -84,10 +98,17 @@ public class MainActivity extends BaseLocalizedActivity {
 
     // Bottom navigation
     private View dashboardView, telemetryView, commandsView, rulesView, settingsView;
-    private LinearLayout navDashboard, navTelemetry, navCommands, navRules, navSettings, navAbout;
+    private LinearLayout navDashboard, navTelemetry, navCommands, navRules, navSettings;
     private View[] contentViews;
     private LinearLayout[] navItems;
     private int currentTab = 0;
+
+    // Settings sections (two-column layout)
+    private int selectedSettingsSection = 0;
+    private final View[] settingsSections = new View[4];
+    private Button btnVehicleResearch;
+    private ProgressDialog researchProgressDialog;
+    private String pendingResearchPath = null;
 
     private static MainActivity instance;
     private RulesListAdapter rulesAdapter;
@@ -103,11 +124,15 @@ public class MainActivity extends BaseLocalizedActivity {
     private final List<DashboardTile> dashboardTiles = new ArrayList<>();
     private final Map<String, String> pendingCommandValues = new HashMap<>();
     private final Map<String, Integer> lastSelectOptionIdx = new HashMap<>();
+    // Track last sent command for stateless toggle presets (mirror_heat, steering_heat, front_defrost, auto_high_beam)
+    private final Map<String, Boolean> statelessToggleOn = new HashMap<>();
     private boolean dashboardEditMode = false;
     private static final int DASHBOARD_GRID_CAPACITY = 16;
     private static final long DASHBOARD_EDIT_TIMEOUT_MS = 15000;
     private final Runnable dashboardEditTimeoutRunnable = this::exitDashboardEditMode;
     private Handler dashboardEditHandler;
+    // Drag-and-drop state.
+    private int dragSourcePosition = -1;
 
     // Storage permission continuation (used by log save on API < Q).
     private Runnable pendingStorageAction;
@@ -127,6 +152,8 @@ public class MainActivity extends BaseLocalizedActivity {
     private Spinner spinnerFileLogMode;
     private EditText editQueueMaxMb, editQueueMaxDays;
     private EditText editAdbHost, editAdbPort, editDiplusAuth;
+    private RadioGroup radioTelemetrySource;
+    private Switch switchDebugCompare;
     private TextView tvTestResult;
     private TextView tvPresetVersion;
 
@@ -253,7 +280,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
             // Default screen is dashboard.
             selectTab(0);
-            showAboutIfFirstRun();
+            handleFirstRunOfVersion();
 
             if (getIntent() != null && getIntent().getBooleanExtra("from_boot", false)) {
                 getIntent().removeExtra("from_boot");
@@ -289,8 +316,7 @@ public class MainActivity extends BaseLocalizedActivity {
         navCommands = findViewById(R.id.navCommands);
         navRules = findViewById(R.id.navRules);
         navSettings = findViewById(R.id.navSettings);
-        navAbout = findViewById(R.id.navAbout);
-        navItems = new LinearLayout[]{navDashboard, navTelemetry, navCommands, navRules, navSettings, navAbout};
+        navItems = new LinearLayout[]{navDashboard, navTelemetry, navCommands, navRules, navSettings};
     }
 
     private void initTelemetryList() {
@@ -672,7 +698,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private void exportLogShare() {
         new Thread(() -> {
             try {
-                final byte[] logBytes = LogExportHelper.buildLogBytes(this);
+                final byte[] logBytes = LogExportHelper.buildLogBytes(this, takeResearchPath());
                 handler.post(() -> shareLog(logBytes));
             } catch (Exception e) {
                 LogBuffer.e("Main", "exportLogShare failed: " + e.getMessage());
@@ -730,7 +756,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private void performLogSave() {
         new Thread(() -> {
             try {
-                final byte[] logBytes = LogExportHelper.buildLogBytes(this);
+                final byte[] logBytes = LogExportHelper.buildLogBytes(this, takeResearchPath());
                 final Uri uri = LogExportHelper.saveLogToDownloads(this, logBytes);
                 handler.post(() -> {
                     String message = uri != null
@@ -836,7 +862,6 @@ public class MainActivity extends BaseLocalizedActivity {
         navCommands.setOnClickListener(v -> selectTab(2));
         navRules.setOnClickListener(v -> selectTab(3));
         navSettings.setOnClickListener(v -> selectTab(4));
-        navAbout.setOnClickListener(v -> startActivity(new Intent(this, AboutActivity.class)));
     }
 
     private void selectTab(int index) {
@@ -951,6 +976,37 @@ public class MainActivity extends BaseLocalizedActivity {
                 showAddTilePicker();
             });
         }
+
+        // Drag-and-drop reordering in edit mode.
+        dashboardGrid.setOnItemLongClickListener((parent, view, position, id) -> {
+            if (!dashboardEditMode) return false;
+            DashboardTile tile = (DashboardTile) dashboardAdapter.getItem(position);
+            if (tile.isEmptyCell) return false;
+            dragSourcePosition = position;
+            ClipData data = ClipData.newPlainText("tile", tile.key);
+            View.DragShadowBuilder shadow = new View.DragShadowBuilder(view);
+            view.startDragAndDrop(data, shadow, null, 0);
+            return true;
+        });
+
+        dashboardGrid.setOnDragListener((v, event) -> {
+            if (!dashboardEditMode) return false;
+            int action = event.getAction();
+            if (action == DragEvent.ACTION_DROP) {
+                int dropPosition = dashboardGrid.pointToPosition(
+                        (int) event.getX(), (int) event.getY());
+                if (dropPosition >= 0 && dropPosition < dashboardAdapter.getCount()
+                        && dragSourcePosition >= 0) {
+                    DashboardTile droppedTile = (DashboardTile) dashboardAdapter.getItem(dropPosition);
+                    if (!droppedTile.isEmptyCell && dragSourcePosition != dropPosition) {
+                        swapTiles(dragSourcePosition, dropPosition);
+                    }
+                }
+                dragSourcePosition = -1;
+                return true;
+            }
+            return false;
+        });
     }
 
     private enum TileZone { LEFT, RIGHT, CENTER }
@@ -991,6 +1047,17 @@ public class MainActivity extends BaseLocalizedActivity {
     private void resetDashboardEditTimeout() {
         dashboardEditHandler.removeCallbacks(dashboardEditTimeoutRunnable);
         dashboardEditHandler.postDelayed(dashboardEditTimeoutRunnable, DASHBOARD_EDIT_TIMEOUT_MS);
+    }
+
+    /** Swap two tiles in the dashboard and refresh the adapter. */
+    private void swapTiles(int from, int to) {
+        List<DashboardTile> tiles = dashboardAdapter.getTiles();
+        if (from < 0 || to < 0 || from >= tiles.size() || to >= tiles.size()) return;
+        DashboardTile temp = tiles.get(from);
+        tiles.set(from, tiles.get(to));
+        tiles.set(to, temp);
+        dashboardAdapter.setTiles(tiles);
+        LogBuffer.i("Dashboard", "Swapped tile at " + from + " with " + to);
     }
 
     /** Pause the edit-mode auto-exit timer while an edit-mode dialog is open. */
@@ -1086,17 +1153,38 @@ public class MainActivity extends BaseLocalizedActivity {
 
         switch (preset.behavior) {
             case "toggle": {
-                // Determine current state from primary sensor and send the opposite command.
-                String state = getPresetSensorState(preset);
-                boolean isOn = isPresetStateTruthy(state, preset);
+                // Toggle with params (e.g. climate): when the user has saved
+                // custom values, offer [On, Off, Custom values] instead of a
+                // blind toggle.
+                if (!preset.params.isEmpty()) {
+                    java.util.Map<String, String> remembered =
+                            AppConfig.getPresetParamValues(this, preset.id);
+                    if (!remembered.isEmpty()) {
+                        showToggleWithParamsDialog(preset, remembered);
+                        break;
+                    }
+                }
                 DashboardPresetRegistry.PresetStateCommands cmds = preset.commands;
                 if (cmds == null) return;
+                boolean isOn;
+                if (preset.state.primarySensor != null) {
+                    // Stateful toggle: determine current state from primary sensor.
+                    String state = getPresetSensorState(preset);
+                    isOn = isPresetStateTruthy(state, preset);
+                } else {
+                    // Stateless toggle: track state in-memory.
+                    isOn = Boolean.TRUE.equals(statelessToggleOn.get(preset.id));
+                }
                 String cmdId = isOn ? cmds.offId : cmds.onId;
                 String cmdValue = isOn ? cmds.offValue : cmds.onValue;
                 if (cmdId.isEmpty()) return;
                 pendingCommandValues.put(cmdId, cmdValue != null ? cmdValue : "");
                 sendQuickCommand(cmdId);
                 pendingCommandValues.remove(cmdId);
+                // Update stateless tracking.
+                if (preset.state.primarySensor == null) {
+                    statelessToggleOn.put(preset.id, !isOn);
+                }
                 break;
             }
             case "command": {
@@ -1215,12 +1303,9 @@ public class MainActivity extends BaseLocalizedActivity {
                 && DashboardLogic.isStateTruthy(state, preset.state.truthy, preset.state.truthyMode);
     }
 
-    /** Normalized select-option comparison: case-insensitive, ignores + _ and spaces. */
+    /** Normalized select-option comparison: case-insensitive, ignores + _ - / : and spaces. */
     private static boolean selectValueMatches(String optionValue, String currentValue) {
-        if (optionValue == null || currentValue == null) return false;
-        String a = optionValue.toLowerCase(Locale.US).replace("+", "").replace("_", "").replace(" ", "");
-        String b = currentValue.toLowerCase(Locale.US).replace("+", "").replace("_", "").replace(" ", "");
-        return !a.isEmpty() && a.equals(b);
+        return DashboardLogic.selectOptionMatches(optionValue, currentValue);
     }
 
     private void sendDashboardCommand(DashboardTile tile) {
@@ -1254,6 +1339,7 @@ public class MainActivity extends BaseLocalizedActivity {
         container.setPadding(dp(16), dp(12), dp(16), dp(12));
 
         final List<EditText> inputs = new ArrayList<>();
+        final java.util.Map<String, String> remembered = AppConfig.getPresetParamValues(this, preset.id);
         for (DashboardPresetRegistry.PresetParam p : preset.params) {
             TextView label = new TextView(this);
             label.setText(DashboardPresetRegistry.pick(this, p.label, p.labelRu) + (p.unit.isEmpty() ? "" : " (" + p.unit + ")"));
@@ -1266,8 +1352,12 @@ public class MainActivity extends BaseLocalizedActivity {
                     InputType.TYPE_NUMBER_FLAG_DECIMAL |
                     InputType.TYPE_NUMBER_FLAG_SIGNED);
 
-            CANDataItem item = CANDataReader.findSignalByKey(p.sensor);
-            String current = item != null && !"---".equals(item.value) ? item.value : "";
+            // Prefill: remembered value wins over the live sensor reading.
+            String current = remembered.get(p.command);
+            if (current == null || current.isEmpty()) {
+                CANDataItem item = CANDataReader.findSignalByKey(p.sensor);
+                current = item != null && !"---".equals(item.value) ? item.value : "";
+            }
             if (current.isEmpty()) {
                 current = formatNumber(p.min);
             }
@@ -1277,22 +1367,14 @@ public class MainActivity extends BaseLocalizedActivity {
         }
 
         b.setView(container);
-        b.setPositiveButton(android.R.string.ok, (d, w) -> {
-            for (int i = 0; i < preset.params.size() && i < inputs.size(); i++) {
-                DashboardPresetRegistry.PresetParam p = preset.params.get(i);
-                String v = inputs.get(i).getText().toString().trim();
-                if (v.isEmpty()) continue;
-                try {
-                    double dval = Double.parseDouble(v.replace(',', '.'));
-                    if (dval < p.min) dval = p.min;
-                    if (dval > p.max) dval = p.max;
-                    v = p.step == (int) p.step ? String.valueOf((int) dval) : String.valueOf(dval);
-                } catch (NumberFormatException ignored) {
-                }
-                pendingCommandValues.put(p.command, v);
-                sendQuickCommand(p.command);
-                pendingCommandValues.remove(p.command);
-            }
+        // Neutral = save only; Positive = save + apply. No silent execution on OK.
+        b.setPositiveButton(R.string.preset_save_apply, (d, w) -> {
+            java.util.Map<String, String> values = collectPresetParamValues(preset, inputs);
+            AppConfig.savePresetParamValues(this, preset.id, values);
+            applyPresetParamValues(preset, values);
+        });
+        b.setNeutralButton(R.string.settings_save, (d, w) -> {
+            AppConfig.savePresetParamValues(this, preset.id, collectPresetParamValues(preset, inputs));
         });
         b.setNegativeButton(android.R.string.cancel, null);
         AlertDialog dialog = b.create();
@@ -1301,27 +1383,183 @@ public class MainActivity extends BaseLocalizedActivity {
         dialog.show();
     }
 
-    private void showPresetActionsDialog(DashboardPresetRegistry.DashboardPreset preset) {
-        AlertDialog.Builder b = new AlertDialog.Builder(this);
-        b.setTitle(DashboardPresetRegistry.pick(this, preset.label, preset.labelRu));
-
-        ListView list = new ListView(this);
-        List<String> labels = new ArrayList<>();
-        for (DashboardPresetRegistry.PresetAction a : preset.actions) {
-            labels.add(DashboardPresetRegistry.pick(this, a.label, a.labelRu));
+    /** Read the dialog inputs, clamp to param min/max and normalize to step. */
+    private java.util.Map<String, String> collectPresetParamValues(
+            DashboardPresetRegistry.DashboardPreset preset, List<EditText> inputs) {
+        java.util.Map<String, String> values = new java.util.LinkedHashMap<>();
+        for (int i = 0; i < preset.params.size() && i < inputs.size(); i++) {
+            DashboardPresetRegistry.PresetParam p = preset.params.get(i);
+            String v = inputs.get(i).getText().toString().trim();
+            if (v.isEmpty()) continue;
+            try {
+                double dval = Double.parseDouble(v.replace(',', '.'));
+                if (dval < p.min) dval = p.min;
+                if (dval > p.max) dval = p.max;
+                v = p.step == (int) p.step ? String.valueOf((int) dval) : String.valueOf(dval);
+            } catch (NumberFormatException ignored) {
+            }
+            values.put(p.command, v);
         }
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, labels);
-        list.setAdapter(adapter);
+        return values;
+    }
 
-        AlertDialog dialog = b.setView(list).setNegativeButton(android.R.string.cancel, null).create();
-        list.setOnItemClickListener((parent, view, position, id) -> {
-            DashboardPresetRegistry.PresetAction action = preset.actions.get(position);
-            LogBuffer.i("Dashboard", "Preset action " + preset.id + "/" + action.id + " command=" + action.command + " value=" + action.value);
-            pendingCommandValues.put(action.command, action.value != null ? action.value : "");
-            sendQuickCommand(action.command);
-            pendingCommandValues.remove(action.command);
-            dialog.dismiss();
-        });
+    /** Send the given parameter values as commands (each command id once). */
+    private void applyPresetParamValues(DashboardPresetRegistry.DashboardPreset preset,
+                                        java.util.Map<String, String> values) {
+        for (DashboardPresetRegistry.PresetParam p : preset.params) {
+            String v = values.get(p.command);
+            if (v == null || v.isEmpty()) continue;
+            // Skip no-op commands (e.g. sunroof=0 when it is already closed):
+            // every extra command crowds the DiPlus voice queue and increases
+            // the chance of a lost or garbled window command.
+            if (isPresetParamAtTarget(p, v)) {
+                LogBuffer.i("Dashboard", "Preset param " + preset.id + "/" + p.command
+                        + " already at " + v + " — command skipped");
+                continue;
+            }
+            LogBuffer.i("Dashboard", "Preset param " + preset.id + "/" + p.command + " value=" + v);
+            pendingCommandValues.put(p.command, v);
+            sendQuickCommand(p.command);
+            pendingCommandValues.remove(p.command);
+        }
+    }
+
+    /** True when the param's linked sensor already reads the target value (±1). */
+    private boolean isPresetParamAtTarget(DashboardPresetRegistry.PresetParam p, String targetValue) {
+        if (p.sensor == null || p.sensor.isEmpty()) return false;
+        CANDataItem item = CANDataReader.findSignalByKey(p.sensor);
+        if (item == null || item.value == null || "---".equals(item.value)) return false;
+        try {
+            double cur = Double.parseDouble(item.value.replace(',', '.'));
+            double tgt = Double.parseDouble(targetValue.replace(',', '.'));
+            return Math.abs(cur - tgt) <= 1.0;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private void showPresetActionsDialog(DashboardPresetRegistry.DashboardPreset preset) {
+        if ("windows".equals(preset.id)) {
+            showWindowsPresetDialog(preset);
+            return;
+        }
+
+        List<ActionItem> items = new ArrayList<>();
+        for (DashboardPresetRegistry.PresetAction a : preset.actions) {
+            items.add(new ActionItem(DashboardPresetRegistry.pick(this, a.label, a.labelRu), () -> {
+                LogBuffer.i("Dashboard", "Preset action " + preset.id + "/" + a.id + " command=" + a.command + " value=" + a.value);
+                pendingCommandValues.put(a.command, a.value != null ? a.value : "");
+                sendQuickCommand(a.command);
+                pendingCommandValues.remove(a.command);
+            }));
+        }
+        addCustomValuesButton(preset, items);
+        showActionButtonsDialog(DashboardPresetRegistry.pick(this, preset.label, preset.labelRu), items);
+    }
+
+    /** Windows preset: Close all / Open 4 windows / Vent / Custom values. */
+    private void showWindowsPresetDialog(DashboardPresetRegistry.DashboardPreset preset) {
+        List<ActionItem> items = new ArrayList<>();
+        items.add(new ActionItem(getString(R.string.preset_windows_close), () -> sendPresetCommand("windows_close_all", null)));
+        items.add(new ActionItem(getString(R.string.preset_windows_open), () -> {
+            // Open the 4 door windows to 100%; sunroof and sunshade untouched.
+            sendPresetCommand("window_driver", "100");
+            sendPresetCommand("window_passenger", "100");
+            sendPresetCommand("window_rear_left", "100");
+            sendPresetCommand("window_rear_right", "100");
+        }));
+        items.add(new ActionItem(getString(R.string.preset_windows_vent), () -> sendPresetCommand("windows_vent", null)));
+        addCustomValuesButton(preset, items);
+        showActionButtonsDialog(DashboardPresetRegistry.pick(this, preset.label, preset.labelRu), items);
+    }
+
+    /** Append a "Custom values" button applying remembered params (hidden when none). */
+    private void addCustomValuesButton(DashboardPresetRegistry.DashboardPreset preset, List<ActionItem> items) {
+        if (preset.params.isEmpty()) return;
+        java.util.Map<String, String> remembered = AppConfig.getPresetParamValues(this, preset.id);
+        if (remembered.isEmpty()) return;
+        items.add(new ActionItem(getString(R.string.preset_custom_values), () ->
+                applyPresetParamValues(preset, remembered)));
+    }
+
+    private void sendPresetCommand(String command, String value) {
+        LogBuffer.i("Dashboard", "Preset command " + command + " value=" + value);
+        pendingCommandValues.put(command, value != null ? value : "");
+        sendQuickCommand(command);
+        pendingCommandValues.remove(command);
+    }
+
+    /** Toggle-with-params tap when custom values exist: [On, Off, Custom values]. */
+    private void showToggleWithParamsDialog(DashboardPresetRegistry.DashboardPreset preset,
+                                            java.util.Map<String, String> remembered) {
+        DashboardPresetRegistry.PresetStateCommands cmds = preset.commands;
+        if (cmds == null) return;
+        List<ActionItem> items = new ArrayList<>();
+        if (!cmds.onId.isEmpty()) {
+            items.add(new ActionItem(getString(R.string.preset_turn_on), () ->
+                    sendPresetCommand(cmds.onId, cmds.onValue)));
+        }
+        if (!cmds.offId.isEmpty()) {
+            items.add(new ActionItem(getString(R.string.preset_turn_off), () ->
+                    sendPresetCommand(cmds.offId, cmds.offValue)));
+        }
+        items.add(new ActionItem(getString(R.string.preset_custom_values), () ->
+                applyPresetParamValues(preset, remembered)));
+        showActionButtonsDialog(DashboardPresetRegistry.pick(this, preset.label, preset.labelRu), items);
+    }
+
+    /** One labeled action button in a {@link #showActionButtonsDialog} grid. */
+    private static final class ActionItem {
+        final String label;
+        final Runnable onClick;
+
+        ActionItem(String label, Runnable onClick) {
+            this.label = label;
+            this.onClick = onClick;
+        }
+    }
+
+    /**
+     * Dialog with a grid of action buttons: 2 columns for 3+ items, 1 column
+     * for 1–2 items. Each button takes the full column width and runs its
+     * action, then dismisses the dialog.
+     */
+    private void showActionButtonsDialog(String title, List<ActionItem> items) {
+        AlertDialog.Builder b = new AlertDialog.Builder(this);
+        b.setTitle(title);
+
+        int columns = items.size() >= 3 ? 2 : 1;
+        GridLayout grid = new GridLayout(this);
+        grid.setColumnCount(columns);
+        int pad = dp(8);
+        grid.setPadding(pad, pad, pad, pad);
+
+        AlertDialog dialog = b.setView(grid)
+                .setNegativeButton(android.R.string.cancel, null)
+                .create();
+        for (int i = 0; i < items.size(); i++) {
+            Button btn = new Button(this);
+            btn.setText(items.get(i).label);
+            btn.setTextColor(getResources().getColor(R.color.textPrimary));
+            btn.setBackgroundResource(R.drawable.bg_action_button);
+            btn.setAllCaps(false);
+
+            GridLayout.LayoutParams lp = new GridLayout.LayoutParams();
+            lp.width = 0;
+            lp.height = GridLayout.LayoutParams.WRAP_CONTENT;
+            lp.columnSpec = GridLayout.spec(GridLayout.UNDEFINED, 1f);
+            lp.setGravity(Gravity.FILL_HORIZONTAL);
+            int margin = dp(6);
+            lp.setMargins(margin, margin, margin, margin);
+            btn.setLayoutParams(lp);
+
+            ActionItem item = items.get(i);
+            btn.setOnClickListener(v -> {
+                item.onClick.run();
+                dialog.dismiss();
+            });
+            grid.addView(btn);
+        }
         dialog.show();
     }
 
@@ -1386,9 +1624,12 @@ public class MainActivity extends BaseLocalizedActivity {
 
             if (entry.valueType == CommandRegistry.ValueType.RANGE ||
                     entry.valueType == CommandRegistry.ValueType.NUMBER) {
-                input.setInputType(InputType.TYPE_CLASS_NUMBER |
-                        InputType.TYPE_NUMBER_FLAG_DECIMAL |
-                        InputType.TYPE_NUMBER_FLAG_SIGNED);
+                int type = InputType.TYPE_CLASS_NUMBER;
+                if (entry.valueType == CommandRegistry.ValueType.RANGE) {
+                    type |= InputType.TYPE_NUMBER_FLAG_DECIMAL;
+                }
+                type |= InputType.TYPE_NUMBER_FLAG_SIGNED;
+                input.setInputType(type);
             }
             if (entry.valueType == CommandRegistry.ValueType.RANGE && TextUtils.isEmpty(currentValue)) {
                 input.setText(String.valueOf((int) entry.minValue));
@@ -1421,10 +1662,36 @@ public class MainActivity extends BaseLocalizedActivity {
         dashboardTiles.clear();
         List<DashboardTile> saved = AppConfig.loadDashboardTiles(this);
         if (saved != null && !saved.isEmpty()) {
-            dashboardTiles.addAll(saved);
+            dashboardTiles.addAll(dropTilesWithRemovedPresets(saved));
         } else {
             dashboardTiles.addAll(DashboardTileFactory.defaultTiles(this));
         }
+    }
+
+    /**
+     * Drop saved preset tiles whose preset no longer exists in the registry
+     * (e.g. presets removed from the catalogue) so they do not linger as dead
+     * tiles after a preset update. Persists the cleaned list when anything was
+     * removed.
+     */
+    private List<DashboardTile> dropTilesWithRemovedPresets(List<DashboardTile> tiles) {
+        DashboardPresetRegistry registry = DashboardPresetRegistry.getInstance(this);
+        List<DashboardTile> kept = new ArrayList<>();
+        boolean dropped = false;
+        for (DashboardTile tile : tiles) {
+            boolean valid = true;
+            if (tile.type == DashboardTile.Type.PRESET && tile.presetId != null) {
+                valid = registry.getPreset(tile.presetId) != null;
+            }
+            if (valid) {
+                kept.add(tile);
+            } else {
+                dropped = true;
+                LogBuffer.i("Dashboard", "Dropping tile for removed preset " + tile.presetId);
+            }
+        }
+        if (dropped) AppConfig.saveDashboardTiles(this, kept);
+        return kept;
     }
 
     private void updateDashboard(List<CANDataItem> items) {
@@ -1648,8 +1915,13 @@ public class MainActivity extends BaseLocalizedActivity {
         String format = DashboardPresetRegistry.pick(this, display.valueFormat, display.valueFormatRu);
 
         if (preset.state.primarySensor == null) {
-            // Stateless toggle (e.g. auto_high_beam) — nothing to display.
-            tile.setValue("", "");
+            // Stateless toggle (mirror_heat, steering_heat, front_defrost, auto_high_beam)
+            // — track state in-memory and display current state.
+            boolean isOn = Boolean.TRUE.equals(statelessToggleOn.get(preset.id));
+            String label = isOn
+                    ? DashboardPresetRegistry.pick(this, display.onLabel, display.onLabelRu)
+                    : DashboardPresetRegistry.pick(this, display.offLabel, display.offLabelRu);
+            tile.setValue(label, "");
             tile.setSub("");
             tile.setAlert(false);
             return;
@@ -1720,6 +1992,10 @@ public class MainActivity extends BaseLocalizedActivity {
     private String substituteSensorPlaceholders(String text, Map<String, CANDataItem> byKey) {
         if (text == null || text.isEmpty()) return "";
         String out = text;
+        // Special placeholder: {door_status} — aggregated door status text.
+        if (out.contains("{door_status}")) {
+            out = out.replace("{door_status}", buildDoorStatusText(byKey));
+        }
         for (Map.Entry<String, CANDataItem> e : byKey.entrySet()) {
             String placeholder = "{" + e.getKey() + "}";
             if (out.contains(placeholder)) {
@@ -1730,6 +2006,22 @@ public class MainActivity extends BaseLocalizedActivity {
             }
         }
         return out;
+    }
+
+    /** Build a compact door status string from all door sensors. */
+    private String buildDoorStatusText(Map<String, CANDataItem> byKey) {
+        String[] doorKeys = {"driver_door", "passenger_door", "rear_left_door", "rear_right_door", "trunk"};
+        int openCount = 0;
+        int total = 0;
+        for (String key : doorKeys) {
+            CANDataItem item = byKey.get(key);
+            if (item == null || "---".equals(item.value)) continue;
+            total++;
+            String translated = SignalTranslator.translateEnumValue(key, item.value);
+            if ("open".equals(translated)) openCount++;
+        }
+        if (openCount == 0) return total > 0 ? "All closed" : "—";
+        return String.format(Locale.US, "%d/%d open", openCount, total);
     }
 
     private void updateTile(String key, CANDataItem item, String unit, String sub) {
@@ -2308,12 +2600,14 @@ public class MainActivity extends BaseLocalizedActivity {
         LogBuffer.i("Main", "Saved disabled signals (count=" + pendingDisabledKeys.size() + ")");
     }
 
-    private void showAboutIfFirstRun() {
-        SharedPreferences sp = getSharedPreferences("app_first_run", Context.MODE_PRIVATE);
-        if (!sp.getBoolean("about_shown", false)) {
-            sp.edit().putBoolean("about_shown", true).apply();
-            startActivity(new Intent(this, AboutActivity.class));
-        }
+    private void handleFirstRunOfVersion() {
+        String current = AppInfo.getVersionString(this);
+        String seen = AppConfig.getFirstRunVersion(this);
+        if (current == null || current.equals(seen)) return;
+        AppConfig.setFirstRunVersion(this, current);
+        LogBuffer.i("Main", "First run of version " + current + " — auto-start settings + About");
+        openAutoStartSettings(this);
+        showAboutDialog();
     }
 
     @Override
@@ -2364,6 +2658,8 @@ public class MainActivity extends BaseLocalizedActivity {
         editAdbHost = settingsView.findViewById(R.id.editAdbHost);
         editAdbPort = settingsView.findViewById(R.id.editAdbPort);
         editDiplusAuth = settingsView.findViewById(R.id.editDiplusAuth);
+        radioTelemetrySource = settingsView.findViewById(R.id.radioTelemetrySource);
+        switchDebugCompare = settingsView.findViewById(R.id.switchDebugCompare);
         tvTestResult = settingsView.findViewById(R.id.tvTestResult);
         tvPresetVersion = settingsView.findViewById(R.id.tvPresetVersion);
         TextView tvHttpWarning = settingsView.findViewById(R.id.tvHttpWarning);
@@ -2383,8 +2679,6 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsView.findViewById(R.id.btnOpenRapidMode).setOnClickListener(v -> openRapidModeSettings(this));
         settingsView.findViewById(R.id.btnApplyBackgroundMode).setOnClickListener(v -> applyBackgroundMode());
         settingsView.findViewById(R.id.btnLanguage).setOnClickListener(v -> showLanguageDialog());
-        settingsView.findViewById(R.id.btnGeofences).setOnClickListener(v ->
-                startActivity(new Intent(this, GeofenceListActivity.class)));
         settingsView.findViewById(R.id.btnRefreshPresets).setOnClickListener(v -> refreshPresets());
         updatePresetVersionLabel();
 
@@ -2395,11 +2689,330 @@ public class MainActivity extends BaseLocalizedActivity {
                 .setPositiveButton(android.R.string.ok, null)
                 .show()
         );
+
+        setupSettingsSections();
+        setupVehicleCard();
+    }
+
+    private void setupSettingsSections() {
+        settingsSections[0] = settingsView.findViewById(R.id.settings_section_car);
+        settingsSections[1] = settingsView.findViewById(R.id.settings_section_protocols);
+        settingsSections[2] = settingsView.findViewById(R.id.settings_section_smarthome);
+        settingsSections[3] = settingsView.findViewById(R.id.settings_section_tech);
+
+        configureNavItem(R.id.navSettingsCar, "◈", R.string.settings_section_car);
+        configureNavItem(R.id.navSettingsProtocols, "⇄", R.string.settings_section_protocols);
+        configureNavItem(R.id.navSettingsSmarthome, "⌂", R.string.settings_section_smarthome);
+        configureNavItem(R.id.navSettingsGeofences, "◎", R.string.nav_geofences);
+        configureNavItem(R.id.navSettingsTech, "⚙", R.string.settings_section_tech);
+        configureNavItem(R.id.navSettingsAbout, "ⓘ", R.string.settings_section_about);
+
+        settingsView.findViewById(R.id.navSettingsCar).setOnClickListener(v -> selectSettingsSection(0));
+        settingsView.findViewById(R.id.navSettingsProtocols).setOnClickListener(v -> selectSettingsSection(1));
+        settingsView.findViewById(R.id.navSettingsSmarthome).setOnClickListener(v -> selectSettingsSection(2));
+        settingsView.findViewById(R.id.navSettingsGeofences).setOnClickListener(v ->
+                startActivity(new Intent(this, GeofenceListActivity.class)));
+        settingsView.findViewById(R.id.navSettingsTech).setOnClickListener(v -> selectSettingsSection(3));
+        settingsView.findViewById(R.id.navSettingsAbout).setOnClickListener(v -> showAboutDialog());
+        selectSettingsSection(0);
+    }
+
+    private void configureNavItem(int navId, String icon, int labelRes) {
+        LinearLayout item = settingsView.findViewById(navId);
+        if (item == null) return;
+        TextView label = item.findViewById(R.id.nav_item_label);
+        TextView iconView = item.findViewById(R.id.nav_item_icon);
+        if (label != null) label.setText(labelRes);
+        if (iconView != null) iconView.setText(icon);
+    }
+
+    private void selectSettingsSection(int index) {
+        selectedSettingsSection = index;
+        for (int i = 0; i < settingsSections.length; i++) {
+            settingsSections[i].setVisibility(i == index ? View.VISIBLE : View.GONE);
+        }
+        int[] navIds = {R.id.navSettingsCar, R.id.navSettingsProtocols, R.id.navSettingsSmarthome,
+                        R.id.navSettingsTech};
+        for (int i = 0; i < navIds.length; i++) {
+            View item = settingsView.findViewById(navIds[i]);
+            item.setSelected(i == index);
+        }
+    }
+
+    private void setupVehicleCard() {
+        Spinner spinnerProducer = settingsView.findViewById(R.id.spinnerVehicleProducer);
+        ArrayAdapter<CharSequence> producerAdapter = ArrayAdapter.createFromResource(this,
+                R.array.vehicle_producers, android.R.layout.simple_spinner_item);
+        producerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerProducer.setAdapter(producerAdapter);
+        spinnerProducer.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                boolean universal = position == 1;
+                AppConfig.saveVehicleProducer(MainActivity.this,
+                        universal ? VehicleProducer.UNIVERSAL : VehicleProducer.BYD);
+                updateVehicleSectionVisibility();
+                scheduleSave();
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        });
+        ((EditText) settingsView.findViewById(R.id.editVehicleMake)).addTextChangedListener(autoSaveWatcher);
+        ((EditText) settingsView.findViewById(R.id.editVehicleYear)).addTextChangedListener(autoSaveWatcher);
+        btnVehicleResearch = settingsView.findViewById(R.id.btnVehicleResearch);
+        btnVehicleResearch.setOnClickListener(v -> runVehicleResearch());
+        updateVehicleSectionVisibility();
+    }
+
+    private void updateVehicleSectionVisibility() {
+        boolean universal = AppConfig.getVehicleProducer(this).equals("UNIVERSAL");
+        TextView ch = settingsView.findViewById(R.id.tvVehicleChannels);
+        if (ch != null) ch.setText(universal
+                ? R.string.settings_vehicle_channels_universal
+                : R.string.settings_vehicle_channels_byd);
+        settingsView.findViewById(R.id.tvVehicleCommandsDisabled)
+                .setVisibility(universal ? View.VISIBLE : View.GONE);
+        settingsView.findViewById(R.id.btnVehicleResearch)
+                .setVisibility(universal ? View.VISIBLE : View.GONE);
+    }
+
+    private void runVehicleResearch() {
+        btnVehicleResearch.setEnabled(false);
+        List<DataChannel> channels = new ArrayList<>();
+        channels.add(new SysPropsChannel());
+        channels.add(new DiPlusChannel());
+        channels.add(new NativeChannel());
+        channels.add(new ExperimentalChannel());
+        VehicleProfile profile = AppConfig.getVehicleProfile(this);
+
+        researchProgressDialog = new ProgressDialog(this);
+        researchProgressDialog.setTitle(R.string.settings_vehicle_research);
+        researchProgressDialog.setMessage(getString(R.string.settings_vehicle_research_progress, 0, channels.size()));
+        researchProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
+        researchProgressDialog.setMax(channels.size());
+        researchProgressDialog.setCancelable(false);
+        researchProgressDialog.show();
+
+        new Thread(() -> {
+            VehicleResearch.ProgressListener listener = (done, total, name) -> runOnUiThread(() -> {
+                if (researchProgressDialog != null) {
+                    researchProgressDialog.setProgress(done);
+                    researchProgressDialog.setMessage(
+                            getString(R.string.settings_vehicle_research_progress, done, total));
+                }
+            });
+            List<ChannelResult> results = VehicleResearch.run(this, channels, profile, listener);
+            String path = VehicleResearch.writeReport(this, profile, results);
+            runOnUiThread(() -> {
+                if (researchProgressDialog != null) {
+                    researchProgressDialog.dismiss();
+                    researchProgressDialog = null;
+                }
+                btnVehicleResearch.setEnabled(true);
+                showResearchSummaryDialog(results, path);
+            });
+        }).start();
+    }
+
+    private void showResearchSummaryDialog(List<ChannelResult> results, String path) {
+        new AlertDialog.Builder(this)
+            .setTitle(R.string.settings_vehicle_research)
+            .setMessage(VehicleResearch.summary(results))
+            .setPositiveButton(android.R.string.ok, null)
+            .setNeutralButton(R.string.send_log, (d, w) -> sendResearchLog(path))
+            .show();
+    }
+
+    private void sendResearchLog(String path) {
+        pendingResearchPath = path;
+        showLogExportDialog();
+    }
+
+    private String takeResearchPath() {
+        String path = pendingResearchPath;
+        pendingResearchPath = null;
+        if (path != null) return path;
+        if (!"UNIVERSAL".equals(AppConfig.getVehicleProducer(this))) return null;
+        return findLatestResearchFile();
+    }
+
+    private String findLatestResearchFile() {
+        File dir = getExternalFilesDir(null);
+        if (dir == null) return null;
+        File[] files = dir.listFiles((d, name) -> name.startsWith("research_"));
+        if (files == null || files.length == 0) return null;
+        File latest = null;
+        for (File f : files) {
+            if (latest == null || f.lastModified() > latest.lastModified()) latest = f;
+        }
+        return latest != null ? latest.getAbsolutePath() : null;
+    }
+
+    private static final String ABOUT_PROJECT_URL = "https://teplitzky.ru/diplus2hass/";
+    private static final String ABOUT_TELEGRAM_URL = "https://t.me/bydiplus2hass";
+
+    private void showAboutDialog() {
+        View content = getLayoutInflater().inflate(R.layout.activity_about, null, false);
+        try {
+            ((TextView) content.findViewById(R.id.tvVersion))
+                    .setText(getString(R.string.about_version, AppInfo.getVersionString(this)));
+            setupAboutContent(content);
+        } catch (Exception e) {
+            LogBuffer.e("Main", "setupAboutContent: " + e.getMessage());
+        }
+        new AlertDialog.Builder(this)
+                .setView(content)
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
+    }
+
+    private void setupAboutContent(View root) {
+        try {
+            TextView tvSite = root.findViewById(R.id.tvSite);
+            if (tvSite != null) tvSite.setOnClickListener(v -> openUrl(ABOUT_PROJECT_URL));
+            TextView tvTelegram = root.findViewById(R.id.tvTelegram);
+            if (tvTelegram != null) tvTelegram.setOnClickListener(v -> openUrl(ABOUT_TELEGRAM_URL));
+
+            setupAboutSpoiler(root, R.id.tvBanksTitle, R.id.layoutBanks);
+            setupAboutSpoiler(root, R.id.tvCryptoTitle, R.id.layoutCrypto);
+
+            setupAboutDonateLink(root, R.id.donateCloudtips, getString(R.string.donate_cloudtips),
+                    "https://pay.cloudtips.ru/p/0ef6b51b", R.drawable.qr_cloudtips);
+            setupAboutDonateRow(root, R.id.donateTbank, getString(R.string.donate_tbank),
+                    "2200 7006 1069 1486", 0);
+            setupAboutDonateRow(root, R.id.donateAlfa, getString(R.string.donate_alfa),
+                    "2200 1523 9377 1947", 0);
+            setupAboutDonateRow(root, R.id.donateSber, getString(R.string.donate_sber),
+                    "2202 2032 6583 9417", 0);
+            setupAboutDonateRow(root, R.id.donateVtb, getString(R.string.donate_vtb),
+                    "2200 2414 5379 1539", 0);
+            setupAboutDonateRow(root, R.id.donateUsdtTrc20, getString(R.string.donate_usdt_trc20),
+                    "TRvVmtB2ztxBa324JxtfaUMB3oAvKKJ1X5", R.drawable.qr_usdt_trc20);
+            setupAboutDonateRow(root, R.id.donateBitcoin, getString(R.string.donate_bitcoin),
+                    "1NhdHQ14JRx9iV3tshqq7Syj7aMaK38uxg", R.drawable.qr_btc);
+            setupAboutDonateRow(root, R.id.donateEthereum, getString(R.string.donate_ethereum),
+                    "0x4100f28e4c650423eb351fc005c97b8d620d1494", R.drawable.qr_eth);
+        } catch (Exception e) {
+            LogBuffer.e("Main", "setupAboutContent: " + e.getMessage());
+        }
+    }
+
+    private void openUrl(String url) {
+        try {
+            Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+            startActivity(intent);
+        } catch (Exception e) {
+            Toast.makeText(this, R.string.error, Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void setupAboutSpoiler(View root, int titleId, int contentId) {
+        TextView title = root.findViewById(titleId);
+        View content = root.findViewById(contentId);
+        if (title == null || content == null) return;
+        title.setOnClickListener(v ->
+                content.setVisibility(content.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE));
+    }
+
+    private void setupAboutDonateRow(View root, int includeId, String label, String address, int qrResId) {
+        try {
+            View row = root.findViewById(includeId);
+            if (row == null) return;
+            TextView tvLabel = row.findViewById(R.id.donateLabel);
+            TextView tvAddress = row.findViewById(R.id.donateAddress);
+            ImageView ivQr = row.findViewById(R.id.qrCode);
+            if (tvLabel != null) tvLabel.setText(label);
+            if (tvAddress != null) tvAddress.setText(address);
+            if (ivQr != null) {
+                if (qrResId != 0) ivQr.setImageResource(qrResId);
+                ivQr.setVisibility(View.GONE);
+            }
+            if (tvAddress != null) {
+                tvAddress.setOnClickListener(v -> {
+                    try {
+                        copyToClipboard(address);
+                        if (qrResId != 0 && ivQr != null) toggleQr(ivQr);
+                    } catch (Exception e) {
+                        LogBuffer.e("Main", "donate row click failed: " + e.getMessage());
+                    }
+                });
+            }
+            if (ivQr != null && qrResId != 0) {
+                ivQr.setOnClickListener(v -> {
+                    try {
+                        hideQr(ivQr);
+                    } catch (Exception e) {
+                        LogBuffer.e("Main", "QR click failed: " + e.getMessage());
+                    }
+                });
+            }
+        } catch (Exception e) {
+            LogBuffer.e("Main", "setupAboutDonateRow failed: " + e.getMessage());
+        }
+    }
+
+    private void setupAboutDonateLink(View root, int includeId, String label, String url, int qrResId) {
+        try {
+            View row = root.findViewById(includeId);
+            if (row == null) return;
+            TextView tvLabel = row.findViewById(R.id.donateLabel);
+            TextView tvAddress = row.findViewById(R.id.donateAddress);
+            ImageView ivQr = row.findViewById(R.id.qrCode);
+            if (tvLabel != null) tvLabel.setText(label);
+            if (tvAddress != null) tvAddress.setText(url);
+            if (ivQr != null && qrResId != 0) ivQr.setImageResource(qrResId);
+            if (tvAddress != null) {
+                tvAddress.setOnClickListener(v -> {
+                    try {
+                        if (ivQr != null && ivQr.getVisibility() == View.VISIBLE) {
+                            openUrl(url);
+                        } else {
+                            showQr(ivQr);
+                        }
+                    } catch (Exception e) {
+                        LogBuffer.e("Main", "donate link click failed: " + e.getMessage());
+                    }
+                });
+            }
+            if (ivQr != null) ivQr.setOnClickListener(v -> hideQr(ivQr));
+        } catch (Exception e) {
+            LogBuffer.e("Main", "setupAboutDonateLink failed: " + e.getMessage());
+        }
+    }
+
+    private void toggleQr(ImageView ivQr) {
+        if (ivQr == null) return;
+        ivQr.setVisibility(ivQr.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE);
+    }
+
+    private void showQr(ImageView ivQr) {
+        if (ivQr == null) return;
+        ivQr.setVisibility(View.VISIBLE);
+    }
+
+    private void hideQr(ImageView ivQr) {
+        if (ivQr == null) return;
+        ivQr.setVisibility(View.GONE);
+    }
+
+    private void copyToClipboard(String text) {
+        ClipboardManager cb = (ClipboardManager) getSystemService(CLIPBOARD_SERVICE);
+        if (cb != null) {
+            cb.setPrimaryClip(ClipData.newPlainText("donate_address", text));
+        }
+        Toast.makeText(this, R.string.donate_copied, Toast.LENGTH_SHORT).show();
     }
 
     private void refreshPresets() {
+        // Show a busy state on the button for the whole network check window.
+        Button btnRefresh = settingsView.findViewById(R.id.btnRefreshPresets);
+        btnRefresh.setEnabled(false);
+        btnRefresh.setText(R.string.settings_presets_checking);
         DashboardPresetRegistry registry = DashboardPresetRegistry.getInstance(this);
         registry.checkForUpdates(true, (result, version) -> {
+            // The callback runs on the main looper after a network round-trip;
+            // the activity may have been destroyed while waiting.
+            if (isFinishing() || isDestroyed()) return;
+            btnRefresh.setEnabled(true);
+            btnRefresh.setText(R.string.settings_refresh_presets);
             updatePresetVersionLabel();
             if (result == DashboardPresetRegistry.UPDATE_UPDATED) {
                 Toast.makeText(this, R.string.settings_presets_updated, Toast.LENGTH_SHORT).show();
@@ -2468,6 +3081,8 @@ public class MainActivity extends BaseLocalizedActivity {
         editAdbHost.addTextChangedListener(autoSaveWatcher);
         editAdbPort.addTextChangedListener(autoSaveWatcher);
         editDiplusAuth.addTextChangedListener(autoSaveWatcher);
+        radioTelemetrySource.setOnCheckedChangeListener((group, checkedId) -> scheduleSave());
+        switchDebugCompare.setOnCheckedChangeListener(listener);
     }
 
     private void warnIfHostEmpty() {
@@ -2544,6 +3159,25 @@ public class MainActivity extends BaseLocalizedActivity {
         AppConfig.saveAdbHost(this, adbHost);
         AppConfig.saveAdbPort(this, adbPort);
         AppConfig.setDiplusAuth(this, editDiplusAuth.getText().toString());
+
+        String source = "diplus";
+        if (radioTelemetrySource != null) {
+            int checkedId = radioTelemetrySource.getCheckedRadioButtonId();
+            if (checkedId == R.id.radioSourceNative) {
+                source = "native";
+            } else if (checkedId == R.id.radioSourceAuto) {
+                source = "auto";
+            }
+        }
+        AppConfig.saveTelemetrySource(this, source);
+        AppConfig.saveDebugCompareEnabled(this, switchDebugCompare != null && switchDebugCompare.isChecked());
+
+        EditText editMake = settingsView.findViewById(R.id.editVehicleMake);
+        EditText editYear = settingsView.findViewById(R.id.editVehicleYear);
+        AppConfig.saveVehicleProfile(this,
+                "UNIVERSAL".equals(AppConfig.getVehicleProducer(this)) ? VehicleProducer.UNIVERSAL : VehicleProducer.BYD,
+                editMake != null ? editMake.getText().toString().trim() : "",
+                editYear != null ? editYear.getText().toString().trim() : "");
 
         if (haSettingsChanged(host, port, token, enabled, https, carControl)) {
             restartTelemetryService();
@@ -2627,6 +3261,33 @@ public class MainActivity extends BaseLocalizedActivity {
         editAdbHost.setText(AppConfig.getAdbHost(this));
         editAdbPort.setText(String.valueOf(AppConfig.getAdbPort(this)));
         editDiplusAuth.setText(AppConfig.getDiplusAuth(this));
+
+        if (radioTelemetrySource != null) {
+            String source = AppConfig.getTelemetrySource(this);
+            int checkedId;
+            if ("native".equals(source)) {
+                checkedId = R.id.radioSourceNative;
+            } else if ("auto".equals(source)) {
+                checkedId = R.id.radioSourceAuto;
+            } else {
+                checkedId = R.id.radioSourceDiplus;
+            }
+            radioTelemetrySource.check(checkedId);
+        }
+        if (switchDebugCompare != null) {
+            switchDebugCompare.setChecked(AppConfig.isDebugCompareEnabled(this));
+        }
+
+        Spinner spinnerProducer = settingsView.findViewById(R.id.spinnerVehicleProducer);
+        if (spinnerProducer != null) {
+            boolean universal = AppConfig.getVehicleProducer(this).equals("UNIVERSAL");
+            spinnerProducer.setSelection(universal ? 1 : 0);
+        }
+        EditText editMake = settingsView.findViewById(R.id.editVehicleMake);
+        if (editMake != null) editMake.setText(AppConfig.getVehicleMake(this));
+        EditText editYear = settingsView.findViewById(R.id.editVehicleYear);
+        if (editYear != null) editYear.setText(AppConfig.getVehicleYear(this));
+        updateVehicleSectionVisibility();
     }
 
 
@@ -2729,11 +3390,16 @@ public class MainActivity extends BaseLocalizedActivity {
         }).start();
     }
 
-    private JSONObject buildConfigJson() throws Exception {
+    private JSONObject buildConfigJson(boolean includeToken) throws Exception {
         JSONObject cfg = new JSONObject();
         cfg.put("hass_host", AppConfig.getHassHost(this));
         cfg.put("hass_port", AppConfig.getHassPort(this));
-        cfg.put("hass_token", AppConfig.getHassToken(this));
+        // The token is excluded by default (review #4): it grants full access
+        // to Home Assistant, so it must only be exported when the user
+        // explicitly opts in via the checkbox in the export dialog.
+        if (includeToken) {
+            cfg.put("hass_token", AppConfig.getHassToken(this));
+        }
         cfg.put("car_name", AppConfig.getCarName(this));
         cfg.put("hass_https", AppConfig.isHassHttps(this));
         cfg.put("hass_enabled", AppConfig.isHassEnabled(this));
@@ -2852,15 +3518,40 @@ public class MainActivity extends BaseLocalizedActivity {
 
         new AlertDialog.Builder(this)
                 .setTitle(R.string.settings_export_to)
-                .setItems(labels, (dialog, which) -> doExport(folders.get(which)))
+                .setItems(labels, (dialog, which) -> showExportTokenDialog(folders.get(which)))
                 .setNegativeButton(R.string.menu_cancel, null)
                 .show();
     }
 
-    private void doExport(ConfigStorageHelper.Folder folder) {
+    private void showExportTokenDialog(ConfigStorageHelper.Folder folder) {
+        // Ask whether the HA access token should be included (review #4).
+        // Default off: LLAT grants full access to Home Assistant.
+        CheckBox cb = new CheckBox(this);
+        cb.setText(getString(R.string.settings_export_include_token));
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int pad = (int) (16 * getResources().getDisplayMetrics().density);
+        layout.setPadding(pad, pad, pad, 0);
+        TextView warning = new TextView(this);
+        warning.setText(R.string.settings_export_token_warning);
+        warning.setTextSize(13);
+        warning.setTextColor(0xFFC62828);
+        layout.addView(warning);
+        layout.addView(cb);
+
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.settings_export_config)
+                .setView(layout)
+                .setPositiveButton(R.string.settings_export, (d, w) -> doExport(folder, cb.isChecked()))
+                .setNegativeButton(R.string.menu_cancel, null)
+                .show();
+    }
+
+    private void doExport(ConfigStorageHelper.Folder folder, boolean includeToken) {
         new Thread(() -> {
             try {
-                ConfigStorageHelper.ConfigRef ref = ConfigStorageHelper.writeConfig(this, folder, buildConfigJson());
+                ConfigStorageHelper.ConfigRef ref = ConfigStorageHelper.writeConfig(
+                        this, folder, buildConfigJson(includeToken));
                 final String message = ref.isUri()
                         ? getString(R.string.settings_exported_download)
                         : getString(R.string.settings_exported, ref.file.getAbsolutePath());

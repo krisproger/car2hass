@@ -27,11 +27,19 @@ public class DashboardTileFactory {
     ));
 
     public static DashboardTile create(Context ctx, String type, String key, String value) {
+        return create(ctx, type, key, value, null);
+    }
+
+    public static DashboardTile create(Context ctx, String type, String key, String value, String displayType) {
         if ("preset".equals(type)) {
             return createPresetTile(ctx, key);
         }
         if ("sensor".equals(type)) {
-            return createSensorTile(ctx, key);
+            DashboardTile tile = createSensorTile(ctx, key);
+            if (displayType != null && !displayType.isEmpty()) {
+                tile.displayType = displayType;
+            }
+            return tile;
         }
         return createCommandTile(ctx, key, value);
     }

@@ -19,12 +19,14 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Executes shell commands on an ADB daemon using the vendored adblib implementation.
@@ -54,6 +56,22 @@ public class AdbShellExecutor {
         void onSuccess(String output);
         void onError(String output, Exception e);
         void onFailure(String reason);
+    }
+
+    /**
+     * Initializes the executor with an application context so that ADB keys can be
+     * loaded or generated. Call once at process start (e.g. from {@code Application#onCreate})
+     * before any {@link #executeSync} use — the sync overload has no context of its own.
+     */
+    public static void init(Context ctx) {
+        if (ctx == null) {
+            LogBuffer.e(TAG, "init: Context is null");
+            return;
+        }
+        if (appContext == null) {
+            appContext = ctx.getApplicationContext();
+            LogBuffer.i(TAG, "Initialized with application context");
+        }
     }
 
     /**
@@ -126,6 +144,50 @@ public class AdbShellExecutor {
         LogBuffer.i(TAG, "Scheduling ADB shell execution to " + trimmedHost + ":" + port);
         final String finalCommand = command;
         executor.execute(() -> runShell(trimmedHost, port, finalCommand, callback));
+    }
+
+    /**
+     * Executes a shell command on the specified ADB daemon and blocks until the
+     * result arrives or {@code OVERALL_TIMEOUT_MS + CONNECT_TIMEOUT_MS} elapses.
+     *
+     * <p>Must be called from a background thread (never the main thread — the
+     * callback is delivered on the main looper, so a main-thread caller would
+     * deadlock). Returns the full output on success, or null when the command
+     * failed, timed out, or reported an error via the callback.
+     *
+     * @param host     ADB daemon host
+     * @param port     ADB daemon port
+     * @param command  the shell command to execute
+     */
+    public static String executeSync(String host, int port, String command) {
+        return executeSync(host, port, command, OVERALL_TIMEOUT_MS + CONNECT_TIMEOUT_MS);
+    }
+
+    /**
+     * Same as {@link #executeSync(String, int, String)} with an explicit wait
+     * timeout for the result.
+     */
+    public static String executeSync(String host, int port, String command, long waitMs) {
+        final CountDownLatch latch = new CountDownLatch(1);
+        final AtomicReference<String> result = new AtomicReference<>(null);
+        execute(host, port, command, new AdbShellCallback() {
+            @Override
+            public void onSuccess(String output) {
+                result.set(output);
+                latch.countDown();
+            }
+
+            @Override
+            public void onError(String output, Exception e) {
+                latch.countDown();
+            }
+
+            @Override
+            public void onFailure(String reason) {
+                latch.countDown();
+            }
+        });
+        return NativeSyncGate.await(latch, result, waitMs);
     }
 
     private static void runShell(String host, int port, String command, AdbShellCallback callback) {

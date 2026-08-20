@@ -79,7 +79,14 @@
     <string name="settings_behaviour">Behaviour</string>
     <string name="settings_system">System</string>
     <string name="settings_service">Service</string>
+    <string name="settings_section_car">Car</string>
+    <string name="settings_section_protocols">Services / data sources</string>
+    <string name="settings_section_smarthome">Home Assistant</string>
+    <string name="settings_section_tech">Options</string>
+    <string name="settings_section_misc">Other</string>
+    <string name="settings_section_about">About</string>
     <string name="settings_refresh_presets">Refresh presets</string>
+    <string name="settings_presets_checking">Checking for updates…</string>
     <string name="settings_preset_version">Presets version: %1$d</string>
     <string name="settings_presets_updated">Presets updated</string>
     <string name="settings_presets_latest">Presets are already up to date</string>
@@ -111,9 +118,31 @@
     <string name="settings_adb_host_hint">127.0.0.1</string>
     <string name="settings_adb_port">ADB port</string>
     <string name="settings_adb_port_hint">5555</string>
+    <string name="settings_telemetry_source">Telemetry source</string>
+    <string name="settings_telemetry_source_summary">How signal values are read. DiPlus uses the DiPlus app HTTP API; Native reads the car service directly over ADB.</string>
+    <string name="settings_source_diplus">DiPlus</string>
+    <string name="settings_source_native">Native (ADB)</string>
+    <string name="settings_source_auto">Auto</string>
+    <string name="settings_debug_compare">Debug compare</string>
+    <string name="settings_debug_compare_summary">Read both sources every tick and log per-signal comparison (NativeCompare) to find map errors.</string>
     <string name="settings_diplus_auth">DiPlus auth token (optional)</string>
     <string name="settings_diplus_auth_hint">Only if DiPlus requires authorization</string>
     <string name="settings_apply_background_mode">Apply background mode</string>
+    <string name="settings_vehicle">Car</string>
+    <string name="settings_vehicle_producer">Manufacturer</string>
+    <string name="settings_vehicle_make_hint">Make / model (e.g. Voyah FREE)</string>
+    <string name="settings_vehicle_year_hint">Year of manufacture</string>
+    <string name="settings_vehicle_producer_byd">BYD</string>
+    <string name="settings_vehicle_producer_universal">Universal car with Android</string>
+    <string name="settings_vehicle_channels_byd">Channels: DiPlus → ADB (native) → system properties. Command control is active.</string>
+    <string name="settings_vehicle_channels_universal">Channels: system properties + experimental; DiPlus/ADB are probed for analysis.</string>
+    <string name="settings_vehicle_commands_disabled">Command control is unavailable for the selected car.</string>
+    <string name="settings_vehicle_research">Probe data channels</string>
+    <string name="settings_vehicle_research_progress">Probing channels: %1$d/%2$d</string>
+    <string-array name="vehicle_producers">
+        <item>@string/settings_vehicle_producer_byd</item>
+        <item>@string/settings_vehicle_producer_universal</item>
+    </string-array>
     <string name="background_mode_disabled">Background mode is disabled</string>
     <string name="background_mode_applied">Background mode applied</string>
     <string name="background_mode_failed">Background mode setup failed. The app will show the ADB commands below — run them from a PC. To use wireless ADB, first run "adb tcpip 5555", then the listed commands.</string>
@@ -150,6 +179,9 @@
     <string name="settings_exported">Exported:\n%1$s</string>
     <string name="settings_exported_download">Exported to Download (MediaStore)</string>
     <string name="settings_export_failed">Export failed: %1$s</string>
+    <string name="settings_export_include_token">Include Home Assistant access token</string>
+    <string name="settings_export_token_warning">Warning: the Long-Lived Access Token grants full access to your Home Assistant. Leave the checkbox off unless you really need it.</string>
+    <string name="settings_export">Export</string>
     <string name="settings_imported">Imported: %1$s</string>
     <string name="settings_import_failed">Import failed: %1$s</string>
     <string name="settings_permission_granted">Permission granted, repeat the action</string>
@@ -313,7 +345,6 @@
     <string name="cmd_headlight_level">Headlight level</string>
     <string name="cmd_comfort_mode">Comfort mode</string>
     <string name="cmd_adb_on">Wireless ADB on</string>
-    <string name="cmd_adb_off">Wireless ADB off</string>
     <string name="cmd_theme">Theme</string>
     <string name="cmd_hud">HUD</string>
 
@@ -362,7 +393,7 @@
     <string name="hint_fan">1–9</string>
     <string name="hint_headlight">0–5</string>
     <string name="hint_nav_volume">0–10</string>
-    <string name="hint_schedule">22:00–08:00</string>
+    <string name="hint_schedule">22:00-08</string>
 
     <!-- Navigation -->
     <string name="nav_dashboard">Dashboard</string>
@@ -390,6 +421,13 @@
     <string name="dashboard_edit_mode_hint">Tap + to add, tap 🗑️ to remove</string>
     <string name="dashboard_add_tile_title">Add tile</string>
     <string name="dashboard_no_tile_settings">No settings for this tile</string>
+    <string name="preset_save_apply">Save &amp; apply</string>
+    <string name="preset_custom_values">Custom values</string>
+    <string name="preset_windows_open">Open</string>
+    <string name="preset_windows_close">Close</string>
+    <string name="preset_windows_vent">Vent</string>
+    <string name="preset_turn_on">On</string>
+    <string name="preset_turn_off">Off</string>
     <string name="dashboard_category_sensors">Sensors</string>
     <string name="dashboard_type_sensor">Sensor</string>
     <string name="dashboard_type_command">Command</string>
@@ -479,6 +517,7 @@
     <string name="nav_geofences">Geofences</string>
     <string name="geofence_list_title">Geofences</string>
     <string name="geofence_list_empty">No geofences yet. Tap + to create one.</string>
+    <string name="geofence_add">Add geofence</string>
     <string name="geofence_edit_title">Geofence zone</string>
     <string name="geofence_field_name">Zone name</string>
     <string name="geofence_field_radius">Radius (meters)</string>
@@ -630,4 +669,12 @@
     <string name="sensor_last_clip_start_time">Last clip start time</string>
     <string name="sensor_last_clip_end_time">Last clip end time</string>
     <string name="sensor_lead_car_start_state">Lead-car start state</string>
+
+    <!-- Dashboard config -->
+    <string name="dashboard_config_display_type_title">Display type</string>
+    <string-array name="sensor_display_types">
+        <item>Text</item>
+        <item>Gauge</item>
+        <item>Graph</item>
+    </string-array>
 </resources>

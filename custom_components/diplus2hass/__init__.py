@@ -34,6 +34,37 @@ SIGNAL_VEHICLE_DATA_UPDATED = f"{DOMAIN}_updated"
 
 MAX_COMMAND_QUEUE = 50
 
+try:
+    from homeassistant.const import MAJOR_VERSION, MINOR_VERSION
+
+    _SUPPORTS_ASYNC_SET_TIMESTAMP = core.supports_async_set_timestamp(
+        MAJOR_VERSION, MINOR_VERSION
+    )
+except ImportError:
+    _SUPPORTS_ASYNC_SET_TIMESTAMP = False
+
+
+def async_replay_state(entity, timestamp):
+    """Write entity state at the snapshot's original collection time.
+
+    Home Assistant 2024.6+ accepts a ``timestamp`` argument on
+    ``states.async_set``, so replaying a telemetry batch stores each
+    intermediate value in history at its real time instead of collapsing
+    the batch into the current time. Older versions fall back to the plain
+    ``async_write_ha_state`` (current time), preserving the old behavior.
+    """
+    if _SUPPORTS_ASYNC_SET_TIMESTAMP:
+        calc = entity._async_calculate_state()
+        entity.hass.states.async_set(
+            entity.entity_id,
+            calc.state,
+            calc.attributes,
+            force_update=entity.force_update,
+            timestamp=timestamp,
+        )
+    else:
+        entity.async_write_ha_state()
+
 
 async def async_enqueue_command(hass: HomeAssistant, car_name: str, command: str, params: dict | None = None) -> str:
     """Enqueue a command for the Android app to execute.
@@ -70,11 +101,6 @@ async def async_enqueue_command(hass: HomeAssistant, car_name: str, command: str
 
     _LOGGER.info("Enqueued command %s for %s: %s (queue size: %s)", entry["id"], car_name, command, len(commands))
     return entry["id"]
-
-
-def _is_command_expired(cmd: dict, now) -> bool:
-    """Return True if a command is stuck unprocessed for too long."""
-    return core.is_command_expired(cmd, now)
 
 
 _LOGGER = logging.getLogger(__name__)
@@ -146,7 +172,9 @@ async def async_setup_entry(hass: HomeAssistant, entry):
         info_lines = []
         total_signals = 0
         for entry_id, store in hass.data.get(DOMAIN, {}).items():
-            if entry_id == "_view_registered":
+            # Skip internal keys (e.g. "_view_registered", "_rate_limits") —
+            # only per-vehicle stores carry a "data" dict.
+            if entry_id.startswith("_"):
                 continue
             signals = store.get("data", {}).get("signals", {})
             total_signals += len(signals)
@@ -292,6 +320,7 @@ class VehicleDataView(HomeAssistantView):
             "latitude": agg["latitude"],
             "longitude": agg["longitude"],
             "accuracy": agg["accuracy"],
+            "fix_timestamp": agg["fix_timestamp"],
             "signals": latest_signals,
             # Full chronological batch so platforms can replay intermediate
             # values / GPS points instead of only the final aggregated state.
@@ -356,14 +385,14 @@ class VehicleCommandsView(HomeAssistantView):
         # processed by the Android app within the timeout window (1 minute after
         # delivery or creation). This prevents the queue from filling up with
         # stale commands when the app is offline or fails to acknowledge.
-        expired = [cmd for cmd in commands if _is_command_expired(cmd, now)]
+        expired = [cmd for cmd in commands if core.is_command_expired(cmd, now)]
         if expired:
             _LOGGER.warning(
                 "Expiring %s unacknowledged command(s) for %s", len(expired), car_name
             )
         commands[:] = [
             cmd for cmd in commands
-            if not _is_command_expired(cmd, now)
+            if not core.is_command_expired(cmd, now)
         ]
         for cmd in commands:
             if not cmd.get("delivered"):

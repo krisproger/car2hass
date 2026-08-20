@@ -42,6 +42,20 @@ def test_validate_batch_allows_missing_s_and_g():
     assert out == [{"t": 5}]
 
 
+def test_validate_batch_coerces_string_t_and_sorts():
+    out = core.validate_batch([{"t": "3", "s": {}, "g": {}}, {"t": 1, "s": {}, "g": {}}])
+    assert [s["t"] for s in out] == [1, 3.0]
+
+
+def test_validate_batch_rejects_non_numeric_t():
+    with pytest.raises(core.BatchValidationError):
+        core.validate_batch([{"t": "abc", "s": {}, "g": {}}])
+    with pytest.raises(core.BatchValidationError):
+        core.validate_batch([{"t": None, "s": {}, "g": {}}])
+    with pytest.raises(core.BatchValidationError):
+        core.validate_batch([{"t": True, "s": {}, "g": {}}])
+
+
 def test_aggregate_latest_value_wins_and_gps():
     batch = core.validate_batch([
         {"t": 1, "s": {"speed": 10}, "g": {"lat": 55.0, "lon": 37.0, "a": 5}},
@@ -70,6 +84,34 @@ def test_aggregate_empty_batch():
     assert agg["latest_signals"] == {}
     assert agg["latitude"] is None
     assert agg["timestamp"] == 0
+
+
+def test_aggregate_uses_fix_time_for_last_location():
+    batch = core.validate_batch([
+        {"t": 10, "s": {}, "g": {"lat": 55.0, "lon": 37.0, "a": 5, "t": 9}},
+        {"t": 11, "s": {}, "g": {}},
+    ])
+    agg = core.aggregate_batch(batch)
+    # GPS carried by the first snapshot, but its fix time (9) is what the
+    # location belongs to, not the later collection time (10/11).
+    assert agg["latitude"] == 55.0
+    assert agg["fix_timestamp"] == 9
+
+
+def test_aggregate_falls_back_to_snapshot_time_without_fix_time():
+    batch = core.validate_batch([
+        {"t": 10, "s": {}, "g": {"lat": 55.0, "lon": 37.0, "a": 5}},
+    ])
+    agg = core.aggregate_batch(batch)
+    assert agg["fix_timestamp"] == 10
+
+
+def test_aggregate_fix_time_tolerates_bad_value():
+    batch = core.validate_batch([
+        {"t": 10, "s": {}, "g": {"lat": 55.0, "lon": 37.0, "t": "bad"}},
+    ])
+    agg = core.aggregate_batch(batch)
+    assert agg["fix_timestamp"] == 10
 
 
 # --- is_command_expired ---
@@ -202,8 +244,8 @@ def test_signal_index_groups_values_chronologically():
         {"t": 3, "s": {"soc": 79}, "g": {}},
     ])
     index = core.build_signal_index(batch)
-    assert index["speed"] == [10, 20]
-    assert index["soc"] == [80, 79]
+    assert index["speed"] == [(1, 10), (2, 20)]
+    assert index["soc"] == [(2, 80), (3, 79)]
     assert "other" not in index
 
 
@@ -213,7 +255,7 @@ def test_signal_index_skips_none_values():
         {"t": 2, "s": {"speed": 5}, "g": {}},
     ])
     index = core.build_signal_index(batch)
-    assert index["speed"] == [5]
+    assert index["speed"] == [(2, 5)]
 
 
 def test_signal_index_empty_batch():
@@ -229,7 +271,7 @@ def test_gps_track_collects_valid_points():
         {"t": 3, "s": {}, "g": {"lat": "55.5", "lon": "37.5"}},
     ])
     track = core.build_gps_track(batch)
-    assert track == [(55.0, 37.0, 5.0), (55.5, 37.5, 0.0)]
+    assert track == [(1, 55.0, 37.0, 5.0), (3, 55.5, 37.5, 0.0)]
 
 
 def test_gps_track_skips_invalid_and_none():
@@ -238,6 +280,17 @@ def test_gps_track_skips_invalid_and_none():
         {"t": 2, "s": {}, "g": {"lat": None, "lon": 37.0}},
     ])
     assert core.build_gps_track(batch) == []
+
+
+def test_gps_track_uses_fix_time_when_present():
+    batch = core.validate_batch([
+        {"t": 10, "s": {}, "g": {"lat": 55.0, "lon": 37.0, "a": 5, "t": 9}},
+        {"t": 11, "s": {}, "g": {"lat": 55.5, "lon": 37.5, "a": 8}},
+    ])
+    track = core.build_gps_track(batch)
+    # First point attributed to its fix time (9), second falls back to the
+    # snapshot collection time (11) because it carries no g.t.
+    assert track == [(9, 55.0, 37.0, 5.0), (11, 55.5, 37.5, 8.0)]
 
 
 # --- geofence dynamic keys ---
@@ -277,4 +330,16 @@ def test_geofence_keys_flow_through_batch_aggregation():
     assert agg["latest_signals"]["geo_ab12cd34"] == "inside"
     assert core.find_geofence_keys(agg["latest_signals"]) == ["geo_ab12cd34"]
     index = core.build_signal_index(batch)
-    assert index["geo_ab12cd34"] == ["outside", "inside"]
+    assert index["geo_ab12cd34"] == [(1, "outside"), (2, "inside")]
+
+
+# --- supports_async_set_timestamp ---
+
+def test_supports_timestamp_for_2024_6_and_newer():
+    assert core.supports_async_set_timestamp(2024, 6) is True
+    assert core.supports_async_set_timestamp(2025, 1) is True
+
+
+def test_supports_timestamp_false_before_2024_6():
+    assert core.supports_async_set_timestamp(2024, 5) is False
+    assert core.supports_async_set_timestamp(2023, 12) is False

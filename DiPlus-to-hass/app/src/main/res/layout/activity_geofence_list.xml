@@ -31,6 +31,6 @@
         android:src="@drawable/ic_plus"
         android:background="@drawable/fab_background"
         android:scaleType="center"
-        android:contentDescription="@string/geofence_edit_title" />
+        android:contentDescription="@string/geofence_add" />
 
 </LinearLayout>

@@ -38,13 +38,11 @@
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <TextView
+            <ImageView
                 android:id="@+id/tileZoneLeft"
                 android:layout_width="32dp"
                 android:layout_height="32dp"
-                android:gravity="center"
-                android:text="➖"
-                android:textSize="20sp"
+                android:importantForAccessibility="no"
                 android:alpha="0.6" />
 
             <LinearLayout
@@ -56,10 +54,8 @@
 
                 <TextView
                     android:id="@+id/tileValue"
-                    android:layout_width="0dp"
+                    android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:gravity="center"
                     android:textSize="24sp"
                     android:textStyle="bold"
                     android:textColor="@color/textPrimary"
@@ -75,13 +71,11 @@
                     android:textColor="@color/textTertiary" />
             </LinearLayout>
 
-            <TextView
+            <ImageView
                 android:id="@+id/tileZoneRight"
                 android:layout_width="32dp"
                 android:layout_height="32dp"
-                android:gravity="center"
-                android:text="➕"
-                android:textSize="20sp"
+                android:importantForAccessibility="no"
                 android:alpha="0.6" />
         </LinearLayout>
 

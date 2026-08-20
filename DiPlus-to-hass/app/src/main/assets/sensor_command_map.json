@@ -1,6 +1,6 @@
 {
-  "version": 4,
-  "generated_at": "2026-07-22",
+  "version": 5,
+  "generated_at": "2026-08-11",
   "mappings": [
     {
       "sensor_key": "ac_state",
@@ -32,12 +32,12 @@
       "sensor_key": "ac_airflow_mode",
       "commands": [
         { "command_id": "ac_airflow", "value": "face" },
-        { "command_id": "ac_airflow", "value": "face_feet" },
+        { "command_id": "ac_airflow", "value": "face_feet", "expected": "face+feet" },
         { "command_id": "ac_airflow", "value": "feet" },
-        { "command_id": "ac_airflow", "value": "feet_defrost" },
+        { "command_id": "ac_airflow", "value": "feet_defrost", "expected": "feet+defrost" },
         { "command_id": "ac_airflow", "value": "defrost" },
-        { "command_id": "ac_airflow", "value": "face_feet_defrost" },
-        { "command_id": "ac_airflow", "value": "face_defrost" }
+        { "command_id": "ac_airflow", "value": "face_feet_defrost", "expected": "face+feet+defrost" },
+        { "command_id": "ac_airflow", "value": "face_defrost", "expected": "face+defrost" }
       ]
     },
     {
@@ -126,27 +126,27 @@
       "sensor_key": "trunk",
       "commands": [
         { "command_id": "trunk_open", "value": "open" },
-        { "command_id": "trunk_close", "value": "close" }
+        { "command_id": "trunk_close", "value": "close", "expected": "closed" }
       ]
     },
     {
       "sensor_key": "rear_left_child_lock",
       "commands": [
-        { "command_id": "child_lock_left", "value": "on" },
-        { "command_id": "child_lock_left", "value": "off" }
+        { "command_id": "child_lock_left", "value": "on", "expected": "locked" },
+        { "command_id": "child_lock_left", "value": "off", "expected": "unlocked" }
       ]
     },
     {
       "sensor_key": "rear_right_child_lock",
       "commands": [
-        { "command_id": "child_lock_right", "value": "on" },
-        { "command_id": "child_lock_right", "value": "off" }
+        { "command_id": "child_lock_right", "value": "on", "expected": "locked" },
+        { "command_id": "child_lock_right", "value": "off", "expected": "unlocked" }
       ]
     },
     {
       "sensor_key": "hazard",
       "commands": [
-        { "command_id": "hazard_on", "value": "on" },
+        { "command_id": "hazard_on", "value": "on", "expected": "open" },
         { "command_id": "hazard_off", "value": "off" }
       ]
     },
@@ -160,45 +160,45 @@
     {
       "sensor_key": "drl",
       "commands": [
-        { "command_id": "drl_on", "value": "on" },
+        { "command_id": "drl_on", "value": "on", "expected": "open" },
         { "command_id": "drl_off", "value": "off" }
       ]
     },
     {
       "sensor_key": "front_fog",
       "commands": [
-        { "command_id": "fog_on", "value": "on" },
+        { "command_id": "fog_on", "value": "on", "expected": "open" },
         { "command_id": "fog_off", "value": "off" }
       ]
     },
     {
       "sensor_key": "rear_fog",
       "commands": [
-        { "command_id": "fog_on", "value": "on" },
+        { "command_id": "fog_on", "value": "on", "expected": "open" },
         { "command_id": "fog_off", "value": "off" }
       ]
     },
     {
       "sensor_key": "footwell_light",
       "commands": [
-        { "command_id": "interior_light_on", "value": "on" },
+        { "command_id": "interior_light_on", "value": "on", "expected": "open" },
         { "command_id": "interior_light_off", "value": "off" }
       ]
     },
     {
       "sensor_key": "powertrain_mode",
       "commands": [
-        { "command_id": "powertrain_mode", "value": "hev" },
-        { "command_id": "powertrain_mode", "value": "ev" },
-        { "command_id": "powertrain_mode", "value": "force_ev" }
+        { "command_id": "powertrain_mode", "value": "hev", "expected": "HEV" },
+        { "command_id": "powertrain_mode", "value": "ev", "expected": "EV" },
+        { "command_id": "powertrain_mode", "value": "force_ev", "expected": "forced EV" }
       ]
     },
     {
       "sensor_key": "drive_mode",
       "commands": [
-        { "command_id": "drive_mode", "value": "eco" },
-        { "command_id": "drive_mode", "value": "sport" },
-        { "command_id": "drive_mode", "value": "normal" },
+        { "command_id": "drive_mode", "value": "eco", "expected": "ECO" },
+        { "command_id": "drive_mode", "value": "sport", "expected": "SPORT" },
+        { "command_id": "drive_mode", "value": "normal", "expected": "NORMAL" },
         { "command_id": "drive_mode", "value": "snow" }
       ]
     },
@@ -225,15 +225,14 @@
     {
       "sensor_key": "dashcam_state",
       "commands": [
-        { "command_id": "dashcam_on", "value": "on" },
-        { "command_id": "dashcam_off", "value": "off" }
+        { "command_id": "dashcam_on", "value": "on", "expected": "running" },
+        { "command_id": "dashcam_off", "value": "off", "expected": "stop" }
       ]
     },
     {
       "sensor_key": "wireless_adb_switch",
       "commands": [
-        { "command_id": "adb_on", "value": "on" },
-        { "command_id": "adb_off", "value": "off" }
+        { "command_id": "adb_on", "value": "on" }
       ]
     },
     {

@@ -586,17 +586,25 @@ public class RuleEditActivity extends BaseLocalizedActivity {
     /**
      * Adjust the value field to the selected command: disabled for NONE,
      * localized enum labels for ENUM, min..max hint for NUMBER/RANGE.
-     * Never touches the current text so presets and user input survive.
+     * Clears a stale typed value only when the command actually changed
+     * (tracked via the input's tag), so the initial preset restore keeps the
+     * stored text while switching commands never leaves an invalid value.
      */
     private void updateActionValueInput(String commandId, AutoCompleteTextView valueInput) {
+        Object tag = valueInput.getTag();
+        String lastCommand = tag instanceof String ? (String) tag : null;
+        boolean commandChanged = lastCommand != null && !lastCommand.equals(commandId);
+        valueInput.setTag(commandId);
         CommandRegistry.CommandEntry entry = CommandRegistry.getById(commandId);
         if (entry == null || entry.valueType == CommandRegistry.ValueType.NONE) {
             valueInput.setEnabled(false);
             valueInput.setHint(null);
+            valueInput.setText("");
             setActionValueAdapter(valueInput, new ArrayList<>());
             return;
         }
         valueInput.setEnabled(true);
+        if (commandChanged) valueInput.setText("");
         List<String> used = usedValuesByCommand.get(commandId);
         switch (entry.valueType) {
             case ENUM: {

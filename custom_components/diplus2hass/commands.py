@@ -134,18 +134,13 @@ SWITCH_COMMANDS = [
         icon_on="mdi:video", icon_off="mdi:video-off",
         state_signal="dashcam_state",
     ),
-    SwitchCommand(
-        "wireless_adb", "Wireless ADB", "System", "adb_on", "adb_off",
-        icon_on="mdi:android-debug-bridge", icon_off="mdi:android-debug-bridge",
-        state_signal="wireless_adb_switch",
-    ),
 ]
 
 # Numeric setters exposed as Number entities.
 NUMBER_COMMANDS = [
-    NumberCommand("ac_temp", "A/C temperature", "Climate", "ac_temp", 16, 30, 0.5, "°C", "mdi:thermometer",
+    NumberCommand("ac_temp", "A/C temperature", "Climate", "ac_temp", 17, 30, 1, "°C", "mdi:thermometer",
                   state_signal="ac_set_temp"),
-    NumberCommand("ac_fan", "A/C fan speed", "Climate", "ac_fan", 1, 9, 1, None, "mdi:fan",
+    NumberCommand("ac_fan", "A/C fan speed", "Climate", "ac_fan", 1, 7, 1, None, "mdi:fan",
                   state_signal="fan_speed"),
     NumberCommand("window_driver", "Driver window", "Windows", "window_driver", 0, 100, 1, "%", "mdi:car-door",
                   state_signal="window_fl"),
@@ -159,13 +154,13 @@ NUMBER_COMMANDS = [
                   state_signal="sunroof"),
     NumberCommand("sunshade", "Sunshade", "Windows", "sunshade", 0, 100, 1, "%", "mdi:car-convertible",
                   state_signal="sunshade"),
-    NumberCommand("charge_soc", "Target charge SOC", "Charging", "charge_soc", 0, 100, 1, "%", "mdi:battery"),
+    NumberCommand("charge_soc", "Target charge SOC", "Charging", "charge_soc", 15, 70, 1, "%", "mdi:battery"),
     NumberCommand("headlight_level", "Headlight level", "Comfort", "headlight_level", 0, 5, 1, None, "mdi:car-high-beam"),
     NumberCommand("volume", "Media volume", "Volume", "volume", 0, 100, 1, "%", "mdi:volume-high",
                   state_signal="media_volume"),
     NumberCommand("nav_volume", "Navigation volume", "Volume", "nav_volume", 0, 10, 1, None, "mdi:volume-medium",
                   state_signal="navigation_volume"),
-    NumberCommand("ext_volume", "External volume", "Volume", "ext_volume", 0, 100, 1, "%", "mdi:volume-medium"),
+    NumberCommand("ext_volume", "External volume", "Volume", "ext_volume", 0, 99, 1, "%", "mdi:volume-medium"),
 ]
 
 # Enum setters exposed as Select entities.
