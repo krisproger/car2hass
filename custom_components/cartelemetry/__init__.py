@@ -536,6 +536,12 @@ def _install_card(hass):
             (dst / "icons").mkdir(parents=True, exist_ok=True)
             for icon in icons_src.glob("*.svg"):
                 shutil.copy2(icon, dst / "icons" / icon.name)
+        assets_src = src / "assets"
+        if assets_src.is_dir():
+            (dst / "assets").mkdir(parents=True, exist_ok=True)
+            for asset in assets_src.iterdir():
+                if asset.is_file():
+                    shutil.copy2(asset, dst / "assets" / asset.name)
     except Exception as err:  # noqa: BLE001 - fall back to the legacy static path
         _LOGGER.warning("www/community copy failed (%s) — falling back to /cartelemetry", err)
         try:
@@ -559,10 +565,15 @@ def _install_card(hass):
                         resources.async_delete_item(item)
                     except Exception:  # noqa: BLE001
                         pass
-            if not any(getattr(i, "url", None) == url or i.get("url") == url for i in items):
-                hass.async_create_task(
-                    resources.async_create_item({"res_type": "module", "url": url})
-                )
-            _LOGGER.info("CARTelemetry lovelace resource registered: %s", url)
+            wanted = [
+                "/local/community/cartelemetry-card/car-card.js",
+                "/local/community/cartelemetry-card/vehicle-card.js",
+            ]
+            for u in wanted:
+                if not any(getattr(i, "url", None) == u or i.get("url") == u for i in items):
+                    hass.async_create_task(
+                        resources.async_create_item({"res_type": "module", "url": u})
+                    )
+            _LOGGER.info("CARTelemetry lovelace resources registered: %s", ", ".join(wanted))
     except Exception as err:  # noqa: BLE001
         _LOGGER.warning("lovelace resource registration failed: %s", err)

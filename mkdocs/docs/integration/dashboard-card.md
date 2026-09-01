@@ -49,6 +49,43 @@ tiles:
 - **Статусная строка**: едет/стоит (по скорости), SOC, диапазон.
 - **Иконка типа авто** (слева сверху): base64-силуэт по `vehicle_type`.
 
+## Vehicle Card (спидометр + binding-точки)
+
+Вторая карточка — **`custom:cartelemetry-vehicle-card`** — универсальная: силуэт
+автомобиля/грузовика/мотоцикла, сенсоры и кнопки по binding-точкам на кузове,
+спидометр, панели сенсоров/управления/дверей. Иконки-изображения (PNG, CC0) лежат в
+`www/community/cartelemetry-card/assets/` (копируются при установке).
+
+```yaml
+type: custom:cartelemetry-vehicle-card
+vehicle: car            # car | truck | motorcycle
+device: binary_sensor.my_car_online   # статус онлайн/офлайн
+name: Мой автомобиль
+sensors:                # маппинг на ваши сущности
+  temperature: sensor.my_car_engine_coolant_temp
+  fuel: sensor.my_car_soc
+  battery: sensor.my_car_device_battery
+  mileage: sensor.my_car_range
+doors:                  # binary_sensor: on = открыто
+  left: binary_sensor.my_car_driver_door
+  right: binary_sensor.my_car_passenger_door
+  trunk: binary_sensor.my_car_trunk
+  hood: binary_sensor.my_car_bonnet
+controls:               # switch/lock/button
+  lock: lock.my_car_remote_lock_state
+  engine: switch.my_car_powertrain_mode
+  lights: switch.my_car_low_beam
+  horn: button.my_car_horn
+speedometer:            # опционально
+  entity: sensor.my_car_speed
+  max: 220
+```
+
+Позиции точек на кузове переопределяются через `binding_overrides` (например,
+`binding_overrides: { fuel: { x: 50, y: 60 } }`). Формат значений сенсоров берётся
+из `unit_of_measurement` сущности (SOC в %, диапазон в км, температура в °C — как в
+интеграции).
+
 ## Вид сверху: оснастка SVG
 
 Карточка берёт изображение из папки `www/community/cartelemetry-card/` (в каталоге
