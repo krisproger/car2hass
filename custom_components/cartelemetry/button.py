@@ -37,7 +37,7 @@ class CarTelemetryButton(ButtonEntity):
 
     @property
     def device_info(self):
-        build_device_info(self._entry_id, self._car_name, self._sw_version)
+        return build_device_info(self._entry_id, self._car_name, self._sw_version)
 
     async def async_added_to_hass(self):
         """Register update listener to set availability."""

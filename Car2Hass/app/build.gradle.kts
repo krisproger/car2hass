@@ -10,7 +10,7 @@ import java.util.Properties
 // (enforced by tests/test_version_consistency.py).
 val buildCounterFile = rootProject.file("build_counter.txt")
 val buildNum = if (buildCounterFile.exists()) buildCounterFile.readText().trim().toInt() else 1
-val appVersionName = System.getenv("VERSION_NAME") ?: "3.0.19"
+val appVersionName = System.getenv("VERSION_NAME") ?: "3.0.20"
 
 // Signing credentials: prefer environment variables / local.properties (used by
 // build_apk.sh and release CI), fall back to the dev keystore checked into .keys/.
@@ -62,8 +62,13 @@ android {
         }
         debug {
             // Sign debug builds with the same dev key so both variants can be
-            // installed side by side with the shell-script builds.
-            signingConfig = signingConfigs.getByName("release")
+            // installed side by side with the shell-script builds. In CI the
+            // keystore is not checked in — fall back to the auto-generated
+            // debug key so assembleDebug keeps working on a fresh checkout.
+            val keyFile = rootProject.file(ksFile)
+            if (keyFile.isFile) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 

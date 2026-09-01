@@ -2,7 +2,7 @@ DOMAIN = "cartelemetry"
 
 CONF_CAR_NAME = "car_name"
 
-INTEGRATION_VERSION = "3.0.19"
+INTEGRATION_VERSION = "3.0.20"
 
 # Sensor considered offline after this many seconds without updates.
 ONLINE_OFFLINE_SECONDS = 60
