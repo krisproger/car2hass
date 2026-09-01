@@ -1,10 +1,10 @@
-"""Basic sanity tests for diplus2hass constants."""
+"""Basic sanity tests for cartelemetry constants."""
 
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT / "custom_components" / "diplus2hass"))
+sys.path.insert(0, str(ROOT / "custom_components" / "cartelemetry"))
 
 from const import (
     BINARY_ON_MAP,
@@ -19,7 +19,7 @@ from const import (
 
 
 def test_domain():
-    assert DOMAIN == "diplus2hass"
+    assert DOMAIN == "cartelemetry"
 
 
 def test_numeric_sensors_have_icons():

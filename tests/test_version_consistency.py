@@ -1,6 +1,6 @@
 """Version consistency across the app, the integration, the docs and the site.
 
-Single source of truth: ``custom_components/diplus2hass/manifest.json`` (the
+Single source of truth: ``custom_components/cartelemetry/manifest.json`` (the
 Home Assistant integration version). The Android app shares the same version
 name; the values in ``build.gradle.kts`` / ``build_apk.sh`` are fallbacks
 only — the ``VERSION_NAME`` environment variable wins at build time.
@@ -14,8 +14,8 @@ import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-MANIFEST = ROOT / "custom_components" / "diplus2hass" / "manifest.json"
-APP_DIR = ROOT / "DiPlus-to-hass"
+MANIFEST = ROOT / "custom_components" / "cartelemetry" / "manifest.json"
+APP_DIR = ROOT / "Car2Hass"
 
 
 def _manifest_version():
@@ -65,22 +65,22 @@ def test_readme_download_links_match_manifest():
         (ROOT / "README.md").read_text(encoding="utf-8"),
         "**Archive of previous versions",
     )
-    links = set(re.findall(r"diplus2hass-v([0-9][0-9.]*)\.(?:apk|zip)", text))
+    links = set(re.findall(r"(?:car2hass|cartelemetry)-v([0-9][0-9.]*)\.(?:apk|zip)", text))
     assert links == {_manifest_version()}, f"stale download links: {links}"
 
 
 def test_site_index_matches_manifest():
     text = _current_release_text(
-        (ROOT / "docs" / "diplus2hass" / "index.php").read_text(encoding="utf-8"),
+        (ROOT / "docs" / "cartelemetry" / "index.php").read_text(encoding="utf-8"),
         '<details class="archive-block">',
     )
-    links = set(re.findall(r"diplus2hass-v([0-9][0-9.]*)\.(?:apk|zip)", text))
+    links = set(re.findall(r"(?:car2hass|cartelemetry)-v([0-9][0-9.]*)\.(?:apk|zip)", text))
     assert links == {_manifest_version()}, f"stale site download links: {links}"
 
 
 def test_site_download_php_matches_manifest():
-    text = (ROOT / "docs" / "diplus2hass" / "download.php").read_text(encoding="utf-8")
-    links = set(re.findall(r"diplus2hass-v([0-9][0-9.]*)\.(?:apk|zip)", text))
+    text = (ROOT / "docs" / "cartelemetry" / "download.php").read_text(encoding="utf-8")
+    links = set(re.findall(r"(?:car2hass|cartelemetry)-v([0-9][0-9.]*)\.(?:apk|zip)", text))
     assert links == {_manifest_version()}, f"stale download.php entries: {links}"
 
 
@@ -97,7 +97,7 @@ def test_manual_download_links_match_manifest():
         text = (ROOT / "mkdocs" / "docs" / page).read_text(encoding="utf-8")
         if marker:
             text = _current_release_text(text, marker)
-        links = set(re.findall(r"diplus2hass-v([0-9][0-9.]*)\.(?:apk|zip)", text))
+        links = set(re.findall(r"(?:car2hass|cartelemetry)-v([0-9][0-9.]*)\.(?:apk|zip)", text))
         assert links == {_manifest_version()}, f"stale links in {page}: {links}"
 
 

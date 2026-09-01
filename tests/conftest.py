@@ -10,5 +10,5 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT / "custom_components" / "diplus2hass"))
+sys.path.insert(0, str(ROOT / "custom_components" / "cartelemetry"))
 sys.path.insert(0, str(ROOT))

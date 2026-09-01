@@ -1,6 +1,6 @@
-site_name: DiPlus-to-hass — Руководство
-site_description: Полное руководство по проекту DiPlus-to-hass — телеметрия и управление автомобилем BYD в Home Assistant
-site_url: https://teplitzky.ru/diplus2hass/manual/
+site_name: Car2Hass / CARTelemetry — Руководство
+site_description: Полное руководство по проекту Car2Hass (приложение) и CARTelemetry (интеграция) — телеметрия и управление автомобилем BYD в Home Assistant
+site_url: https://mytechnic.ru/cartelemetry/manual/
 docs_dir: docs
 site_dir: site
 
@@ -63,9 +63,14 @@ nav:
     - Фоновый режим: app/background.md
   - Интеграция HA:
     - Сущности: integration/entities.md
+    - Установка: integration/install-hacs.md
+    - API-контракт: integration/api-spec.md
+    - Сторонние приложения: integration/third-party.md
+    - Карточка автомобиля: integration/dashboard-card.md
     - Управление: integration/controls.md
   - Продвинутое:
     - OTA-обновления: advanced/ota.md
+    - Переход на 3.0: advanced/migration-3-0.md
     - Сигналы: advanced/signals.md
     - Диагностика и FAQ: advanced/troubleshooting.md
   - История версий: changelog.md
@@ -79,4 +84,4 @@ extra:
     - icon: fontawesome/brands/github
       link: https://github.com/krisproger
 
-copyright: DiPlus-to-hass — MIT License
+copyright: Car2Hass / CARTelemetry — MIT License

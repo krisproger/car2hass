@@ -15,7 +15,7 @@ def test_signals_yaml_exists_and_has_expected_count():
     yaml_path = ROOT / "signals.yaml"
     assert yaml_path.exists(), "signals.yaml not found"
     data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
-    assert len(data["signals"]) == 137
+    assert len(data["signals"]) == 161
 
 
 def test_java_registry_matches_yaml_keys():
@@ -39,7 +39,7 @@ def test_const_keys_match_yaml_keys():
 
 def test_signals_md_parses_to_same_count():
     md_rows = _parse_signals_md()
-    assert len(md_rows) == 137
+    assert len(md_rows) == 148  # SIGNALS.md documents CAN signals only, no synthetic
 
 
 def test_binary_sensor_truthy_covers_labels():

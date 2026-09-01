@@ -1,7 +1,7 @@
 # diplus — полный каталог сигналов (`/api/getVal?name=`)
 
 Источник: `com.van.diplus.cmd.s` (конструктор), декомпиляция diplus 1.3.8-beta18.
-Всего **137** сигналов. Ключ `name` — китайская строка (единственное латинское имя — `SOC`).
+Всего **161** сигналов. Ключ `name` — китайская строка (единственное латинское имя — `SOC`).
 
 - **ID** — внутренний индекс в реестре (`SparseArray`), для справки; в HTTP-запросе не используется.
 - **Тип**: *num* — числовое значение; *enum* — при `status=true` возвращает текстовую метку, при `status=false` — числовой индекс.
@@ -162,8 +162,19 @@ GET http://127.0.0.1:8988/api/getVal?name=车速&status=true   →  {"success":t
 
 | ID | Ключ (`name`) | Значение | Тип | Метки enum |
 |---:|---|---|---|---|
-| 9001 | `在线状态` | Online | enum | 0=off, 1=on |
-| 9002 | `Версия приложения` | App version | enum |  |
-| 9003 | `WiFi SSID` | WiFi SSID | enum |  |
-| 9004 | `WiFi BSSID` | WiFi BSSID | enum |  |
-| 9005 | `WiFi RSSI` | WiFi RSSI | num |  |
+| 30001 | `发动机负荷` | Engine load | num |  |
+| 30002 | `进气温度` | Intake air temperature | num |  |
+| 30003 | `空气质量流量` | MAF air flow | num |  |
+| 30004 | `环境温度` | Ambient temperature | num |  |
+| 30005 | `机油温度` | Engine oil temperature | num |  |
+| 30006 | `燃油消耗率` | Fuel consumption rate | num |  |
+| 40001 | `主驾座椅加热` | Driver seat heating | enum |  |
+| 40002 | `副驾座椅加热` | Passenger seat heating | enum |  |
+| 40003 | `主驾座椅通风` | Driver seat ventilation | enum |  |
+| 40004 | `副驾座椅通风` | Passenger seat ventilation | enum |  |
+| 40005 | `后排左侧座椅加热` | Rear-left seat heating | enum |  |
+| 40006 | `后排右侧座椅加热` | Rear-right seat heating | enum |  |
+| 40007 | `方向盘加热` | Steering wheel heating | enum |  |
+| 40008 | `后挡风玻璃加热` | Rear window defrost | enum |  |
+| 40009 | `充电功率` | Charge rate | num |  |
+| 40010 | `后视镜折叠` | Rear mirror fold | enum |  |

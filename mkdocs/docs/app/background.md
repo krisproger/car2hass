@@ -14,10 +14,10 @@
 
     ```bash
     adb connect <IP_ГУ>:5555
-    adb shell pm grant com.diplustohass android.permission.WRITE_SECURE_SETTINGS
-    adb shell pm grant com.diplustohass android.permission.DEVICE_POWER
+    adb shell pm grant com.car2hass android.permission.WRITE_SECURE_SETTINGS
+    adb shell pm grant com.car2hass android.permission.DEVICE_POWER
     adb shell settings put global allow_online_while_car_off 1
-    adb shell dumpsys deviceidle whitelist +com.diplustohass
+    adb shell dumpsys deviceidle whitelist +com.car2hass
     ```
 
 5. Адрес ADB-подключения меняется в настройках (**ADB host/port**, по умолчанию `127.0.0.1:5555`).

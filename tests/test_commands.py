@@ -1,10 +1,10 @@
-"""Tests for diplus2hass command registry."""
+"""Tests for cartelemetry command registry."""
 
 import sys
 from pathlib import Path
 
 ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(ROOT / "custom_components" / "diplus2hass"))
+sys.path.insert(0, str(ROOT / "custom_components" / "cartelemetry"))
 
 from commands import (
     BUTTON_COMMANDS,

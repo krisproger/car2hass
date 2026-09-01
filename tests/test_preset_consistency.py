@@ -19,11 +19,11 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parent.parent
-PRESETS = ROOT / "DiPlus-to-hass" / "app" / "src" / "main" / "assets" / "dashboard_presets.json"
-SITE_PRESETS = ROOT / "docs" / "diplus2hass" / "dashboard_presets.json"
-SITE_META = ROOT / "docs" / "diplus2hass" / "dashboard_presets.meta.json"
+PRESETS = ROOT / "Car2Hass" / "app" / "src" / "main" / "assets" / "dashboard_presets.json"
+SITE_PRESETS = ROOT / "docs" / "cartelemetry" / "dashboard_presets.json"
+SITE_META = ROOT / "docs" / "cartelemetry" / "dashboard_presets.meta.json"
 SIGNALS = ROOT / "signals.yaml"
-CONST = ROOT / "custom_components" / "diplus2hass" / "const.py"
+CONST = ROOT / "custom_components" / "cartelemetry" / "const.py"
 
 
 def _load_signals():

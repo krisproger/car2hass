@@ -9,7 +9,7 @@ from pathlib import Path
 
 PLATFORM_DIR = (
     Path(__file__).resolve().parent.parent
-    / "custom_components" / "diplus2hass"
+    / "custom_components" / "cartelemetry"
 )
 
 

@@ -1310,7 +1310,7 @@ signals:
   key: rain_amount
   labels: {}
   ha_type: sensor
-  unit: 'mm'
+  unit: mm
   icon: mdi:weather-rainy
   device_class: precipitation
   state_class: measurement
@@ -1597,7 +1597,6 @@ signals:
   ha_type: sensor
   unit: ''
   icon: mdi:car
-# Synthetic sensor — derived from last_seen timestamp, not a CAN signal
 - id: 9001
   name: 在线状态
   description: Online
@@ -1610,8 +1609,7 @@ signals:
   ha_type: binary_sensor
   device_class: connectivity
   truthy:
-    - 'on'
-# Synthetic sensors — supplied by the Android app, not DiPlus
+  - 'on'
 - id: 9002
   name: Версия приложения
   description: App version
@@ -1654,3 +1652,234 @@ signals:
   icon: mdi:wifi
   device_class: signal_strength
   state_class: measurement
+- id: 9101
+  name: GPS Latitude
+  description: GPS latitude
+  type: num
+  synthetic: true
+  key: location_lat
+  labels: {}
+  ha_type: sensor
+  unit: deg
+  icon: mdi:latitude
+  state_class: measurement
+- id: 9102
+  name: GPS Longitude
+  description: GPS longitude
+  type: num
+  synthetic: true
+  key: location_lon
+  labels: {}
+  ha_type: sensor
+  unit: deg
+  icon: mdi:longitude
+  state_class: measurement
+- id: 9103
+  name: GPS Speed
+  description: GPS speed
+  type: num
+  synthetic: true
+  key: location_speed
+  labels: {}
+  ha_type: sensor
+  unit: km/h
+  icon: mdi:speedometer
+  device_class: speed
+  state_class: measurement
+- id: 9104
+  name: GPS Bearing
+  description: GPS bearing
+  type: num
+  synthetic: true
+  key: location_bearing
+  labels: {}
+  ha_type: sensor
+  unit: deg
+  icon: mdi:compass
+  state_class: measurement
+- id: 9105
+  name: GPS Altitude
+  description: GPS altitude
+  type: num
+  synthetic: true
+  key: location_altitude
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:image-filter-hdr
+  device_class: distance
+  state_class: measurement
+- id: 9106
+  name: GPS Accuracy
+  description: GPS accuracy
+  type: num
+  synthetic: true
+  key: location_accuracy
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:crosshairs-gps
+  device_class: distance
+  state_class: measurement
+- id: 9107
+  name: Device Battery
+  description: Head unit battery level
+  type: num
+  synthetic: true
+  key: device_battery
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:battery
+  device_class: battery
+  state_class: measurement
+- id: 9108
+  name: GPS Provider
+  description: Location provider
+  type: enum
+  synthetic: true
+  key: location_provider
+  labels: {}
+  ha_type: sensor
+- id: 30001
+  name: 发动机负荷
+  description: Engine load
+  type: num
+  key: engine_load
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:gauge
+  state_class: measurement
+- id: 30002
+  name: 进气温度
+  description: Intake air temperature
+  type: num
+  key: intake_air_temp
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  state_class: measurement
+- id: 30003
+  name: 空气质量流量
+  description: MAF air flow
+  type: num
+  key: maf
+  labels: {}
+  ha_type: sensor
+  unit: g/s
+  icon: mdi:air-filter
+  state_class: measurement
+- id: 30004
+  name: 环境温度
+  description: Ambient temperature
+  type: num
+  key: ambient_temp
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  state_class: measurement
+- id: 30005
+  name: 机油温度
+  description: Engine oil temperature
+  type: num
+  key: engine_oil_temp
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:oil-temperature
+  state_class: measurement
+- id: 30006
+  name: 燃油消耗率
+  description: Fuel consumption rate
+  type: num
+  key: fuel_rate
+  labels: {}
+  ha_type: sensor
+  unit: L/h
+  icon: mdi:gas-station
+  state_class: measurement
+- id: 40001
+  name: 主驾座椅加热
+  description: Driver seat heating
+  type: enum
+  key: driver_seat_heat
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat-heater
+- id: 40002
+  name: 副驾座椅加热
+  description: Passenger seat heating
+  type: enum
+  key: passenger_seat_heat
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat-heater
+- id: 40003
+  name: 主驾座椅通风
+  description: Driver seat ventilation
+  type: enum
+  key: driver_seat_vent
+  labels: {}
+  ha_type: sensor
+  icon: mdi:fan
+- id: 40004
+  name: 副驾座椅通风
+  description: Passenger seat ventilation
+  type: enum
+  key: passenger_seat_vent
+  labels: {}
+  ha_type: sensor
+  icon: mdi:fan
+- id: 40005
+  name: 后排左侧座椅加热
+  description: Rear-left seat heating
+  type: enum
+  key: rear_left_seat_heat
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat-heater
+- id: 40006
+  name: 后排右侧座椅加热
+  description: Rear-right seat heating
+  type: enum
+  key: rear_right_seat_heat
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat-heater
+- id: 40007
+  name: 方向盘加热
+  description: Steering wheel heating
+  type: enum
+  key: steering_wheel_heat
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-defrost-rear
+- id: 40008
+  name: 后挡风玻璃加热
+  description: Rear window defrost
+  type: enum
+  key: rear_defrost
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-defrost-rear
+- id: 40009
+  name: 充电功率
+  description: Charge rate
+  type: num
+  key: charge_rate
+  labels: {}
+  ha_type: sensor
+  unit: kW
+  icon: mdi:lightning-bolt
+  state_class: measurement
+- id: 40010
+  name: 后视镜折叠
+  description: Rear mirror fold
+  type: enum
+  key: mirror_fold
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-side

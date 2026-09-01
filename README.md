@@ -1,20 +1,20 @@
-# DiPlus-to-hass
+# Car2Hass
 
 Bridge for sending BYD vehicle telemetry to Home Assistant.
 
 Мост для отправки телеметрии автомобиля BYD в Home Assistant.
 
-- **DiPlus-to-hass** — Android app for the BYD head unit (DiLink). Reads vehicle data via the **DiPlus** app (mandatory — it will not work without it) and forwards it to a Home Assistant server.
-- **custom_components/diplus2hass** — Home Assistant custom integration that receives the data and creates sensors, binary sensors, a device tracker and control entities.
+- **Car2Hass** — Android app for the BYD head unit (DiLink). Reads vehicle data via the **DiPlus** app (optional BYD DiLink channel) and forwards it to a Home Assistant server.
+- **custom_components/cartelemetry** — Home Assistant custom integration that receives the data and creates sensors, binary sensors, a device tracker and control entities.
 - **mkdocs** — full project manual (Russian), built with MkDocs Material.
 
-- **DiPlus-to-hass** — Android-приложение для головного устройства BYD (DiLink). Читает данные автомобиля через приложение **DiPlus** (обязательно — без него приложение не работает) и пересылает их на сервер Home Assistant.
-- **custom_components/diplus2hass** — интеграция Home Assistant, которая принимает данные и создаёт сенсоры, бинарные сенсоры, трекер местоположения и элементы управления.
+- **Car2Hass** — Android-приложение для головного устройства BYD (DiLink). Читает данные автомобиля через приложение **DiPlus** (опциональный канал BYD DiLink) и пересылает их на сервер Home Assistant.
+- **custom_components/cartelemetry** — интеграция Home Assistant, которая принимает данные и создаёт сенсоры, бинарные сенсоры, трекер местоположения и элементы управления.
 - **mkdocs** — полное руководство по проекту (на русском), собирается MkDocs Material.
 
-> 📖 **Full project manual — [teplitzky.ru/diplus2hass/manual](https://teplitzky.ru/diplus2hass/manual/).**
-> 📖 **Полное руководство по проекту — [teplitzky.ru/diplus2hass/manual](https://teplitzky.ru/diplus2hass/manual/).**
-> 📰 **Step-by-step article — [teplitzky.ru/diplus2hass/article.html](https://teplitzky.ru/diplus2hass/article.html) · Rules guide — [article_rules.html](https://teplitzky.ru/diplus2hass/article_rules.html).**
+> 📖 **Full project manual — [mytechnic.ru/cartelemetry/manual](https://mytechnic.ru/cartelemetry/manual/).**
+> 📖 **Полное руководство по проекту — [mytechnic.ru/cartelemetry/manual](https://mytechnic.ru/cartelemetry/manual/).**
+> 📰 **Step-by-step article — [mytechnic.ru/cartelemetry/article.html](https://mytechnic.ru/cartelemetry/article.html) · Rules guide — [article_rules.html](https://mytechnic.ru/cartelemetry/article_rules.html).**
 > 💬 **Telegram community — [t.me/bydiplus2hass](https://t.me/bydiplus2hass).**
 
 ---
@@ -23,11 +23,11 @@ Bridge for sending BYD vehicle telemetry to Home Assistant.
 
 | What / Что | Link / Ссылка |
 |------------|---------------|
-| Android app (latest) | [diplus2hass-v2.1.2.apk](https://teplitzky.ru/diplus2hass/download.php?file=app) |
-| HA integration (latest) | [diplus2hass-v2.1.2.zip](https://teplitzky.ru/diplus2hass/download.php?file=integration) |
-| DiPlus app (mandatory) | [diplus.1.3.8-beta18.apk](https://teplitzky.ru/diplus2hass/download.php?file=diplus) |
+| Android app (latest) | [diplus2hass-v2.1.2.apk](https://mytechnic.ru/cartelemetry/download.php?file=app) |
+| HA integration (latest) | [diplus2hass-v2.1.2.zip](https://mytechnic.ru/cartelemetry/download.php?file=integration) |
+| DiPlus app (optional, BYD DiLink) | [diplus.1.3.8-beta18.apk](https://mytechnic.ru/cartelemetry/download.php?file=diplus) |
 
-Previous releases and the version archive: [project site](https://teplitzky.ru/diplus2hass/) · Архив версий — на [сайте проекта](https://teplitzky.ru/diplus2hass/).
+Previous releases and the version archive: [project site](https://mytechnic.ru/cartelemetry/) · Архив версий — на [сайте проекта](https://mytechnic.ru/cartelemetry/).
 
 ---
 
@@ -37,8 +37,8 @@ Previous releases and the version archive: [project site](https://teplitzky.ru/d
 
 ```
 .
-├── custom_components/diplus2hass/  # Home Assistant custom integration
-├── DiPlus-to-hass/                 # Android app
+├── custom_components/cartelemetry/  # Home Assistant custom integration
+├── Car2Hass/                 # Android app
 │   ├── app/src/main/               # Source code
 │   ├── build_apk.sh                # Shell build script (release + test APK)
 │   └── run_java_tests.sh           # Plain-JVM unit tests
@@ -51,13 +51,13 @@ Previous releases and the version archive: [project site](https://teplitzky.ru/d
 
 ### Quick start
 
-Detailed guide: [install.html](https://teplitzky.ru/diplus2hass/install.html) · full manual: [manual](https://teplitzky.ru/diplus2hass/manual/).
+Detailed guide: [install.html](https://mytechnic.ru/cartelemetry/install.html) · full manual: [manual](https://mytechnic.ru/cartelemetry/manual/).
 
-1. Install **DiPlus** on the head unit (mandatory).
+1. For BYD DiLink: install **DiPlus** on the head unit (optional data source).
 2. Install the HA integration — one of two ways:
    - **HACS (recommended):** HACS → ⋮ → Custom repositories → add `https://github.com/krisproger/diplustohass` (Integration) → Download.
-   - **Manually:** copy `custom_components/diplus2hass` to `/config/custom_components/`.
-3. Restart HA and add the **DiPlus-to-hass — BYD Vehicle Telemetry** integration, set a car name.
+   - **Manually:** copy `custom_components/cartelemetry` to `/config/custom_components/`.
+3. Restart HA and add the **CARTelemetry — BYD Vehicle Telemetry** integration, set a car name.
 4. Install the Android app, enter HA address, Long-Lived Access Token and the same car name.
 5. Enable **Send data to HA** on the main screen and pick the signals to transmit.
 6. Allow auto-start and background activity for the app in the BYD system settings.
@@ -78,7 +78,7 @@ Detailed guide: [install.html](https://teplitzky.ru/diplus2hass/install.html) ·
 Requirements: Android SDK (platform `android-35`, build-tools `36.1.0`) and JDK 17+.
 
 ```bash
-cd DiPlus-to-hass
+cd Car2Hass
 ./build_apk.sh          # builds release + test APK into build/apk/
 ```
 
@@ -87,7 +87,7 @@ The script signs with a dev keystore. Generate it once (the script prints this c
 ```bash
 mkdir -p .keys && keytool -genkey -keystore .keys/dev-release.jks -alias devkey \
   -keyalg RSA -keysize 2048 -validity 10000 -storepass devpass -keypass devpass \
-  -dname 'CN=DiPlus-to-hass Dev'
+  -dname 'CN=Car2Hass Dev'
 ```
 
 Gradle alternative: `./gradlew assembleRelease`.
@@ -95,7 +95,7 @@ Gradle alternative: `./gradlew assembleRelease`.
 ### Tests
 
 - Integration: `pip install -r requirements-dev.txt && pytest tests/`
-- Android (plain JVM): `DiPlus-to-hass/run_java_tests.sh`
+- Android (plain JVM): `Car2Hass/run_java_tests.sh`
 
 ### Signal registry
 
@@ -128,8 +128,8 @@ MIT — see [LICENSE](LICENSE).
 
 ```
 .
-├── custom_components/diplus2hass/  # Home Assistant Custom Integration
-├── DiPlus-to-hass/                 # Android-приложение
+├── custom_components/cartelemetry/  # Home Assistant Custom Integration
+├── Car2Hass/                 # Android-приложение
 │   ├── app/src/main/               # Исходный код
 │   ├── build_apk.sh                # Shell-сборка (release + test APK)
 │   └── run_java_tests.sh           # Юнит-тесты (plain JVM)
@@ -142,13 +142,13 @@ MIT — see [LICENSE](LICENSE).
 
 ### Быстрый старт
 
-Подробная инструкция: [install.html](https://teplitzky.ru/diplus2hass/install.html) · руководство: [manual](https://teplitzky.ru/diplus2hass/manual/).
+Подробная инструкция: [install.html](https://mytechnic.ru/cartelemetry/install.html) · руководство: [manual](https://mytechnic.ru/cartelemetry/manual/).
 
-1. Установите **DiPlus** на головное устройство (обязательно).
+1. Для BYD DiLink: установите **DiPlus** на головное устройство (опциональный источник данных).
 2. Установите интеграцию HA — одним из двух способов:
    - **Через HACS (рекомендуется):** HACS → ⋮ → Custom repositories → добавьте `https://github.com/krisproger/diplustohass` (Integration) → Download.
-   - **Вручную:** скопируйте `custom_components/diplus2hass` в `/config/custom_components/`.
-3. Перезапустите HA и добавьте интеграцию **DiPlus-to-hass — BYD Vehicle Telemetry**, задайте имя автомобиля.
+   - **Вручную:** скопируйте `custom_components/cartelemetry` в `/config/custom_components/`.
+3. Перезапустите HA и добавьте интеграцию **CARTelemetry — BYD Vehicle Telemetry**, задайте имя автомобиля.
 4. Установите Android-приложение, укажите адрес HA, Long-Lived Access Token и то же имя автомобиля.
 5. Включите **Отправлять в HA** на главном экране и отметьте нужные сигналы.
 6. Разрешите автозапуск и фоновую работу приложения в системных настройках BYD.
@@ -169,7 +169,7 @@ MIT — see [LICENSE](LICENSE).
 Требования: Android SDK (platform `android-35`, build-tools `36.1.0`) и JDK 17+.
 
 ```bash
-cd DiPlus-to-hass
+cd Car2Hass
 ./build_apk.sh          # собирает release + test APK в build/apk/
 ```
 
@@ -178,7 +178,7 @@ cd DiPlus-to-hass
 ### Тесты
 
 - Интеграция: `pip install -r requirements-dev.txt && pytest tests/`
-- Android (plain JVM): `DiPlus-to-hass/run_java_tests.sh`
+- Android (plain JVM): `Car2Hass/run_java_tests.sh`
 
 ### Лицензия
 

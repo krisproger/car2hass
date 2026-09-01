@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Generate PNG preset icons for the DiPlus-to-hass Android dashboard.
+"""Generate PNG preset icons for the Car2Hass Android dashboard.
 
 Each preset in app/src/main/assets/dashboard_presets.json has an "icon" field
 (e.g. "air-conditioner"). This script renders a simple white-on-transparent
 64x64 PNG for every known icon name into:
 
-    DiPlus-to-hass/app/src/main/assets/icons/<name>.png
+    Car2Hass/app/src/main/assets/icons/<name>.png
 
 The app resolves icons at runtime (filesDir/icons override -> assets -> emoji
 fallback), so these PNGs are the bundled baseline.
@@ -19,7 +19,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).parent.parent
-OUT_DIR = ROOT / "DiPlus-to-hass" / "app" / "src" / "main" / "assets" / "icons"
+OUT_DIR = ROOT / "Car2Hass" / "app" / "src" / "main" / "assets" / "icons"
 
 SIZE = 64          # final icon edge, px
 SS = 4             # supersampling factor for antialiasing

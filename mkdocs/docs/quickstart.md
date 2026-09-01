@@ -1,12 +1,18 @@
 # Быстрый старт
 
-Полная установка занимает 15–20 минут. Порядок важен: сначала DiPlus, потом интеграция HA, потом наше приложение.
+Полная установка занимает 15–20 минут.
 
-## Шаг 1. Установите DiPlus на головное устройство
+**Car2Hass универсален**: приложение стартует само и само определяет, какие
+источники данных доступны на устройстве (ADB, DiPlus, OBD, системные датчики).
+DiPlus нужен только если вы хотите канал BYD/DiLink — на BYD без него не будет
+основного потока CAN-данных.
 
-Приложение **DiPlus** — источник данных об автомобиле. Без него DiPlus-to-hass работать не будет.
+## Шаг 1. (Для BYD DiLink) Установите DiPlus на головное устройство
 
-1. Скачайте [diplus.1.3.8-beta18.apk](https://teplitzky.ru/diplus2hass/download.php?file=diplus).
+Приложение **DiPlus** — один из поддерживаемых источников данных (канал BYD CAN).
+Для других автомобилей/источников этот шаг пропустите.
+
+1. Скачайте [diplus.1.3.8-beta18.apk](https://mytechnic.ru/cartelemetry/download.php?file=diplus).
 2. Установите на ГУ любым способом (флешка, мессенджер, ADB).
 3. Запустите DiPlus и выдайте ему запрошенные разрешения.
 4. Проверьте, что DiPlus видит автомобиль: на главном экране DiPlus появляются данные (скорость, SOC и т.д.).
@@ -20,38 +26,42 @@
 1. Убедитесь, что в HA установлен [HACS](https://hacs.xyz/).
 2. **HACS → Integrations → меню ⋮ (вверху справа) → Custom repositories**.
 3. В поле Repository вставьте `https://github.com/krisproger/diplustohass`, категория — **Integration** → **Add**.
-4. Найдите в HACS **DiPlus-to-hass — BYD Vehicle Telemetry** и нажмите **Download**.
+4. Найдите в HACS **Car2Hass — BYD Vehicle Telemetry** и нажмите **Download**.
 5. Перезапустите Home Assistant.
 
 Обновления интеграции будут приходить через HACS автоматически.
 
 ### Способ B. Вручную (без HACS)
 
-1. Скачайте [diplus2hass-v2.3.1.zip](https://teplitzky.ru/diplus2hass/download.php?file=integration) и распакуйте.
-2. Скопируйте папку `custom_components/diplus2hass` в `/config/custom_components/`.
+1. Скачайте [cartelemetry-v3.0.19.zip](https://mytechnic.ru/cartelemetry/download.php?file=integration) и распакуйте.
+2. Скопируйте папку `custom_components/cartelemetry` в `/config/custom_components/`.
 
     ```bash
-    cp -r custom_components/diplus2hass /config/custom_components/
+    cp -r custom_components/cartelemetry /config/custom_components/
     ```
 
     !!! warning "Обновление с предыдущей версии"
-        Сначала **полностью удалите** старую папку `/config/custom_components/diplus2hass/`, затем копируйте новую. Перезапись поверх оставляет смешанный набор файлов и приводит к ошибкам импорта при запуске.
+        Сначала **полностью удалите** старую папку `/config/custom_components/cartelemetry/`, затем копируйте новую. Перезапись поверх оставляет смешанный набор файлов и приводит к ошибкам импорта при запуске.
 
 3. Перезапустите Home Assistant.
 
 ### Добавление интеграции
 
-1. **Настройки → Устройства и службы → Добавить интеграцию** → найдите **DiPlus-to-hass — BYD Vehicle Telemetry**.
+1. **Настройки → Устройства и службы → Добавить интеграцию** → найдите **Car2Hass — BYD Vehicle Telemetry**.
 2. Введите имя автомобиля (латиницей, без пробелов — например, `BYDSongPRO`). Оно станет префиксом всех сущностей.
+
+!!! note "Анонимная связь с сайтом"
+    Интеграция один раз в сутки отправляет на `mytechnic.ru` анонимный запрос (без личных данных)
+    для подсчёта числа установок. Если ваш HA не имеет доступа к сайту — запрос молча пропускается.
 
 ## Шаг 3. Создайте Long-Lived Access Token
 
 1. В HA откройте профиль пользователя (внизу слева) → раздел **Long-Lived Access Tokens**.
 2. Создайте токен с понятным именем (например, `diplus-car`) и скопируйте его — он показывается один раз.
 
-## Шаг 4. Установите приложение DiPlus-to-hass
+## Шаг 4. Установите приложение Car2Hass
 
-1. Скачайте [diplus2hass-v2.3.1.apk](https://teplitzky.ru/diplus2hass/download.php?file=app).
+1. Скачайте [car2hass-v3.0.19.apk](https://mytechnic.ru/cartelemetry/download.php?file=app).
 2. Установите на ГУ (флешка, мессенджер или `adb install -r`).
 3. При первом запуске выдайте разрешения: местоположение (в т.ч. в фоне) — нужно для трекера и геозон.
 
@@ -77,7 +87,7 @@
 
 Чтобы приложение работало постоянно:
 
-1. В меню приложения выберите пункт автозапуска — откроется системное окно BYD **AppStartManagement**; разрешите автозапуск DiPlus-to-hass.
+1. В меню приложения выберите пункт автозапуска — откроется системное окно BYD **AppStartManagement**; разрешите автозапуск Car2Hass.
 2. В системных настройках батареи/энергосбережения исключите приложение из оптимизации.
 3. Для работы при выключенном авто (ACC off) см. [Фоновый режим](app/background.md).
 

@@ -1,0 +1,3622 @@
+{
+  "version": 1,
+  "channels_priority": [
+    "diplus",
+    "adb",
+    "dumpsys",
+    "system",
+    "obd",
+    "diplus_push",
+    "byd_cloud",
+    "voyah"
+  ],
+  "sensors": [
+    {
+      "key": "power_state",
+      "label_en": "Power state",
+      "label_ru": "Power state",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "电源状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "speed",
+      "label_en": "Speed (km/h)",
+      "label_ru": "Speed (km/h)",
+      "type": "num",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "车速"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": {
+          "pid": "010D"
+        },
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "range",
+      "label_en": "Range / mileage",
+      "label_ru": "Range / mileage",
+      "type": "num",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "里程"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "PDCM_REMAINING_MILEAGE_STANDARD"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "gear",
+      "label_en": "Gear",
+      "label_ru": "Gear",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "档位"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "engine_rpm",
+      "label_en": "Engine RPM",
+      "label_ru": "Engine RPM",
+      "type": "num",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "发动机转速"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": {
+          "pid": "010C"
+        },
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "brake_pedal",
+      "label_en": "Brake pedal depth",
+      "label_ru": "Brake pedal depth",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "刹车深度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "BRAKE_PEDAL_STATUS"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "accel_pedal",
+      "label_en": "Accelerator pedal depth",
+      "label_ru": "Accelerator pedal depth",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "加速踏板深度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": {
+          "pid": "0111"
+        },
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "ACCEL_PEDAL_POSITION"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "front_motor_rpm",
+      "label_en": "Front motor RPM",
+      "label_ru": "Front motor RPM",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "前电机转速"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "rear_motor_rpm",
+      "label_en": "Rear motor RPM",
+      "label_ru": "Rear motor RPM",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "后电机转速"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "engine_power",
+      "label_en": "Engine power",
+      "label_ru": "Engine power",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "发动机功率"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "front_motor_torque",
+      "label_en": "Front motor torque",
+      "label_ru": "Front motor torque",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "前电机扭矩"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "charge_gun_state",
+      "label_en": "Charge gun plug state",
+      "label_ru": "Charge gun plug state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "充电枪插枪状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "CHARGE_GUN_UNLOCK_SET"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "energy_per_100km",
+      "label_en": "Energy per 100 km",
+      "label_ru": "Energy per 100 km",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "百公里电耗"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "battery_temp_max",
+      "label_en": "Max battery temp",
+      "label_ru": "Max battery temp",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "最高电池温度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "battery_temp_avg",
+      "label_en": "Avg battery temp",
+      "label_ru": "Avg battery temp",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "平均电池温度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "battery_temp_min",
+      "label_en": "Min battery temp",
+      "label_ru": "Min battery temp",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "最低电池温度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "cell_voltage_max",
+      "label_en": "Max cell voltage",
+      "label_ru": "Max cell voltage",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "最高电池电压"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "cell_voltage_min",
+      "label_en": "Min cell voltage",
+      "label_ru": "Min cell voltage",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "最低电池电压"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "last_wiper_time",
+      "label_en": "Last wiper time",
+      "label_ru": "Last wiper time",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "上次雨刮时间"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "weather",
+      "label_en": "Weather",
+      "label_ru": "Weather",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "天气"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "driver_seatbelt",
+      "label_en": "Driver seatbelt state",
+      "label_ru": "Driver seatbelt state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "主驾驶安全带状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "remote_lock_state",
+      "label_en": "Remote lock state",
+      "label_ru": "Remote lock state",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "远程锁车状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "cabin_temp",
+      "label_en": "Cabin temperature",
+      "label_ru": "Cabin temperature",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "车内温度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "outside_temp",
+      "label_en": "Outside temperature",
+      "label_ru": "Outside temperature",
+      "type": "num",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "车外温度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "ac_set_temp",
+      "label_en": "Driver A/C set temp",
+      "label_ru": "Driver A/C set temp",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "主驾驶空调温度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "temp_unit",
+      "label_en": "Temperature unit",
+      "label_ru": "Temperature unit",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "温度单位"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "battery_capacity",
+      "label_en": "Battery capacity",
+      "label_ru": "Battery capacity",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "电池容量"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "steering_angle",
+      "label_en": "Steering wheel angle",
+      "label_ru": "Steering wheel angle",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "方向盘转角"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "steering_rate",
+      "label_en": "Steering wheel rate",
+      "label_ru": "Steering wheel rate",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "方向盘转速"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "total_energy",
+      "label_en": "Total energy consumption",
+      "label_ru": "Total energy consumption",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "总电耗"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "battery_charge",
+      "label_en": "Battery charge (%)",
+      "label_ru": "Battery charge (%)",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "电量百分比"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "fuel_level",
+      "label_en": "Fuel level (%)",
+      "label_ru": "Fuel level (%)",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "油量百分比"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": {
+          "pid": "012F"
+        },
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "total_fuel",
+      "label_en": "Total fuel consumption",
+      "label_ru": "Total fuel consumption",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "总燃油消耗"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "lane_curvature",
+      "label_en": "Lane curvature",
+      "label_ru": "Lane curvature",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "车道线曲率"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "right_lane_distance",
+      "label_en": "Right lane distance",
+      "label_ru": "Right lane distance",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "右侧线距离"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "left_lane_distance",
+      "label_en": "Left lane distance",
+      "label_ru": "Left lane distance",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "左侧线距离"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "battery_voltage",
+      "label_en": "12V battery voltage",
+      "label_ru": "12V battery voltage",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "蓄电池电压"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "radar_fl",
+      "label_en": "Radar front-left",
+      "label_ru": "Radar front-left",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "雷达左前"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "radar_fr",
+      "label_en": "Radar front-right",
+      "label_ru": "Radar front-right",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "雷达右前"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "radar_rl",
+      "label_en": "Radar rear-left",
+      "label_ru": "Radar rear-left",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "雷达左后"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "radar_rr",
+      "label_en": "Radar rear-right",
+      "label_ru": "Radar rear-right",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "雷达右后"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "radar_left",
+      "label_en": "Radar left",
+      "label_ru": "Radar left",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "雷达左"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "radar_flc",
+      "label_en": "Radar front-left-center",
+      "label_ru": "Radar front-left-center",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "雷达前左中"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "radar_frc",
+      "label_en": "Radar front-right-center",
+      "label_ru": "Radar front-right-center",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "雷达前右中"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "radar_rc",
+      "label_en": "Radar rear-center",
+      "label_ru": "Radar rear-center",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "雷达中后"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "front_wiper_speed",
+      "label_en": "Front wiper speed",
+      "label_ru": "Front wiper speed",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "前雨刮速度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "FRONT_WIPER"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "wiper_mode",
+      "label_en": "Wiper mode",
+      "label_ru": "Wiper mode",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "雨刮档位"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "cruise_switch",
+      "label_en": "Cruise switch",
+      "label_ru": "Cruise switch",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "巡航开关"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "distance_to_car_ahead",
+      "label_en": "Distance to car ahead",
+      "label_ru": "Distance to car ahead",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "前车距离"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "charging_state",
+      "label_en": "Charging state",
+      "label_ru": "Charging state",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "充电状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "CHARGE_STATE"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "tyre_pressure_fl",
+      "label_en": "Tyre pressure FL",
+      "label_ru": "Tyre pressure FL",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "左前轮气压"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "tyre_pressure_fr",
+      "label_en": "Tyre pressure FR",
+      "label_ru": "Tyre pressure FR",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "右前轮气压"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "tyre_pressure_rl",
+      "label_en": "Tyre pressure RL",
+      "label_ru": "Tyre pressure RL",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "左后轮气压"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "tyre_pressure_rr",
+      "label_en": "Tyre pressure RR",
+      "label_ru": "Tyre pressure RR",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "右后轮气压"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "left_turn",
+      "label_en": "Left turn signal",
+      "label_ru": "Left turn signal",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "左转向灯"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "right_turn",
+      "label_en": "Right turn signal",
+      "label_ru": "Right turn signal",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "右转向灯"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "driver_door_lock",
+      "label_en": "Driver door lock",
+      "label_ru": "Driver door lock",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "主驾车门锁"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "window_fl",
+      "label_en": "Window FL open (%)",
+      "label_ru": "Window FL open (%)",
+      "type": "num",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "主驾车窗打开百分比"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "window_fr",
+      "label_en": "Window FR open (%)",
+      "label_ru": "Window FR open (%)",
+      "type": "num",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "副驾车窗打开百分比"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "window_rl",
+      "label_en": "Window RL open (%)",
+      "label_ru": "Window RL open (%)",
+      "type": "num",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "左后车窗打开百分比"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "window_rr",
+      "label_en": "Window RR open (%)",
+      "label_ru": "Window RR open (%)",
+      "type": "num",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "右后车窗打开百分比"
+        },
+        "adb": {
+          "device": 1001,
+          "fid": 1267728408,
+          "transact": 5,
+          "decoder": "ParamDecoder.INT_PERCENT",
+          "scale": 1.0
+        },
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "sunroof",
+      "label_en": "Sunroof open (%)",
+      "label_ru": "Sunroof open (%)",
+      "type": "num",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "天窗打开百分比"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "sunshade",
+      "label_en": "Sunshade open (%)",
+      "label_ru": "Sunshade open (%)",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "遮阳帘打开百分比"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "powertrain_mode",
+      "label_en": "Powertrain work mode",
+      "label_ru": "Powertrain work mode",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "整车工作模式"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "TravelProgramme"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "drive_mode",
+      "label_en": "Drive mode",
+      "label_ru": "Drive mode",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "整车运行模式"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "month",
+      "label_en": "Month",
+      "label_ru": "Month",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "月"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "day",
+      "label_en": "Day",
+      "label_ru": "Day",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "日"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "hour",
+      "label_en": "Hour",
+      "label_ru": "Hour",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "时"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "minute",
+      "label_en": "Minute",
+      "label_ru": "Minute",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "分"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "passenger_seatbelt_warning",
+      "label_en": "Passenger seatbelt warning",
+      "label_ru": "Passenger seatbelt warning",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "副驾安全带警告"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "seatbelt_2nd_left",
+      "label_en": "2nd row left seatbelt",
+      "label_ru": "2nd row left seatbelt",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "二排左安全带"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "seatbelt_2nd_right",
+      "label_en": "2nd row right seatbelt",
+      "label_ru": "2nd row right seatbelt",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "二排右安全带"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "seatbelt_2nd_center",
+      "label_en": "2nd row center seatbelt",
+      "label_ru": "2nd row center seatbelt",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "二排中安全带"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "ac_state",
+      "label_en": "A/C state",
+      "label_ru": "A/C state",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "空调状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "AC_CLIMATE_SW_REQ"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "fan_speed",
+      "label_en": "Fan speed level",
+      "label_ru": "Fan speed level",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "风量档位"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "ac_recirculation",
+      "label_en": "A/C recirculation",
+      "label_ru": "A/C recirculation",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "空调循环方式"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "ac_airflow_mode",
+      "label_en": "A/C airflow mode",
+      "label_ru": "A/C airflow mode",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "空调出风模式"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "driver_door",
+      "label_en": "Driver door",
+      "label_ru": "Driver door",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "主驾车门"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "passenger_door",
+      "label_en": "Passenger door",
+      "label_ru": "Passenger door",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "副驾车门"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "rear_left_door",
+      "label_en": "Rear-left door",
+      "label_ru": "Rear-left door",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "左后车门"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "DOOR_POSITION_STATUS_RL"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "rear_right_door",
+      "label_en": "Rear-right door",
+      "label_ru": "Rear-right door",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "右后车门"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "DOOR_POSITION_STATUS_RR"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "bonnet",
+      "label_en": "Bonnet",
+      "label_ru": "Bonnet",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "引擎盖"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "trunk",
+      "label_en": "Trunk",
+      "label_ru": "Trunk",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "后备箱门"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "fuel_charge_flap",
+      "label_en": "Fuel/charge flap",
+      "label_ru": "Fuel/charge flap",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "油箱盖"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "auto_hold",
+      "label_en": "Auto hold",
+      "label_ru": "Auto hold",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "自动驻车"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "acc_cruise_state",
+      "label_en": "ACC cruise state",
+      "label_ru": "ACC cruise state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "ACC巡航状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "rear_left_approach_warning",
+      "label_en": "Rear-left approach warning",
+      "label_ru": "Rear-left approach warning",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "左后接近告警"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "rear_right_approach_warning",
+      "label_en": "Rear-right approach warning",
+      "label_ru": "Rear-right approach warning",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "右后接近告警"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "lane_keep_state",
+      "label_en": "Lane keep state",
+      "label_ru": "Lane keep state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "车道保持状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "rear_left_door_lock",
+      "label_en": "Rear-left door lock",
+      "label_ru": "Rear-left door lock",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "左后车门锁"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "DOOR_WORK_STATUS_RL"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "passenger_door_lock",
+      "label_en": "Passenger door lock",
+      "label_ru": "Passenger door lock",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "副驾车门锁"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "rear_right_door_lock",
+      "label_en": "Rear-right door lock",
+      "label_ru": "Rear-right door lock",
+      "type": "enum",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "右后车门锁"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "DOOR_WORK_STATUS_RR"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "trunk_lock",
+      "label_en": "Trunk lock",
+      "label_ru": "Trunk lock",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "后备箱门锁"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "rear_left_child_lock",
+      "label_en": "Rear-left child lock",
+      "label_ru": "Rear-left child lock",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "左后儿童锁"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "rear_right_child_lock",
+      "label_en": "Rear-right child lock",
+      "label_ru": "Rear-right child lock",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "右后儿童锁"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "sidelights",
+      "label_en": "Sidelights",
+      "label_ru": "Sidelights",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "小灯"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "low_beam",
+      "label_en": "Low beam",
+      "label_ru": "Low beam",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "近光灯"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "HEAD_LIGHT_STATUS"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "high_beam",
+      "label_en": "High beam",
+      "label_ru": "High beam",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "远光灯"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "HIGH_BEAM"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "front_fog",
+      "label_en": "Front fog",
+      "label_ru": "Front fog",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "前雾灯"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "FRONT_FOG_LIGHT"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "rear_fog",
+      "label_en": "Rear fog",
+      "label_ru": "Rear fog",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "后雾灯"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "REAR_FOG_LIGHT"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "footwell_light",
+      "label_en": "Footwell light",
+      "label_ru": "Footwell light",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "脚照灯"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "drl",
+      "label_en": "DRL",
+      "label_ru": "DRL",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "日行灯"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "DaytimeRunninglights"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "engine_coolant_temp",
+      "label_en": "Engine coolant temp",
+      "label_ru": "Engine coolant temp",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "发动机水温"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": {
+          "pid": "0105"
+        },
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "ENG_COOLANT_TEMP"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "hazard",
+      "label_en": "Hazard lights",
+      "label_ru": "Hazard lights",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "双闪"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "slope",
+      "label_en": "Slope / grade",
+      "label_ru": "Slope / grade",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "坡度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "rain_amount",
+      "label_en": "Rain amount",
+      "label_ru": "Rain amount",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "雨量"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "passenger_seatbelt",
+      "label_en": "Passenger seatbelt",
+      "label_ru": "Passenger seatbelt",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "副驾安全带"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "second",
+      "label_en": "Second",
+      "label_ru": "Second",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "秒"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "soc",
+      "label_en": "Battery SOC (%)",
+      "label_ru": "Battery SOC (%)",
+      "type": "num",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": {
+          "name": "SOC"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "BMS_SOC_DISPLAY"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "turn_signal",
+      "label_en": "Turn signal",
+      "label_ru": "Turn signal",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "转向信号"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "surround_view_state",
+      "label_en": "Surround-view state",
+      "label_ru": "Surround-view state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "全景状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "ui_config_version",
+      "label_en": "UI config version",
+      "label_ru": "UI config version",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "配置UI版本"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "sentry_state",
+      "label_en": "Sentry state",
+      "label_ru": "Sentry state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "哨兵状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "parked_recording_switch",
+      "label_en": "Parked-recording switch",
+      "label_ru": "Parked-recording switch",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "熄火录像配置开关"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "parked_sentry_alarm",
+      "label_en": "Parked sentry alarm",
+      "label_ru": "Parked sentry alarm",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "熄火哨兵报警"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "wifi_state",
+      "label_en": "Wi-Fi state",
+      "label_ru": "Wi-Fi state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "WIFI状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "bluetooth_state",
+      "label_en": "Bluetooth state",
+      "label_ru": "Bluetooth state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "蓝牙状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "bluetooth_signal",
+      "label_en": "Bluetooth signal",
+      "label_ru": "Bluetooth signal",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "蓝牙信号强度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "sway_magnitude",
+      "label_en": "Sway magnitude",
+      "label_ru": "Sway magnitude",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "晃动幅度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "vibration_magnitude",
+      "label_en": "Vibration magnitude",
+      "label_ru": "Vibration magnitude",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "振动幅度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "screen_width",
+      "label_en": "Screen width",
+      "label_ru": "Screen width",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "屏幕宽度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "screen_height",
+      "label_en": "Screen height",
+      "label_ru": "Screen height",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "屏幕高度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "dashcam_state",
+      "label_en": "Dashcam state",
+      "label_ru": "Dashcam state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "全景记录仪状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "wireless_adb_switch",
+      "label_en": "Wireless ADB switch",
+      "label_ru": "Wireless ADB switch",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "无线ADB开关"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "media_volume",
+      "label_en": "Media volume",
+      "label_ru": "Media volume",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "媒体音量"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "navigation_volume",
+      "label_en": "Navigation volume",
+      "label_ru": "Navigation volume",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "导航音量"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "ai_person_confidence",
+      "label_en": "AI person confidence",
+      "label_ru": "AI person confidence",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "AI识别人可信度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "ai_vehicle_confidence",
+      "label_en": "AI vehicle confidence",
+      "label_ru": "AI vehicle confidence",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "AI识别车可信度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "last_sentry_trigger_time",
+      "label_en": "Last sentry trigger time",
+      "label_ru": "Last sentry trigger time",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "上次哨兵触发时间"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "last_clip_start_time",
+      "label_en": "Last clip start time",
+      "label_ru": "Last clip start time",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "上次录像文件开始时间"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "last_clip_end_time",
+      "label_en": "Last clip end time",
+      "label_ru": "Last clip end time",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "上次录像文件结束时间"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "lead_car_start_state",
+      "label_en": "Lead-car start state",
+      "label_ru": "Lead-car start state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "前车起步状态"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "engine_load",
+      "label_en": "Engine load",
+      "label_ru": "Engine load",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "发动机负荷"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": {
+          "pid": "0104"
+        },
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "intake_air_temp",
+      "label_en": "Intake air temperature",
+      "label_ru": "Intake air temperature",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "进气温度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": {
+          "pid": "010F"
+        },
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "maf",
+      "label_en": "MAF air flow",
+      "label_ru": "MAF air flow",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "空气质量流量"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": {
+          "pid": "0110"
+        },
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "ambient_temp",
+      "label_en": "Ambient temperature",
+      "label_ru": "Ambient temperature",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "环境温度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": {
+          "pid": "0146"
+        },
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "engine_oil_temp",
+      "label_en": "Engine oil temperature",
+      "label_ru": "Engine oil temperature",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "机油温度"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": {
+          "pid": "015C"
+        },
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "fuel_rate",
+      "label_en": "Fuel consumption rate",
+      "label_ru": "Fuel consumption rate",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "燃油消耗率"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": {
+          "pid": "015E"
+        },
+        "diplus_push": null,
+        "byd_cloud": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "driver_seat_heat",
+      "label_en": "Driver seat heating",
+      "label_ru": "Driver seat heating",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "主驾座椅加热"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "FRONT_SEAT_HEATING_SWITCH_LEFT"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "passenger_seat_heat",
+      "label_en": "Passenger seat heating",
+      "label_ru": "Passenger seat heating",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "副驾座椅加热"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "FRONT_SEAT_HEATING_SWITCH_RIGHT"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "driver_seat_vent",
+      "label_en": "Driver seat ventilation",
+      "label_ru": "Driver seat ventilation",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "主驾座椅通风"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "FRONT_SEAT_VENTILATION_SWITCH_LEFT"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "passenger_seat_vent",
+      "label_en": "Passenger seat ventilation",
+      "label_ru": "Passenger seat ventilation",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "副驾座椅通风"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "FRONT_SEAT_VENTILATION_SWITCH_RIGHT"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "rear_left_seat_heat",
+      "label_en": "Rear-left seat heating",
+      "label_ru": "Rear-left seat heating",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "后排左侧座椅加热"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "REAR_SEAT_HEATING_SWITCH_LEFT"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "rear_right_seat_heat",
+      "label_en": "Rear-right seat heating",
+      "label_ru": "Rear-right seat heating",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "后排右侧座椅加热"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "REAR_SEAT_HEATING_SWITCH_RIGHT"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "steering_wheel_heat",
+      "label_en": "Steering wheel heating",
+      "label_ru": "Steering wheel heating",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "方向盘加热"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "STEERING_WHEEL_HEATING_SWITCH"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "rear_defrost",
+      "label_en": "Rear window defrost",
+      "label_ru": "Rear window defrost",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "后挡风玻璃加热"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "REAR_WINDOWN_HEAT_STATUS"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "charge_rate",
+      "label_en": "Charge rate",
+      "label_ru": "Charge rate",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "充电功率"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "CHARGE_RATE"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "mirror_fold",
+      "label_en": "Rear mirror fold",
+      "label_ru": "Rear mirror fold",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": {
+          "name": "后视镜折叠"
+        },
+        "adb": null,
+        "dumpsys": null,
+        "system": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "voyah": {
+          "vs": "REAR_MIRROR_FOLD_SET"
+        }
+      },
+      "expected_on": [
+        "byd_generic",
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "location_lat",
+      "label_en": "Latitude",
+      "label_ru": "Latitude",
+      "type": "gps",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "location_lat"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "location_lon",
+      "label_en": "Longitude",
+      "label_ru": "Longitude",
+      "type": "gps",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "location_lon"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "location_speed",
+      "label_en": "GPS speed",
+      "label_ru": "GPS speed",
+      "type": "gps",
+      "unit": "km/h",
+      "core": true,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "location_speed"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "location_bearing",
+      "label_en": "Bearing / azimuth",
+      "label_ru": "Bearing / azimuth",
+      "type": "gps",
+      "unit": "deg",
+      "core": true,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "location_bearing"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "location_altitude",
+      "label_en": "Altitude",
+      "label_ru": "Altitude",
+      "type": "gps",
+      "unit": "m",
+      "core": true,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "location_altitude"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "location_accuracy",
+      "label_en": "Location accuracy",
+      "label_ru": "Location accuracy",
+      "type": "gps",
+      "unit": "m",
+      "core": true,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "location_accuracy"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "location_provider",
+      "label_en": "Location provider",
+      "label_ru": "Location provider",
+      "type": "gps",
+      "unit": null,
+      "core": true,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "location_provider"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "device_battery",
+      "label_en": "Device battery level",
+      "label_ru": "Device battery level",
+      "type": "gps",
+      "unit": "%",
+      "core": true,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "device_battery"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "device_pressure",
+      "label_en": "Barometric pressure",
+      "label_ru": "Barometric pressure",
+      "type": "gps",
+      "unit": "hPa",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "device_pressure"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    }
+  ]
+}

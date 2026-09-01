@@ -1,0 +1,14 @@
+{
+  "domain": "cartelemetry",
+  "name": "CARTelemetry — Vehicle Telemetry",
+  "version": "3.0.19",
+  "requirements": [],
+  "dependencies": [],
+  "codeowners": [
+    "@krisproger"
+  ],
+  "config_flow": true,
+  "iot_class": "local_push",
+  "documentation": "https://github.com/krisproger/car2hass",
+  "issue_tracker": "https://github.com/krisproger/car2hass/issues"
+}

@@ -42,6 +42,6 @@ DiPlus отдаёт значения на китайском. Приложени
 
 1. Правьте `signals.yaml` в корне репозитория.
 2. Запустите `python scripts/signals_tool.py regenerate` — обновятся `CANDataReader.java`, `SignalTranslator.java`, `const.py`, `SIGNALS.md`.
-3. Прогоните тесты: `pytest tests/` и `DiPlus-to-hass/run_java_tests.sh`.
+3. Прогоните тесты: `pytest tests/` и `Car2Hass/run_java_tests.sh`.
 
 Регенерация идемпотентна и сохраняет версию интеграции и служебные блоки (геозоны).

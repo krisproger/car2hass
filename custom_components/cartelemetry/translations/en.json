@@ -1,0 +1,36 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "CARTelemetry",
+        "description": "Enter the car name exactly as it is set in the Car2Hass Android app (Settings → Car name). The app signs every data payload with this name, so it must match letter for letter.\n\nThird-party apps can also push telemetry via the open API contract — see the developer guide: https://mytechnic.ru/cartelemetry/manual/integration/third-party/",
+        "data": {
+          "car_name": "Car name"
+        },
+        "data_description": {
+          "car_name": "Letters, digits, underscore and dash only (no spaces), up to 64 characters"
+        }
+      }
+    },
+    "error": {
+      "invalid_car_name": "Use only letters, digits, underscore and dash (no spaces)"
+    },
+    "abort": {
+      "already_configured": "A vehicle with this name is already configured"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "CARTelemetry options",
+        "description": "Rename the vehicle. The integration will reload; do not forget to update the car name in the Android app too.",
+        "data": {
+          "car_name": "Car name"
+        }
+      }
+    },
+    "error": {
+      "invalid_car_name": "Use only letters, digits, underscore and dash (no spaces)"
+    }
+  }
+}
