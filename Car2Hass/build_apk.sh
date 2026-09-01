@@ -250,9 +250,26 @@ mkdir -p "$OUTPUT_DIR"
 prepare_osmdroid
 prepare_androidx_core
 
-# Build release and test variants into the same output directory
-build_variant "release" "false" "$OUTPUT_DIR/Car2Hass.apk"
-build_variant "test" "true" "$OUTPUT_DIR/Car2Hass-test.apk"
+# Build release and test variants into the same output directory, versioned
+build_variant "release" "false" "$OUTPUT_DIR/Car2Hass_v$VERSION_NAME.apk"
+build_variant "test" "true" "$OUTPUT_DIR/Car2Hass_v${VERSION_NAME}_test.apk"
+
+# --- Prune old APK versions: keep the current one + the 3 previous ones ---
+# and drop legacy non-versioned files. Version-sorted so 3.0.9 < 3.0.10.
+KEEP=4
+cd "$OUTPUT_DIR" || exit 1
+KEEP_LIST=$(ls Car2Hass_v*.apk 2>/dev/null \
+    | sed -E 's/^Car2Hass_v([0-9][0-9.]*)(_test)?\.apk$/\1/' \
+    | sort -Vu -r | head -n "$KEEP" | tr '\n' ' ')
+for f in Car2Hass_v*.apk; do
+    [ -e "$f" ] || continue
+    v=$(echo "$f" | sed -E 's/^Car2Hass_v([0-9][0-9.]*)(_test)?\.apk$/\1/')
+    if ! echo "$KEEP_LIST" | grep -qw "$v"; then
+        rm -f "$f"
+    fi
+done
+rm -f Car2Hass.apk Car2Hass-test.apk
+cd "$PROJECT"
 
 # --- Stage the release into the site folder (docs/cartelemetry/) ---
 # Copies the APK, packs the integration zip and regenerates the API spec
@@ -268,7 +285,7 @@ stage_site_release() {
     # APK under its published name; drop the previous release file
     local apk_name="car2hass-v$VERSION_NAME.apk"
     rm -f "$SITE_DIR"/car2hass-v*.apk
-    cp "$OUTPUT_DIR/Car2Hass.apk" "$SITE_DIR/$apk_name"
+    cp "$OUTPUT_DIR/Car2Hass_v$VERSION_NAME.apk" "$SITE_DIR/$apk_name"
 
     # Integration zip from custom_components (no caches inside)
     local zip_name="cartelemetry-v$VERSION_NAME.zip"
