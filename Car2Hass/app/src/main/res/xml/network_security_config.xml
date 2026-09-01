@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<network-security-config>
+    <!--
+        Allow cleartext HTTP for any domain. Home Assistant is often deployed on a
+        local network (http://192.168.x.x:8123) where HTTPS is impractical. Loopback
+        traffic to the local DiPlus HTTP server (127.0.0.1 / localhost) is also covered.
+        For remote/production HA use HTTPS and a trusted certificate.
+    -->
+    <base-config cleartextTrafficPermitted="true" />
+</network-security-config>

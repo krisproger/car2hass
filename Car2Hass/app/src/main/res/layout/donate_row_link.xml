@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:layout_marginBottom="10dp">
+
+    <TextView
+        android:id="@+id/donateLabel"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/about_support"
+        android:textColor="#FFB0B0B0"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/donateAddress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text=""
+        android:textColor="#FF4CAF50"
+        android:textSize="12sp"
+        android:textIsSelectable="true"
+        android:background="#FF252525"
+        android:padding="6dp" />
+
+    <ImageView
+        android:id="@+id/qrCode"
+        android:layout_width="140dp"
+        android:layout_height="140dp"
+        android:layout_marginTop="8dp"
+        android:layout_gravity="center_horizontal"
+        android:background="#FFFFFFFF"
+        android:padding="4dp"
+        android:scaleType="fitCenter"
+        android:visibility="gone" />
+</LinearLayout>

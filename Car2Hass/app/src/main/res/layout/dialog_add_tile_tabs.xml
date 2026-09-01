@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <RadioGroup
+        android:id="@+id/radioGroupTabs"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="#EEEEEE"
+        android:padding="4dp">
+
+        <RadioButton
+            android:id="@+id/radioSensors"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/dashboard_config_sensors"
+            android:textSize="13sp"
+            android:textColor="#212121"
+            android:checked="true" />
+
+        <RadioButton
+            android:id="@+id/radioCommands"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/dashboard_config_commands"
+            android:textSize="13sp"
+            android:textColor="#212121" />
+
+        <RadioButton
+            android:id="@+id/radioPresets"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/dashboard_config_linked_commands"
+            android:textSize="13sp"
+            android:textColor="#212121" />
+
+    </RadioGroup>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#CCCCCC"
+        android:layout_marginTop="4dp"
+        android:layout_marginBottom="4dp" />
+
+    <ListView
+        android:id="@+id/lvAddTile"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:divider="#EEEEEE"
+        android:dividerHeight="1dp" />
+
+</LinearLayout>

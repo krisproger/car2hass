@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "commands": {
+    "ac_on": {
+      "native": { "dev": 1000, "fid": 501219364, "value": 1, "verify": "ac_state" },
+      "diplus": { "chinese": "迪加空调自动" }
+    },
+    "ac_off": {
+      "native": { "dev": 1000, "fid": 501219364, "value": 0, "verify": "ac_state" },
+      "diplus": { "chinese": "迪加关空调" }
+    },
+    "ac_auto": {
+      "native": { "dev": 1000, "fid": 501219352, "value": 0, "verify": "ac_state" },
+      "diplus": { "chinese": "迪加空调自动" }
+    },
+    "ac_temp": {
+      "native": { "dev": 1000, "fid": 501219368, "valueExpr": "{{value}}", "min": 16, "max": 30, "verify": "ac_set_temp" },
+      "diplus": { "chinese": "迪加设置温度{{value}}" }
+    },
+    "ac_recirc": {
+      "native": {
+        "dev": 1000, "fid": 501219355,
+        "valueMap": { "recirc": 1, "fresh": 0 },
+        "verify": "ac_recirculation"
+      },
+      "diplus": { "chinese": "迪加{{value}}" }
+    },
+    "mirror_heat_on": {
+      "native": { "dev": 1000, "fid": 501219357, "value": 1 },
+      "diplus": { "chinese": "迪加后视镜加热" }
+    },
+    "mirror_heat_off": {
+      "native": { "dev": 1000, "fid": 501219357, "value": 0 },
+      "diplus": { "chinese": "迪加关闭后视镜加热" }
+    },
+    "window_driver": {
+      "native": { "dev": 1001, "fid": 1276219408, "valueExpr": "{{value}}", "min": 0, "max": 100, "verify": "window_fl" },
+      "diplus": { "chinese": "迪加主驾打开百分之{{value}}" }
+    },
+    "window_passenger": {
+      "native": { "dev": 1001, "fid": 1276219424, "valueExpr": "{{value}}", "min": 0, "max": 100, "verify": "window_fr" },
+      "diplus": { "chinese": "迪加副驾打开百分之{{value}}" }
+    },
+    "window_rear_left": {
+      "native": { "dev": 1001, "fid": 1276219416, "valueExpr": "{{value}}", "min": 0, "max": 100, "verify": "window_rl" },
+      "diplus": { "chinese": "迪加左后打开百分之{{value}}" }
+    },
+    "window_rear_right": {
+      "native": { "dev": 1001, "fid": 1276219432, "valueExpr": "{{value}}", "min": 0, "max": 100, "verify": "window_rr" },
+      "diplus": { "chinese": "迪加右后打开百分之{{value}}" }
+    },
+    "windows_close_all": {
+      "native": [
+        { "dev": 1001, "fid": 1276219408, "value": 0 },
+        { "dev": 1001, "fid": 1276219424, "value": 0 },
+        { "dev": 1001, "fid": 1276219416, "value": 0 },
+        { "dev": 1001, "fid": 1276219432, "value": 0 }
+      ],
+      "diplus": { "chinese": "迪加一键关窗" }
+    },
+    "windows_vent": {
+      "native": [
+        { "dev": 1001, "fid": 1276219408, "value": 10 },
+        { "dev": 1001, "fid": 1276219424, "value": 10 },
+        { "dev": 1001, "fid": 1276219416, "value": 10 },
+        { "dev": 1001, "fid": 1276219432, "value": 10 }
+      ],
+      "diplus": { "chinese": "迪加一键通风" }
+    },
+    "sunroof": {
+      "native": {
+        "dev": 1001, "fid": 1125122056,
+        "valueMap": { "0": 2, "50": 3, "100": 1 },
+        "verify": "sunroof"
+      },
+      "diplus": { "chinese": "迪加天窗打开百分之{{value}}" }
+    },
+    "sunshade": {
+      "native": {
+        "dev": 1001, "fid": 1125122060,
+        "valueMap": { "0": 2, "100": 1 },
+        "verify": "sunshade"
+      },
+      "diplus": { "chinese": "迪加遮阳帘打开百分之{{value}}" }
+    },
+    "doors_unlock": {
+      "native": { "dev": 1001, "fid": 1276141590, "value": 1 },
+      "diplus": { "chinese": "迪加车门解锁" }
+    },
+    "doors_lock": {
+      "native": { "dev": 1001, "fid": 1276141590, "value": 2 },
+      "diplus": { "chinese": "迪加车门上锁" }
+    },
+    "interior_light_on": {
+      "native": { "dev": 1023, "fid": 1330643002, "value": 2 },
+      "diplus": { "chinese": "迪加打开车内灯" }
+    },
+    "interior_light_off": {
+      "native": { "dev": 1023, "fid": 1330643002, "value": 1 },
+      "diplus": { "chinese": "迪加关闭车内灯" }
+    },
+    "ambilight_on": {
+      "native": { "dev": 1023, "fid": 1069547536, "value": 5 },
+      "diplus": { "chinese": "迪加打开氛围灯" }
+    },
+    "ambilight_off": {
+      "native": { "dev": 1023, "fid": 1069547536, "value": 1 },
+      "diplus": { "chinese": "迪加关闭氛围灯" }
+    },
+    "drl_on": {
+      "native": { "dev": 1004, "fid": 1125122118, "value": 1 },
+      "diplus": { "chinese": "迪加打开日行灯" }
+    },
+    "drl_off": {
+      "native": { "dev": 1004, "fid": 1125122118, "value": 2 },
+      "diplus": { "chinese": "迪加关闭日行灯" }
+    },
+    "hazard_on": {
+      "native": { "dev": 1004, "fid": 871366669, "value": 1 },
+      "diplus": { "chinese": "迪加双闪" }
+    },
+    "hazard_off": {
+      "native": { "dev": 1004, "fid": 871366669, "value": 0 },
+      "diplus": { "chinese": "迪加关双闪" }
+    },
+    "driver_seat_heat": {
+      "native": {
+        "valueMap": {
+          "off":  [ { "dev": 1000, "fid": 1276248084, "value": 2 } ],
+          "low":  [ { "dev": 1000, "fid": 1276248084, "value": 1 }, { "dev": 1000, "fid": 1276252180, "value": 1 } ],
+          "high": [ { "dev": 1000, "fid": 1276248084, "value": 1 }, { "dev": 1000, "fid": 1276252180, "value": 2 } ]
+        }
+      },
+      "diplus": { "chinese": "迪加主驾座椅加热{{value}}" }
+    },
+    "passenger_seat_heat": {
+      "native": {
+        "valueMap": {
+          "off":  [ { "dev": 1000, "fid": 1276248092, "value": 2 } ],
+          "low":  [ { "dev": 1000, "fid": 1276248092, "value": 1 }, { "dev": 1000, "fid": 1276252188, "value": 1 } ],
+          "high": [ { "dev": 1000, "fid": 1276248092, "value": 1 }, { "dev": 1000, "fid": 1276252188, "value": 2 } ]
+        }
+      },
+      "diplus": { "chinese": "迪加副驾座椅加热{{value}}" }
+    },
+    "driver_seat_vent": {
+      "native": {
+        "valueMap": {
+          "off":  [ { "dev": 1000, "fid": 1276248080, "value": 2 } ],
+          "low":  [ { "dev": 1000, "fid": 1276248080, "value": 1 }, { "dev": 1000, "fid": 1276252176, "value": 1 } ],
+          "high": [ { "dev": 1000, "fid": 1276248080, "value": 1 }, { "dev": 1000, "fid": 1276252176, "value": 2 } ]
+        }
+      },
+      "diplus": { "chinese": "迪加主驾座椅通风{{value}}" }
+    },
+    "passenger_seat_vent": {
+      "native": {
+        "valueMap": {
+          "off":  [ { "dev": 1000, "fid": 1276248088, "value": 2 } ],
+          "low":  [ { "dev": 1000, "fid": 1276248088, "value": 1 }, { "dev": 1000, "fid": 1276252184, "value": 1 } ],
+          "high": [ { "dev": 1000, "fid": 1276248088, "value": 1 }, { "dev": 1000, "fid": 1276252184, "value": 2 } ]
+        }
+      },
+      "diplus": { "chinese": "迪加副驾座椅通风{{value}}" }
+    }
+  }
+}

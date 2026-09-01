@@ -1,0 +1,744 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Car2Hass</string>
+    <string name="no_data">No CAN data available</string>
+    <string name="connecting">Connecting…</string>
+    <string name="error">Error</string>
+
+    <!-- Main screen -->
+    <string name="status_idle">● idle</string>
+    <string name="status_active_ha">● Active — sending to HA</string>
+    <string name="status_active_no_ha">● Active — HA disabled</string>
+    <string name="status_error">● Error: %1$s</string>
+    <string name="location_no_gps">No GPS</string>
+    <string name="send_to_ha">Send to HA</string>
+    <string name="tab_telemetry">Telemetry</string>
+    <string name="tab_commands">Commands</string>
+    <string name="column_id">ID</string>
+    <string name="column_parameter">Parameter</string>
+    <string name="column_value">Value</string>
+    <string name="column_unit">Unit</string>
+    <string name="column_route">Route</string>
+    <string name="vvin_prefix">VVIN: %1$s</string>
+    <string name="fw_prefix">FW: %1$s</string>
+    <string name="app_version">App: v%1$s</string>
+    <string name="updated_prefix">Updated: %1$s</string>
+    <string name="send_log">Send Log</string>
+    <string name="copied_to_clipboard">Copied</string>
+
+    <!-- Menu -->
+    <string name="menu_title">Menu</string>
+    <string name="menu_settings">Settings</string>
+    <string name="menu_about">About / Support author</string>
+    <string name="menu_probe_api">Probe diplus HTTP API</string>
+    <string name="menu_cancel">Cancel</string>
+
+    <!-- Permissions / log -->
+    <string name="toast_grant_storage">Grant storage permission, then tap Send again</string>
+    <string name="toast_permission_granted">Permission granted, tap Send again</string>
+    <string name="toast_permission_denied">Permission denied, log will be shared as text</string>
+    <string name="log_saved">Log saved (%1$d bytes)</string>
+    <string name="log_shared_text">Log shared as text (%1$d bytes)</string>
+    <string name="log_server_ok">Log sent to the developer. Thank you!</string>
+    <string name="log_server_error">Failed to send the log. Try again later.</string>
+    <string name="upload_queue_ask_title">Upload queue</string>
+    <string name="upload_queue_ask_message">Could not send logs/research to the developer (no connection). Continue trying?</string>
+    <string name="upload_queue_continue">Continue</string>
+    <string name="upload_queue_cancel">Cancel</string>
+    <string name="log_export_title">Export log</string>
+    <string name="log_export_share">Share</string>
+    <string name="log_export_server">Send to developer</string>
+    <string name="log_server_hint">Describe your car (make/model/year) and how it started. Recommended for faster processing.</string>
+    <string name="log_server_hint_autofill">Auto-filled with your car ID (VVIN, firmware). You can edit or leave as is.</string>
+    <string name="log_export_save">Save to Downloads</string>
+    <string name="log_save_failed">Failed to save log</string>
+    <string name="log_share_truncated">... (log truncated, full log saved to Downloads when possible) ...\n</string>
+    <string name="permission_requesting">Requesting %1$d runtime permissions</string>
+    <string name="permission_all_granted">All runtime permissions already granted</string>
+    <string name="permission_runtime_prefix">Runtime permissions:</string>
+    <string name="permission_granted">GRANTED</string>
+    <string name="permission_denied">DENIED</string>
+
+    <!-- Commands tab -->
+    <string name="clear">Clear</string>
+    <string name="commands_advanced_title">Advanced command</string>
+    <string name="commands_category">Category</string>
+    <string name="commands_command">Command</string>
+    <string name="commands_value">Value</string>
+    <string name="commands_send">Send command</string>
+    <string name="commands_ready">Ready to send</string>
+    <string name="commands_invalid_value">Invalid value</string>
+    <string name="commands_sending">Sending: %1$s</string>
+    <string name="commands_result_ok">OK (%1$d ms)</string>
+    <string name="commands_result_error">Error: %1$s</string>
+    <string name="commands_result_ok_short">OK</string>
+    <string name="commands_result_fail">FAIL</string>
+    <string name="commands_empty_command">empty command</string>
+    <string name="commands_unknown_command">unknown or invalid command: %1$s value=%2$s</string>
+    <string name="commands_journal_empty">(journal is empty)</string>
+    <string name="commands_journal_title">Command journal</string>
+    <string name="command_verify_ok">verified</string>
+    <string name="command_verify_mismatch">state mismatch</string>
+    <string name="command_verify_no_link">no sensor link</string>
+    <string name="command_verify_send_failed">send failed</string>
+    <string name="command_verify_pending">pending verification</string>
+
+    <!-- Settings -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_behaviour">Behaviour</string>
+    <string name="settings_system">System</string>
+    <string name="settings_service">Service</string>
+    <string name="settings_section_car">Car</string>
+    <string name="settings_section_protocols">Services / data sources</string>
+    <string name="settings_section_smarthome">Home Assistant</string>
+    <string name="settings_section_tech">Options</string>
+    <string name="settings_section_misc">Other</string>
+    <string name="settings_section_about">About</string>
+    <string name="settings_refresh_presets">Refresh presets</string>
+    <string name="settings_presets_checking">Checking for updates…</string>
+    <string name="settings_preset_version">Presets version: %1$d</string>
+    <string name="settings_presets_updated">Presets updated</string>
+    <string name="settings_presets_latest">Presets are already up to date</string>
+    <string name="settings_presets_failed">Failed to check for preset updates</string>
+    <string name="settings_server">Server (host:port)</string>
+    <string name="settings_ha_server_address">HA server address</string>
+    <string name="settings_port">Port</string>
+    <string name="settings_https">HTTPS</string>
+    <string name="settings_token">Token (Long-Lived Access Token)</string>
+    <string name="settings_token_help_title">Long-lived access token</string>
+    <string name="settings_token_help_text">In Home Assistant open your profile, create a long-lived access token, and paste it here.</string>
+    <string name="settings_car_name">Car name</string>
+    <string name="settings_car_name_hint">Defaults to VVIN</string>
+    <string name="settings_send_to_ha">Send data to HA</string>
+    <string name="settings_use_https">Use HTTPS</string>
+    <string name="settings_http_warning">HTTP without encryption — only for local network. Enable HTTPS for remote access.</string>
+    <string name="settings_queue_bytes">Queued: %1$s</string>
+    <string name="settings_last_send">Last send: %1$s</string>
+    <string name="settings_last_attempt">Last attempt: %1$s</string>
+    <string name="settings_boot_auto_start">Auto-start on boot</string>
+    <string name="settings_car_control">Control car from HA</string>
+    <string name="settings_file_log_mode">File log mode</string>
+    <string name="settings_detailed_log">Write detailed log</string>
+    <string-array name="file_log_modes">
+        <item>Off (export only)</item>
+        <item>Basic</item>
+        <item>Detailed (with RAW)</item>
+    </string-array>
+    <string name="settings_background_mode">Work when car is off</string>
+    <string name="settings_background_mode_summary">Keeps telemetry and command polling alive after ACC off. Requires extra permissions.</string>
+    <string name="settings_adb_host">ADB host</string>
+    <string name="settings_adb_host_hint">127.0.0.1</string>
+    <string name="settings_adb_port">ADB port</string>
+    <string name="settings_adb_port_hint">5555</string>
+    <string name="settings_telemetry_source">Telemetry source</string>
+    <string name="settings_telemetry_source_summary">How signal values are read. DiPlus uses the DiPlus app HTTP API; Native reads the car service directly over ADB.</string>
+    <string name="settings_source_diplus">DiPlus</string>
+    <string name="settings_source_native">Native (ADB)</string>
+    <string name="settings_auto_fallback">Source auto-fallback</string>
+    <string name="settings_auto_fallback_summary">When a source fails, the next selected one is used, and so on in a circle. Off: only the top-priority channel.</string>
+    <string name="settings_source_auto">Auto</string>
+    <string name="settings_debug_compare">Debug compare</string>
+    <string name="settings_debug_compare_summary">Read both sources every tick and log per-signal comparison (NativeCompare) to find map errors.</string>
+    <string name="settings_diplus_auth">DiPlus auth token (optional)</string>
+    <string name="settings_diplus_auth_hint">Only if DiPlus requires authorization</string>
+    <string name="settings_apply_background_mode">Apply background mode</string>
+    <string name="settings_vehicle">Car</string>
+    <string name="settings_vehicle_producer">Manufacturer</string>
+    <string name="settings_vehicle_make_hint">Make / model (e.g. Voyah FREE)</string>
+    <string name="settings_vehicle_year_hint">Year of manufacture</string>
+    <string name="settings_vehicle_producer_byd">BYD</string>
+    <string name="settings_vehicle_producer_universal">Universal car with Android</string>
+    <string name="settings_vehicle_producer_voyah">Voyah (read-only)</string>
+    <string name="settings_vehicle_channels_byd">Channels: DiPlus → ADB (native) → system properties. Command control is active.</string>
+    <string name="settings_vehicle_channels_universal">Channels: system properties + experimental; DiPlus/ADB are probed for analysis.</string>
+    <string name="settings_vehicle_commands_disabled">Command control is unavailable for the selected car.</string>
+    <string name="settings_vehicle_research">Probe data channels</string>
+    <string name="settings_vehicle_research_progress">Probing channels: %1$d/%2$d</string>
+    <string name="settings_vehicle_research_profile">Probe: vehicle profile %1$s</string>
+    <string name="settings_vehicle_research_channels">Active channels: %1$s</string>
+    <string name="settings_vehicle_research_signals">Sensors probed: %1$d</string>
+    <string name="settings_vehicle_research_ok_by_channel">Sensors by channel: %1$s</string>
+    <string name="settings_research_title">System research</string>
+    <string name="settings_research_profile">Vehicle profile</string>
+    <string name="settings_research_channels_label">Active channels</string>
+    <string name="settings_research_last_scan">Last research: %1$s</string>
+    <string name="settings_research_status_auto">auto</string>
+    <string name="settings_research_match">%1$d%% match</string>
+    <string name="settings_research_preliminary">preliminary</string>
+    <string name="settings_research_status_manual">manual</string>
+    <string name="settings_research_restart">Restart research</string>
+    <string name="settings_research_export">Export report</string>
+    <string name="settings_research_no_report">No research report yet</string>
+    <string name="settings_research_upload">Send anonymous reports</string>
+    <string name="settings_research_upload_hint">Shares an anonymized channel/signal availability report after research. No VIN, serials or location. Off by default.</string>
+    <string name="channel_diplus">DiPlus (HTTP)</string>
+    <string name="channel_adb">ADB (service call)</string>
+    <string name="channel_dumpsys">Dumpsys</string>
+    <string name="channel_system">System (GPS, device)</string>
+    <string name="channel_obd">OBD</string>
+    <string name="obd_connect_button">Connect OBD adapter (Bluetooth)</string>
+    <string name="obd_connected_button">Adapter: %1$s — change</string>
+    <string name="obd_picker_title">Select OBD adapter</string>
+    <string name="obd_no_devices">No paired Bluetooth devices</string>
+    <string name="obd_bt_off">Enable Bluetooth to connect the adapter</string>
+    <string name="obd_not_elm">This is not an ELM327 adapter: %1$s</string>
+    <string name="obd_connect_failed">Could not connect to %1$s</string>
+    <string name="obd_connected">Connected: %1$s (ELM327 %2$s)</string>
+    <string name="settings_enable_bt">Enable Bluetooth</string>
+    <string name="channel_diplus_push">DiPlus Push</string>
+    <string name="channel_byd_cloud">BYD Cloud</string>
+    <string name="channel_voyah">Voyah CANBus</string>
+    <string-array name="vehicle_producers">
+        <item>@string/settings_vehicle_producer_byd</item>
+        <item>@string/settings_vehicle_producer_universal</item>
+        <item>@string/settings_vehicle_producer_voyah</item>
+    </string-array>
+    <string name="background_mode_disabled">Background mode is disabled</string>
+    <string name="background_mode_applied">Background mode applied</string>
+    <string name="background_mode_failed">Background mode setup failed. The app will show the ADB commands below — run them from a PC. To use wireless ADB, first run "adb tcpip 5555", then the listed commands.</string>
+    <string name="background_mode_manual_intro">Run these commands from your PC:</string>
+    <string name="background_mode_copied">ADB command copied</string>
+    <string name="settings_offline_queue">Offline queue</string>
+    <string name="settings_queue_max_mb">Queue max size (MB)</string>
+    <string name="settings_queue_max_days">Queue max age (days)</string>
+    <string name="settings_export_log">Export log</string>
+    <string name="settings_auto_start_byd">Auto-start (BYD)</string>
+    <string name="settings_background_work">Background work</string>
+    <string name="settings_test_connection">Test connection</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_import_config">Import config</string>
+    <string name="settings_request_permissions">Request permissions</string>
+    <string name="update_check">Check for updates</string>
+    <string name="update_checking">Checking for updates…</string>
+    <string name="update_up_to_date">You have the latest version</string>
+    <string name="update_available">Update %1$s available</string>
+    <string name="update_download">Download and install</string>
+    <string name="update_downloading">Downloading: %1$s</string>
+    <string name="update_download_failed">Download failed</string>
+    <string name="update_support_caption">If you like the app — support the project. Thank you!</string>
+    <string name="update_install_failed">Install failed — the APK is in Downloads, open it manually</string>
+    <string name="update_check_failed">Update check failed</string>
+    <string name="whatsnew_title">What\'s new</string>
+    <string name="about_whatsnew">What\'s new</string>
+    <string name="whatsnew_none">No release notes published yet</string>
+    <string name="settings_export_config">Export config</string>
+    <string name="settings_language">Language</string>
+    <string name="settings_language_en">English</string>
+    <string name="settings_language_ru">Русский</string>
+    <string name="settings_test_fill_host_token">Fill host and token</string>
+    <string name="settings_test_testing">Testing…</string>
+    <string name="settings_test_ok">Connection successful (HTTP %1$d)</string>
+    <string name="settings_test_api_ok">Connection successful. Endpoint /api/cartelemetry responds (HTTP %1$d)</string>
+    <string name="settings_test_not_found">HA server reachable, but /api/cartelemetry not found (install integration)</string>
+    <string name="settings_test_endpoint_http">Endpoint responded HTTP %1$d</string>
+    <string name="settings_test_api_error">API OK, /api/cartelemetry: %1$s</string>
+    <string name="settings_test_error">Error: %1$s</string>
+    <string name="settings_invalid_port">Invalid port</string>
+    <string name="settings_enter_host">Enter server address</string>
+    <string name="settings_enter_token">Enter token</string>
+    <string name="settings_saved">Saved</string>
+    <string name="settings_export_to">Export config to</string>
+    <string name="settings_import_from">Import config from</string>
+    <string name="settings_select_config">Select config to import</string>
+    <string name="settings_exported">Exported:\n%1$s</string>
+    <string name="settings_exported_download">Exported to Download (MediaStore)</string>
+    <string name="settings_export_failed">Export failed: %1$s</string>
+    <string name="settings_export_include_token">Include Home Assistant access token</string>
+    <string name="settings_export_token_warning">Warning: the Long-Lived Access Token grants full access to your Home Assistant. Leave the checkbox off unless you really need it.</string>
+    <string name="settings_export">Export</string>
+    <string name="settings_imported">Imported: %1$s</string>
+    <string name="settings_import_failed">Import failed: %1$s</string>
+    <string name="settings_permission_granted">Permission granted, repeat the action</string>
+    <string name="settings_permission_denied">Without permission only app-private storage is used</string>
+    <string name="folder_download">Download</string>
+    <string name="folder_sdcard_download">/sdcard/Download</string>
+    <string name="folder_app_private">App private</string>
+
+    <!-- Attribute filter -->
+    <string name="filter_title">Attribute filter for HA</string>
+    <string name="filter_description">Checked attributes are sent to Home Assistant. By default all are selected.</string>
+    <string name="filter_select_all">Select all</string>
+    <string name="filter_deselect_all">Deselect all</string>
+    <string name="filter_count">Selected: %1$d / %2$d</string>
+    <string name="filter_key">Key</string>
+    <string name="filter_saved">Filter saved</string>
+    <string name="filter_save">Save</string>
+
+    <!-- About -->
+    <string name="about_version">Version: %1$s</string>
+    <string name="about_developer">Developer</string>
+    <string name="about_project_url">Project page</string>
+    <string name="about_telegram_url">Telegram group</string>
+    <string name="about_site">Site</string>
+    <string name="about_telegram">@BYDiPlus2HASS</string>
+    <string name="donate_crypto_title">Cryptocurrency</string>
+    <string name="donate_usdt_trc20">USDT (TRC20)</string>
+    <string name="donate_bitcoin">Bitcoin (BTC)</string>
+    <string name="donate_ethereum">Ethereum (ETH)</string>
+    <string name="donate_cloudtips">CloudTips (all Russian cards)</string>
+    <string name="donate_tbank">T-Bank</string>
+    <string name="donate_alfa">Alfa-Bank</string>
+    <string name="donate_sber">SberBank</string>
+    <string name="donate_vtb">VTB</string>
+    <string name="donate_open_link">Open</string>
+    <string name="donate_banks_title">Bank cards</string>
+    <string name="donate_aggregator_title">Payment aggregator</string>
+    <string name="about_purpose">Purpose</string>
+    <string name="about_purpose_text">Reads BYD telemetry and sends commands via DiPlus HTTP API to Home Assistant. 132 signals: drivetrain, battery, climate, doors, lights, ADAS, etc.</string>
+    <string name="about_support">Support the author</string>
+    <string name="about_support_text">Development and support of the app and integration take time. Any support is appreciated!</string>
+    <string name="about_stack">Stack: Android (Java) + Home Assistant (Python)\nData provided by diplus (com.van.diplus) via HTTP API localhost:8988</string>
+    <string name="donate_copied">Copied</string>
+
+    <!-- Notification / boot -->
+    <string name="boot_auto_start_toast">Car2Hass: auto-start</string>
+    <string name="notification_title">Car2Hass</string>
+    <string name="notification_text">Collecting BYD telemetry</string>
+    <string name="notification_active">Active — %1$d signals</string>
+    <string name="notification_error">Error: %1$s</string>
+
+    <!-- Service -->
+    <string name="service_bound">TelemetryService bound</string>
+    <string name="service_unbound">TelemetryService unbound</string>
+
+    <!-- Auto-start / rapid mode -->
+    <string name="auto_start_opened">Opened BYD AppStartManagement settings</string>
+    <string name="auto_start_app_manager">Opened system app manager for auto-start: %1$s/%2$s</string>
+    <string name="auto_start_battery">Opened battery optimization request (background execution)</string>
+    <string name="auto_start_app_details">Opened app details settings for auto-start check</string>
+    <string name="auto_start_failed">Cannot open app details: %1$s</string>
+    <string name="rapid_mode_launched">Launched com.byd.rapidmode.RapidModeActivity</string>
+    <string name="rapid_mode_failed">Cannot launch rapidmode: %1$s</string>
+    <string name="rapid_mode_toast_failed">Failed to launch RapidMode: %1$s</string>
+    <string name="toast_auto_start_failed">Failed to open settings: %1$s</string>
+
+    <!-- Command categories -->
+    <string name="cmd_category_climate">Climate</string>
+    <string name="cmd_category_windows">Windows</string>
+    <string name="cmd_category_doors">Doors</string>
+    <string name="cmd_category_lights">Lights</string>
+    <string name="cmd_category_modes">Modes</string>
+    <string name="cmd_category_charging">Charging</string>
+    <string name="cmd_category_volume">Volume</string>
+    <string name="cmd_category_sentry">Sentry</string>
+    <string name="cmd_category_comfort">Comfort</string>
+    <string name="cmd_category_system">System</string>
+
+    <!-- Command names (Climate) -->
+    <string name="cmd_ac_on">AC on</string>
+    <string name="cmd_ac_off">AC off</string>
+    <string name="cmd_ac_auto">AC auto</string>
+    <string name="cmd_ac_temp">AC temperature</string>
+    <string name="cmd_ac_temp_up">Temperature +</string>
+    <string name="cmd_ac_temp_down">Temperature -</string>
+    <string name="cmd_ac_fan">Fan speed</string>
+    <string name="cmd_ac_fan_up">Fan +</string>
+    <string name="cmd_ac_fan_down">Fan -</string>
+    <string name="cmd_ac_airflow">Airflow mode</string>
+    <string name="cmd_ac_recirc">Recirculation</string>
+    <string name="cmd_driver_seat_heat">Driver seat heating</string>
+    <string name="cmd_passenger_seat_heat">Passenger seat heating</string>
+    <string name="cmd_driver_seat_vent">Driver seat ventilation</string>
+    <string name="cmd_passenger_seat_vent">Passenger seat ventilation</string>
+    <string name="cmd_steering_heat_on">Steering wheel heating on</string>
+    <string name="cmd_steering_heat_off">Steering wheel heating off</string>
+    <string name="cmd_mirror_heat_on">Mirror heating on</string>
+    <string name="cmd_mirror_heat_off">Mirror heating off</string>
+    <string name="cmd_front_defrost_on">Front defrost on</string>
+    <string name="cmd_front_defrost_off">Front defrost off</string>
+
+    <!-- Windows -->
+    <string name="cmd_window_driver">Driver window</string>
+    <string name="cmd_window_passenger">Passenger window</string>
+    <string name="cmd_window_rear_left">Rear-left window</string>
+    <string name="cmd_window_rear_right">Rear-right window</string>
+    <string name="cmd_sunroof">Sunroof</string>
+    <string name="cmd_sunshade">Sunshade</string>
+    <string name="cmd_windows_close_all">Close all windows</string>
+    <string name="cmd_windows_vent">Ventilate</string>
+
+    <!-- Doors -->
+    <string name="cmd_doors_unlock">Unlock doors</string>
+    <string name="cmd_doors_lock">Lock doors</string>
+    <string name="cmd_trunk_open">Open trunk</string>
+    <string name="cmd_trunk_close">Close trunk</string>
+    <string name="cmd_child_lock_left">Child lock left</string>
+    <string name="cmd_child_lock_right">Child lock right</string>
+
+    <!-- Lights -->
+    <string name="cmd_hazard_on">Hazard lights on</string>
+    <string name="cmd_hazard_off">Hazard lights off</string>
+    <string name="cmd_turn_signal">Turn signal</string>
+    <string name="cmd_fog_on">Fog lights on</string>
+    <string name="cmd_fog_off">Fog lights off</string>
+    <string name="cmd_drl_on">DRL on</string>
+    <string name="cmd_drl_off">DRL off</string>
+    <string name="cmd_interior_light_on">Interior light on</string>
+    <string name="cmd_interior_light_off">Interior light off</string>
+    <string name="cmd_ambilight_on">Ambilight on</string>
+    <string name="cmd_ambilight_off">Ambilight off</string>
+    <string name="cmd_auto_high_beam_on">Auto high beam on</string>
+    <string name="cmd_auto_high_beam_off">Auto high beam off</string>
+
+    <!-- Modes -->
+    <string name="cmd_powertrain_mode">HEV/EV mode</string>
+    <string name="cmd_drive_mode">Drive mode</string>
+    <string name="cmd_charge_save">Charge saving</string>
+    <string name="cmd_regen">Regeneration</string>
+    <string name="cmd_steering_assist">Steering assist</string>
+    <string name="cmd_brake_assist">Brake assist</string>
+    <string name="cmd_active_brake">Active braking</string>
+
+    <!-- Charging -->
+    <string name="cmd_charge_soc">Target charge SOC</string>
+    <string name="cmd_charge_schedule">Scheduled charging</string>
+
+    <!-- Volume -->
+    <string name="cmd_volume">Media volume</string>
+    <string name="cmd_volume_up">Volume +</string>
+    <string name="cmd_volume_down">Volume -</string>
+    <string name="cmd_nav_volume">Navigation volume</string>
+    <string name="cmd_ext_volume">External volume</string>
+
+    <!-- Sentry -->
+    <string name="cmd_sentry">Sentry mode</string>
+    <string name="cmd_dashcam_on">Dashcam on</string>
+    <string name="cmd_dashcam_off">Dashcam off</string>
+
+    <!-- Comfort / system -->
+    <string name="cmd_headlight_level">Headlight level</string>
+    <string name="cmd_comfort_mode">Comfort mode</string>
+    <string name="cmd_adb_on">Wireless ADB on</string>
+    <string name="cmd_theme">Theme</string>
+    <string name="cmd_hud">HUD</string>
+
+    <!-- Enum values -->
+    <string name="enum_off">Off</string>
+    <string name="enum_on">On</string>
+    <string name="enum_low">Low</string>
+    <string name="enum_high">High</string>
+    <string name="enum_face">Face</string>
+    <string name="enum_face_feet">Face + feet</string>
+    <string name="enum_feet">Feet</string>
+    <string name="enum_feet_defrost">Feet + defrost</string>
+    <string name="enum_defrost">Defrost</string>
+    <string name="enum_face_feet_defrost">Face + feet + defrost</string>
+    <string name="enum_face_defrost">Face + defrost</string>
+    <string name="enum_recirc">Recirculation</string>
+    <string name="enum_fresh">Fresh air</string>
+    <string name="enum_hev">HEV</string>
+    <string name="enum_ev">EV</string>
+    <string name="enum_force_ev">Force EV</string>
+    <string name="enum_eco">ECO</string>
+    <string name="enum_sport">SPORT</string>
+    <string name="enum_normal">NORMAL</string>
+    <string name="enum_snow">Snow</string>
+    <string name="enum_smart">Smart</string>
+    <string name="enum_force">Force</string>
+    <string name="enum_standard">Standard</string>
+    <string name="enum_comfort">Comfort</string>
+    <string name="enum_long_trip">Long trip</string>
+    <string name="enum_city">City</string>
+    <string name="enum_sleep">Sleep</string>
+    <string name="enum_screen_off">Screen off</string>
+    <string name="enum_dark">Dark</string>
+    <string name="enum_light">Light</string>
+    <string name="enum_left">Left</string>
+    <string name="enum_right">Right</string>
+    <string name="enum_engine_off_on">Engine-off sentry on</string>
+    <string name="enum_time_lapse_on">Time-lapse sentry on</string>
+    <string name="enum_engine_off_off">Engine-off sentry off</string>
+
+    <!-- Units / hints -->
+    <string name="unit_celsius">°C</string>
+    <string name="unit_percent">%</string>
+    <string name="hint_range_0_100">0–100</string>
+    <string name="hint_celsius">16–30</string>
+    <string name="hint_fan">1–9</string>
+    <string name="hint_headlight">0–5</string>
+    <string name="hint_nav_volume">0–10</string>
+    <string name="hint_schedule">22:00-08</string>
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_telemetry">Telemetry</string>
+    <string name="nav_commands">Commands</string>
+    <string name="nav_settings">Settings</string>
+    <string name="nav_about">About</string>
+
+    <!-- Dashboard tiles -->
+    <string name="dash_speed">Speed</string>
+    <string name="dash_battery">Battery</string>
+    <string name="dash_range">Range</string>
+    <string name="dash_charge_gun">Charge gun</string>
+    <string name="dash_cabin_temp">Cabin temp</string>
+    <string name="dash_outside_temp">Outside temp</string>
+    <string name="dash_doors">Doors</string>
+    <string name="dash_tyre_pressure">Tyre pressure</string>
+    <string name="dash_lights">Lights</string>
+    <string name="dash_gps">GPS</string>
+    <string name="dash_ha_status">HA status</string>
+    <string name="dash_unknown">—</string>
+    <string name="dash_all_closed">Closed</string>
+    <string name="dash_open">Open</string>
+    <string name="dashboard_done">Done</string>
+    <string name="dashboard_edit_mode_hint">Tap + to add, tap 🗑️ to remove</string>
+    <string name="dashboard_add_tile_title">Add tile</string>
+    <string name="dashboard_no_tile_settings">No settings for this tile</string>
+    <string name="preset_save_apply">Save &amp; apply</string>
+    <string name="preset_custom_values">Custom values</string>
+    <string name="preset_windows_open">Open</string>
+    <string name="preset_windows_close">Close</string>
+    <string name="preset_windows_vent">Vent</string>
+    <string name="preset_turn_on">On</string>
+    <string name="preset_turn_off">Off</string>
+    <string name="dashboard_category_sensors">Sensors</string>
+    <string name="dashboard_type_sensor">Sensor</string>
+    <string name="dashboard_type_command">Command</string>
+    <string name="dashboard_type_preset">Preset</string>
+    <string name="dashboard_configure">Configure tiles</string>
+    <string name="dashboard_config_title">Dashboard tiles</string>
+    <string name="dashboard_config_description">Select sensors and quick commands to display on the dashboard.</string>
+    <string name="dashboard_config_sensor_section">Sensors</string>
+    <string name="dashboard_config_command_section">Quick commands</string>
+    <string name="dashboard_config_saved">Dashboard saved</string>
+    <string name="dashboard_config_none_selected">Select at least one item</string>
+    <string name="dashboard_config_select_all">Select all</string>
+    <string name="dashboard_config_sensors">Sensors</string>
+    <string name="dashboard_config_commands">Commands</string>
+    <string name="dashboard_config_linked_commands">Linked controls</string>
+    <string name="dashboard_config_value_title">Command value</string>
+    <string name="dashboard_config_name">Name</string>
+    <string name="dashboard_config_key">Key</string>
+    <string name="dashboard_config_category">Category</string>
+
+    <!-- Rules / Automation -->
+    <string name="nav_rules">Rules</string>
+    <string name="rules_title">Automation Rules</string>
+    <string name="rules_empty">No rules yet. Tap + to add one.</string>
+    <string name="rules_add">Add rule</string>
+    <string name="rules_save">Save</string>
+    <string name="rules_cancel">Cancel</string>
+    <string name="rules_edit_title">Edit rule</string>
+    <string name="rules_create_title">New rule</string>
+    <string name="rules_field_name">Rule name</string>
+    <string name="rules_field_sensor">Sensor</string>
+    <string name="rules_field_operator">Condition</string>
+    <string name="rules_field_value">Expected value</string>
+    <string name="rules_field_command">Command</string>
+    <string name="rules_field_command_value">Command value</string>
+    <string name="rules_field_min_interval">Min interval (seconds)</string>
+    <string name="rules_hint_min_interval_edge">Not used for rising-edge rules — the edge itself is the throttle</string>
+    <string name="rules_field_anti_loop">Anti-loop window (sec)</string>
+    <string name="rules_field_hold_seconds">Hold condition (sec, 0 = fire immediately)</string>
+    <string name="rules_empty_condition_value">Condition %1$d: value must not be empty</string>
+    <string name="rules_field_rising_edge">Fire only on rising edge</string>
+    <string name="rules_export">Export rules</string>
+    <string name="rules_import">Import rules</string>
+    <string name="rules_export_success">Rules exported to %s</string>
+    <string name="rules_import_success">Rules imported successfully</string>
+    <string name="rules_import_error">Failed to import rules</string>
+    <string name="rules_export_share">Share</string>
+    <string name="rules_export_file">Save to file</string>
+    <string name="rules_delete">Delete</string>
+    <string name="rules_delete_confirm">Delete rule \"%s\"?</string>
+    <string name="rules_deleted">Rule deleted</string>
+    <string name="rules_section_conditions">Conditions</string>
+    <string name="rules_section_actions">Actions</string>
+    <string name="rules_add_condition">Add condition</string>
+    <string name="rules_add_action">Add action</string>
+    <string name="rules_need_condition">At least one condition required</string>
+    <string name="rules_need_action">At least one action required</string>
+    <string name="rules_connector_and">AND</string>
+    <string name="rules_connector_or">OR</string>
+    <string name="rules_condition_not">NOT</string>
+    <string-array name="rules_connector_options">
+        <item>@string/rules_connector_and</item>
+        <item>@string/rules_connector_or</item>
+    </string-array>
+
+    <!-- Rules editor: operator labels -->
+    <string name="rules_operator_eq">= equals</string>
+    <string name="rules_operator_neq">≠ not equal</string>
+    <string name="rules_operator_gt">&gt; greater than</string>
+    <string name="rules_operator_lt">&lt; less than</string>
+    <string name="rules_operator_gte">≥ greater or equal</string>
+    <string name="rules_operator_lte">≤ less or equal</string>
+
+    <!-- Rules editor: fire once per session -->
+    <string name="rules_field_fire_once">Fire once per session</string>
+
+    <!-- Rules editor: else actions -->
+    <string name="rules_enable_else">Enable else action</string>
+    <string name="rules_add_else_action">Add else action</string>
+    <string name="rules_section_else_actions">Else actions</string>
+
+    <!-- Rules list: last fired timestamps -->
+    <string name="rules_last_fired">fired: %s</string>
+    <string name="rules_last_fired_else">else fired: %s</string>
+
+    <!-- Geofences -->
+    <string name="nav_geofences">Geofences</string>
+    <string name="geofence_list_title">Geofences</string>
+    <string name="geofence_list_empty">No geofences yet. Tap + to create one.</string>
+    <string name="geofence_add">Add geofence</string>
+    <string name="geofence_edit_title">Geofence zone</string>
+    <string name="geofence_field_name">Zone name</string>
+    <string name="geofence_field_radius">Radius (meters)</string>
+    <string name="geofence_save">Save</string>
+    <string name="geofence_delete">Delete</string>
+    <string name="geofence_delete_confirm">Delete zone \"%s\"?</string>
+    <string name="geofence_inside">inside</string>
+    <string name="geofence_outside">outside</string>
+    <string name="geofence_map_hint">Tap the map or drag the marker to set the zone center</string>
+    <string name="geofence_field_lat">Latitude</string>
+    <string name="geofence_field_lng">Longitude</string>
+    <string name="geofence_use_car_position">Use current car position</string>
+    <string name="geofence_no_position">Car position unavailable</string>
+    <string name="geofence_last_visited">Last visited: %1$s</string>
+    <string name="geofence_last_visited_never">never</string>
+    <string name="geofence_last_visited_today">today %1$s</string>
+    <string name="geofence_last_visited_yesterday">yesterday %1$s</string>
+
+    <!-- Sensor display names for rule editor -->
+    <string name="sensor_power_state">Power state</string>
+    <string name="sensor_speed">Speed (km/h)</string>
+    <string name="sensor_range">Range / mileage</string>
+    <string name="sensor_gear">Gear</string>
+    <string name="sensor_engine_rpm">Engine RPM</string>
+    <string name="sensor_brake_pedal">Brake pedal depth</string>
+    <string name="sensor_accel_pedal">Accelerator pedal depth</string>
+    <string name="sensor_front_motor_rpm">Front motor RPM</string>
+    <string name="sensor_rear_motor_rpm">Rear motor RPM</string>
+    <string name="sensor_engine_power">Engine power</string>
+    <string name="sensor_front_motor_torque">Front motor torque</string>
+    <string name="sensor_charge_gun_state">Charge gun plug state</string>
+    <string name="sensor_energy_per_100km">Energy per 100 km</string>
+    <string name="sensor_battery_temp_max">Max battery temp</string>
+    <string name="sensor_battery_temp_avg">Avg battery temp</string>
+    <string name="sensor_battery_temp_min">Min battery temp</string>
+    <string name="sensor_cell_voltage_max">Max cell voltage</string>
+    <string name="sensor_cell_voltage_min">Min cell voltage</string>
+    <string name="sensor_last_wiper_time">Last wiper time</string>
+    <string name="sensor_weather">Weather</string>
+    <string name="sensor_driver_seatbelt">Driver seatbelt state</string>
+    <string name="sensor_remote_lock_state">Remote lock state</string>
+    <string name="sensor_cabin_temp">Cabin temperature</string>
+    <string name="sensor_outside_temp">Outside temperature</string>
+    <string name="sensor_ac_set_temp">Driver A/C set temp</string>
+    <string name="sensor_temp_unit">Temperature unit</string>
+    <string name="sensor_battery_capacity">Battery capacity</string>
+    <string name="sensor_steering_angle">Steering wheel angle</string>
+    <string name="sensor_steering_rate">Steering wheel rate</string>
+    <string name="sensor_total_energy">Total energy consumption</string>
+    <string name="sensor_battery_charge">Battery charge (%)</string>
+    <string name="sensor_fuel_level">Fuel level (%)</string>
+    <string name="sensor_total_fuel">Total fuel consumption</string>
+    <string name="sensor_lane_curvature">Lane curvature</string>
+    <string name="sensor_right_lane_distance">Right lane distance</string>
+    <string name="sensor_left_lane_distance">Left lane distance</string>
+    <string name="sensor_battery_voltage">12V battery voltage</string>
+    <string name="sensor_radar_fl">Radar front-left</string>
+    <string name="sensor_radar_fr">Radar front-right</string>
+    <string name="sensor_radar_rl">Radar rear-left</string>
+    <string name="sensor_radar_rr">Radar rear-right</string>
+    <string name="sensor_radar_left">Radar left</string>
+    <string name="sensor_radar_flc">Radar front-left-center</string>
+    <string name="sensor_radar_frc">Radar front-right-center</string>
+    <string name="sensor_radar_rc">Radar rear-center</string>
+    <string name="sensor_front_wiper_speed">Front wiper speed</string>
+    <string name="sensor_wiper_mode">Wiper mode</string>
+    <string name="sensor_cruise_switch">Cruise switch</string>
+    <string name="sensor_distance_to_car_ahead">Distance to car ahead</string>
+    <string name="sensor_charging_state">Charging state</string>
+    <string name="sensor_tyre_pressure_fl">Tyre pressure FL</string>
+    <string name="sensor_tyre_pressure_fr">Tyre pressure FR</string>
+    <string name="sensor_tyre_pressure_rl">Tyre pressure RL</string>
+    <string name="sensor_tyre_pressure_rr">Tyre pressure RR</string>
+    <string name="sensor_left_turn">Left turn signal</string>
+    <string name="sensor_right_turn">Right turn signal</string>
+    <string name="sensor_driver_door_lock">Driver door lock</string>
+    <string name="sensor_window_fl">Window FL open (%)</string>
+    <string name="sensor_window_fr">Window FR open (%)</string>
+    <string name="sensor_window_rl">Window RL open (%)</string>
+    <string name="sensor_window_rr">Window RR open (%)</string>
+    <string name="sensor_sunroof">Sunroof open (%)</string>
+    <string name="sensor_sunshade">Sunshade open (%)</string>
+    <string name="sensor_powertrain_mode">Powertrain work mode</string>
+    <string name="sensor_drive_mode">Drive mode</string>
+    <string name="sensor_month">Month</string>
+    <string name="sensor_day">Day</string>
+    <string name="sensor_hour">Hour</string>
+    <string name="sensor_minute">Minute</string>
+    <string name="sensor_passenger_seatbelt_warning">Passenger seatbelt warning</string>
+    <string name="sensor_seatbelt_2nd_left">2nd row left seatbelt</string>
+    <string name="sensor_seatbelt_2nd_right">2nd row right seatbelt</string>
+    <string name="sensor_seatbelt_2nd_center">2nd row center seatbelt</string>
+    <string name="sensor_ac_state">A/C state</string>
+    <string name="sensor_fan_speed">Fan speed level</string>
+    <string name="sensor_ac_recirculation">A/C recirculation</string>
+    <string name="sensor_ac_airflow_mode">A/C airflow mode</string>
+    <string name="sensor_driver_door">Driver door</string>
+    <string name="sensor_passenger_door">Passenger door</string>
+    <string name="sensor_rear_left_door">Rear-left door</string>
+    <string name="sensor_rear_right_door">Rear-right door</string>
+    <string name="sensor_bonnet">Bonnet</string>
+    <string name="sensor_trunk">Trunk</string>
+    <string name="sensor_fuel_charge_flap">Fuel/charge flap</string>
+    <string name="sensor_auto_hold">Auto hold</string>
+    <string name="sensor_acc_cruise_state">ACC cruise state</string>
+    <string name="sensor_rear_left_approach_warning">Rear-left approach warning</string>
+    <string name="sensor_rear_right_approach_warning">Rear-right approach warning</string>
+    <string name="sensor_lane_keep_state">Lane keep state</string>
+    <string name="sensor_rear_left_door_lock">Rear-left door lock</string>
+    <string name="sensor_passenger_door_lock">Passenger door lock</string>
+    <string name="sensor_rear_right_door_lock">Rear-right door lock</string>
+    <string name="sensor_trunk_lock">Trunk lock</string>
+    <string name="sensor_rear_left_child_lock">Rear-left child lock</string>
+    <string name="sensor_rear_right_child_lock">Rear-right child lock</string>
+    <string name="sensor_sidelights">Sidelights</string>
+    <string name="sensor_low_beam">Low beam</string>
+    <string name="sensor_high_beam">High beam</string>
+    <string name="sensor_front_fog">Front fog</string>
+    <string name="sensor_rear_fog">Rear fog</string>
+    <string name="sensor_footwell_light">Footwell light</string>
+    <string name="sensor_drl">DRL</string>
+    <string name="sensor_engine_coolant_temp">Engine coolant temp</string>
+    <string name="sensor_hazard">Hazard lights</string>
+    <string name="sensor_slope">Slope / grade</string>
+    <string name="sensor_rain_amount">Rain amount</string>
+    <string name="sensor_passenger_seatbelt">Passenger seatbelt</string>
+    <string name="sensor_second">Second</string>
+    <string name="sensor_soc">Battery SOC (%)</string>
+    <string name="sensor_turn_signal">Turn signal</string>
+    <string name="sensor_surround_view_state">Surround-view state</string>
+    <string name="sensor_ui_config_version">UI config version</string>
+    <string name="sensor_sentry_state">Sentry state</string>
+    <string name="sensor_parked_recording_switch">Parked-recording switch</string>
+    <string name="sensor_parked_sentry_alarm">Parked sentry alarm</string>
+    <string name="sensor_wifi_state">Wi-Fi state</string>
+    <string name="sensor_bluetooth_state">Bluetooth state</string>
+    <string name="sensor_bluetooth_signal">Bluetooth signal</string>
+    <string name="sensor_sway_magnitude">Sway magnitude</string>
+    <string name="sensor_vibration_magnitude">Vibration magnitude</string>
+    <string name="sensor_screen_width">Screen width</string>
+    <string name="sensor_screen_height">Screen height</string>
+    <string name="sensor_dashcam_state">Dashcam state</string>
+    <string name="sensor_wireless_adb_switch">Wireless ADB switch</string>
+    <string name="sensor_media_volume">Media volume</string>
+    <string name="sensor_navigation_volume">Navigation volume</string>
+    <string name="sensor_ai_person_confidence">AI person confidence</string>
+    <string name="sensor_ai_vehicle_confidence">AI vehicle confidence</string>
+    <string name="sensor_last_sentry_trigger_time">Last sentry trigger time</string>
+    <string name="sensor_last_clip_start_time">Last clip start time</string>
+    <string name="sensor_last_clip_end_time">Last clip end time</string>
+    <string name="sensor_lead_car_start_state">Lead-car start state</string>
+
+    <!-- Dashboard config -->
+    <string name="dashboard_config_display_type_title">Display type</string>
+    <string-array name="sensor_display_types">
+        <item>Text</item>
+        <item>Gauge</item>
+        <item>Graph</item>
+    </string-array>
+</resources>

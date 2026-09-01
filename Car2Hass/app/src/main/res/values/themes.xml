@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Car2Hass" parent="android:Theme.Material.NoActionBar">
+        <item name="android:colorPrimary">@color/primary</item>
+        <item name="android:colorPrimaryDark">@color/primaryContainer</item>
+        <item name="android:colorAccent">@color/secondary</item>
+        <item name="android:windowBackground">@color/background</item>
+        <item name="android:statusBarColor">@color/background</item>
+        <item name="android:navigationBarColor">@color/background</item>
+        <item name="android:textColorPrimary">@color/textPrimary</item>
+        <item name="android:textColorSecondary">@color/textSecondary</item>
+    </style>
+
+    <style name="TextAppearance.Car2Hass" parent="android:TextAppearance" />
+
+    <!-- Dashboard tile value -->
+    <style name="TextAppearance.Car2Hass.DashboardValue">
+        <item name="android:textSize">36sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/textPrimary</item>
+    </style>
+
+    <!-- Dashboard tile label -->
+    <style name="TextAppearance.Car2Hass.DashboardLabel">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/textSecondary</item>
+    </style>
+
+    <!-- Telemetry value (monospace) -->
+    <style name="TextAppearance.Car2Hass.TelemetryValue">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/textPrimary</item>
+        <item name="android:typeface">monospace</item>
+    </style>
+
+    <!-- Caption / small text -->
+    <style name="TextAppearance.Car2Hass.Caption">
+        <item name="android:textSize">12sp</item>
+        <item name="android:textColor">@color/textTertiary</item>
+    </style>
+
+    <!-- Section title inside cards -->
+    <style name="TextAppearance.Car2Hass.SectionTitle">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textColor">@color/textPrimary</item>
+    </style>
+</resources>

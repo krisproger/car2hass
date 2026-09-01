@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/bg_card"
+    android:padding="14dp"
+    android:layout_marginBottom="12dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_research_title"
+        android:textColor="@color/primary"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="10dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_research_profile"
+        android:textColor="@color/textSecondary"
+        android:textSize="13sp" />
+
+    <Spinner
+        android:id="@+id/spinnerResearchProfile"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginBottom="10dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_research_channels_label"
+        android:textColor="@color/textSecondary"
+        android:textSize="13sp" />
+
+    <LinearLayout
+        android:id="@+id/researchChannelContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="10dp" />
+
+    <TextView
+        android:id="@+id/tvResearchStatus"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/textSecondary"
+        android:textSize="12sp"
+        android:layout_marginBottom="10dp" />
+
+    <Switch
+        android:id="@+id/swProbeUpload"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_research_upload"
+        android:textColor="@color/textPrimary"
+        android:textSize="13sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_research_upload_hint"
+        android:textColor="@color/textTertiary"
+        android:textSize="11sp"
+        android:layout_marginBottom="10dp" />
+
+    <Button
+        android:id="@+id/btnRestartResearch"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@color/surfaceVariant"
+        android:textColor="@color/accentGreen"
+        android:textSize="14sp"
+        android:text="@string/settings_research_restart"
+        android:layout_marginBottom="8dp" />
+
+    <Button
+        android:id="@+id/btnExportResearch"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@color/surfaceVariant"
+        android:textColor="@color/accentGreen"
+        android:textSize="14sp"
+        android:text="@string/settings_research_export" />
+</LinearLayout>

@@ -1,0 +1,45 @@
+# Gradle
+.gradle/
+build/
+app/build/
+
+# Local configuration
+local.properties
+
+# Keystores and signing material (NEVER commit release keys)
+.keys/
+*.jks
+*.keystore
+
+# Generated build metadata
+build_counter.txt
+
+# IDE
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+CANMonitor_log*.txt
+DiPlusToHass_log*.txt
+
+# Android captures / outputs
+captures/
+*.apk.idsig
+*.apk
+!app/**/*.apk
+
+# Distribution APK artifacts (built locally, not committed)
+dist/
+
+# Test-only bundled config (contains real credentials, never commit)
+test/config.json

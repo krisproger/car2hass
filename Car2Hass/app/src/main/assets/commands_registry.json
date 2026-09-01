@@ -1,0 +1,865 @@
+{
+  "version": 1,
+  "commands": [
+    {
+      "id": "ac_on",
+      "label_en": "ac_on",
+      "label_ru": "ac_on",
+      "state_sensor": "ac_state",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加空调自动"
+        },
+        "adb": {
+          "dev": 1000,
+          "fid": 501219364,
+          "value": 1,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": "ac_state"
+        }
+      }
+    },
+    {
+      "id": "ac_off",
+      "label_en": "ac_off",
+      "label_ru": "ac_off",
+      "state_sensor": "ac_state",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加关空调"
+        },
+        "adb": {
+          "dev": 1000,
+          "fid": 501219364,
+          "value": 0,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": "ac_state"
+        }
+      }
+    },
+    {
+      "id": "ac_auto",
+      "label_en": "ac_auto",
+      "label_ru": "ac_auto",
+      "state_sensor": null,
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加空调自动"
+        },
+        "adb": {
+          "dev": 1000,
+          "fid": 501219352,
+          "value": 0,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": "ac_state"
+        }
+      }
+    },
+    {
+      "id": "ac_temp",
+      "label_en": "ac_temp",
+      "label_ru": "ac_temp",
+      "state_sensor": "ac_set_temp",
+      "param": {
+        "min": 16,
+        "max": 30,
+        "step": 1
+      },
+      "channels": {
+        "diplus": {
+          "command": "迪加设置温度{{value}}"
+        },
+        "adb": {
+          "dev": 1000,
+          "fid": 501219368,
+          "value": null,
+          "valueMap": null,
+          "valueExpr": "{{value}}",
+          "min": 16,
+          "max": 30,
+          "verify": "ac_set_temp"
+        }
+      }
+    },
+    {
+      "id": "ac_recirc",
+      "label_en": "ac_recirc",
+      "label_ru": "ac_recirc",
+      "state_sensor": "ac_recirculation",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加{{value}}"
+        },
+        "adb": {
+          "dev": 1000,
+          "fid": 501219355,
+          "value": null,
+          "valueMap": {
+            "recirc": 1,
+            "fresh": 0
+          },
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": "ac_recirculation"
+        }
+      }
+    },
+    {
+      "id": "mirror_heat_on",
+      "label_en": "mirror_heat_on",
+      "label_ru": "mirror_heat_on",
+      "state_sensor": null,
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加后视镜加热"
+        },
+        "adb": {
+          "dev": 1000,
+          "fid": 501219357,
+          "value": 1,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "mirror_heat_off",
+      "label_en": "mirror_heat_off",
+      "label_ru": "mirror_heat_off",
+      "state_sensor": null,
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加关闭后视镜加热"
+        },
+        "adb": {
+          "dev": 1000,
+          "fid": 501219357,
+          "value": 0,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "window_driver",
+      "label_en": "window_driver",
+      "label_ru": "window_driver",
+      "state_sensor": "window_fl",
+      "param": {
+        "min": 0,
+        "max": 100,
+        "step": 1
+      },
+      "channels": {
+        "diplus": {
+          "command": "迪加主驾打开百分之{{value}}"
+        },
+        "adb": {
+          "dev": 1001,
+          "fid": 1276219408,
+          "value": null,
+          "valueMap": null,
+          "valueExpr": "{{value}}",
+          "min": 0,
+          "max": 100,
+          "verify": "window_fl"
+        }
+      }
+    },
+    {
+      "id": "window_passenger",
+      "label_en": "window_passenger",
+      "label_ru": "window_passenger",
+      "state_sensor": "window_fr",
+      "param": {
+        "min": 0,
+        "max": 100,
+        "step": 1
+      },
+      "channels": {
+        "diplus": {
+          "command": "迪加副驾打开百分之{{value}}"
+        },
+        "adb": {
+          "dev": 1001,
+          "fid": 1276219424,
+          "value": null,
+          "valueMap": null,
+          "valueExpr": "{{value}}",
+          "min": 0,
+          "max": 100,
+          "verify": "window_fr"
+        }
+      }
+    },
+    {
+      "id": "window_rear_left",
+      "label_en": "window_rear_left",
+      "label_ru": "window_rear_left",
+      "state_sensor": "window_rl",
+      "param": {
+        "min": 0,
+        "max": 100,
+        "step": 1
+      },
+      "channels": {
+        "diplus": {
+          "command": "迪加左后打开百分之{{value}}"
+        },
+        "adb": {
+          "dev": 1001,
+          "fid": 1276219416,
+          "value": null,
+          "valueMap": null,
+          "valueExpr": "{{value}}",
+          "min": 0,
+          "max": 100,
+          "verify": "window_rl"
+        }
+      }
+    },
+    {
+      "id": "window_rear_right",
+      "label_en": "window_rear_right",
+      "label_ru": "window_rear_right",
+      "state_sensor": "window_rr",
+      "param": {
+        "min": 0,
+        "max": 100,
+        "step": 1
+      },
+      "channels": {
+        "diplus": {
+          "command": "迪加右后打开百分之{{value}}"
+        },
+        "adb": {
+          "dev": 1001,
+          "fid": 1276219432,
+          "value": null,
+          "valueMap": null,
+          "valueExpr": "{{value}}",
+          "min": 0,
+          "max": 100,
+          "verify": "window_rr"
+        }
+      }
+    },
+    {
+      "id": "windows_close_all",
+      "label_en": "windows_close_all",
+      "label_ru": "windows_close_all",
+      "state_sensor": "window_rr",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加一键关窗"
+        },
+        "adb": [
+          {
+            "dev": 1001,
+            "fid": 1276219408,
+            "value": 0,
+            "valueMap": null,
+            "valueExpr": null,
+            "min": null,
+            "max": null,
+            "verify": null
+          },
+          {
+            "dev": 1001,
+            "fid": 1276219424,
+            "value": 0,
+            "valueMap": null,
+            "valueExpr": null,
+            "min": null,
+            "max": null,
+            "verify": null
+          },
+          {
+            "dev": 1001,
+            "fid": 1276219416,
+            "value": 0,
+            "valueMap": null,
+            "valueExpr": null,
+            "min": null,
+            "max": null,
+            "verify": null
+          },
+          {
+            "dev": 1001,
+            "fid": 1276219432,
+            "value": 0,
+            "valueMap": null,
+            "valueExpr": null,
+            "min": null,
+            "max": null,
+            "verify": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "windows_vent",
+      "label_en": "windows_vent",
+      "label_ru": "windows_vent",
+      "state_sensor": null,
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加一键通风"
+        },
+        "adb": [
+          {
+            "dev": 1001,
+            "fid": 1276219408,
+            "value": 10,
+            "valueMap": null,
+            "valueExpr": null,
+            "min": null,
+            "max": null,
+            "verify": null
+          },
+          {
+            "dev": 1001,
+            "fid": 1276219424,
+            "value": 10,
+            "valueMap": null,
+            "valueExpr": null,
+            "min": null,
+            "max": null,
+            "verify": null
+          },
+          {
+            "dev": 1001,
+            "fid": 1276219416,
+            "value": 10,
+            "valueMap": null,
+            "valueExpr": null,
+            "min": null,
+            "max": null,
+            "verify": null
+          },
+          {
+            "dev": 1001,
+            "fid": 1276219432,
+            "value": 10,
+            "valueMap": null,
+            "valueExpr": null,
+            "min": null,
+            "max": null,
+            "verify": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "sunroof",
+      "label_en": "sunroof",
+      "label_ru": "sunroof",
+      "state_sensor": "sunroof",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加天窗打开百分之{{value}}"
+        },
+        "adb": {
+          "dev": 1001,
+          "fid": 1125122056,
+          "value": null,
+          "valueMap": {
+            "0": 2,
+            "50": 3,
+            "100": 1
+          },
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": "sunroof"
+        }
+      }
+    },
+    {
+      "id": "sunshade",
+      "label_en": "sunshade",
+      "label_ru": "sunshade",
+      "state_sensor": "sunshade",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加遮阳帘打开百分之{{value}}"
+        },
+        "adb": {
+          "dev": 1001,
+          "fid": 1125122060,
+          "value": null,
+          "valueMap": {
+            "0": 2,
+            "100": 1
+          },
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": "sunshade"
+        }
+      }
+    },
+    {
+      "id": "doors_unlock",
+      "label_en": "doors_unlock",
+      "label_ru": "doors_unlock",
+      "state_sensor": "remote_lock_state",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加车门解锁"
+        },
+        "adb": {
+          "dev": 1001,
+          "fid": 1276141590,
+          "value": 1,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "doors_lock",
+      "label_en": "doors_lock",
+      "label_ru": "doors_lock",
+      "state_sensor": "remote_lock_state",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加车门上锁"
+        },
+        "adb": {
+          "dev": 1001,
+          "fid": 1276141590,
+          "value": 2,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "interior_light_on",
+      "label_en": "interior_light_on",
+      "label_ru": "interior_light_on",
+      "state_sensor": "footwell_light",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加打开车内灯"
+        },
+        "adb": {
+          "dev": 1023,
+          "fid": 1330643002,
+          "value": 2,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "interior_light_off",
+      "label_en": "interior_light_off",
+      "label_ru": "interior_light_off",
+      "state_sensor": "footwell_light",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加关闭车内灯"
+        },
+        "adb": {
+          "dev": 1023,
+          "fid": 1330643002,
+          "value": 1,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "ambilight_on",
+      "label_en": "ambilight_on",
+      "label_ru": "ambilight_on",
+      "state_sensor": null,
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加打开氛围灯"
+        },
+        "adb": {
+          "dev": 1023,
+          "fid": 1069547536,
+          "value": 5,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "ambilight_off",
+      "label_en": "ambilight_off",
+      "label_ru": "ambilight_off",
+      "state_sensor": null,
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加关闭氛围灯"
+        },
+        "adb": {
+          "dev": 1023,
+          "fid": 1069547536,
+          "value": 1,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "drl_on",
+      "label_en": "drl_on",
+      "label_ru": "drl_on",
+      "state_sensor": "drl",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加打开日行灯"
+        },
+        "adb": {
+          "dev": 1004,
+          "fid": 1125122118,
+          "value": 1,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "drl_off",
+      "label_en": "drl_off",
+      "label_ru": "drl_off",
+      "state_sensor": "drl",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加关闭日行灯"
+        },
+        "adb": {
+          "dev": 1004,
+          "fid": 1125122118,
+          "value": 2,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "hazard_on",
+      "label_en": "hazard_on",
+      "label_ru": "hazard_on",
+      "state_sensor": "hazard",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加双闪"
+        },
+        "adb": {
+          "dev": 1004,
+          "fid": 871366669,
+          "value": 1,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "hazard_off",
+      "label_en": "hazard_off",
+      "label_ru": "hazard_off",
+      "state_sensor": "hazard",
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加关双闪"
+        },
+        "adb": {
+          "dev": 1004,
+          "fid": 871366669,
+          "value": 0,
+          "valueMap": null,
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "driver_seat_heat",
+      "label_en": "driver_seat_heat",
+      "label_ru": "driver_seat_heat",
+      "state_sensor": null,
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加主驾座椅加热{{value}}"
+        },
+        "adb": {
+          "dev": null,
+          "fid": null,
+          "value": null,
+          "valueMap": {
+            "off": [
+              {
+                "dev": 1000,
+                "fid": 1276248084,
+                "value": 2
+              }
+            ],
+            "low": [
+              {
+                "dev": 1000,
+                "fid": 1276248084,
+                "value": 1
+              },
+              {
+                "dev": 1000,
+                "fid": 1276252180,
+                "value": 1
+              }
+            ],
+            "high": [
+              {
+                "dev": 1000,
+                "fid": 1276248084,
+                "value": 1
+              },
+              {
+                "dev": 1000,
+                "fid": 1276252180,
+                "value": 2
+              }
+            ]
+          },
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "passenger_seat_heat",
+      "label_en": "passenger_seat_heat",
+      "label_ru": "passenger_seat_heat",
+      "state_sensor": null,
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加副驾座椅加热{{value}}"
+        },
+        "adb": {
+          "dev": null,
+          "fid": null,
+          "value": null,
+          "valueMap": {
+            "off": [
+              {
+                "dev": 1000,
+                "fid": 1276248092,
+                "value": 2
+              }
+            ],
+            "low": [
+              {
+                "dev": 1000,
+                "fid": 1276248092,
+                "value": 1
+              },
+              {
+                "dev": 1000,
+                "fid": 1276252188,
+                "value": 1
+              }
+            ],
+            "high": [
+              {
+                "dev": 1000,
+                "fid": 1276248092,
+                "value": 1
+              },
+              {
+                "dev": 1000,
+                "fid": 1276252188,
+                "value": 2
+              }
+            ]
+          },
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "driver_seat_vent",
+      "label_en": "driver_seat_vent",
+      "label_ru": "driver_seat_vent",
+      "state_sensor": null,
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加主驾座椅通风{{value}}"
+        },
+        "adb": {
+          "dev": null,
+          "fid": null,
+          "value": null,
+          "valueMap": {
+            "off": [
+              {
+                "dev": 1000,
+                "fid": 1276248080,
+                "value": 2
+              }
+            ],
+            "low": [
+              {
+                "dev": 1000,
+                "fid": 1276248080,
+                "value": 1
+              },
+              {
+                "dev": 1000,
+                "fid": 1276252176,
+                "value": 1
+              }
+            ],
+            "high": [
+              {
+                "dev": 1000,
+                "fid": 1276248080,
+                "value": 1
+              },
+              {
+                "dev": 1000,
+                "fid": 1276252176,
+                "value": 2
+              }
+            ]
+          },
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    },
+    {
+      "id": "passenger_seat_vent",
+      "label_en": "passenger_seat_vent",
+      "label_ru": "passenger_seat_vent",
+      "state_sensor": null,
+      "param": null,
+      "channels": {
+        "diplus": {
+          "command": "迪加副驾座椅通风{{value}}"
+        },
+        "adb": {
+          "dev": null,
+          "fid": null,
+          "value": null,
+          "valueMap": {
+            "off": [
+              {
+                "dev": 1000,
+                "fid": 1276248088,
+                "value": 2
+              }
+            ],
+            "low": [
+              {
+                "dev": 1000,
+                "fid": 1276248088,
+                "value": 1
+              },
+              {
+                "dev": 1000,
+                "fid": 1276252184,
+                "value": 1
+              }
+            ],
+            "high": [
+              {
+                "dev": 1000,
+                "fid": 1276248088,
+                "value": 1
+              },
+              {
+                "dev": 1000,
+                "fid": 1276252184,
+                "value": 2
+              }
+            ]
+          },
+          "valueExpr": null,
+          "min": null,
+          "max": null,
+          "verify": null
+        }
+      }
+    }
+  ]
+}

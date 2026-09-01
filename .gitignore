@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Android build outputs
+DiPlus-to-hass/build/
+DiPlus-to-hass/.gradle/
+DiPlus-to-hass/app/build/
+DiPlus-to-hass/libs/
+DiPlus-to-hass/build_counter.txt
+*.apk
+*.apk.idsig
+
+# Signing material (never commit keys)
+.keys/
+*.jks
+*.keystore
+
+# Local configs with credentials
+DiPlus-to-hass/test/config.json
+local.properties
+
+# Logs
+logs/
+*.log
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# MkDocs build output (build with mkdocs/build.sh)
+site/
+# Caches from test runs
+.pytest_cache/
+DiPlus-to-hass/.pytest_cache/

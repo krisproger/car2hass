@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/background">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:scrollbars="vertical">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rules_field_name"
+                android:textColor="@color/textSecondary"
+                android:textSize="12sp" />
+            <EditText
+                android:id="@+id/editRuleName"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:background="@color/surfaceVariant"
+                android:textColor="@color/textPrimary"
+                android:textSize="14sp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp"
+                android:layout_marginBottom="4dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/rules_section_conditions"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+                <ImageButton
+                    android:id="@+id/btnAddCondition"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_plus"
+                    android:contentDescription="@string/rules_add_condition"
+                    android:scaleType="fitCenter" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/conditionsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/surfaceVariant"
+                android:layout_marginVertical="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="40dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="4dp">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="@string/rules_section_actions"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="16sp"
+                    android:textStyle="bold" />
+                <ImageButton
+                    android:id="@+id/btnAddAction"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:background="@android:color/transparent"
+                    android:src="@drawable/ic_plus"
+                    android:contentDescription="@string/rules_add_action"
+                    android:scaleType="fitCenter" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/actionsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/surfaceVariant"
+                android:layout_marginVertical="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+                <Switch
+                    android:id="@+id/switchRisingEdge"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/rules_field_rising_edge"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <TextView
+                android:id="@+id/labelMinInterval"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rules_field_min_interval"
+                android:textColor="@color/textSecondary"
+                android:textSize="12sp" />
+            <EditText
+                android:id="@+id/editMinInterval"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:background="@color/surfaceVariant"
+                android:textColor="@color/textPrimary"
+                android:textSize="14sp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:inputType="number"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+            <TextView
+                android:id="@+id/hintMinInterval"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rules_hint_min_interval_edge"
+                android:textColor="@color/textSecondary"
+                android:textSize="11sp"
+                android:visibility="gone"
+                android:layout_marginTop="-8dp"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rules_field_anti_loop"
+                android:textColor="@color/textSecondary"
+                android:textSize="12sp" />
+            <EditText
+                android:id="@+id/editAntiLoopWindow"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:background="@color/surfaceVariant"
+                android:textColor="@color/textPrimary"
+                android:textSize="14sp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:inputType="number"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/rules_field_hold_seconds"
+                android:textColor="@color/textSecondary"
+                android:textSize="12sp" />
+            <EditText
+                android:id="@+id/editHoldSeconds"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:background="@color/surfaceVariant"
+                android:textColor="@color/textPrimary"
+                android:textSize="14sp"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:inputType="number"
+                android:layout_marginTop="4dp"
+                android:layout_marginBottom="12dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="12dp">
+                <CheckBox
+                    android:id="@+id/checkFireOnce"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/rules_field_fire_once"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:background="@color/surfaceVariant"
+                android:layout_marginVertical="8dp" />
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="8dp">
+                <Switch
+                    android:id="@+id/switchEnableElse"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="@string/rules_enable_else"
+                    android:textColor="@color/textPrimary"
+                    android:textSize="14sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/elseActionsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="4dp">
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="@string/rules_section_else_actions"
+                        android:textColor="@color/textPrimary"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+                    <ImageButton
+                        android:id="@+id/btnAddElseAction"
+                        android:layout_width="36dp"
+                        android:layout_height="36dp"
+                        android:background="@android:color/transparent"
+                        android:src="@drawable/ic_plus"
+                        android:contentDescription="@string/rules_add_else_action"
+                        android:scaleType="fitCenter" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:padding="12dp"
+        android:background="@color/surface">
+        <Button
+            android:id="@+id/btnRuleSave"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"
+            android:background="@color/primary"
+            android:textColor="@color/onPrimary"
+            android:textSize="14sp"
+            android:text="@string/rules_save" />
+        <Button
+            android:id="@+id/btnRuleCancel"
+            android:layout_width="0dp"
+            android:layout_height="46dp"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:background="@color/primaryContainer"
+            android:textColor="@color/onPrimary"
+            android:textSize="14sp"
+            android:text="@string/rules_cancel" />
+    </LinearLayout>
+</LinearLayout>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>car-card demo</title>
+  <script src="car-card.js"></script>
+  <!-- minimal HA stubs for standalone preview -->
+  <script>
+    class HaIcon extends HTMLElement { set icon(v) { this.textContent = "●"; } }
+    customElements.define("ha-icon", HaIcon);
+    class HaCard extends HTMLElement {}
+    customElements.define("ha-card", HaCard);
+    window.addEventListener("DOMContentLoaded", () => {
+      const card = document.createElement("cartelemetry-car-card");
+      card.setConfig({ car: "byd_car", title: "Demo Car" });
+      card.hass = {
+        states: {
+          "sensor.byd_car_speed": { state: "0" },
+          "sensor.byd_car_soc": { state: "68" },
+          "sensor.byd_car_range": { state: "240" },
+          "sensor.byd_car_outside_temp": { state: "21" },
+          "sensor.byd_car_engine_coolant_temp": { state: "74" },
+          "binary_sensor.byd_car_driver_door": { state: "on" },
+          "binary_sensor.byd_car_window_rl": { state: "on" },
+          "switch.byd_car_ac_state": { state: "off" },
+        },
+        callService: (d, s, data) => console.log("call", d, s, data),
+      };
+      document.body.appendChild(card);
+    });
+  </script>
+</head>
+<body style="background:#111;color:#fff;font-family:sans-serif;max-width:420px;margin:0 auto;">
+</body>
+</html>

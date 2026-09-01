@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
+
+    <!-- Dashboard tile grid -->
+    <GridView
+        android:id="@+id/dashboardGrid"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:numColumns="2"
+        android:verticalSpacing="12dp"
+        android:horizontalSpacing="12dp"
+        android:padding="12dp"
+        android:stretchMode="columnWidth"
+        android:gravity="center"
+        android:scrollbars="vertical" />
+
+    <ImageButton
+        android:id="@+id/fabDashboardAdd"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|end"
+        android:layout_margin="16dp"
+        android:background="@drawable/fab_background"
+        android:src="@drawable/ic_plus"
+        android:visibility="gone"
+        android:contentDescription="@string/dashboard_add_tile_title" />
+
+    <ImageButton
+        android:id="@+id/fabDashboardDone"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:layout_gravity="bottom|start"
+        android:layout_margin="16dp"
+        android:background="@drawable/fab_background"
+        android:src="@drawable/ic_check"
+        android:visibility="gone"
+        android:contentDescription="@string/dashboard_done" />
+
+</FrameLayout>

@@ -1,0 +1,1885 @@
+value_trans:
+  关闭: 'off'
+  打开: 'on'
+  已系: buckled
+  未系: unbuckled
+  行车: driving
+  上电: 'on'
+  断开: disconnected
+  已连接: connected
+  解锁: unlocked
+  未锁: unlocked
+  开启: 'on'
+  未显示: not shown
+  停止: stopped
+  开启缩时哨兵: timelapse sentry on
+  开启中: starting
+  无报警: no alarm
+  开启熄火录制: parked recording on
+  开启熄火哨兵: engine-off sentry on
+  报警中: alarming
+  无目标: no target
+  未移动: not moving
+  晴天: sunny
+  摄氏度: °C
+  华氏度: °F
+  外循环: external
+  内循环: recirculation
+  吹面: face
+  吹脚: feet
+  未生效: inactive
+  禁用: disabled
+  正常: normal
+  无告警: no alert
+  无效: invalid
+  开: 'on'
+  关: 'off'
+  已开启: 'on'
+  已关闭: 'off'
+  强制EV: forced EV
+  直流枪: DC gun
+  激活: active
+  激活2: active2
+  吹面吹脚: face+feet
+  锁定: locked
+  已锁: locked
+  锁: locked
+  充电: charging
+  放电: discharging
+  充满: full
+  空闲: idle
+  暖机: warming up
+  运行: running
+  运行中: running
+  报警: alarm
+  在线: online
+  离线: offline
+  是: 'yes'
+  否: 'no'
+  未定义: undefined
+  双闪: hazard
+  左转: left
+  右转: right
+  雨天: rain
+  未连接: disconnected
+  显示中: shown
+  待激活: pending
+  P: P
+  R: R
+  N: N
+  D: D
+  M: M
+  S: S
+  有车接近: car approaching
+  交流枪: AC gun
+  转换枪: adapter gun
+  放电枪: discharge gun
+  开始: started
+  完成: done
+  终止: aborted
+  激活1: active1
+  错误: error
+  状态3: state3
+  取消或无效: cancelled
+  状态4: state4
+  主动起步: auto-start
+  除霜: defrost
+  吹脚除霜: feet+defrost
+  吹面+吹脚+除霜: face+feet+defrost
+  吹面+除霜: face+defrost
+  存储异常: storage error
+  左转2: left2
+  右转2: right2
+  紧急: emergency
+  后闪灯: rear flash
+  闪灯: flash
+signals:
+- id: 1
+  name: 电源状态
+  description: Power state
+  type: enum
+  key: power_state
+  labels:
+    0: 'off'
+    1: 'on'
+    2: driving
+  ha_type: binary_sensor
+  device_class: power
+  truthy:
+  - 'on'
+  - driving
+- id: 2
+  name: 车速
+  description: Speed (km/h)
+  type: num
+  key: speed
+  labels: {}
+  ha_type: sensor
+  unit: km/h
+  icon: mdi:speedometer
+  device_class: speed
+  state_class: measurement
+- id: 3
+  name: 里程
+  description: Range / mileage
+  type: num
+  key: range
+  labels: {}
+  ha_type: sensor
+  unit: km
+  icon: mdi:map-marker-distance
+  state_class: measurement
+- id: 4
+  name: 档位
+  description: Gear
+  type: enum
+  key: gear
+  labels:
+    0: —
+    1: P
+    2: R
+    3: N
+    4: D
+    5: M
+    6: S
+  ha_type: sensor
+  icon: mdi:car-shift-pattern
+- id: 5
+  name: 发动机转速
+  description: Engine RPM
+  type: num
+  key: engine_rpm
+  labels: {}
+  ha_type: sensor
+  unit: rpm
+  icon: mdi:engine
+  state_class: measurement
+- id: 6
+  name: 刹车深度
+  description: Brake pedal depth
+  type: num
+  key: brake_pedal
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car-brake-hold
+  state_class: measurement
+- id: 7
+  name: 加速踏板深度
+  description: Accelerator pedal depth
+  type: num
+  key: accel_pedal
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car
+  state_class: measurement
+- id: 8
+  name: 前电机转速
+  description: Front motor RPM
+  type: num
+  key: front_motor_rpm
+  labels: {}
+  ha_type: sensor
+  unit: rpm
+  icon: mdi:engine
+  state_class: measurement
+- id: 9
+  name: 后电机转速
+  description: Rear motor RPM
+  type: num
+  key: rear_motor_rpm
+  labels: {}
+  ha_type: sensor
+  unit: rpm
+  icon: mdi:engine
+  state_class: measurement
+- id: 10
+  name: 发动机功率
+  description: Engine power
+  type: num
+  key: engine_power
+  labels: {}
+  ha_type: sensor
+  unit: kW
+  icon: mdi:lightning-bolt
+  state_class: measurement
+- id: 11
+  name: 前电机扭矩
+  description: Front motor torque
+  type: num
+  key: front_motor_torque
+  labels: {}
+  ha_type: sensor
+  unit: Nm
+  icon: mdi:lightning-bolt
+  state_class: measurement
+- id: 12
+  name: 充电枪插枪状态
+  description: Charge gun plug state
+  type: enum
+  key: charge_gun_state
+  labels:
+    0: —
+    1: disconnected
+    2: AC gun
+    3: DC gun
+    4: adapter gun
+    5: discharge gun
+  ha_type: sensor
+  icon: mdi:ev-plug
+- id: 13
+  name: 百公里电耗
+  description: Energy per 100 km
+  type: num
+  key: energy_per_100km
+  labels: {}
+  ha_type: sensor
+  unit: kWh
+  icon: mdi:lightning-bolt
+  state_class: measurement
+- id: 14
+  name: 最高电池温度
+  description: Max battery temp
+  type: num
+  key: battery_temp_max
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  device_class: temperature
+  state_class: measurement
+- id: 15
+  name: 平均电池温度
+  description: Avg battery temp
+  type: num
+  key: battery_temp_avg
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  device_class: temperature
+  state_class: measurement
+- id: 16
+  name: 最低电池温度
+  description: Min battery temp
+  type: num
+  key: battery_temp_min
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  device_class: temperature
+  state_class: measurement
+- id: 17
+  name: 最高电池电压
+  description: Max cell voltage
+  type: num
+  key: cell_voltage_max
+  labels: {}
+  ha_type: sensor
+  unit: V
+  icon: mdi:battery
+  device_class: voltage
+  state_class: measurement
+- id: 18
+  name: 最低电池电压
+  description: Min cell voltage
+  type: num
+  key: cell_voltage_min
+  labels: {}
+  ha_type: sensor
+  unit: V
+  icon: mdi:battery
+  device_class: voltage
+  state_class: measurement
+- id: 19
+  name: 上次雨刮时间
+  description: Last wiper time
+  type: num
+  key: last_wiper_time
+  labels: {}
+  ha_type: sensor
+  unit: s
+  icon: mdi:wiper
+- id: 20
+  name: 天气
+  description: Weather
+  type: enum
+  key: weather
+  labels:
+    0: clear
+    1: rain
+  ha_type: sensor
+  icon: mdi:weather-partly-cloudy
+- id: 21
+  name: 主驾驶安全带状态
+  description: Driver seatbelt state
+  type: enum
+  key: driver_seatbelt
+  labels:
+    0: unbuckled
+    1: buckled
+    2: invalid
+  ha_type: binary_sensor
+  device_class: safety
+  truthy:
+  - buckled
+- id: 22
+  name: 远程锁车状态
+  description: Remote lock state
+  type: enum
+  key: remote_lock_state
+  labels:
+    0: unlocked
+    1: locked
+  ha_type: binary_sensor
+  device_class: lock
+  truthy:
+  - locked
+- id: 25
+  name: 车内温度
+  description: Cabin temperature
+  type: num
+  key: cabin_temp
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  device_class: temperature
+  state_class: measurement
+- id: 26
+  name: 车外温度
+  description: Outside temperature
+  type: num
+  key: outside_temp
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  device_class: temperature
+  state_class: measurement
+- id: 27
+  name: 主驾驶空调温度
+  description: Driver A/C set temp
+  type: num
+  key: ac_set_temp
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  device_class: temperature
+  state_class: measurement
+- id: 28
+  name: 温度单位
+  description: Temperature unit
+  type: enum
+  key: temp_unit
+  labels:
+    0: °F
+    1: °C
+  ha_type: sensor
+  icon: mdi:thermometer
+- id: 29
+  name: 电池容量
+  description: Battery capacity
+  type: num
+  key: battery_capacity
+  labels: {}
+  ha_type: sensor
+  unit: kWh
+  icon: mdi:battery
+  state_class: measurement
+- id: 30
+  name: 方向盘转角
+  description: Steering wheel angle
+  type: num
+  key: steering_angle
+  labels: {}
+  ha_type: sensor
+  unit: °
+  icon: mdi:steering
+  state_class: measurement
+- id: 31
+  name: 方向盘转速
+  description: Steering wheel rate
+  type: num
+  key: steering_rate
+  labels: {}
+  ha_type: sensor
+  unit: °/s
+  icon: mdi:steering
+  state_class: measurement
+- id: 32
+  name: 总电耗
+  description: Total energy consumption
+  type: num
+  key: total_energy
+  labels: {}
+  ha_type: sensor
+  unit: kWh
+  icon: mdi:counter
+  state_class: total
+- id: 33
+  name: 电量百分比
+  description: Battery charge (%)
+  type: num
+  key: battery_charge
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:battery
+  device_class: battery
+  state_class: measurement
+- id: 34
+  name: 油量百分比
+  description: Fuel level (%)
+  type: num
+  key: fuel_level
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:gas-station
+  state_class: measurement
+- id: 35
+  name: 总燃油消耗
+  description: Total fuel consumption
+  type: num
+  key: total_fuel
+  labels: {}
+  ha_type: sensor
+  unit: L
+  icon: mdi:gas-station
+  state_class: total_increasing
+- id: 36
+  name: 车道线曲率
+  description: Lane curvature
+  type: num
+  key: lane_curvature
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:road-variant
+  state_class: measurement
+- id: 37
+  name: 右侧线距离
+  description: Right lane distance
+  type: num
+  key: right_lane_distance
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:road-variant
+  state_class: measurement
+- id: 38
+  name: 左侧线距离
+  description: Left lane distance
+  type: num
+  key: left_lane_distance
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:road-variant
+  state_class: measurement
+- id: 39
+  name: 蓄电池电压
+  description: 12V battery voltage
+  type: num
+  key: battery_voltage
+  labels: {}
+  ha_type: sensor
+  unit: V
+  icon: mdi:car
+  device_class: voltage
+  state_class: measurement
+- id: 40
+  name: 雷达左前
+  description: Radar front-left
+  type: num
+  key: radar_fl
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:radar
+  state_class: measurement
+- id: 41
+  name: 雷达右前
+  description: Radar front-right
+  type: num
+  key: radar_fr
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:radar
+  state_class: measurement
+- id: 42
+  name: 雷达左后
+  description: Radar rear-left
+  type: num
+  key: radar_rl
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:radar
+  state_class: measurement
+- id: 43
+  name: 雷达右后
+  description: Radar rear-right
+  type: num
+  key: radar_rr
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:radar
+  state_class: measurement
+- id: 44
+  name: 雷达左
+  description: Radar left
+  type: num
+  key: radar_left
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:radar
+  state_class: measurement
+- id: 45
+  name: 雷达前左中
+  description: Radar front-left-center
+  type: num
+  key: radar_flc
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:radar
+  state_class: measurement
+- id: 46
+  name: 雷达前右中
+  description: Radar front-right-center
+  type: num
+  key: radar_frc
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:radar
+  state_class: measurement
+- id: 47
+  name: 雷达中后
+  description: Radar rear-center
+  type: num
+  key: radar_rc
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:radar
+  state_class: measurement
+- id: 48
+  name: 前雨刮速度
+  description: Front wiper speed
+  type: num
+  key: front_wiper_speed
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:wiper
+  state_class: measurement
+- id: 49
+  name: 雨刮档位
+  description: Wiper mode
+  type: num
+  key: wiper_mode
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:wiper
+- id: 50
+  name: 巡航开关
+  description: Cruise switch
+  type: num
+  key: cruise_switch
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:cruise-control
+- id: 51
+  name: 前车距离
+  description: Distance to car ahead
+  type: num
+  key: distance_to_car_ahead
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:car
+  state_class: measurement
+- id: 52
+  name: 充电状态
+  description: Charging state
+  type: enum
+  key: charging_state
+  labels:
+    0: invalid
+    1: Ready
+    2: started
+    3: done
+    4: aborted
+  ha_type: binary_sensor
+  device_class: battery_charging
+  truthy:
+  - Ready
+  - started
+  - charging
+  - full
+- id: 53
+  name: 左前轮气压
+  description: Tyre pressure FL
+  type: num
+  key: tyre_pressure_fl
+  labels: {}
+  ha_type: sensor
+  unit: kPa
+  icon: mdi:car
+  device_class: pressure
+  state_class: measurement
+- id: 54
+  name: 右前轮气压
+  description: Tyre pressure FR
+  type: num
+  key: tyre_pressure_fr
+  labels: {}
+  ha_type: sensor
+  unit: kPa
+  icon: mdi:car
+  device_class: pressure
+  state_class: measurement
+- id: 55
+  name: 左后轮气压
+  description: Tyre pressure RL
+  type: num
+  key: tyre_pressure_rl
+  labels: {}
+  ha_type: sensor
+  unit: kPa
+  icon: mdi:car
+  device_class: pressure
+  state_class: measurement
+- id: 56
+  name: 右后轮气压
+  description: Tyre pressure RR
+  type: num
+  key: tyre_pressure_rr
+  labels: {}
+  ha_type: sensor
+  unit: kPa
+  icon: mdi:car
+  device_class: pressure
+  state_class: measurement
+- id: 57
+  name: 左转向灯
+  description: Left turn signal
+  type: enum
+  key: left_turn
+  labels:
+    0: 'off'
+    1: 'on'
+  ha_type: binary_sensor
+  device_class: light
+  truthy:
+  - 'on'
+  - open
+- id: 58
+  name: 右转向灯
+  description: Right turn signal
+  type: enum
+  key: right_turn
+  labels:
+    0: 'off'
+    1: 'on'
+  ha_type: binary_sensor
+  device_class: light
+  truthy:
+  - 'on'
+  - open
+- id: 59
+  name: 主驾车门锁
+  description: Driver door lock
+  type: enum
+  key: driver_door_lock
+  labels:
+    0: —
+    1: unlocked
+    2: locked
+  ha_type: binary_sensor
+  device_class: lock
+  truthy:
+  - locked
+- id: 61
+  name: 主驾车窗打开百分比
+  description: Window FL open (%)
+  type: num
+  key: window_fl
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car-door
+  state_class: measurement
+- id: 62
+  name: 副驾车窗打开百分比
+  description: Window FR open (%)
+  type: num
+  key: window_fr
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car-door
+  state_class: measurement
+- id: 63
+  name: 左后车窗打开百分比
+  description: Window RL open (%)
+  type: num
+  key: window_rl
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car-door
+  state_class: measurement
+- id: 64
+  name: 右后车窗打开百分比
+  description: Window RR open (%)
+  type: num
+  key: window_rr
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car-door
+  state_class: measurement
+- id: 65
+  name: 天窗打开百分比
+  description: Sunroof open (%)
+  type: num
+  key: sunroof
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car-convertible
+  state_class: measurement
+- id: 66
+  name: 遮阳帘打开百分比
+  description: Sunshade open (%)
+  type: num
+  key: sunshade
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car-convertible
+  state_class: measurement
+- id: 67
+  name: 整车工作模式
+  description: Powertrain work mode
+  type: enum
+  key: powertrain_mode
+  labels:
+    0: stop
+    1: EV
+    2: forced EV
+    3: HEV
+  ha_type: sensor
+  icon: mdi:car-engine
+- id: 68
+  name: 整车运行模式
+  description: Drive mode
+  type: enum
+  key: drive_mode
+  labels:
+    0: NORMAL
+    1: ECO
+    2: SPORT
+  ha_type: sensor
+  icon: mdi:car-settings
+- id: 69
+  name: 月
+  description: Month
+  type: num
+  key: month
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:calendar
+- id: 70
+  name: 日
+  description: Day
+  type: num
+  key: day
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:calendar
+- id: 71
+  name: 时
+  description: Hour
+  type: num
+  key: hour
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:clock
+- id: 72
+  name: 分
+  description: Minute
+  type: num
+  key: minute
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:clock
+- id: 73
+  name: 副驾安全带警告
+  description: Passenger seatbelt warning
+  type: enum
+  key: passenger_seatbelt_warning
+  labels:
+    0: —
+    1: alarm
+    2: normal
+  ha_type: binary_sensor
+  device_class: safety
+  truthy:
+  - alarm
+- id: 74
+  name: 二排左安全带
+  description: 2nd row left seatbelt
+  type: enum
+  key: seatbelt_2nd_left
+  labels:
+    0: unbuckled
+    1: buckled
+    2: invalid
+  ha_type: binary_sensor
+  device_class: safety
+  truthy:
+  - buckled
+- id: 75
+  name: 二排右安全带
+  description: 2nd row right seatbelt
+  type: enum
+  key: seatbelt_2nd_right
+  labels:
+    0: unbuckled
+    1: buckled
+    2: invalid
+  ha_type: binary_sensor
+  device_class: safety
+  truthy:
+  - buckled
+- id: 76
+  name: 二排中安全带
+  description: 2nd row center seatbelt
+  type: enum
+  key: seatbelt_2nd_center
+  labels:
+    0: unbuckled
+    1: buckled
+    2: invalid
+  ha_type: binary_sensor
+  device_class: safety
+  truthy:
+  - buckled
+- id: 77
+  name: 空调状态
+  description: A/C state
+  type: enum
+  key: ac_state
+  labels:
+    0: 'off'
+    1: 'on'
+  ha_type: binary_sensor
+  device_class: cold
+  truthy:
+  - 'on'
+  - open
+- id: 78
+  name: 风量档位
+  description: Fan speed level
+  type: num
+  key: fan_speed
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:fan
+  state_class: measurement
+- id: 79
+  name: 空调循环方式
+  description: A/C recirculation
+  type: enum
+  key: ac_recirculation
+  labels:
+    0: fresh
+    1: recirc
+  ha_type: binary_sensor
+  device_class: cold
+  truthy:
+  - recirculation
+  - recirc
+- id: 80
+  name: 空调出风模式
+  description: A/C airflow mode
+  type: enum
+  key: ac_airflow_mode
+  labels:
+    0: —
+    1: face
+    2: face+feet
+    3: feet
+    4: feet+defrost
+    5: defrost
+    6: face+feet+defrost
+    7: face+defrost
+  ha_type: sensor
+  icon: mdi:fan
+- id: 81
+  name: 主驾车门
+  description: Driver door
+  type: enum
+  key: driver_door
+  labels:
+    0: closed
+    1: open
+  ha_type: binary_sensor
+  device_class: door
+  truthy:
+  - open
+  - 'on'
+- id: 82
+  name: 副驾车门
+  description: Passenger door
+  type: enum
+  key: passenger_door
+  labels:
+    0: closed
+    1: open
+  ha_type: binary_sensor
+  device_class: door
+  truthy:
+  - open
+  - 'on'
+- id: 83
+  name: 左后车门
+  description: Rear-left door
+  type: enum
+  key: rear_left_door
+  labels:
+    0: closed
+    1: open
+  ha_type: binary_sensor
+  device_class: door
+  truthy:
+  - open
+  - 'on'
+- id: 84
+  name: 右后车门
+  description: Rear-right door
+  type: enum
+  key: rear_right_door
+  labels:
+    0: closed
+    1: open
+  ha_type: binary_sensor
+  device_class: door
+  truthy:
+  - open
+  - 'on'
+- id: 85
+  name: 引擎盖
+  description: Bonnet
+  type: enum
+  key: bonnet
+  labels:
+    0: closed
+    1: open
+  ha_type: binary_sensor
+  device_class: door
+  truthy:
+  - open
+  - 'on'
+- id: 86
+  name: 后备箱门
+  description: Trunk
+  type: enum
+  key: trunk
+  labels:
+    0: closed
+    1: open
+  ha_type: binary_sensor
+  device_class: door
+  truthy:
+  - open
+  - 'on'
+- id: 87
+  name: 油箱盖
+  description: Fuel/charge flap
+  type: enum
+  key: fuel_charge_flap
+  labels:
+    0: closed
+    1: open
+  ha_type: binary_sensor
+  device_class: door
+  truthy:
+  - open
+  - 'on'
+- id: 88
+  name: 自动驻车
+  description: Auto hold
+  type: enum
+  key: auto_hold
+  labels:
+    0: disabled
+    1: pending
+    2: active
+    3: state3
+  ha_type: binary_sensor
+  device_class: safety
+  truthy:
+  - active
+- id: 89
+  name: ACC巡航状态
+  description: ACC cruise state
+  type: enum
+  key: acc_cruise_state
+  labels:
+    0: disabled
+    1: cancelled
+    2: pending
+    3: active
+    4: state4
+    5: auto-start
+  ha_type: sensor
+  icon: mdi:cruise-control
+- id: 90
+  name: 左后接近告警
+  description: Rear-left approach warning
+  type: enum
+  key: rear_left_approach_warning
+  labels:
+    0: no warning
+    1: car approaching
+    2: alarm
+  ha_type: binary_sensor
+  device_class: safety
+  truthy:
+  - car approaching
+  - alarm
+- id: 91
+  name: 右后接近告警
+  description: Rear-right approach warning
+  type: enum
+  key: rear_right_approach_warning
+  labels:
+    0: no warning
+    1: car approaching
+    2: alarm
+  ha_type: binary_sensor
+  device_class: safety
+  truthy:
+  - car approaching
+  - alarm
+- id: 92
+  name: 车道保持状态
+  description: Lane keep state
+  type: enum
+  key: lane_keep_state
+  labels:
+    0: 'off'
+    1: inactive
+    2: active1
+    3: active2
+    4: error
+  ha_type: binary_sensor
+  device_class: safety
+  truthy:
+  - active1
+  - active2
+- id: 93
+  name: 左后车门锁
+  description: Rear-left door lock
+  type: enum
+  key: rear_left_door_lock
+  labels:
+    0: invalid
+    1: unlocked
+    2: locked
+  ha_type: binary_sensor
+  device_class: lock
+  truthy:
+  - locked
+- id: 94
+  name: 副驾车门锁
+  description: Passenger door lock
+  type: enum
+  key: passenger_door_lock
+  labels:
+    0: invalid
+    1: unlocked
+    2: locked
+  ha_type: binary_sensor
+  device_class: lock
+  truthy:
+  - locked
+- id: 95
+  name: 右后车门锁
+  description: Rear-right door lock
+  type: enum
+  key: rear_right_door_lock
+  labels:
+    0: invalid
+    1: unlocked
+    2: locked
+  ha_type: binary_sensor
+  device_class: lock
+  truthy:
+  - locked
+- id: 96
+  name: 后备箱门锁
+  description: Trunk lock
+  type: enum
+  key: trunk_lock
+  labels:
+    0: invalid
+    1: unlocked
+    2: locked
+  ha_type: binary_sensor
+  device_class: lock
+  truthy:
+  - locked
+- id: 97
+  name: 左后儿童锁
+  description: Rear-left child lock
+  type: enum
+  key: rear_left_child_lock
+  labels:
+    0: invalid
+    1: unlocked
+    2: locked
+  ha_type: binary_sensor
+  device_class: lock
+  truthy:
+  - locked
+- id: 98
+  name: 右后儿童锁
+  description: Rear-right child lock
+  type: enum
+  key: rear_right_child_lock
+  labels:
+    0: invalid
+    1: unlocked
+    2: locked
+  ha_type: binary_sensor
+  device_class: lock
+  truthy:
+  - locked
+- id: 99
+  name: 小灯
+  description: Sidelights
+  type: enum
+  key: sidelights
+  labels:
+    0: 'off'
+    1: open
+  ha_type: binary_sensor
+  device_class: light
+  truthy:
+  - 'on'
+  - open
+- id: 100
+  name: 近光灯
+  description: Low beam
+  type: enum
+  key: low_beam
+  labels:
+    0: 'off'
+    1: open
+  ha_type: binary_sensor
+  device_class: light
+  truthy:
+  - 'on'
+  - open
+- id: 101
+  name: 远光灯
+  description: High beam
+  type: enum
+  key: high_beam
+  labels:
+    0: 'off'
+    1: open
+  ha_type: binary_sensor
+  device_class: light
+  truthy:
+  - 'on'
+  - open
+- id: 104
+  name: 前雾灯
+  description: Front fog
+  type: enum
+  key: front_fog
+  labels:
+    0: 'off'
+    1: open
+  ha_type: binary_sensor
+  device_class: light
+  truthy:
+  - 'on'
+  - open
+- id: 105
+  name: 后雾灯
+  description: Rear fog
+  type: enum
+  key: rear_fog
+  labels:
+    0: 'off'
+    1: open
+  ha_type: binary_sensor
+  device_class: light
+  truthy:
+  - 'on'
+  - open
+- id: 106
+  name: 脚照灯
+  description: Footwell light
+  type: enum
+  key: footwell_light
+  labels:
+    0: 'off'
+    1: open
+  ha_type: binary_sensor
+  device_class: light
+  truthy:
+  - 'on'
+  - open
+- id: 107
+  name: 日行灯
+  description: DRL
+  type: enum
+  key: drl
+  labels:
+    0: invalid
+    1: open
+    2: 'off'
+    3: 未定义
+  ha_type: binary_sensor
+  device_class: light
+  truthy:
+  - 'on'
+  - open
+- id: 108
+  name: 发动机水温
+  description: Engine coolant temp
+  type: num
+  key: engine_coolant_temp
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  device_class: temperature
+  state_class: measurement
+- id: 109
+  name: 双闪
+  description: Hazard lights
+  type: enum
+  key: hazard
+  labels:
+    0: invalid
+    1: 'off'
+    2: open
+  ha_type: binary_sensor
+  device_class: light
+  truthy:
+  - 'on'
+  - open
+- id: 110
+  name: 坡度
+  description: Slope / grade
+  type: num
+  key: slope
+  labels: {}
+  ha_type: sensor
+  unit: °
+  icon: mdi:hill
+  state_class: measurement
+- id: 111
+  name: 雨量
+  description: Rain amount
+  type: num
+  key: rain_amount
+  labels: {}
+  ha_type: sensor
+  unit: mm
+  icon: mdi:weather-rainy
+  device_class: precipitation
+  state_class: measurement
+- id: 112
+  name: 副驾安全带
+  description: Passenger seatbelt
+  type: enum
+  key: passenger_seatbelt
+  labels:
+    0: unbuckled
+    1: buckled
+    2: invalid
+  ha_type: binary_sensor
+  device_class: safety
+  truthy:
+  - buckled
+- id: 113
+  name: 秒
+  description: Second
+  type: num
+  key: second
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:clock
+- id: 114
+  name: SOC
+  description: Battery SOC (%)
+  type: num
+  key: soc
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:battery
+  device_class: battery
+  state_class: measurement
+- id: 115
+  name: 转向信号
+  description: Turn signal
+  type: enum
+  key: turn_signal
+  labels:
+    0: 'off'
+    1: 'off'
+    2: left
+    3: left2
+    4: right
+    5: right2
+    6: hazard
+    7: emergency
+    8: rear flash
+    9: flash
+  ha_type: binary_sensor
+  device_class: light
+  truthy:
+  - left
+  - left2
+  - right
+  - right2
+  - hazard
+  - emergency
+  - rear flash
+  - flash
+- id: 1001
+  name: 全景状态
+  description: Surround-view state
+  type: enum
+  key: surround_view_state
+  labels:
+    0: hidden
+    1: shown
+  ha_type: binary_sensor
+  device_class: running
+  truthy:
+  - shown
+- id: 1002
+  name: 配置UI版本
+  description: UI config version
+  type: enum
+  key: ui_config_version
+  labels:
+    0: UI3
+    1: UI4
+  ha_type: sensor
+  icon: mdi:monitor-dashboard
+- id: 1003
+  name: 哨兵状态
+  description: Sentry state
+  type: enum
+  key: sentry_state
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:shield-car
+- id: 1004
+  name: 熄火录像配置开关
+  description: Parked-recording switch
+  type: enum
+  key: parked_recording_switch
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:video-switch
+- id: 1006
+  name: 熄火哨兵报警
+  description: Parked sentry alarm
+  type: enum
+  key: parked_sentry_alarm
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:shield-alert
+- id: 1007
+  name: WIFI状态
+  description: Wi-Fi state
+  type: enum
+  key: wifi_state
+  labels:
+    0: disconnected
+    1: connected
+  ha_type: binary_sensor
+  device_class: connectivity
+  truthy:
+  - connected
+- id: 1008
+  name: 蓝牙状态
+  description: Bluetooth state
+  type: enum
+  key: bluetooth_state
+  labels:
+    0: disconnected
+    1: connected
+  ha_type: binary_sensor
+  device_class: connectivity
+  truthy:
+  - connected
+- id: 1009
+  name: 蓝牙信号强度
+  description: Bluetooth signal
+  type: num
+  key: bluetooth_signal
+  labels: {}
+  ha_type: sensor
+  unit: dBm
+  icon: mdi:bluetooth-audio
+  state_class: measurement
+- id: 1010
+  name: 晃动幅度
+  description: Sway magnitude
+  type: num
+  key: sway_magnitude
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:car-swing
+  state_class: measurement
+- id: 1011
+  name: 振动幅度
+  description: Vibration magnitude
+  type: num
+  key: vibration_magnitude
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:vibrate
+  state_class: measurement
+- id: 1016
+  name: 屏幕宽度
+  description: Screen width
+  type: num
+  key: screen_width
+  labels: {}
+  ha_type: sensor
+  unit: px
+  icon: mdi:monitor
+- id: 1017
+  name: 屏幕高度
+  description: Screen height
+  type: num
+  key: screen_height
+  labels: {}
+  ha_type: sensor
+  unit: px
+  icon: mdi:monitor
+- id: 1018
+  name: 全景记录仪状态
+  description: Dashcam state
+  type: enum
+  key: dashcam_state
+  labels:
+    0: stop
+    1: starting
+    2: running
+    3: storage error
+  ha_type: binary_sensor
+  device_class: running
+  truthy:
+  - running
+- id: 1101
+  name: 无线ADB开关
+  description: Wireless ADB switch
+  type: enum
+  key: wireless_adb_switch
+  labels:
+    0: 'off'
+    1: 'on'
+  ha_type: binary_sensor
+  device_class: switch
+  truthy:
+  - 'on'
+- id: 1103
+  name: 媒体音量
+  description: Media volume
+  type: num
+  key: media_volume
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:volume-high
+  state_class: measurement
+- id: 1104
+  name: 导航音量
+  description: Navigation volume
+  type: num
+  key: navigation_volume
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:volume-high
+  state_class: measurement
+- id: 2001
+  name: AI识别人可信度
+  description: AI person confidence
+  type: num
+  key: ai_person_confidence
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:face-recognition
+  state_class: measurement
+- id: 2002
+  name: AI识别车可信度
+  description: AI vehicle confidence
+  type: num
+  key: ai_vehicle_confidence
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car
+  state_class: measurement
+- id: 2003
+  name: 上次哨兵触发时间
+  description: Last sentry trigger time
+  type: num
+  key: last_sentry_trigger_time
+  labels: {}
+  ha_type: sensor
+  unit: s
+  icon: mdi:shield-car
+- id: 2005
+  name: 上次录像文件开始时间
+  description: Last clip start time
+  type: num
+  key: last_clip_start_time
+  labels: {}
+  ha_type: sensor
+  unit: s
+  icon: mdi:video
+- id: 2006
+  name: 上次录像文件结束时间
+  description: Last clip end time
+  type: num
+  key: last_clip_end_time
+  labels: {}
+  ha_type: sensor
+  unit: s
+  icon: mdi:video
+- id: 2008
+  name: 前车起步状态
+  description: Lead-car start state
+  type: enum
+  key: lead_car_start_state
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:car
+- id: 9001
+  name: 在线状态
+  description: Online
+  type: enum
+  synthetic: true
+  key: online
+  labels:
+    0: 'off'
+    1: 'on'
+  ha_type: binary_sensor
+  device_class: connectivity
+  truthy:
+  - 'on'
+- id: 9002
+  name: Версия приложения
+  description: App version
+  type: enum
+  synthetic: true
+  key: app_version
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:information-outline
+- id: 9003
+  name: WiFi SSID
+  description: WiFi SSID
+  type: enum
+  synthetic: true
+  key: wifi_ssid
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:wifi
+- id: 9004
+  name: WiFi BSSID
+  description: WiFi BSSID
+  type: enum
+  synthetic: true
+  key: wifi_bssid
+  labels: {}
+  ha_type: sensor
+  unit: ''
+  icon: mdi:wifi
+- id: 9005
+  name: WiFi RSSI
+  description: WiFi RSSI
+  type: num
+  synthetic: true
+  key: wifi_rssi
+  labels: {}
+  ha_type: sensor
+  unit: dBm
+  icon: mdi:wifi
+  device_class: signal_strength
+  state_class: measurement
+- id: 9101
+  name: GPS Latitude
+  description: GPS latitude
+  type: num
+  synthetic: true
+  key: location_lat
+  labels: {}
+  ha_type: sensor
+  unit: deg
+  icon: mdi:latitude
+  state_class: measurement
+- id: 9102
+  name: GPS Longitude
+  description: GPS longitude
+  type: num
+  synthetic: true
+  key: location_lon
+  labels: {}
+  ha_type: sensor
+  unit: deg
+  icon: mdi:longitude
+  state_class: measurement
+- id: 9103
+  name: GPS Speed
+  description: GPS speed
+  type: num
+  synthetic: true
+  key: location_speed
+  labels: {}
+  ha_type: sensor
+  unit: km/h
+  icon: mdi:speedometer
+  device_class: speed
+  state_class: measurement
+- id: 9104
+  name: GPS Bearing
+  description: GPS bearing
+  type: num
+  synthetic: true
+  key: location_bearing
+  labels: {}
+  ha_type: sensor
+  unit: deg
+  icon: mdi:compass
+  state_class: measurement
+- id: 9105
+  name: GPS Altitude
+  description: GPS altitude
+  type: num
+  synthetic: true
+  key: location_altitude
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:image-filter-hdr
+  device_class: distance
+  state_class: measurement
+- id: 9106
+  name: GPS Accuracy
+  description: GPS accuracy
+  type: num
+  synthetic: true
+  key: location_accuracy
+  labels: {}
+  ha_type: sensor
+  unit: m
+  icon: mdi:crosshairs-gps
+  device_class: distance
+  state_class: measurement
+- id: 9107
+  name: Device Battery
+  description: Head unit battery level
+  type: num
+  synthetic: true
+  key: device_battery
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:battery
+  device_class: battery
+  state_class: measurement
+- id: 9108
+  name: GPS Provider
+  description: Location provider
+  type: enum
+  synthetic: true
+  key: location_provider
+  labels: {}
+  ha_type: sensor
+- id: 30001
+  name: 发动机负荷
+  description: Engine load
+  type: num
+  key: engine_load
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:gauge
+  state_class: measurement
+- id: 30002
+  name: 进气温度
+  description: Intake air temperature
+  type: num
+  key: intake_air_temp
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  state_class: measurement
+- id: 30003
+  name: 空气质量流量
+  description: MAF air flow
+  type: num
+  key: maf
+  labels: {}
+  ha_type: sensor
+  unit: g/s
+  icon: mdi:air-filter
+  state_class: measurement
+- id: 30004
+  name: 环境温度
+  description: Ambient temperature
+  type: num
+  key: ambient_temp
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  state_class: measurement
+- id: 30005
+  name: 机油温度
+  description: Engine oil temperature
+  type: num
+  key: engine_oil_temp
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:oil-temperature
+  state_class: measurement
+- id: 30006
+  name: 燃油消耗率
+  description: Fuel consumption rate
+  type: num
+  key: fuel_rate
+  labels: {}
+  ha_type: sensor
+  unit: L/h
+  icon: mdi:gas-station
+  state_class: measurement
+- id: 40001
+  name: 主驾座椅加热
+  description: Driver seat heating
+  type: enum
+  key: driver_seat_heat
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat-heater
+- id: 40002
+  name: 副驾座椅加热
+  description: Passenger seat heating
+  type: enum
+  key: passenger_seat_heat
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat-heater
+- id: 40003
+  name: 主驾座椅通风
+  description: Driver seat ventilation
+  type: enum
+  key: driver_seat_vent
+  labels: {}
+  ha_type: sensor
+  icon: mdi:fan
+- id: 40004
+  name: 副驾座椅通风
+  description: Passenger seat ventilation
+  type: enum
+  key: passenger_seat_vent
+  labels: {}
+  ha_type: sensor
+  icon: mdi:fan
+- id: 40005
+  name: 后排左侧座椅加热
+  description: Rear-left seat heating
+  type: enum
+  key: rear_left_seat_heat
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat-heater
+- id: 40006
+  name: 后排右侧座椅加热
+  description: Rear-right seat heating
+  type: enum
+  key: rear_right_seat_heat
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat-heater
+- id: 40007
+  name: 方向盘加热
+  description: Steering wheel heating
+  type: enum
+  key: steering_wheel_heat
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-defrost-rear
+- id: 40008
+  name: 后挡风玻璃加热
+  description: Rear window defrost
+  type: enum
+  key: rear_defrost
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-defrost-rear
+- id: 40009
+  name: 充电功率
+  description: Charge rate
+  type: num
+  key: charge_rate
+  labels: {}
+  ha_type: sensor
+  unit: kW
+  icon: mdi:lightning-bolt
+  state_class: measurement
+- id: 40010
+  name: 后视镜折叠
+  description: Rear mirror fold
+  type: enum
+  key: mirror_fold
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-side

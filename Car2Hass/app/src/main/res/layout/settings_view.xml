@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="horizontal"
+    android:background="@color/background">
+
+    <!-- Левая колонка: разделы -->
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.2"
+        android:orientation="vertical"
+        android:background="@color/surface"
+        android:paddingTop="8dp">
+
+        <include layout="@layout/nav_item" android:id="@+id/navSettingsCar" />
+        <include layout="@layout/nav_item" android:id="@+id/navSettingsProtocols" />
+        <include layout="@layout/nav_item" android:id="@+id/navSettingsSmarthome" />
+        <include layout="@layout/nav_item" android:id="@+id/navSettingsGeofences" />
+        <include layout="@layout/nav_item" android:id="@+id/navSettingsTech" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="@color/divider" />
+
+        <!-- «О программе» — отдельный пункт в конце колонки -->
+        <include layout="@layout/nav_item" android:id="@+id/navSettingsAbout" />
+    </LinearLayout>
+
+    <!-- Правая область -->
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.8"
+        android:padding="12dp"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <include layout="@layout/settings_section_car"
+                android:id="@+id/settings_section_car" />
+            <include layout="@layout/settings_section_geofences"
+                android:id="@+id/settings_section_geofences"
+                android:visibility="gone" />
+            <include layout="@layout/settings_section_protocols"
+                android:id="@+id/settings_section_protocols"
+                android:visibility="gone" />
+            <include layout="@layout/settings_section_smarthome"
+                android:id="@+id/settings_section_smarthome"
+                android:visibility="gone" />
+            <include layout="@layout/settings_section_tech"
+                android:id="@+id/settings_section_tech"
+                android:visibility="gone" />
+            <include layout="@layout/settings_section_research"
+                android:id="@+id/settings_section_research"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvTestResult"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text=""
+                android:textColor="@color/textSecondary"
+                android:textSize="12sp"
+                android:gravity="center"
+                android:layout_marginBottom="16dp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

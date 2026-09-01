@@ -1,0 +1,87 @@
+site_name: Car2Hass / CARTelemetry — Руководство
+site_description: Полное руководство по проекту Car2Hass (приложение) и CARTelemetry (интеграция) — телеметрия и управление автомобилем BYD в Home Assistant
+site_url: https://mytechnic.ru/cartelemetry/manual/
+docs_dir: docs
+site_dir: site
+
+theme:
+  name: material
+  language: ru
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: blue grey
+      accent: light blue
+      toggle:
+        icon: material/brightness-7
+        name: Тёмная тема
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: blue grey
+      accent: light blue
+      toggle:
+        icon: material/brightness-4
+        name: Светлая тема
+  features:
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - toc.follow
+    - content.action.view
+    - search.highlight
+    - search.suggest
+
+plugins:
+  - search:
+      lang: ru
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Обзор: index.md
+  - Быстрый старт: quickstart.md
+  - Приложение:
+    - Дашборд: app/dashboard.md
+    - Команды: app/commands.md
+    - Правила: app/rules.md
+    - Геозоны: app/geofences.md
+    - Настройки: app/settings.md
+    - Фоновый режим: app/background.md
+  - Интеграция HA:
+    - Сущности: integration/entities.md
+    - Установка: integration/install-hacs.md
+    - API-контракт: integration/api-spec.md
+    - Сторонние приложения: integration/third-party.md
+    - Карточка автомобиля: integration/dashboard-card.md
+    - Управление: integration/controls.md
+  - Продвинутое:
+    - OTA-обновления: advanced/ota.md
+    - Переход на 3.0: advanced/migration-3-0.md
+    - Сигналы: advanced/signals.md
+    - Диагностика и FAQ: advanced/troubleshooting.md
+  - История версий: changelog.md
+  - Поддержать проект: donate.md
+
+extra:
+  generator: false
+  social:
+    - icon: fontawesome/brands/telegram
+      link: https://t.me/bydiplus2hass
+    - icon: fontawesome/brands/github
+      link: https://github.com/krisproger
+
+copyright: Car2Hass / CARTelemetry — MIT License
