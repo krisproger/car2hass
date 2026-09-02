@@ -3209,6 +3209,26 @@ public class MainActivity extends BaseLocalizedActivity {
                         line)).append('\n');
             }
         }
+        // Phone-only case (no DiPlus/Voyah alive): guide the user to OBD2.
+        if (outcome.report != null) {
+            JSONArray channels = outcome.report.optJSONArray("channels");
+            boolean hasDiplus = false;
+            boolean hasVoyah = false;
+            if (channels != null) {
+                for (int i = 0; i < channels.length(); i++) {
+                    JSONObject c = channels.optJSONObject(i);
+                    if (c == null) continue;
+                    String id = c.optString("id");
+                    if ("diplus".equals(id) && c.optBoolean("available", false)) hasDiplus = true;
+                    if ("voyah".equals(id) && c.optBoolean("available", false)) hasVoyah = true;
+                }
+            }
+            String addr = AppConfig.getObdBtAddress(this);
+            boolean obdSet = addr != null && !addr.isEmpty();
+            if (!hasDiplus && !hasVoyah && !obdSet) {
+                sb.append(getString(R.string.research_hint_obd2)).append('\n');
+            }
+        }
         return sb.toString();
     }
 

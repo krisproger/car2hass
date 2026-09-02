@@ -149,6 +149,7 @@
     <string name="settings_vehicle_research_channels">Активные каналы: %1$s</string>
     <string name="settings_vehicle_research_signals">Сенсоров проверено: %1$d</string>
     <string name="settings_vehicle_research_ok_by_channel">Сенсоров по каналам: %1$s</string>
+    <string name="research_hint_obd2">На этом устройстве нет DiPlus/Voyah — применим только OBD-II. Включите OBD и выберите ELM327-адаптер (кнопка под чекбоксом OBD).</string>
     <string name="settings_research_title">Исследование системы</string>
     <string name="settings_research_profile">Профиль авто</string>
     <string name="settings_research_channels_label">Активные каналы</string>

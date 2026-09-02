@@ -34,6 +34,7 @@ public class ObdChannel implements DataChannel {
         if (!AppConfig.isObdEnabled(ctx)) {
             return ChannelResult.dead("отключён пользователем");
         }
+        autoDetectAdapter(ctx);
         ObdTransport transport = ObdTransportFactory.create(ctx);
         String resp = transport.transact("ATI", 1);
         if (resp == null) {
@@ -113,6 +114,19 @@ public class ObdChannel implements DataChannel {
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /** Phone case: no adapter configured yet — pick a bonded ELM327-looking device. */
+    private static void autoDetectAdapter(Context ctx) {
+        if (!"bt".equals(AppConfig.getObdMode(ctx))) return;
+        if (!AppConfig.getObdBtAddress(ctx).isEmpty()) return;
+        android.bluetooth.BluetoothDevice dev =
+                com.car2hass.vehicle.obd.BtSppTransport.findBondedObdAdapter();
+        if (dev == null) return;
+        AppConfig.setObdMode(ctx, "bt");
+        AppConfig.setObdBtAddress(ctx, dev.getAddress());
+        AppConfig.setObdBtName(ctx, dev.getName() != null ? dev.getName() : dev.getAddress());
+        LogBuffer.i("ObdChannel", "auto-detected OBD adapter: " + dev.getName());
     }
 
     @Override

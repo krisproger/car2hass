@@ -38,7 +38,9 @@ public class LogExportHelper {
         fullLog.append("=== Car2Hass v").append(appVer).append(" Log ===\n");
         fullLog.append("Device: ").append(getDeviceInfo()).append("\n");
         fullLog.append("Time: ").append(new Date().toString()).append("\n");
-        fullLog.append("Source: All signals (merged)\n\n");
+        fullLog.append("Source: All signals (merged)\n");
+        fullLog.append(buildDiagnostics(context));
+        fullLog.append("\n");
 
         // In-memory buffer and persistent file log overlap (same events
         // replayed into both sections). Dedup by full line text (timestamp
@@ -97,6 +99,35 @@ public class LogExportHelper {
     private static void appendLines(StringBuilder sb, java.util.List<String> lines) {
         for (String line : lines) {
             sb.append(line).append('\n');
+        }
+    }
+
+    /** One-glance channel/link state at send time (OBD, protocol, DiPlus…). */
+    private static String buildDiagnostics(Context context) {
+        StringBuilder d = new StringBuilder("--- Diagnostics ---\n");
+        d.append("Profile: ").append(AppConfig.getSelectedProfile(context)).append('\n');
+        d.append("Active channels: ").append(AppConfig.getActiveChannels(context)).append('\n');
+        String vin = com.car2hass.CANDataReader.sVin;
+        d.append("VVIN: ").append(vin != null ? vin : "").append('\n');
+        String fw = com.car2hass.CANDataReader.sFirmware;
+        d.append("Firmware: ").append(fw != null ? fw : "").append('\n');
+        d.append("OBD: enabled=").append(AppConfig.isObdEnabled(context))
+          .append(" mode=").append(AppConfig.getObdMode(context))
+          .append(" status=").append(AppConfig.getObdStatus(context))
+          .append(" protocol=").append(AppConfig.getObdProtocol(context))
+          .append(" supported_pids=").append(countPids(AppConfig.getObdSupportedPids(context)))
+          .append(" last_error=").append(AppConfig.getObdLastError(context)).append('\n');
+        d.append("OBD device: ").append(AppConfig.getObdBtName(context))
+          .append(" (").append(AppConfig.getObdBtAddress(context)).append(")\n");
+        return d.toString();
+    }
+
+    private static int countPids(String json) {
+        if (json == null || json.isEmpty()) return 0;
+        try {
+            return new org.json.JSONArray(json).length();
+        } catch (Exception e) {
+            return 0;
         }
     }
 

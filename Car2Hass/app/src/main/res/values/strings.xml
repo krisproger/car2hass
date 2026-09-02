@@ -158,6 +158,7 @@
     <string name="settings_vehicle_research_channels">Active channels: %1$s</string>
     <string name="settings_vehicle_research_signals">Sensors probed: %1$d</string>
     <string name="settings_vehicle_research_ok_by_channel">Sensors by channel: %1$s</string>
+    <string name="research_hint_obd2">This device has no DiPlus/Voyah — only OBD-II applies. Enable OBD and select your ELM327 adapter (button under the OBD checkbox).</string>
     <string name="settings_research_title">System research</string>
     <string name="settings_research_profile">Vehicle profile</string>
     <string name="settings_research_channels_label">Active channels</string>

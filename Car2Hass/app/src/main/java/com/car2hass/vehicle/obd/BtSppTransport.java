@@ -10,6 +10,7 @@ import com.car2hass.vehicle.Elm327Parser;
 
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.Locale;
 import java.util.UUID;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.TimeUnit;
@@ -38,6 +39,26 @@ public final class BtSppTransport implements ObdTransport {
     public static boolean bluetoothUsable(Context ctx) {
         BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
         return adapter != null && adapter.isEnabled();
+    }
+
+    /** First bonded device whose name looks like an OBD/ELM adapter, or null. */
+    public static BluetoothDevice findBondedObdAdapter() {
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        if (adapter == null || !adapter.isEnabled()) return null;
+        java.util.Set<BluetoothDevice> bonded = adapter.getBondedDevices();
+        if (bonded == null) return null;
+        String[] hints = {"ELM", "OBD", "V-LINK", "V_LINK", "CAR SCANNER",
+                "CARD", "OBDII", "OBD II", "KONNWEI", "VEEPEAK", "LELINK",
+                "OBDFORCE", "OBDLINK", "B-TOOL"};
+        for (BluetoothDevice d : bonded) {
+            String n = d.getName();
+            if (n == null) continue;
+            String up = n.toUpperCase(Locale.ROOT);
+            for (String h : hints) {
+                if (up.contains(h)) return d;
+            }
+        }
+        return null;
     }
 
     @Override
