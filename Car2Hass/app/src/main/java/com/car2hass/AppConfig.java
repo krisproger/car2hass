@@ -807,6 +807,46 @@ public class AppConfig {
         prefs(ctx).edit().putString(KEY_LAST_ATTEMPT_RESULT, v == null ? "" : v).apply();
     }
 
+    private static final String KEY_OBD_STATUS = "obd_status";
+    private static final String KEY_OBD_LAST_ERROR = "obd_last_error";
+    private static final String KEY_OBD_PROTOCOL = "obd_protocol";
+    private static final String KEY_OBD_SUPPORTED_PIDS = "obd_supported_pids";
+
+    /** OBD adapter link state: "connected", "connecting", "disconnected" or "". */
+    public static String getObdStatus(Context ctx) {
+        return prefs(ctx).getString(KEY_OBD_STATUS, "");
+    }
+
+    public static void setObdStatus(Context ctx, String v) {
+        prefs(ctx).edit().putString(KEY_OBD_STATUS, v == null ? "" : v).apply();
+    }
+
+    public static String getObdLastError(Context ctx) {
+        return prefs(ctx).getString(KEY_OBD_LAST_ERROR, "");
+    }
+
+    public static void setObdLastError(Context ctx, String v) {
+        prefs(ctx).edit().putString(KEY_OBD_LAST_ERROR, v == null ? "" : v).apply();
+    }
+
+    /** Detected ELM327 protocol (ATDP output), "" when not analyzed yet. */
+    public static String getObdProtocol(Context ctx) {
+        return prefs(ctx).getString(KEY_OBD_PROTOCOL, "");
+    }
+
+    public static void setObdProtocol(Context ctx, String v) {
+        prefs(ctx).edit().putString(KEY_OBD_PROTOCOL, v == null ? "" : v).apply();
+    }
+
+    /** JSON array of supported mode-01 PIDs; "" = unknown (read all). */
+    public static String getObdSupportedPids(Context ctx) {
+        return prefs(ctx).getString(KEY_OBD_SUPPORTED_PIDS, "");
+    }
+
+    public static void setObdSupportedPids(Context ctx, String json) {
+        prefs(ctx).edit().putString(KEY_OBD_SUPPORTED_PIDS, json == null ? "" : json).apply();
+    }
+
     private static final String KEY_SEND_HISTORY = "send_history";
     private static final String KEY_LAST_SEND_TS = "last_send_ts";
     private static final String KEY_LAST_SEND_BYTES = "last_send_bytes";

@@ -98,6 +98,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private TextView statusText, vinText, firmwareText, appVersionText, refreshTimeText, locationText;
     private ProgressBar queueBar;
     private TextView tvQueueBytes, tvLastSend, tvLastAttempt;
+    private Button obdButton;
     private Button btnSendLog;
     private CheckBox checkSelectAll;
     private CheckBox headerCheckAll;
@@ -2601,6 +2602,7 @@ public class MainActivity extends BaseLocalizedActivity {
         refreshTimeText.setText(getString(R.string.updated_prefix, sdf.format(new Date(lastRefresh))));
         updateQueueBar();
         updateSmarthomeStats();
+        updateObdButton();
     }
 
     /** Thin bar of queued telemetry: hidden at 0, full at >= 2h of recent throughput. */
@@ -2624,6 +2626,31 @@ public class MainActivity extends BaseLocalizedActivity {
                 SendHistory.getLastSendLabel(this)));
         tvLastAttempt.setText(getString(R.string.settings_last_attempt,
                 SendHistory.getLastAttemptLabel(this)));
+    }
+
+    /** Refreshes the OBD button text with the live adapter link state. */
+    private void updateObdButton() {
+        if (obdButton == null) return;
+        String name = AppConfig.getObdBtName(this);
+        boolean hasBt = "bt".equals(AppConfig.getObdMode(this))
+                && !AppConfig.getObdBtAddress(this).isEmpty();
+        String base = hasBt
+                ? (name != null && !name.isEmpty() ? name : AppConfig.getObdBtAddress(this))
+                : null;
+        String status = AppConfig.getObdStatus(this);
+        String suffix;
+        if (!hasBt) {
+            suffix = "";
+        } else if ("connected".equals(status)) {
+            suffix = getString(R.string.obd_link_ok);
+        } else if ("disconnected".equals(status)) {
+            suffix = getString(R.string.obd_link_down);
+        } else {
+            suffix = "";
+        }
+        obdButton.setText(base != null
+                ? getString(R.string.obd_connected_button, base) + suffix
+                : getString(R.string.obd_connect_button));
     }
 
     private void updateLocationText() {
@@ -3270,6 +3297,7 @@ public class MainActivity extends BaseLocalizedActivity {
             // OBD: when the protocol is enabled, show a connect/device button.
             if ("obd".equals(cv.name) && cv.checked) {
                 Button obdBtn = new Button(this);
+                obdButton = obdBtn;
                 String name = AppConfig.getObdBtName(this);
                 boolean hasBt = "bt".equals(AppConfig.getObdMode(this))
                         && !AppConfig.getObdBtAddress(this).isEmpty();
@@ -3278,6 +3306,7 @@ public class MainActivity extends BaseLocalizedActivity {
                                 name != null && !name.isEmpty() ? name
                                         : AppConfig.getObdBtAddress(this))
                         : getString(R.string.obd_connect_button));
+                updateObdButton();
                 obdBtn.setOnClickListener(v -> showObdPicker());
                 obdBtn.setAllCaps(false);
                 LinearLayout.LayoutParams bp = new LinearLayout.LayoutParams(

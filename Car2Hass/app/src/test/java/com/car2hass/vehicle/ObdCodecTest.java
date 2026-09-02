@@ -62,6 +62,15 @@ public class ObdCodecTest {
         if (!"speed".equals(ObdPidCodec.keyFor("010D"))) throw new AssertionError("keyFor");
         if (!"fuel_rate".equals(ObdPidCodec.keyFor("015E"))) throw new AssertionError("keyFor 015E");
         if (ObdPidCodec.PID_TO_KEY.size() < 10) throw new AssertionError("catalog size");
+
+        // supported-PID bitmap: "41 00 BE 3F A8 13" -> [0xBE,0x3F,0xA8,0x13]
+        int[] bm = ObdPidCodec.responseData("41 00 BE 3F A8 13");
+        if (bm.length != 4 || bm[0] != 0xBE) throw new AssertionError("bitmap bytes=" + java.util.Arrays.toString(bm));
+        // PID 05 (index 4) -> bit 3 of byte 0 (0xBE=1011 1110) -> supported
+        if (!ObdPidCodec.bitmapSupports(bm, 4)) throw new AssertionError("pid05 should be supported");
+        // PID 08 (index 7) -> bit 0 of byte 0 -> 0 -> unsupported
+        if (ObdPidCodec.bitmapSupports(bm, 7)) throw new AssertionError("pid08 should be unsupported");
+        if (ObdPidCodec.responseData("NO DATA").length != 0) throw new AssertionError("bitmap no data");
         System.out.println("All OBD codec tests passed.");
     }
 }

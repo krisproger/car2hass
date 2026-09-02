@@ -184,6 +184,8 @@
     <string name="obd_not_elm">This is not an ELM327 adapter: %1$s</string>
     <string name="obd_connect_failed">Could not connect to %1$s</string>
     <string name="obd_connected">Connected: %1$s (ELM327 %2$s)</string>
+    <string name="obd_link_ok"> · connected</string>
+    <string name="obd_link_down"> · no link</string>
     <string name="settings_enable_bt">Enable Bluetooth</string>
     <string name="channel_diplus_push">DiPlus Push</string>
     <string name="channel_byd_cloud">BYD Cloud</string>

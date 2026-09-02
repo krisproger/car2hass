@@ -177,6 +177,8 @@
     <string name="obd_not_elm">Это не ELM327-адаптер: %1$s</string>
     <string name="obd_connect_failed">Не удалось подключиться к %1$s</string>
     <string name="obd_connected">Подключено: %1$s (ELM327 %2$s)</string>
+    <string name="obd_link_ok"> · подключено</string>
+    <string name="obd_link_down"> · нет связи</string>
     <string name="settings_enable_bt">Включить Bluetooth</string>
     <string name="channel_diplus_push">DiPlus Push</string>
     <string name="channel_byd_cloud">BYD Cloud</string>

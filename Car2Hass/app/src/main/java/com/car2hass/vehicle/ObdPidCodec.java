@@ -93,6 +93,26 @@ public final class ObdPidCodec {
         }
     }
 
+    /** Data bytes of the first "41 XX …" line in the response, empty on garbage. */
+    public static int[] responseData(String rawResponse) {
+        if (rawResponse == null) return new int[0];
+        for (String line : Elm327Parser.splitLines(rawResponse)) {
+            String l = line.replace(" ", "");
+            if (!l.startsWith("41")) continue;
+            return hexBytes(l.substring(4));
+        }
+        return new int[0];
+    }
+
+    /** True when the supported-PID bitmap (one byte per 8 PIDs, MSB first) has bit `pidIndex` set. */
+    public static boolean bitmapSupports(int[] bitmap, int pidIndex) {
+        if (bitmap == null || bitmap.length == 0) return false;
+        int byteIdx = pidIndex / 8;
+        int bit = 7 - (pidIndex % 8);
+        if (byteIdx >= bitmap.length) return false;
+        return ((bitmap[byteIdx] >>> bit) & 1) != 0;
+    }
+
     private static int[] hexBytes(String hex) {
         if (hex.length() % 2 != 0) hex = hex.substring(0, hex.length() - 1);
         int[] out = new int[hex.length() / 2];
