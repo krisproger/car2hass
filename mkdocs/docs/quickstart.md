@@ -33,7 +33,7 @@ DiPlus нужен только если вы хотите канал BYD/DiLink 
 
 ### Способ B. Вручную (без HACS)
 
-1. Скачайте [cartelemetry-v3.0.23.zip](https://mytechnic.ru/cartelemetry/download.php?file=integration) и распакуйте.
+1. Скачайте [cartelemetry-v3.0.24.zip](https://mytechnic.ru/cartelemetry/download.php?file=integration) и распакуйте.
 2. Скопируйте папку `custom_components/cartelemetry` в `/config/custom_components/`.
 
     ```bash
@@ -61,7 +61,7 @@ DiPlus нужен только если вы хотите канал BYD/DiLink 
 
 ## Шаг 4. Установите приложение Car2Hass
 
-1. Скачайте [car2hass-v3.0.23.apk](https://mytechnic.ru/cartelemetry/download.php?file=app).
+1. Скачайте [car2hass-v3.0.24.apk](https://mytechnic.ru/cartelemetry/download.php?file=app).
 2. Установите на ГУ (флешка, мессенджер или `adb install -r`).
 3. При первом запуске выдайте разрешения: местоположение (в т.ч. в фоне) — нужно для трекера и геозон.
 

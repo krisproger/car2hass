@@ -72,6 +72,830 @@ const t=t=>(e,o)=>{ void 0!==o?o.addInitializer(()=>{customElements.define(t,e);
  * SPDX-License-Identifier: BSD-3-Clause
  */function r(r){return n({...r,state:true,attribute:false})}
 
+let CarCardEditor = class CarCardEditor extends i {
+    static getConfigForm() {
+        return {
+            schema: [
+                {
+                    name: "vehicle",
+                    selector: {
+                        select: {
+                            options: [
+                                { value: "car", label: "Легковая" },
+                                { value: "truck", label: "Грузовая" },
+                                { value: "motorcycle", label: "Мотоцикл" },
+                            ],
+                        },
+                    },
+                    required: true,
+                },
+                {
+                    name: "device",
+                    selector: { device: {} },
+                },
+                {
+                    name: "name",
+                    selector: { text: {} },
+                },
+                {
+                    type: "expandable",
+                    name: "sensors",
+                    title: "Сенсоры",
+                    schema: [
+                        { name: "temperature", selector: { entity: { domain: "sensor" } } },
+                        { name: "fuel", selector: { entity: { domain: "sensor" } } },
+                        { name: "battery", selector: { entity: { domain: "sensor" } } },
+                        { name: "mileage", selector: { entity: { domain: "sensor" } } },
+                    ],
+                },
+                {
+                    type: "expandable",
+                    name: "controls",
+                    title: "Управление",
+                    schema: [
+                        { name: "lock", selector: { entity: { domain: "lock" } } },
+                        { name: "engine", selector: { entity: { domain: "switch" } } },
+                        { name: "lights", selector: { entity: { domain: "light" } } },
+                        { name: "horn", selector: { entity: { domain: "button" } } },
+                    ],
+                },
+                {
+                    type: "expandable",
+                    name: "doors",
+                    title: "Двери/отсеки",
+                    schema: [
+                        {
+                            name: "left",
+                            selector: { entity: { domain: "binary_sensor" } },
+                        },
+                        {
+                            name: "right",
+                            selector: { entity: { domain: "binary_sensor" } },
+                        },
+                        {
+                            name: "trunk",
+                            selector: { entity: { domain: "binary_sensor" } },
+                        },
+                        {
+                            name: "hood",
+                            selector: { entity: { domain: "binary_sensor" } },
+                        },
+                    ],
+                },
+            ],
+            computeLabel: (schema) => {
+                const labels = {
+                    vehicle: "Тип транспорта",
+                    device: "Устройство",
+                    name: "Название",
+                    temperature: "Температура двигателя",
+                    fuel: "Уровень топлива",
+                    battery: "Напряжение АКБ",
+                    mileage: "Пробег",
+                    lock: "Замки дверей",
+                    engine: "Двигатель",
+                    lights: "Свет",
+                    horn: "Клаксон",
+                    left: "Левая дверь",
+                    right: "Правая дверь",
+                    trunk: "Багажник",
+                    hood: "Капот",
+                };
+                return labels[schema.name] || schema.name;
+            },
+            computeHelper: (schema) => {
+                const helpers = {
+                    vehicle: "Выберите тип транспортного средства",
+                    device: "Устройство в Home Assistant для отслеживания",
+                    name: "Отображаемое имя на карточке",
+                };
+                return helpers[schema.name] || undefined;
+            },
+        };
+    }
+    setConfig(config) {
+        this._config = Object.assign({}, config);
+    }
+    _valueChanged(ev) {
+        const target = ev.target;
+        if (!target)
+            return;
+        const key = target.getAttribute("data-key") || target.name;
+        const value = target.value || target.checked;
+        if (!key)
+            return;
+        // Handle nested objects
+        if (key.includes(".")) {
+            const parts = key.split(".");
+            const obj = Object.assign({}, this._config);
+            let current = obj;
+            for (let i = 0; i < parts.length - 1; i++) {
+                if (!current[parts[i]]) {
+                    current[parts[i]] = {};
+                }
+                current = current[parts[i]];
+            }
+            current[parts[parts.length - 1]] = value;
+            this._config = obj;
+        }
+        else {
+            this._config = Object.assign(Object.assign({}, this._config), { [key]: value });
+        }
+        // Fire config changed event
+        const event = new CustomEvent("config-changed", {
+            bubbles: true,
+            composed: true,
+            detail: { config: this._config },
+        });
+        this.dispatchEvent(event);
+    }
+    _handleSelectChange(ev, key) {
+        const target = ev.target;
+        this._config = Object.assign(Object.assign({}, this._config), { [key]: target.value });
+        const event = new CustomEvent("config-changed", {
+            bubbles: true,
+            composed: true,
+            detail: { config: this._config },
+        });
+        this.dispatchEvent(event);
+    }
+    _handleEntityChange(ev, key, category) {
+        const target = ev.target;
+        const value = target.value;
+        if (category) {
+            const categoryObj = Object.assign({}, (this._config[category] || {}));
+            categoryObj[key] = value;
+            this._config = Object.assign(Object.assign({}, this._config), { [category]: categoryObj });
+        }
+        else {
+            this._config = Object.assign(Object.assign({}, this._config), { [key]: value });
+        }
+        const event = new CustomEvent("config-changed", {
+            bubbles: true,
+            composed: true,
+            detail: { config: this._config },
+        });
+        this.dispatchEvent(event);
+    }
+    /** x/y (% of the image) editors for every binding point (sensors/doors/controls). */
+    _renderBindingPositions() {
+        const groups = {
+            sensors: ["temperature", "fuel", "battery", "mileage"],
+            doors: ["left", "right", "trunk", "hood"],
+            controls: ["lock", "engine", "lights", "horn"],
+        };
+        const overrides = this._config.binding_overrides || {};
+        return Object.entries(groups).map(([group, keys]) => b `
+      <div class="binding-group">
+        <div class="binding-group-title">${group}</div>
+        ${keys.map((key) => {
+            var _a, _b;
+            const ov = overrides[key] || {};
+            return b `
+            <div class="binding-row">
+              <span class="binding-label">${key}</span>
+              <input
+                type="number" min="0" max="100" step="1" placeholder="x"
+                .value=${(_a = ov.x) !== null && _a !== void 0 ? _a : ""}
+                @input=${this._valueChanged}
+                data-key="binding_overrides.${key}.x"
+              />
+              <input
+                type="number" min="0" max="100" step="1" placeholder="y"
+                .value=${(_b = ov.y) !== null && _b !== void 0 ? _b : ""}
+                @input=${this._valueChanged}
+                data-key="binding_overrides.${key}.y"
+              />
+            </div>
+          `;
+        })}
+      </div>
+    `);
+    }
+    render() {
+        var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
+        if (!this.hass || !this._config) {
+            return b `<div class="loading">Загрузка...</div>`;
+        }
+        const entities = Object.keys(this.hass.states).sort();
+        const sensorEntities = entities.filter((e) => e.startsWith("sensor."));
+        const switchEntities = entities.filter((e) => e.startsWith("switch."));
+        const lightEntities = entities.filter((e) => e.startsWith("light."));
+        const lockEntities = entities.filter((e) => e.startsWith("lock."));
+        const buttonEntities = entities.filter((e) => e.startsWith("button."));
+        const binarySensorEntities = entities.filter((e) => e.startsWith("binary_sensor."));
+        const deviceTrackers = entities.filter((e) => e.startsWith("device_tracker."));
+        return b `
+      <div class="editor">
+        <div class="section">
+          <div class="section-title">Основные настройки</div>
+
+          <div class="field">
+            <label>Тип транспорта</label>
+            <select
+              .value=${this._config.vehicle || "car"}
+              @change=${(e) => this._handleSelectChange(e, "vehicle")}
+            >
+              <option value="car" ?selected=${this._config.vehicle === "car"}>
+                Легковая
+              </option>
+              <option
+                value="truck"
+                ?selected=${this._config.vehicle === "truck"}
+              >
+                Грузовая
+              </option>
+              <option
+                value="motorcycle"
+                ?selected=${this._config.vehicle === "motorcycle"}
+              >
+                Мотоцикл
+              </option>
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Устройство</label>
+            <select
+              .value=${this._config.device || ""}
+              @change=${(e) => this._handleEntityChange(e, "device")}
+            >
+              <option value="">Не выбрано</option>
+              ${deviceTrackers.map((entity) => b `
+                  <option
+                    value="${entity}"
+                    ?selected=${this._config.device === entity}
+                  >
+                    ${entity}
+                  </option>
+                `)}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Название</label>
+            <input
+              type="text"
+              .value=${this._config.name || ""}
+              @input=${this._valueChanged}
+              data-key="name"
+              placeholder="Мой автомобиль"
+            />
+          </div>
+
+          <div class="field">
+            <label>Ссылка на картинку (необязательно)</label>
+            <input
+              type="text"
+              .value=${this._config.image_url || ""}
+              @input=${this._valueChanged}
+              data-key="image_url"
+              placeholder="/local/.../my-car.png или https://…"
+            />
+            <div class="hint">Если не указана — используется встроенный силуэт.</div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Позиции иконок (x/y, % от картинки)</div>
+          ${this._renderBindingPositions()}
+        </div>
+
+        <div class="section">
+          <div class="section-title">Сенсоры</div>
+
+          <div class="field">
+            <label>Температура двигателя</label>
+            <select
+              .value=${((_a = this._config.sensors) === null || _a === void 0 ? void 0 : _a.temperature) || ""}
+              @change=${(e) => this._handleEntityChange(e, "temperature", "sensors")}
+            >
+              <option value="">Не выбрано</option>
+              ${sensorEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.sensors) === null || _a === void 0 ? void 0 : _a.temperature) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Уровень топлива</label>
+            <select
+              .value=${((_b = this._config.sensors) === null || _b === void 0 ? void 0 : _b.fuel) || ""}
+              @change=${(e) => this._handleEntityChange(e, "fuel", "sensors")}
+            >
+              <option value="">Не выбрано</option>
+              ${sensorEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.sensors) === null || _a === void 0 ? void 0 : _a.fuel) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Напряжение АКБ</label>
+            <select
+              .value=${((_c = this._config.sensors) === null || _c === void 0 ? void 0 : _c.battery) || ""}
+              @change=${(e) => this._handleEntityChange(e, "battery", "sensors")}
+            >
+              <option value="">Не выбрано</option>
+              ${sensorEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.sensors) === null || _a === void 0 ? void 0 : _a.battery) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Пробег</label>
+            <select
+              .value=${((_d = this._config.sensors) === null || _d === void 0 ? void 0 : _d.mileage) || ""}
+              @change=${(e) => this._handleEntityChange(e, "mileage", "sensors")}
+            >
+              <option value="">Не выбрано</option>
+              ${sensorEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.sensors) === null || _a === void 0 ? void 0 : _a.mileage) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Управление</div>
+
+          <div class="field">
+            <label>Замки дверей</label>
+            <select
+              .value=${((_e = this._config.controls) === null || _e === void 0 ? void 0 : _e.lock) || ""}
+              @change=${(e) => this._handleEntityChange(e, "lock", "controls")}
+            >
+              <option value="">Не выбрано</option>
+              ${lockEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.controls) === null || _a === void 0 ? void 0 : _a.lock) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Двигатель</label>
+            <select
+              .value=${((_f = this._config.controls) === null || _f === void 0 ? void 0 : _f.engine) || ""}
+              @change=${(e) => this._handleEntityChange(e, "engine", "controls")}
+            >
+              <option value="">Не выбрано</option>
+              ${switchEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.controls) === null || _a === void 0 ? void 0 : _a.engine) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Свет</label>
+            <select
+              .value=${((_g = this._config.controls) === null || _g === void 0 ? void 0 : _g.lights) || ""}
+              @change=${(e) => this._handleEntityChange(e, "lights", "controls")}
+            >
+              <option value="">Не выбрано</option>
+              ${lightEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.controls) === null || _a === void 0 ? void 0 : _a.lights) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Клаксон</label>
+            <select
+              .value=${((_h = this._config.controls) === null || _h === void 0 ? void 0 : _h.horn) || ""}
+              @change=${(e) => this._handleEntityChange(e, "horn", "controls")}
+            >
+              <option value="">Не выбрано</option>
+              ${buttonEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.controls) === null || _a === void 0 ? void 0 : _a.horn) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Двери и отсеки</div>
+
+          <div class="field">
+            <label>Левая дверь</label>
+            <select
+              .value=${((_j = this._config.doors) === null || _j === void 0 ? void 0 : _j.left) || ""}
+              @change=${(e) => this._handleEntityChange(e, "left", "doors")}
+            >
+              <option value="">Не выбрано</option>
+              ${binarySensorEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.doors) === null || _a === void 0 ? void 0 : _a.left) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Правая дверь</label>
+            <select
+              .value=${((_k = this._config.doors) === null || _k === void 0 ? void 0 : _k.right) || ""}
+              @change=${(e) => this._handleEntityChange(e, "right", "doors")}
+            >
+              <option value="">Не выбрано</option>
+              ${binarySensorEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.doors) === null || _a === void 0 ? void 0 : _a.right) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Багажник</label>
+            <select
+              .value=${((_l = this._config.doors) === null || _l === void 0 ? void 0 : _l.trunk) || ""}
+              @change=${(e) => this._handleEntityChange(e, "trunk", "doors")}
+            >
+              <option value="">Не выбрано</option>
+              ${binarySensorEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.doors) === null || _a === void 0 ? void 0 : _a.trunk) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Капот</label>
+            <select
+              .value=${((_m = this._config.doors) === null || _m === void 0 ? void 0 : _m.hood) || ""}
+              @change=${(e) => this._handleEntityChange(e, "hood", "doors")}
+            >
+              <option value="">Не выбрано</option>
+              ${binarySensorEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.doors) === null || _a === void 0 ? void 0 : _a.hood) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-title">Позиции на изображении</div>
+          <div class="section-subtitle">Перетащите ползунки или введите значения 0-100%</div>
+
+          ${this._renderPositionFields()}
+        </div>
+
+        <div class="section">
+          <div class="section-title">Спидометр</div>
+
+          <div class="field">
+            <label>Сущность скорости</label>
+            <select
+              .value=${((_o = this._config.speedometer) === null || _o === void 0 ? void 0 : _o.entity) || ""}
+              @change=${(e) => this._handleSpeedometerChange("entity", e.target.value)}
+            >
+              <option value="">Не показывать</option>
+              ${sensorEntities.map((entity) => {
+            var _a;
+            return b `
+                  <option
+                    value="${entity}"
+                    ?selected=${((_a = this._config.speedometer) === null || _a === void 0 ? void 0 : _a.entity) === entity}
+                  >
+                    ${entity}
+                  </option>
+                `;
+        })}
+            </select>
+          </div>
+
+          <div class="field">
+            <label>Макс. скорость</label>
+            <input
+              type="number"
+              .value=${String(((_p = this._config.speedometer) === null || _p === void 0 ? void 0 : _p.max) || 220)}
+              @input=${(e) => this._handleSpeedometerChange("max", parseInt(e.target.value, 10))}
+              min="100"
+              max="400"
+              placeholder="220"
+            />
+          </div>
+
+          <div class="field">
+            <label>Единица измерения</label>
+            <input
+              type="text"
+              .value=${((_q = this._config.speedometer) === null || _q === void 0 ? void 0 : _q.unit) || "км/ч"}
+              @input=${(e) => this._handleSpeedometerChange("unit", e.target.value)}
+              placeholder="км/ч"
+            />
+          </div>
+        </div>
+      </div>
+    `;
+    }
+    _handleSpeedometerChange(key, value) {
+        const speedometer = Object.assign({}, (this._config.speedometer || {}));
+        speedometer[key] = value;
+        this._config = Object.assign(Object.assign({}, this._config), { speedometer });
+        const event = new CustomEvent("config-changed", {
+            bubbles: true,
+            composed: true,
+            detail: { config: this._config },
+        });
+        this.dispatchEvent(event);
+    }
+    _renderPositionFields() {
+        const items = [
+            { key: "temperature", label: "🌡 Температура", defaults: { x: 25, y: 30 } },
+            { key: "fuel", label: "⛽ Топливо", defaults: { x: 75, y: 50 } },
+            { key: "battery", label: "🔋 АКБ", defaults: { x: 15, y: 50 } },
+            { key: "mileage", label: "📏 Пробег", defaults: { x: 50, y: 70 } },
+            { key: "lock", label: "🔒 Замки", defaults: { x: 50, y: 15 } },
+            { key: "engine", label: "🚗 Двигатель", defaults: { x: 50, y: 85 } },
+            { key: "lights", label: "💡 Свет", defaults: { x: 10, y: 20 } },
+            { key: "horn", label: "📯 Гудок", defaults: { x: 90, y: 20 } },
+        ];
+        return b `
+      <div class="position-grid">
+        ${items.map((item) => {
+            var _a, _b, _c, _d, _e, _f;
+            const currentX = (_c = (_b = (_a = this._config.binding_overrides) === null || _a === void 0 ? void 0 : _a[item.key]) === null || _b === void 0 ? void 0 : _b.x) !== null && _c !== void 0 ? _c : item.defaults.x;
+            const currentY = (_f = (_e = (_d = this._config.binding_overrides) === null || _d === void 0 ? void 0 : _d[item.key]) === null || _e === void 0 ? void 0 : _e.y) !== null && _f !== void 0 ? _f : item.defaults.y;
+            return b `
+            <div class="position-row">
+              <div class="position-label">${item.label}</div>
+              <div class="position-inputs">
+                <label class="position-input">
+                  <span>X</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    .value=${String(currentX)}
+                    @input=${(e) => this._handlePositionChange(item.key, "x", e.target.value)}
+                  />
+                  <span class="position-value">${currentX}%</span>
+                </label>
+                <label class="position-input">
+                  <span>Y</span>
+                  <input
+                    type="range"
+                    min="0"
+                    max="100"
+                    .value=${String(currentY)}
+                    @input=${(e) => this._handlePositionChange(item.key, "y", e.target.value)}
+                  />
+                  <span class="position-value">${currentY}%</span>
+                </label>
+              </div>
+            </div>
+          `;
+        })}
+      </div>
+    `;
+    }
+    _handlePositionChange(key, axis, value) {
+        const numValue = parseInt(value, 10);
+        if (isNaN(numValue))
+            return;
+        const overrides = Object.assign({}, (this._config.binding_overrides || {}));
+        if (!overrides[key]) {
+            overrides[key] = {};
+        }
+        overrides[key][axis] = numValue;
+        this._config = Object.assign(Object.assign({}, this._config), { binding_overrides: overrides });
+        const event = new CustomEvent("config-changed", {
+            bubbles: true,
+            composed: true,
+            detail: { config: this._config },
+        });
+        this.dispatchEvent(event);
+    }
+    static get styles() {
+        return i$3 `
+      .editor {
+        padding: 16px;
+      }
+
+      .section {
+        margin-bottom: 24px;
+      }
+
+      .section-title {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--primary-text-color, #fff);
+        margin-bottom: 12px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--divider-color, rgba(255, 255, 255, 0.1));
+      }
+
+      .field {
+        margin-bottom: 12px;
+      }
+
+      .field label {
+        display: block;
+        font-size: 12px;
+        color: var(--secondary-text-color, #aaa);
+        margin-bottom: 4px;
+      }
+
+      .field select,
+      .field input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid var(--divider-color, rgba(255, 255, 255, 0.2));
+        border-radius: 4px;
+        background: var(--card-background-color, #1c1c1c);
+        color: var(--primary-text-color, #fff);
+        font-size: 14px;
+      }
+
+      .field select:focus,
+      .field input:focus {
+        outline: none;
+        border-color: var(--primary-color, #03a9f4);
+      }
+
+      .loading {
+        text-align: center;
+        padding: 16px;
+        color: var(--secondary-text-color, #aaa);
+      }
+
+      .section-subtitle {
+        font-size: 11px;
+        color: var(--secondary-text-color, #aaa);
+        margin-bottom: 12px;
+      }
+
+      .position-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      .position-row {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .position-label {
+        font-size: 12px;
+        font-weight: 500;
+        color: var(--primary-text-color, #fff);
+      }
+
+      .position-inputs {
+        display: flex;
+        gap: 16px;
+      }
+
+      .position-input {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex: 1;
+      }
+
+      .position-input span:first-child {
+        font-size: 11px;
+        color: var(--secondary-text-color, #aaa);
+        min-width: 16px;
+      }
+
+      .position-input input[type="range"] {
+        flex: 1;
+        height: 4px;
+        -webkit-appearance: none;
+        background: var(--divider-color, rgba(255, 255, 255, 0.2));
+        border-radius: 2px;
+        border: none;
+        padding: 0;
+      }
+
+      .position-input input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        background: var(--primary-color, #03a9f4);
+        border-radius: 50%;
+        cursor: pointer;
+      }
+
+      .position-value {
+        font-size: 11px;
+        color: var(--primary-color, #03a9f4);
+        min-width: 32px;
+        text-align: right;
+        font-family: monospace;
+      }
+    `;
+    }
+};
+__decorate([
+    n({ attribute: false })
+], CarCardEditor.prototype, "hass", void 0);
+__decorate([
+    n({ attribute: false })
+], CarCardEditor.prototype, "lovelace", void 0);
+__decorate([
+    r()
+], CarCardEditor.prototype, "_config", void 0);
+CarCardEditor = __decorate([
+    t("cartelemetry-vehicle-card-editor")
+], CarCardEditor);
+
 // Binding templates for different vehicle types
 const BINDING_TEMPLATES = {
     car: {
@@ -134,10 +958,11 @@ const BINDING_TEMPLATES = {
     },
 };
 let CarCard = class CarCard extends i {
+    static getConfigEditor() {
+        return document.createElement("cartelemetry-vehicle-card-editor");
+    }
     static getConfigElement() {
-        // Visual editor is a separate file not shipped with the card; fall back
-        // to the YAML editor so the card does not reference an undefined element.
-        return null;
+        return document.createElement("cartelemetry-vehicle-card-editor");
     }
     static getStubConfig() {
         return {
@@ -216,6 +1041,9 @@ let CarCard = class CarCard extends i {
         this._callService("button", "press", entityId);
     }
     _getImageUrl() {
+        // A direct image link overrides the bundled vehicle image entirely.
+        if (this.config.image_url)
+            return this.config.image_url;
         const base = this.config.image_base || "/local/community/cartelemetry-card/assets";
         return `${base}/${this._template.image_file}`;
     }
