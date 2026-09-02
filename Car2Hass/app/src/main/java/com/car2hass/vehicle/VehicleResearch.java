@@ -1,6 +1,7 @@
 package com.car2hass.vehicle;
 
 import android.content.Context;
+import com.car2hass.AppConfig;
 import com.car2hass.AppInfo;
 import com.car2hass.LogBuffer;
 
@@ -283,6 +284,21 @@ public final class VehicleResearch {
         try {
             report = ProbeReport.build(reg, channelAvailability, sensorResults,
                     cmdCallable, scores, selected, version, deviceAnon);
+            if (ctx != null && report != null) {
+                // Per-report link diagnostics: why an OBD/Voyah channel may be down.
+                JSONObject diag = new JSONObject();
+                diag.put("obd_enabled", AppConfig.isObdEnabled(ctx));
+                diag.put("obd_mode", AppConfig.getObdMode(ctx));
+                diag.put("obd_status", AppConfig.getObdStatus(ctx));
+                diag.put("obd_protocol", AppConfig.getObdProtocol(ctx));
+                diag.put("obd_last_error", AppConfig.getObdLastError(ctx));
+                diag.put("obd_bt_name", AppConfig.getObdBtName(ctx));
+                diag.put("obd_bt_addr", AppConfig.getObdBtAddress(ctx));
+                String pids = AppConfig.getObdSupportedPids(ctx);
+                diag.put("obd_supported_pids", pids == null || pids.isEmpty() ? 0
+                        : new org.json.JSONArray(pids).length());
+                report.put("diagnostics", diag);
+            }
             if (ctx != null) reportPath = ProbeReport.writeFile(ctx, report);
         } catch (Exception e) {
             LogBuffer.e("VehicleResearch", "report: " + e.getMessage());

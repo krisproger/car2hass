@@ -10,7 +10,7 @@ import java.util.Properties
 // (enforced by tests/test_version_consistency.py).
 val buildCounterFile = rootProject.file("build_counter.txt")
 val buildNum = if (buildCounterFile.exists()) buildCounterFile.readText().trim().toInt() else 1
-val appVersionName = System.getenv("VERSION_NAME") ?: "3.0.24"
+val appVersionName = System.getenv("VERSION_NAME") ?: "3.0.25"
 
 // Signing credentials: prefer environment variables / local.properties (used by
 // build_apk.sh and release CI), fall back to the dev keystore checked into .keys/.
