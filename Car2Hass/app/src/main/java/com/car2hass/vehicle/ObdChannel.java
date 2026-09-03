@@ -49,10 +49,14 @@ public class ObdChannel implements DataChannel {
             return ChannelResult.dead(transport.describe() + " — это не ELM327: "
                     + firstLine(resp));
         }
-        // Auto-connect + protocol analysis (ELM327 init → ATDP → supported-PID bitmap).
-        analyzeProtocol(ctx, transport);
+        // Auto-connect is done: report alive right away so the research probe
+        // never hits its 15s timeout. Protocol analysis (ELM327 init, ATDP,
+        // supported-PID bitmap) runs on a background thread because it opens
+        // several BT sockets and would otherwise block the probe.
         AppConfig.setObdStatus(ctx, "connected");
         AppConfig.setObdLastError(ctx, "");
+        new Thread(() -> analyzeProtocol(ctx, ObdTransportFactory.create(ctx)),
+                "obd-analyze").start();
         return ChannelResult.rawData("ELM327 " + version + " на " + transport.describe());
     }
 

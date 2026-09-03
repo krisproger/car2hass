@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Car2Hass theme attributes (palette). Layouts reference ?attr/car* so
+         per-car themes can override colors without touching layouts. -->
+    <attr name="carBackground" format="color" />
+    <attr name="carSurface" format="color" />
+    <attr name="carSurfaceVariant" format="color" />
+    <attr name="carTextPrimary" format="color" />
+    <attr name="carTextSecondary" format="color" />
+    <attr name="carTextTertiary" format="color" />
+    <attr name="carPrimary" format="color" />
+    <attr name="carPrimaryContainer" format="color" />
+    <attr name="carOnPrimary" format="color" />
+    <attr name="carSecondary" format="color" />
+    <attr name="carAccentGreen" format="color" />
+    <attr name="carAccentRed" format="color" />
+    <attr name="carAccentYellow" format="color" />
+    <attr name="carDivider" format="color" />
+    <attr name="carCardBackground" format="color" />
+    <attr name="carTileBorder" format="color" />
+    <attr name="carTileBackground" format="color" />
+</resources>

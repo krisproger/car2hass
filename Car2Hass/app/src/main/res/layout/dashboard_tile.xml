@@ -27,14 +27,14 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="8dp"
             android:textSize="28sp"
-            android:textColor="@color/primary" />
+            android:textColor="?attr/carPrimary" />
 
         <TextView
             android:id="@+id/tileLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="13sp"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/carTextSecondary"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -52,7 +52,7 @@
                 android:layout_weight="1"
                 android:textSize="32sp"
                 android:textStyle="bold"
-                android:textColor="@color/textPrimary"
+                android:textColor="?attr/carTextPrimary"
                 android:maxLines="1"
                 android:ellipsize="end" />
 
@@ -62,7 +62,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="4dp"
                 android:textSize="12sp"
-                android:textColor="@color/textTertiary" />
+                android:textColor="?attr/carTextTertiary" />
         </LinearLayout>
 
         <TextView
@@ -71,7 +71,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="4dp"
             android:textSize="12sp"
-            android:textColor="@color/textTertiary"
+            android:textColor="?attr/carTextTertiary"
             android:maxLines="1"
             android:ellipsize="end"
             android:visibility="gone" />

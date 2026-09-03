@@ -251,7 +251,7 @@ echo "=== Compiling test-only BuildConfig stub ==="
 javac -d "$OUT" -classpath "$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/BuildConfig.java"
 
 echo "=== Compiling Phase-2 probe engine (pure classes) ==="
-javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 \
   "$SRC/com/car2hass/CANDataItem.java" \
   "$SRC/com/car2hass/AppInfo.java" \
   "$SRC/com/car2hass/vehicle/DataChannel.java" \

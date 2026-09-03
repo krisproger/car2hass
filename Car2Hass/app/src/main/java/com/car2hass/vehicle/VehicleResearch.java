@@ -1,7 +1,6 @@
 package com.car2hass.vehicle;
 
 import android.content.Context;
-import com.car2hass.AppConfig;
 import com.car2hass.AppInfo;
 import com.car2hass.LogBuffer;
 
@@ -149,6 +148,18 @@ public final class VehicleResearch {
         }
     }
 
+    /** Calls a static no-arg(Context) AppConfig getter via reflection (harness-safe). */
+    private static String appConfigGet(Context ctx, String method) {
+        try {
+            java.lang.reflect.Method m = Class.forName("com.car2hass.AppConfig")
+                    .getMethod(method, Context.class);
+            Object v = m.invoke(null, ctx);
+            return v == null ? "" : v.toString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
     private static List<String> channelPriority(RegistryStore reg) {
         try {
             List<String> ids = reg.channelIds();
@@ -286,17 +297,25 @@ public final class VehicleResearch {
                     cmdCallable, scores, selected, version, deviceAnon);
             if (ctx != null && report != null) {
                 // Per-report link diagnostics: why an OBD/Voyah channel may be down.
+                // Read via reflection so the plain-java test harness does not need
+                // the whole AppConfig dependency chain at compile time.
                 JSONObject diag = new JSONObject();
-                diag.put("obd_enabled", AppConfig.isObdEnabled(ctx));
-                diag.put("obd_mode", AppConfig.getObdMode(ctx));
-                diag.put("obd_status", AppConfig.getObdStatus(ctx));
-                diag.put("obd_protocol", AppConfig.getObdProtocol(ctx));
-                diag.put("obd_last_error", AppConfig.getObdLastError(ctx));
-                diag.put("obd_bt_name", AppConfig.getObdBtName(ctx));
-                diag.put("obd_bt_addr", AppConfig.getObdBtAddress(ctx));
-                String pids = AppConfig.getObdSupportedPids(ctx);
-                diag.put("obd_supported_pids", pids == null || pids.isEmpty() ? 0
-                        : new org.json.JSONArray(pids).length());
+                diag.put("obd_enabled", appConfigGet(ctx, "isObdEnabled"));
+                diag.put("obd_mode", appConfigGet(ctx, "getObdMode"));
+                diag.put("obd_status", appConfigGet(ctx, "getObdStatus"));
+                diag.put("obd_protocol", appConfigGet(ctx, "getObdProtocol"));
+                diag.put("obd_last_error", appConfigGet(ctx, "getObdLastError"));
+                diag.put("obd_bt_name", appConfigGet(ctx, "getObdBtName"));
+                diag.put("obd_bt_addr", appConfigGet(ctx, "getObdBtAddress"));
+                String pids = appConfigGet(ctx, "getObdSupportedPids");
+                int pidCount = 0;
+                if (!pids.isEmpty()) {
+                    try {
+                        pidCount = new org.json.JSONArray(pids).length();
+                    } catch (Exception ignored) {
+                    }
+                }
+                diag.put("obd_supported_pids", pidCount);
                 report.put("diagnostics", diag);
             }
             if (ctx != null) reportPath = ProbeReport.writeFile(ctx, report);

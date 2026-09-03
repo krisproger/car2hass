@@ -40,7 +40,7 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:text="@string/settings_https"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/carTextSecondary"
             android:textSize="14sp"
             android:paddingStart="8dp" />
     </LinearLayout>
@@ -79,7 +79,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/settings_token"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/carTextSecondary"
             android:textSize="13sp" />
 
         <ImageButton
@@ -127,7 +127,7 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="@string/settings_send_to_ha"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/carTextSecondary"
             android:textSize="14sp" />
 
         <android.widget.Switch
@@ -141,7 +141,7 @@
         android:id="@+id/tvQueueBytes"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/carTextSecondary"
         android:textSize="13sp"
         android:paddingTop="6dp" />
 
@@ -149,7 +149,7 @@
         android:id="@+id/tvLastSend"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/carTextSecondary"
         android:textSize="13sp"
         android:paddingTop="2dp" />
 
@@ -157,7 +157,7 @@
         android:id="@+id/tvLastAttempt"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textColor="@color/textSecondary"
+        android:textColor="?attr/carTextSecondary"
         android:textSize="13sp"
         android:paddingTop="2dp"
         android:paddingBottom="6dp" />

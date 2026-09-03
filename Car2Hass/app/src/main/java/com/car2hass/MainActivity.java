@@ -227,10 +227,10 @@ public class MainActivity extends BaseLocalizedActivity {
                         adapter.setData(items);
                         if (AppConfig.isHassEnabled(MainActivity.this)) {
                             statusText.setText(R.string.status_active_ha);
-                            statusText.setTextColor(0xFF4CAF50);
+                            statusText.setTextColor(attrColor(R.attr.carAccentGreen));
                         } else {
                             statusText.setText(R.string.status_active_no_ha);
-                            statusText.setTextColor(0xFFFFC107);
+                            statusText.setTextColor(attrColor(R.attr.carAccentYellow));
                         }
                         vinText.setText(getString(R.string.vvin_prefix, CANDataReader.sVin));
                         firmwareText.setText(getString(R.string.fw_prefix, CANDataReader.sFirmware));
@@ -252,7 +252,7 @@ public class MainActivity extends BaseLocalizedActivity {
                 handler.post(() -> {
                     try {
                         statusText.setText(getString(R.string.status_error, message));
-                        statusText.setTextColor(0xFFF44336);
+                        statusText.setTextColor(attrColor(R.attr.carAccentRed));
                         vinText.setText(getString(R.string.vvin_prefix, CANDataReader.sVin));
                         firmwareText.setText(getString(R.string.fw_prefix, CANDataReader.sFirmware));
                         updateLocationText();
@@ -729,7 +729,7 @@ public class MainActivity extends BaseLocalizedActivity {
         TextView hint = new TextView(this);
         hint.setText(R.string.log_server_hint);
         hint.setTextSize(13);
-        hint.setTextColor(0xFF616161);
+        hint.setTextColor(attrColor(R.attr.carTextTertiary));
         box.addView(hint);
         EditText edit = new EditText(this);
         edit.setHint(R.string.log_server_hint);
@@ -744,7 +744,7 @@ public class MainActivity extends BaseLocalizedActivity {
         TextView autofill = new TextView(this);
         autofill.setText(R.string.log_server_hint_autofill);
         autofill.setTextSize(12);
-        autofill.setTextColor(0xFF616161);
+        autofill.setTextColor(attrColor(R.attr.carTextTertiary));
         autofill.setPadding(0, dp(4), 0, 0);
         box.addView(autofill);
 
@@ -2274,7 +2274,7 @@ public class MainActivity extends BaseLocalizedActivity {
             String finalValue = value;
             textCommandResult.setText(getString(R.string.commands_sending,
                 finalEntry.getDisplayName(this) + (finalValue.isEmpty() ? "" : "=" + finalValue)));
-            textCommandResult.setTextColor(0xFFFFC107);
+            textCommandResult.setTextColor(attrColor(R.attr.carAccentYellow));
             new Thread(() -> {
                 try {
                     CommandExecutor.Result result = CommandExecutor.execute(
@@ -2289,7 +2289,7 @@ public class MainActivity extends BaseLocalizedActivity {
                     handler.post(() -> {
                         try {
                             textCommandResult.setText(formatCommandResult(result));
-                            textCommandResult.setTextColor(result.success ? 0xFF4CAF50 : 0xFFF44336);
+                            textCommandResult.setTextColor(result.success ? attrColor(R.attr.carAccentGreen) : attrColor(R.attr.carAccentRed));
                             refreshCommandJournal();
                         } catch (Exception e) {
                             LogBuffer.e("Main", "Quick command result UI failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
@@ -2299,7 +2299,7 @@ public class MainActivity extends BaseLocalizedActivity {
                     LogBuffer.e("Main", "sendQuickCommand thread failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
                     handler.post(() -> {
                         textCommandResult.setText(getString(R.string.commands_result_error, e.getMessage()));
-                        textCommandResult.setTextColor(0xFFF44336);
+                        textCommandResult.setTextColor(attrColor(R.attr.carAccentRed));
                     });
                 }
             }).start();
@@ -2428,7 +2428,7 @@ public class MainActivity extends BaseLocalizedActivity {
             final String finalValue = value;
             textCommandResult.setText(getString(R.string.commands_sending,
                 entry.getDisplayName(this) + (finalValue.isEmpty() ? "" : "=" + finalValue)));
-            textCommandResult.setTextColor(0xFFFFC107);
+            textCommandResult.setTextColor(attrColor(R.attr.carAccentYellow));
 
             new Thread(() -> {
                 try {
@@ -2444,7 +2444,7 @@ public class MainActivity extends BaseLocalizedActivity {
                     handler.post(() -> {
                         try {
                             textCommandResult.setText(formatCommandResult(result));
-                            textCommandResult.setTextColor(result.success ? 0xFF4CAF50 : 0xFFF44336);
+                            textCommandResult.setTextColor(result.success ? attrColor(R.attr.carAccentGreen) : attrColor(R.attr.carAccentRed));
                             refreshCommandJournal();
                         } catch (Exception e) {
                             LogBuffer.e("Main", "Command result UI failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
@@ -2454,7 +2454,7 @@ public class MainActivity extends BaseLocalizedActivity {
                     LogBuffer.e("Main", "sendSelectedCommand thread failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
                     handler.post(() -> {
                         textCommandResult.setText(getString(R.string.commands_result_error, e.getMessage()));
-                        textCommandResult.setTextColor(0xFFF44336);
+                        textCommandResult.setTextColor(attrColor(R.attr.carAccentRed));
                     });
                 }
             }).start();
@@ -2658,10 +2658,10 @@ public class MainActivity extends BaseLocalizedActivity {
         if (telemetryService.hasValidLocation()) {
             String text = String.format(Locale.US, "%.5f, %.5f", telemetryService.getLastLatitude(), telemetryService.getLastLongitude());
             locationText.setText(text);
-            locationText.setTextColor(0xFF4CAF50);
+            locationText.setTextColor(attrColor(R.attr.carAccentGreen));
         } else {
             locationText.setText(R.string.location_no_gps);
-            locationText.setTextColor(0xFFFFC107);
+            locationText.setTextColor(attrColor(R.attr.carAccentYellow));
         }
     }
 
@@ -3689,6 +3689,15 @@ public class MainActivity extends BaseLocalizedActivity {
         return (int) (v * getResources().getDisplayMetrics().density + 0.5f);
     }
 
+    /** Theme color by the app attribute id (so per-car themes apply in code too). */
+    private int attrColor(int attrRes) {
+        android.util.TypedValue tv = new android.util.TypedValue();
+        if (getTheme().resolveAttribute(attrRes, tv, true)) {
+            return tv.data;
+        }
+        return 0xFFFFFFFF;
+    }
+
     private void downloadUpdate(UpdateChecker.UpdateInfo info) {
         // Skip re-download when the file already landed (e.g. install failed
         // earlier and left a copy in Downloads).
@@ -4177,13 +4186,13 @@ public class MainActivity extends BaseLocalizedActivity {
         String baseUrl = getBaseUrl();
 
         if (editHost.getText().toString().trim().isEmpty() || token.isEmpty()) {
-            tvTestResult.setTextColor(0xFFFFC107);
+            tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
             tvTestResult.setText(R.string.settings_test_fill_host_token);
             return;
         }
 
         tvTestResult.setText(R.string.settings_test_testing);
-        tvTestResult.setTextColor(0xFFFFC107);
+        tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
 
         final String finalBaseUrl = baseUrl;
         new Thread(() -> {
@@ -4200,17 +4209,17 @@ public class MainActivity extends BaseLocalizedActivity {
 
                 runOnUiThread(() -> {
                     if (code == 200) {
-                        tvTestResult.setTextColor(0xFF4CAF50);
+                        tvTestResult.setTextColor(attrColor(R.attr.carAccentGreen));
                         tvTestResult.setText(getString(R.string.settings_test_ok, code));
                         testVehicleEndpoint(finalBaseUrl, token);
                     } else {
-                        tvTestResult.setTextColor(0xFFF44336);
+                        tvTestResult.setTextColor(attrColor(R.attr.carAccentRed));
                         tvTestResult.setText(getString(R.string.settings_test_error, "HTTP " + code));
                     }
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
-                    tvTestResult.setTextColor(0xFFF44336);
+                    tvTestResult.setTextColor(attrColor(R.attr.carAccentRed));
                     tvTestResult.setText(getString(R.string.settings_test_error, e.getMessage()));
                 });
             }
@@ -4246,23 +4255,23 @@ public class MainActivity extends BaseLocalizedActivity {
 
                 runOnUiThread(() -> {
                     if (code == 200 || code == 201) {
-                        tvTestResult.setTextColor(0xFF4CAF50);
+                        tvTestResult.setTextColor(attrColor(R.attr.carAccentGreen));
                         tvTestResult.setText(getString(R.string.settings_test_api_ok, code));
                     } else if (code == 404) {
-                        tvTestResult.setTextColor(0xFFFFC107);
+                        tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
                         tvTestResult.setText(R.string.settings_test_not_found);
                     } else if (code == 501) {
-                        tvTestResult.setTextColor(0xFFFFC107);
+                        tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
                         tvTestResult.setText(getString(R.string.settings_test_endpoint_http, code)
                                 + " — обновите интеграцию и перезапустите HA");
                     } else {
-                        tvTestResult.setTextColor(0xFFFFC107);
+                        tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
                         tvTestResult.setText(getString(R.string.settings_test_endpoint_http, code));
                     }
                 });
             } catch (Exception e) {
                 runOnUiThread(() -> {
-                    tvTestResult.setTextColor(0xFFFFC107);
+                    tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
                     tvTestResult.setText(getString(R.string.settings_test_api_error, e.getMessage()));
                 });
             }

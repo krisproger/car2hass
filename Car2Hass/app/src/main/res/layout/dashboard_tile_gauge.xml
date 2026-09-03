@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:background="@drawable/bg_card_selectable"
+    android:layout_height="150dp"
+    android:background="@drawable/bg_tile"
     android:clickable="true"
     android:focusable="true"
-    android:padding="16dp">
+    android:padding="12dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -27,14 +27,14 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="4dp"
             android:textSize="24sp"
-            android:textColor="@color/primary" />
+            android:textColor="?attr/carPrimary" />
 
         <TextView
             android:id="@+id/tileLabel"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:textSize="12sp"
-            android:textColor="@color/textSecondary"
+            android:textColor="?attr/carTextSecondary"
             android:maxLines="1"
             android:ellipsize="end" />
 
@@ -66,7 +66,7 @@
                 android:layout_height="wrap_content"
                 android:textSize="28sp"
                 android:textStyle="bold"
-                android:textColor="@color/textPrimary"
+                android:textColor="?attr/carTextPrimary"
                 android:maxLines="1" />
 
             <TextView
@@ -75,7 +75,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="2dp"
                 android:textSize="14sp"
-                android:textColor="@color/textTertiary" />
+                android:textColor="?attr/carTextTertiary" />
         </LinearLayout>
 
         <TextView
@@ -84,7 +84,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="2dp"
             android:textSize="11sp"
-            android:textColor="@color/textTertiary"
+            android:textColor="?attr/carTextTertiary"
             android:maxLines="1"
             android:ellipsize="end"
             android:visibility="gone" />
