@@ -3311,6 +3311,10 @@ public class MainActivity extends BaseLocalizedActivity {
                     if (nowChecked && !"system".equals(c.name)) active.add(c.name);
                 }
                 AppConfig.updateActiveChannels(this, active);
+                // OBD checkbox is the enable switch for the protocol itself.
+                if ("obd".equals(cv.name)) {
+                    AppConfig.setObdEnabled(this, isChecked);
+                }
                 renderResearch();
             });
             channelContainer.addView(box);
@@ -3599,6 +3603,7 @@ public class MainActivity extends BaseLocalizedActivity {
             runOnUiThread(() -> {
                 if (version != null) {
                     AppConfig.setObdMode(this, "bt");
+                    AppConfig.setObdEnabled(this, true);
                     AppConfig.setObdBtAddress(this, dev.getAddress());
                     AppConfig.setObdBtName(this,
                             dev.getName() != null ? dev.getName() : dev.getAddress());
