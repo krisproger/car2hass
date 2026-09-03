@@ -49,7 +49,8 @@
             android:maxLines="1" />
     </RelativeLayout>
 
-    <!-- Thin telemetry queue bar: hidden at 0, full at >= 2h of recent throughput -->
+    <!-- Thin telemetry queue bar: reserves its height permanently so the screen
+         does not shift when the queue appears; invisible at 0, full at >= 2h -->
     <ProgressBar
         android:id="@+id/queueBar"
         style="?android:attr/progressBarStyleHorizontal"
@@ -58,7 +59,7 @@
         android:max="1000"
         android:progressTint="@color/secondary"
         android:progressBackgroundTint="@color/textTertiary"
-        android:visibility="gone" />
+        android:visibility="invisible" />
 
     <!-- Info bar -->
     <LinearLayout

@@ -17,4 +17,7 @@
     <color name="divider">#FF333333</color>
     <color name="cardBackground">#FF1E1E1E</color>
     <color name="cardRipple">#1FFFFFFF</color>
+    <!-- Light-cyan accent for tile/panel borders -->
+    <color name="tileBorder">#FF80DEEA</color>
+    <color name="tileBackground">#FF1C2222</color>
 </resources>

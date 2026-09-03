@@ -2605,12 +2605,12 @@ public class MainActivity extends BaseLocalizedActivity {
         updateObdButton();
     }
 
-    /** Thin bar of queued telemetry: hidden at 0, full at >= 2h of recent throughput. */
+    /** Thin bar of queued telemetry: invisible at 0 (space kept), full at >= 2h. */
     private void updateQueueBar() {
         if (queueBar == null) return;
         long pending = SendHistory.getPendingBytes(this);
         if (pending <= 0) {
-            queueBar.setVisibility(View.GONE);
+            queueBar.setVisibility(View.INVISIBLE);
             return;
         }
         queueBar.setVisibility(View.VISIBLE);
