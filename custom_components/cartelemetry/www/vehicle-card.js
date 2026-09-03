@@ -888,6 +888,24 @@ let CarCard = class CarCard extends i {
                 trunk: "binary_sensor.car_trunk",
                 hood: "binary_sensor.car_hood",
             },
+            // Позиции иконок поверх картинки авто (x/y в процентах от картинки).
+            // image_url — ссылка на свою картинку (PNG/JPG). В примере — стандартный
+            // силуэт; замените на свою картинку, например /local/community/cartelemetry-card/my-car.png
+            image_url: "/local/community/cartelemetry-card/assets/car-silhouette.png",
+            binding_overrides: {
+                temperature: { x: 25, y: 30 },
+                fuel: { x: 75, y: 50 },
+                battery: { x: 15, y: 50 },
+                mileage: { x: 50, y: 70 },
+                lock: { x: 50, y: 15 },
+                engine: { x: 50, y: 85 },
+                lights: { x: 10, y: 20 },
+                horn: { x: 90, y: 20 },
+                left: { x: 20, y: 45 },
+                right: { x: 80, y: 45 },
+                trunk: { x: 90, y: 50 },
+                hood: { x: 10, y: 35 },
+            },
         };
     }
     setConfig(config) {
