@@ -111,6 +111,16 @@ public final class VehicleResearch {
     public interface SensorProbe {
         ProbeResult probe(android.content.Context ctx, RegistryStore reg, String sensorKey, String channel)
                 throws org.json.JSONException;
+
+        /**
+         * Batch OBD PID probe: all PIDs in one session so the adapter keeps its
+         * protocol lock. Returns key → result, or null when the strategy has no
+         * batch support (fall back to per-sensor {@link #probe}).
+         */
+        default java.util.Map<String, ProbeResult> obdBatch(
+                android.content.Context ctx, RegistryStore reg, java.util.List<String> keys) {
+            return null;
+        }
     }
 
     /** Persists the research outcome; production delegates to {@code AppConfig}. */
@@ -180,34 +190,52 @@ public final class VehicleResearch {
     public static ResearchOutcome runWithRegistry(Context ctx, RegistryStore reg,
             List<DataChannel> channels, VehicleProfile profile,
             ProgressListener listener, SensorProbe probe, Persister persister) {
-        Map<String, Boolean> channelAvailability = new java.util.LinkedHashMap<>();
-        List<ChannelResult> channelResults = new ArrayList<>();
-        for (DataChannel ch : channels) {
-            ChannelResult r = probeWithTimeout(ch, ctx);
-            channelResults.add(r);
-            channelAvailability.put(ch.id(), r.isAlive());
-        }
-        List<String> brandProfiles = BrandSelector.detect(reg, channelAvailability);
-
-        Map<String, Map<String, ProbeResult>> sensorResults = new java.util.LinkedHashMap<>();
-        Map<String, Set<String>> okByChannel = new java.util.HashMap<>();
         List<String> sensorKeys = new ArrayList<>();
         try {
             sensorKeys = reg.sensorKeys();
         } catch (org.json.JSONException e) {
             LogBuffer.e("VehicleResearch", "registry sensorKeys: " + e.getMessage());
         }
+        // Progress spans channels first, then sensors (Car Scanner-style two phases).
+        int channelCount = channels.size();
+        int total = channelCount + sensorKeys.size();
+        Map<String, Boolean> channelAvailability = new java.util.LinkedHashMap<>();
+        List<ChannelResult> channelResults = new ArrayList<>();
+        int chIdx = 0;
+        for (DataChannel ch : channels) {
+            ChannelResult r = probeWithTimeout(ch, ctx);
+            channelResults.add(r);
+            channelAvailability.put(ch.id(), r.isAlive());
+            chIdx++;
+            if (listener != null) listener.onChannelDone(chIdx, total, ch.id());
+        }
+        List<String> brandProfiles = BrandSelector.detect(reg, channelAvailability);
+
+        Map<String, Map<String, ProbeResult>> sensorResults = new java.util.LinkedHashMap<>();
+        Map<String, Set<String>> okByChannel = new java.util.HashMap<>();
         List<String> priority = channelPriority(reg);
-        int total = sensorKeys.size();
         int done = 0;
+        Map<String, ProbeResult> obdResults = probe.obdBatch(ctx, reg, sensorKeys);
         for (String key : sensorKeys) {
             Map<String, ProbeResult> perCh = new java.util.LinkedHashMap<>();
             for (String ch : priority) {
                 ProbeResult r;
-                try {
-                    r = probe.probe(ctx, reg, key, ch);
-                } catch (Exception e) {
-                    r = ProbeResult.error(e.getMessage());
+                if ("obd".equals(ch)) {
+                    if (obdResults != null && obdResults.containsKey(key)) {
+                        r = obdResults.get(key);
+                    } else {
+                        try {
+                            r = probe.probe(ctx, reg, key, ch);
+                        } catch (Exception e) {
+                            r = ProbeResult.error(e.getMessage());
+                        }
+                    }
+                } else {
+                    try {
+                        r = probe.probe(ctx, reg, key, ch);
+                    } catch (Exception e) {
+                        r = ProbeResult.error(e.getMessage());
+                    }
                 }
                 perCh.put(ch, r);
                 if (r != null && r.isOk()) {
@@ -216,7 +244,7 @@ public final class VehicleResearch {
             }
             sensorResults.put(key, perCh);
             done++;
-            if (listener != null) listener.onChannelDone(done, total, key);
+            if (listener != null) listener.onChannelDone(channelCount + done, total, key);
         }
 
         ProfileScorer scorer = new ProfileScorer(reg, okByChannel);
@@ -234,20 +262,35 @@ public final class VehicleResearch {
                 }
                 Map<String, Set<String>> heavyOk = new java.util.HashMap<>();
                 int doneH = 0;
+                List<String> heavyList = new ArrayList<>(heavyKeys);
+                Map<String, ProbeResult> obdHeavy = probe.obdBatch(ctx, reg, heavyList);
                 for (String key : heavyKeys) {
                     for (String ch : priority) {
                         ProbeResult r;
-                        try {
-                            r = probe.probe(ctx, reg, key, ch);
-                        } catch (Exception e) {
-                            r = ProbeResult.error(e.getMessage());
+                        if ("obd".equals(ch)) {
+                            if (obdHeavy != null && obdHeavy.containsKey(key)) {
+                                r = obdHeavy.get(key);
+                            } else {
+                                try {
+                                    r = probe.probe(ctx, reg, key, ch);
+                                } catch (Exception e) {
+                                    r = ProbeResult.error(e.getMessage());
+                                }
+                            }
+                        } else {
+                            try {
+                                r = probe.probe(ctx, reg, key, ch);
+                            } catch (Exception e) {
+                                r = ProbeResult.error(e.getMessage());
+                            }
                         }
                         if (r != null && r.isOk()) {
                             heavyOk.computeIfAbsent(key, k -> new HashSet<>()).add(ch);
                         }
                     }
                     doneH++;
-                    if (listener != null) listener.onChannelDone(doneH, heavyKeys.size(), key);
+                    // Heavy pass is an internal scoring refinement; it does not
+                    // advance the visible progress bar.
                 }
                 ProfileScorer heavyScorer = new ProfileScorer(reg, heavyOk);
                 for (String pid : brandProfiles) scores.put(pid, heavyScorer.score(pid));

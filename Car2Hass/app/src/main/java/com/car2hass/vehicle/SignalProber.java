@@ -7,16 +7,22 @@ import com.car2hass.NativeSignalMap;
 
 import org.json.JSONObject;
 
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
 /**
  * Probes a single sensor on a single channel using the Phase-1 registry
  * descriptors and the existing DiPlus / native readers. Classification is
  * delegated to {@link ProbeResult}.
  */
-public final class SignalProber {
+public final class SignalProber implements VehicleResearch.SensorProbe {
 
-    private SignalProber() {}
+    public SignalProber() {}
 
-    public static ProbeResult probe(Context ctx, RegistryStore reg, String sensorKey, String channel)
+    @Override
+    public ProbeResult probe(Context ctx, RegistryStore reg, String sensorKey, String channel)
             throws org.json.JSONException {
         JSONObject ch = reg.sensorChannel(sensorKey, channel);
         if (ch == null || ch.length() == 0) {
@@ -46,6 +52,26 @@ public final class SignalProber {
         } catch (Exception e) {
             return ProbeResult.error(e.getMessage());
         }
+    }
+
+    @Override
+    public Map<String, ProbeResult> obdBatch(Context ctx, RegistryStore reg, List<String> keys) {
+        Map<String, String> pidOf = new LinkedHashMap<>();
+        for (String key : keys) {
+            try {
+                JSONObject ch = reg.sensorChannel(key, "obd");
+                String pid = ch != null ? ch.optString("pid") : "";
+                if (!pid.isEmpty()) pidOf.put(key, pid);
+            } catch (org.json.JSONException ignored) {}
+        }
+        if (pidOf.isEmpty()) return null;
+        List<String> pids = new ArrayList<>(pidOf.values());
+        Map<String, ProbeResult> byPid = ObdChannel.readPids(ctx, pids);
+        Map<String, ProbeResult> byKey = new LinkedHashMap<>();
+        for (Map.Entry<String, String> e : pidOf.entrySet()) {
+            byKey.put(e.getKey(), byPid.get(e.getValue()));
+        }
+        return byKey;
     }
 
     private static NativeSignalMap.FidEntry toFidEntry(String key, JSONObject ch) {

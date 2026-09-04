@@ -154,7 +154,7 @@
     <string name="settings_vehicle_channels_universal">Channels: system properties + experimental; DiPlus/ADB are probed for analysis.</string>
     <string name="settings_vehicle_commands_disabled">Command control is unavailable for the selected car.</string>
     <string name="settings_vehicle_research">Probe data channels</string>
-    <string name="settings_vehicle_research_progress">Probing channels: %1$d/%2$d</string>
+    <string name="settings_vehicle_research_progress">Research: %1$d/%2$d</string>
     <string name="settings_vehicle_research_profile">Probe: vehicle profile %1$s</string>
     <string name="settings_vehicle_research_channels">Active channels: %1$s</string>
     <string name="settings_vehicle_research_signals">Sensors probed: %1$d</string>
@@ -185,6 +185,7 @@
     <string name="obd_bt_off">Enable Bluetooth to connect the adapter</string>
     <string name="obd_not_elm">This is not an ELM327 adapter: %1$s</string>
     <string name="obd_connect_failed">Could not connect to %1$s</string>
+    <string name="obd_connecting">Connecting to adapter…</string>
     <string name="obd_connected">Connected: %1$s (ELM327 %2$s)</string>
     <string name="obd_link_ok"> · connected</string>
     <string name="obd_link_down"> · no link</string>

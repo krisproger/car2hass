@@ -3118,12 +3118,19 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         final List<DataChannel> researchChannels = channels;
         VehicleProfile profile = AppConfig.getVehicleProfile(this);
+        int researchSensorCount;
+        try {
+            researchSensorCount = RegistryStore.load(this).sensorCount();
+        } catch (Exception e) {
+            researchSensorCount = 0;
+        }
+        final int researchTotal = researchChannels.size() + researchSensorCount;
 
         researchProgressDialog = new ProgressDialog(this);
         researchProgressDialog.setTitle(R.string.settings_vehicle_research);
-        researchProgressDialog.setMessage(getString(R.string.settings_vehicle_research_progress, 0, researchChannels.size()));
+        researchProgressDialog.setMessage(getString(R.string.settings_vehicle_research_progress, 0, researchTotal));
         researchProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        researchProgressDialog.setMax(researchChannels.size());
+        researchProgressDialog.setMax(researchTotal);
         researchProgressDialog.setCancelable(false);
         researchProgressDialog.show();
 
@@ -3141,7 +3148,7 @@ public class MainActivity extends BaseLocalizedActivity {
                 // must not overwrite their choice.
                 outcome = VehicleResearch.runWithRegistry(
                         this, RegistryStore.load(this), researchChannels, profile, listener,
-                        SignalProber::probe,
+                        new SignalProber(),
                         (ctx, p, a, rp) -> AppConfig.saveProbeResult(ctx,
                                 AppConfig.isUserOverridden(ctx)
                                         ? AppConfig.getSelectedProfile(ctx) : p,
@@ -3596,7 +3603,7 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void connectObdDevice(final BluetoothDevice dev) {
-        Toast.makeText(this, R.string.update_checking, Toast.LENGTH_SHORT).show();
+        Toast.makeText(this, R.string.obd_connecting, Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             final String version = com.car2hass.vehicle.obd.BtSppTransport
                     .connectAndAti(this, dev.getAddress());

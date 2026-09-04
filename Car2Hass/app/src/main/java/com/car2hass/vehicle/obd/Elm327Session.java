@@ -42,6 +42,16 @@ public class Elm327Session implements ObdSession {
     }
 
     @Override
+    public String lightInit() {
+        transact("ATE0", 0);
+        transact("ATH0", 0);
+        transact("ATL0", 0);
+        transact("ATSP0", 0);
+        String resp = transact("ATI", 1);
+        return resp != null ? Elm327Parser.extractVersion(resp) : null;
+    }
+
+    @Override
     public void close() {
         // subclasses close the underlying socket
     }

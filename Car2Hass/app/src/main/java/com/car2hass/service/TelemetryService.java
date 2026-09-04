@@ -234,7 +234,7 @@ public class TelemetryService extends Service {
                 if (full) {
                     LogBuffer.i("TelemetryService", "Probe: full research (runs=" + runs + ")");
                     VehicleResearch.ResearchOutcome outcome = VehicleResearch.runWithRegistry(this,
-                            RegistryStore.load(this), channels, profile, null, SignalProber::probe,
+                            RegistryStore.load(this), channels, profile, null, new SignalProber(),
                             (ctx, p, a, rp) -> AppConfig.saveProbeResult(ctx, p,
                                     com.car2hass.vehicle.ResearchUiModel.unionActive(
                                             AppConfig.getActiveChannels(ctx), a), rp));

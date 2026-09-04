@@ -29,7 +29,7 @@ public final class BtSppTransport implements ObdTransport {
     public static String connectAndAti(Context ctx, String address) {
         if (!bluetoothUsable(ctx)) return null;
         BtSppTransport t = new BtSppTransport(address);
-        try (ObdSession s = t.open()) {
+        try (ObdSession s = t.openForced()) {
             return s.initWarmUp();
         } catch (Exception e) {
             LogBuffer.d("BtSppTransport", address + ": " + e.getMessage());
@@ -74,7 +74,40 @@ public final class BtSppTransport implements ObdTransport {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("bad address " + address, e);
         }
-        BluetoothSocket socket = connect(device);
+        return session(connect(device));
+    }
+
+    /**
+     * Mandatory re-init used on first connect and manual re-bind: ELM327 clones
+     * often refuse a new SPP link right after the previous one was closed, so we
+     * cancel discovery and let the stack settle before retrying once.
+     */
+    @Override
+    public ObdSession openForced() throws Exception {
+        BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+        if (adapter == null || !adapter.isEnabled()) {
+            throw new IllegalStateException("bluetooth off");
+        }
+        BluetoothDevice device;
+        try {
+            device = adapter.getRemoteDevice(address);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("bad address " + address, e);
+        }
+        Exception last = null;
+        for (int attempt = 0; attempt < 2; attempt++) {
+            if (attempt > 0) Thread.sleep(1000);
+            try {
+                if (adapter.isDiscovering()) adapter.cancelDiscovery();
+                return session(connect(device));
+            } catch (Exception e) {
+                last = e;
+            }
+        }
+        throw last != null ? last : new Exception("bt connect failed");
+    }
+
+    private static ObdSession session(BluetoothSocket socket) throws java.io.IOException {
         return new Elm327Session(socket.getInputStream(), socket.getOutputStream()) {
             @Override
             public void close() {
@@ -84,8 +117,11 @@ public final class BtSppTransport implements ObdTransport {
     }
 
     private static BluetoothSocket connect(BluetoothDevice device) throws Exception {
+        final java.util.concurrent.atomic.AtomicReference<BluetoothSocket> ref =
+                new java.util.concurrent.atomic.AtomicReference<>();
         FutureTask<BluetoothSocket> task = new FutureTask<>(() -> {
             BluetoothSocket s = device.createRfcommSocketToServiceRecord(SPP_UUID);
+            ref.set(s);
             s.connect();
             return s;
         });
@@ -94,7 +130,13 @@ public final class BtSppTransport implements ObdTransport {
         try {
             return task.get(CONNECT_TIMEOUT_MS, TimeUnit.MILLISECONDS);
         } catch (java.util.concurrent.TimeoutException te) {
-            t.interrupt();
+            // Close the half-open socket so it cannot complete later and hold the
+            // adapter's SPP channel (which would block the next connect). Do NOT
+            // interrupt the worker: closing the socket aborts connect() itself.
+            BluetoothSocket s = ref.get();
+            if (s != null) {
+                try { s.close(); } catch (Exception ignored) {}
+            }
             throw new java.net.SocketTimeoutException("bt connect timeout (" + CONNECT_TIMEOUT_MS + "ms)");
         }
     }

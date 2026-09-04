@@ -8,6 +8,9 @@ public interface ObdSession extends AutoCloseable {
     /** Warm-up init (ATZ → ATE0/ATH0/ATL0/ATSP0 → ATI); returns ELM version or null. */
     String initWarmUp();
 
+    /** No-reset init (ATE0/ATH0/ATL0/ATSP0 → ATI); keeps a locked protocol across reads. */
+    String lightInit();
+
     @Override
     void close();
 }

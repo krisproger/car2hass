@@ -145,7 +145,7 @@
     <string name="settings_vehicle_channels_universal">Каналы: системные свойства + экспериментальные; DiPlus/ADB зондируются для анализа.</string>
     <string name="settings_vehicle_commands_disabled">Управление командами недоступно для выбранного авто.</string>
     <string name="settings_vehicle_research">Исследование каналов</string>
-    <string name="settings_vehicle_research_progress">Проверяем каналы: %1$d/%2$d</string>
+    <string name="settings_vehicle_research_progress">Исследование: %1$d/%2$d</string>
     <string name="settings_vehicle_research_profile">Исследование: профиль авто %1$s</string>
     <string name="settings_vehicle_research_channels">Активные каналы: %1$s</string>
     <string name="settings_vehicle_research_signals">Сенсоров проверено: %1$d</string>
@@ -178,6 +178,7 @@
     <string name="obd_bt_off">Включите Bluetooth для подключения адаптера</string>
     <string name="obd_not_elm">Это не ELM327-адаптер: %1$s</string>
     <string name="obd_connect_failed">Не удалось подключиться к %1$s</string>
+    <string name="obd_connecting">Подключение к адаптеру…</string>
     <string name="obd_connected">Подключено: %1$s (ELM327 %2$s)</string>
     <string name="obd_link_ok"> · подключено</string>
     <string name="obd_link_down"> · нет связи</string>

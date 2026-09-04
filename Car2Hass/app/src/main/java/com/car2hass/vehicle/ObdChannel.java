@@ -10,6 +10,7 @@ import com.car2hass.vehicle.obd.ObdTransport;
 import com.car2hass.vehicle.obd.ObdTransportFactory;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -45,7 +46,7 @@ public class ObdChannel implements DataChannel {
                 return ChannelResult.dead(transport.describe() + " — нет ответа на init (ATZ/ATI)");
             }
             String dp = s.transact("ATDP", 1);
-            AppConfig.setObdProtocol(ctx, dp != null ? dp.trim() : "");
+            AppConfig.setObdProtocol(ctx, dp != null ? dp.replace(">", "").trim() : "");
             Set<String> supported = readSupportedPids(s);
             if (supported != null) {
                 AppConfig.setObdSupportedPids(ctx,
@@ -111,7 +112,11 @@ public class ObdChannel implements DataChannel {
         ObdTransport transport = ObdTransportFactory.create(ctx);
         Set<String> supported = supportedPids(ctx);
         try (ObdSession s = transport.open()) {
-            s.initWarmUp(); // ensure the adapter is responsive before batch reads
+            if (s.lightInit() == null && s.initWarmUp() == null) {
+                // adapter unreachable this cycle
+                AppConfig.setObdStatus(ctx, "disconnected");
+                return out;
+            }
             for (Map.Entry<String, String> e : ObdPidCodec.PID_TO_KEY.entrySet()) {
                 String pid = e.getKey();
                 if (supported != null && !supported.contains(pid)) continue;
@@ -143,6 +148,9 @@ public class ObdChannel implements DataChannel {
         if (!AppConfig.isObdEnabled(ctx)) return ProbeResult.unsupported();
         ObdTransport transport = ObdTransportFactory.create(ctx);
         try (ObdSession s = transport.open()) {
+            if (s.lightInit() == null && s.initWarmUp() == null) {
+                return ProbeResult.error("ELM327 не отвечает на init");
+            }
             String resp = s.transact(ObdPidCodec.command(pid).trim(), 1);
             Integer value = resp != null ? ObdPidCodec.parse(pid, resp) : null;
             if (value != null) return ProbeResult.fromRaw(String.valueOf(value), false);
@@ -150,6 +158,42 @@ public class ObdChannel implements DataChannel {
             LogBuffer.d("ObdChannel", "readSinglePid " + pid + ": " + e.getMessage());
         }
         return ProbeResult.error("ELM327 не ответил на " + pid);
+    }
+
+    /**
+     * Batch PID probe: one session, one light init, all PIDs on the same socket so
+     * the adapter keeps its protocol lock (Car Scanner model). The research engine
+     * uses this instead of per-PID {@link #readSinglePid} sessions.
+     */
+    public static Map<String, ProbeResult> readPids(Context ctx, List<String> pids) {
+        Map<String, ProbeResult> out = new LinkedHashMap<>();
+        if (!AppConfig.isObdEnabled(ctx)) {
+            for (String pid : pids) out.put(pid, ProbeResult.unsupported());
+            return out;
+        }
+        ObdTransport transport = ObdTransportFactory.create(ctx);
+        try (ObdSession s = transport.open()) {
+            if (s.lightInit() == null && s.initWarmUp() == null) {
+                for (String pid : pids) {
+                    out.put(pid, ProbeResult.error("ELM327 не отвечает на init"));
+                }
+                return out;
+            }
+            for (String pid : pids) {
+                String resp = s.transact(ObdPidCodec.command(pid).trim(), 1);
+                Integer value = resp != null ? ObdPidCodec.parse(pid, resp) : null;
+                if (value != null) {
+                    out.put(pid, ProbeResult.fromRaw(String.valueOf(value), false));
+                } else {
+                    out.put(pid, ProbeResult.error("ELM327 не ответил на " + pid));
+                }
+            }
+        } catch (Exception e) {
+            String msg = "connect: " + e.getMessage();
+            LogBuffer.d("ObdChannel", "readPids: " + msg);
+            for (String pid : pids) out.put(pid, ProbeResult.error(msg));
+        }
+        return out;
     }
 
     private static CANDataItem findByKey(List<CANDataItem> items, String key) {
