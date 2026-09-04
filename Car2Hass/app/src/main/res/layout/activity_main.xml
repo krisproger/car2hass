@@ -152,11 +152,6 @@
             android:visibility="gone" />
 
         <include
-            android:id="@+id/commandsView"
-            layout="@layout/commands_view"
-            android:visibility="gone" />
-
-        <include
             android:id="@+id/rulesView"
             layout="@layout/rules_view"
             android:visibility="gone" />
@@ -227,32 +222,6 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="@string/nav_telemetry"
-                android:textColor="@color/textSecondary"
-                android:textSize="11sp" />
-        </LinearLayout>
-
-        <LinearLayout
-            android:id="@+id/navCommands"
-            android:layout_width="0dp"
-            android:layout_height="match_parent"
-            android:layout_weight="1"
-            android:orientation="vertical"
-            android:gravity="center"
-            android:background="@drawable/bg_nav_item"
-            android:clickable="true"
-            android:focusable="true">
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⌘"
-                android:textColor="@color/textSecondary"
-                android:textSize="22sp" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/nav_commands"
                 android:textColor="@color/textSecondary"
                 android:textSize="11sp" />
         </LinearLayout>

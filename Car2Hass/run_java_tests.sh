@@ -49,6 +49,17 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/c
 echo "=== Compiling tests ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/SignalTranslatorTest.java"
 
+echo "=== Compiling ELM327 session (pure Java) ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 \
+  "$SRC/com/car2hass/vehicle/Elm327Parser.java" \
+  "$SRC/com/car2hass/vehicle/obd/Elm327Io.java" \
+  "$SRC/com/car2hass/vehicle/obd/ObdSession.java" \
+  "$SRC/com/car2hass/vehicle/obd/Elm327Session.java"
+
+echo "=== Compiling Elm327SessionTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 \
+  "$TEST/com/car2hass/vehicle/Elm327SessionTest.java"
+
 echo "=== Overriding with test-only LogBuffer stub ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/LogBuffer.java"
 
@@ -428,4 +439,5 @@ java -cp "$OUT" com.car2hass.vehicle.ObdCodecTest
 
 echo "=== Running Phase-6 OBD transport test ==="
 java -cp "$OUT" com.car2hass.vehicle.obd.ObdIoTest
+java -cp "$OUT" com.car2hass.vehicle.Elm327SessionTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.UpdateCheckerTest

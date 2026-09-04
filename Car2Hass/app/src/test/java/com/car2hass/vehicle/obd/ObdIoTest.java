@@ -55,7 +55,10 @@ public class ObdIoTest {
         server.start();
 
         TcpTransport t = new TcpTransport("127.0.0.1", port);
-        String resp = t.transact("ATI", 1);
+        String resp;
+        try (ObdSession s = t.open()) {
+            resp = s.transact("ATI", 1);
+        }
         server.join(2000);
         ss.close();
         if (resp == null || !resp.contains("ELM327")) {

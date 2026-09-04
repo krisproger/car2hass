@@ -114,15 +114,15 @@ public class MainActivity extends BaseLocalizedActivity {
     private final Runnable saveEnabledRunnable = this::saveEnabledState;
 
     // Bottom navigation
-    private View dashboardView, telemetryView, commandsView, rulesView, settingsView;
-    private LinearLayout navDashboard, navTelemetry, navCommands, navRules, navSettings;
+    private View dashboardView, telemetryView, rulesView, settingsView;
+    private LinearLayout navDashboard, navTelemetry, navRules, navSettings;
     private View[] contentViews;
     private LinearLayout[] navItems;
     private int currentTab = 0;
 
     // Settings sections (two-column layout)
     private int selectedSettingsSection = 0;
-    private final View[] settingsSections = new View[6];
+    private final View[] settingsSections = new View[7];
     private Button btnRestartResearch;
     private ProgressDialog researchProgressDialog;
     private String pendingResearchPath = null;
@@ -328,17 +328,15 @@ public class MainActivity extends BaseLocalizedActivity {
     private void initContentViews() {
         dashboardView = findViewById(R.id.dashboardView);
         telemetryView = findViewById(R.id.telemetryView);
-        commandsView = findViewById(R.id.commandsView);
         rulesView = findViewById(R.id.rulesView);
         settingsView = findViewById(R.id.settingsView);
-        contentViews = new View[]{dashboardView, telemetryView, commandsView, rulesView, settingsView};
+        contentViews = new View[]{dashboardView, telemetryView, rulesView, settingsView};
 
         navDashboard = findViewById(R.id.navDashboard);
         navTelemetry = findViewById(R.id.navTelemetry);
-        navCommands = findViewById(R.id.navCommands);
         navRules = findViewById(R.id.navRules);
         navSettings = findViewById(R.id.navSettings);
-        navItems = new LinearLayout[]{navDashboard, navTelemetry, navCommands, navRules, navSettings};
+        navItems = new LinearLayout[]{navDashboard, navTelemetry, navRules, navSettings};
     }
 
     private void initTelemetryList() {
@@ -1010,13 +1008,12 @@ public class MainActivity extends BaseLocalizedActivity {
     private void setupBottomNavigation() {
         navDashboard.setOnClickListener(v -> selectTab(0));
         navTelemetry.setOnClickListener(v -> selectTab(1));
-        navCommands.setOnClickListener(v -> selectTab(2));
-        navRules.setOnClickListener(v -> selectTab(3));
-        navSettings.setOnClickListener(v -> selectTab(4));
+        navRules.setOnClickListener(v -> selectTab(2));
+        navSettings.setOnClickListener(v -> selectTab(3));
     }
 
     private void selectTab(int index) {
-        int SETTINGS_INDEX = 4;
+        int SETTINGS_INDEX = 3;
         // Leaving the settings tab: flush any pending autosave immediately so a
         // debounced doSave() cannot later overwrite changes made elsewhere
         // (e.g. the master "Send to HA" toggle on the telemetry tab).
@@ -2950,11 +2947,13 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsSections[4] = settingsView.findViewById(R.id.settings_section_tech);
         // The research card is rendered together with the data-sources section.
         settingsSections[5] = settingsView.findViewById(R.id.settings_section_research);
+        settingsSections[6] = settingsView.findViewById(R.id.settings_section_commands);
 
         configureNavItem(R.id.navSettingsCar, "◈", R.string.settings_section_car);
         configureNavItem(R.id.navSettingsProtocols, "⇄", R.string.settings_section_protocols);
         configureNavItem(R.id.navSettingsSmarthome, "⌂", R.string.settings_section_smarthome);
         configureNavItem(R.id.navSettingsGeofences, "◎", R.string.nav_geofences);
+        configureNavItem(R.id.navSettingsCommands, "⌘", R.string.settings_section_commands);
         configureNavItem(R.id.navSettingsTech, "⚙", R.string.settings_section_tech);
         configureNavItem(R.id.navSettingsAbout, "ⓘ", R.string.settings_section_about);
 
@@ -2964,6 +2963,7 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsView.findViewById(R.id.navSettingsGeofences).setOnClickListener(v -> selectSettingsSection(3));
         settingsView.findViewById(R.id.btnAddGeofence).setOnClickListener(v ->
                 startActivity(new Intent(this, GeofenceEditActivity.class)));
+        settingsView.findViewById(R.id.navSettingsCommands).setOnClickListener(v -> selectSettingsSection(6));
         settingsView.findViewById(R.id.navSettingsTech).setOnClickListener(v -> selectSettingsSection(4));
         settingsView.findViewById(R.id.navSettingsAbout).setOnClickListener(v -> showAboutDialog());
         btnRestartResearch = settingsView.findViewById(R.id.btnRestartResearch);
@@ -2993,8 +2993,8 @@ public class MainActivity extends BaseLocalizedActivity {
             settingsSections[i].setVisibility(visible ? View.VISIBLE : View.GONE);
         }
         int[] navIds = {R.id.navSettingsCar, R.id.navSettingsProtocols, R.id.navSettingsSmarthome,
-                        R.id.navSettingsGeofences, R.id.navSettingsTech};
-        boolean[] selected = {index == 0, index == 1, index == 2, index == 3, index == 4};
+                        R.id.navSettingsGeofences, R.id.navSettingsTech, R.id.navSettingsCommands};
+        boolean[] selected = {index == 0, index == 1, index == 2, index == 3, index == 4, index == 6};
         for (int i = 0; i < navIds.length; i++) {
             View item = settingsView.findViewById(navIds[i]);
             item.setSelected(selected[i]);

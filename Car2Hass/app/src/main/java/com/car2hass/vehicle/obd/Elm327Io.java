@@ -9,7 +9,7 @@ import java.nio.charset.StandardCharsets;
 /** Shared request/response loop for ELM327 over any byte stream. */
 public final class Elm327Io {
 
-    private static final int READ_TIMEOUT_MS = 500;
+    private static final int READ_TIMEOUT_MS = 1000;
 
     private Elm327Io() {}
 

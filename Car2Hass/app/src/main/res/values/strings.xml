@@ -92,6 +92,7 @@
     <string name="settings_section_protocols">Services / data sources</string>
     <string name="settings_section_smarthome">Home Assistant</string>
     <string name="settings_section_tech">Options</string>
+    <string name="settings_section_commands">Car control test</string>
     <string name="settings_section_misc">Other</string>
     <string name="settings_section_about">About</string>
     <string name="settings_refresh_presets">Refresh presets</string>

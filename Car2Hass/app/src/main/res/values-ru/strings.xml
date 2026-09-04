@@ -92,6 +92,7 @@
     <string name="settings_section_protocols">Сервисы / источники данных</string>
     <string name="settings_section_smarthome">Умный дом</string>
     <string name="settings_section_tech">Опции</string>
+    <string name="settings_section_commands">Тест управления авто</string>
     <string name="settings_section_misc">Прочее</string>
     <string name="settings_section_about">О программе</string>
     <string name="settings_refresh_presets">Обновить пресеты</string>

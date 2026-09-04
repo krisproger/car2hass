@@ -1,10 +1,10 @@
 package com.car2hass.vehicle.obd;
 
-/** One ELM327 command exchange; implementations own the connection lifecycle. */
+/** ELM327 transport; {@link #open()} yields a session bound to one connection. */
 public interface ObdTransport {
 
-    /** Sends {@code command} and returns the raw adapter response, null on failure. */
-    String transact(String command, int expectedLines);
+    /** Connect and return a session; throws on connection failure. */
+    ObdSession open() throws Exception;
 
     /** Human-readable target (host:port or device name) for error messages. */
     String describe();

@@ -79,6 +79,20 @@ controls:               # switch/lock/button
 speedometer:            # опционально
   entity: sensor.my_car_speed
   max: 220
+image_url: /local/community/cartelemetry-card/assets/car-silhouette.png  # своя картинка
+binding_overrides:      # позиции иконок (x/y в % от картинки)
+  temperature: { x: 25, y: 30 }
+  fuel: { x: 75, y: 50 }
+  battery: { x: 15, y: 50 }
+  mileage: { x: 50, y: 70 }
+  lock: { x: 50, y: 15 }
+  engine: { x: 50, y: 85 }
+  lights: { x: 10, y: 20 }
+  horn: { x: 90, y: 20 }
+  left: { x: 20, y: 45 }
+  right: { x: 80, y: 45 }
+  trunk: { x: 90, y: 50 }
+  hood: { x: 10, y: 35 }
 ```
 
 Позиции точек на кузове переопределяются через `binding_overrides` (например,
