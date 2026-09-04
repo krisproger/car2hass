@@ -119,16 +119,15 @@ let CarCardEditor = class CarCardEditor extends i {
         });
         this.dispatchEvent(event);
     }
-    _handleEntityChange(ev, key, category) {
-        const target = ev.target;
-        const value = target.value;
+    _handleEntityChanged(key, category, value) {
+        const v = value || "";
         if (category) {
             const categoryObj = Object.assign({}, (this._config[category] || {}));
-            categoryObj[key] = value;
+            categoryObj[key] = v;
             this._config = Object.assign(Object.assign({}, this._config), { [category]: categoryObj });
         }
         else {
-            this._config = Object.assign(Object.assign({}, this._config), { [key]: value });
+            this._config = Object.assign(Object.assign({}, this._config), { [key]: v });
         }
         const event = new CustomEvent("config-changed", {
             bubbles: true,
@@ -137,54 +136,11 @@ let CarCardEditor = class CarCardEditor extends i {
         });
         this.dispatchEvent(event);
     }
-    /** x/y (% of the image) editors for every binding point (sensors/doors/controls). */
-    _renderBindingPositions() {
-        const groups = {
-            sensors: ["temperature", "fuel", "battery", "mileage"],
-            doors: ["left", "right", "trunk", "hood"],
-            controls: ["lock", "engine", "lights", "horn"],
-        };
-        const overrides = this._config.binding_overrides || {};
-        return Object.entries(groups).map(([group, keys]) => b `
-      <div class="binding-group">
-        <div class="binding-group-title">${group}</div>
-        ${keys.map((key) => {
-            var _a, _b;
-            const ov = overrides[key] || {};
-            return b `
-            <div class="binding-row">
-              <span class="binding-label">${key}</span>
-              <input
-                type="number" min="0" max="100" step="1" placeholder="x"
-                .value=${(_a = ov.x) !== null && _a !== void 0 ? _a : ""}
-                @input=${this._valueChanged}
-                data-key="binding_overrides.${key}.x"
-              />
-              <input
-                type="number" min="0" max="100" step="1" placeholder="y"
-                .value=${(_b = ov.y) !== null && _b !== void 0 ? _b : ""}
-                @input=${this._valueChanged}
-                data-key="binding_overrides.${key}.y"
-              />
-            </div>
-          `;
-        })}
-      </div>
-    `);
-    }
     render() {
         var _a, _b, _c, _d, _e, _f, _g, _h, _j, _k, _l, _m, _o, _p, _q;
         if (!this.hass || !this._config) {
             return b `<div class="loading">Загрузка...</div>`;
         }
-        const entities = Object.keys(this.hass.states).sort();
-        const sensorEntities = entities.filter((e) => e.startsWith("sensor."));
-        const switchEntities = entities.filter((e) => e.startsWith("switch."));
-        const lightEntities = entities.filter((e) => e.startsWith("light."));
-        const lockEntities = entities.filter((e) => e.startsWith("lock."));
-        const buttonEntities = entities.filter((e) => e.startsWith("button."));
-        const binarySensorEntities = entities.filter((e) => e.startsWith("binary_sensor."));
-        const deviceTrackers = entities.filter((e) => e.startsWith("device_tracker."));
         return b `
       <div class="editor">
         <div class="section">
@@ -216,20 +172,13 @@ let CarCardEditor = class CarCardEditor extends i {
 
           <div class="field">
             <label>Устройство</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${this._config.device || ""}
-              @change=${(e) => this._handleEntityChange(e, "device")}
-            >
-              <option value="">Не выбрано</option>
-              ${deviceTrackers.map((entity) => b `
-                  <option
-                    value="${entity}"
-                    ?selected=${this._config.device === entity}
-                  >
-                    ${entity}
-                  </option>
-                `)}
-            </select>
+              .include-filters=${["device_tracker"]}
+              .allow-custom-entity=${true}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("device", null, (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
 
           <div class="field">
@@ -257,95 +206,46 @@ let CarCardEditor = class CarCardEditor extends i {
         </div>
 
         <div class="section">
-          <div class="section-title">Позиции иконок (x/y, % от картинки)</div>
-          ${this._renderBindingPositions()}
-        </div>
-
-        <div class="section">
           <div class="section-title">Сенсоры</div>
 
           <div class="field">
             <label>Температура двигателя</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_a = this._config.sensors) === null || _a === void 0 ? void 0 : _a.temperature) || ""}
-              @change=${(e) => this._handleEntityChange(e, "temperature", "sensors")}
-            >
-              <option value="">Не выбрано</option>
-              ${sensorEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.sensors) === null || _a === void 0 ? void 0 : _a.temperature) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["sensor", "number"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("temperature", "sensors", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
 
           <div class="field">
             <label>Уровень топлива</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_b = this._config.sensors) === null || _b === void 0 ? void 0 : _b.fuel) || ""}
-              @change=${(e) => this._handleEntityChange(e, "fuel", "sensors")}
-            >
-              <option value="">Не выбрано</option>
-              ${sensorEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.sensors) === null || _a === void 0 ? void 0 : _a.fuel) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["sensor", "number"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("fuel", "sensors", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
 
           <div class="field">
             <label>Напряжение АКБ</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_c = this._config.sensors) === null || _c === void 0 ? void 0 : _c.battery) || ""}
-              @change=${(e) => this._handleEntityChange(e, "battery", "sensors")}
-            >
-              <option value="">Не выбрано</option>
-              ${sensorEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.sensors) === null || _a === void 0 ? void 0 : _a.battery) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["sensor", "number"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("battery", "sensors", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
 
           <div class="field">
             <label>Пробег</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_d = this._config.sensors) === null || _d === void 0 ? void 0 : _d.mileage) || ""}
-              @change=${(e) => this._handleEntityChange(e, "mileage", "sensors")}
-            >
-              <option value="">Не выбрано</option>
-              ${sensorEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.sensors) === null || _a === void 0 ? void 0 : _a.mileage) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["sensor", "number"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("mileage", "sensors", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
         </div>
 
@@ -354,86 +254,42 @@ let CarCardEditor = class CarCardEditor extends i {
 
           <div class="field">
             <label>Замки дверей</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_e = this._config.controls) === null || _e === void 0 ? void 0 : _e.lock) || ""}
-              @change=${(e) => this._handleEntityChange(e, "lock", "controls")}
-            >
-              <option value="">Не выбрано</option>
-              ${lockEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.controls) === null || _a === void 0 ? void 0 : _a.lock) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["lock"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("lock", "controls", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
 
           <div class="field">
             <label>Двигатель</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_f = this._config.controls) === null || _f === void 0 ? void 0 : _f.engine) || ""}
-              @change=${(e) => this._handleEntityChange(e, "engine", "controls")}
-            >
-              <option value="">Не выбрано</option>
-              ${switchEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.controls) === null || _a === void 0 ? void 0 : _a.engine) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["switch", "input_boolean"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("engine", "controls", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
 
           <div class="field">
             <label>Свет</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_g = this._config.controls) === null || _g === void 0 ? void 0 : _g.lights) || ""}
-              @change=${(e) => this._handleEntityChange(e, "lights", "controls")}
-            >
-              <option value="">Не выбрано</option>
-              ${lightEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.controls) === null || _a === void 0 ? void 0 : _a.lights) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["switch", "input_boolean", "light"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("lights", "controls", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
 
           <div class="field">
-            <label>Клаксон</label>
-            <select
+            <label>Клаксон / сигнал (кнопка)</label>
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_h = this._config.controls) === null || _h === void 0 ? void 0 : _h.horn) || ""}
-              @change=${(e) => this._handleEntityChange(e, "horn", "controls")}
-            >
-              <option value="">Не выбрано</option>
-              ${buttonEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.controls) === null || _a === void 0 ? void 0 : _a.horn) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["button", "scene", "script"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("horn", "controls", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
         </div>
 
@@ -442,86 +298,42 @@ let CarCardEditor = class CarCardEditor extends i {
 
           <div class="field">
             <label>Левая дверь</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_j = this._config.doors) === null || _j === void 0 ? void 0 : _j.left) || ""}
-              @change=${(e) => this._handleEntityChange(e, "left", "doors")}
-            >
-              <option value="">Не выбрано</option>
-              ${binarySensorEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.doors) === null || _a === void 0 ? void 0 : _a.left) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["binary_sensor"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("left", "doors", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
 
           <div class="field">
             <label>Правая дверь</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_k = this._config.doors) === null || _k === void 0 ? void 0 : _k.right) || ""}
-              @change=${(e) => this._handleEntityChange(e, "right", "doors")}
-            >
-              <option value="">Не выбрано</option>
-              ${binarySensorEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.doors) === null || _a === void 0 ? void 0 : _a.right) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["binary_sensor"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("right", "doors", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
 
           <div class="field">
             <label>Багажник</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_l = this._config.doors) === null || _l === void 0 ? void 0 : _l.trunk) || ""}
-              @change=${(e) => this._handleEntityChange(e, "trunk", "doors")}
-            >
-              <option value="">Не выбрано</option>
-              ${binarySensorEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.doors) === null || _a === void 0 ? void 0 : _a.trunk) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["binary_sensor"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("trunk", "doors", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
 
           <div class="field">
             <label>Капот</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_m = this._config.doors) === null || _m === void 0 ? void 0 : _m.hood) || ""}
-              @change=${(e) => this._handleEntityChange(e, "hood", "doors")}
-            >
-              <option value="">Не выбрано</option>
-              ${binarySensorEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.doors) === null || _a === void 0 ? void 0 : _a.hood) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["binary_sensor"]}
+              @value-changed=${(e) => { var _a; return this._handleEntityChanged("hood", "doors", (_a = e.detail) === null || _a === void 0 ? void 0 : _a.value); }}
+            ></ha-entity-picker>
           </div>
         </div>
 
@@ -537,23 +349,13 @@ let CarCardEditor = class CarCardEditor extends i {
 
           <div class="field">
             <label>Сущность скорости</label>
-            <select
+            <ha-entity-picker
+              .hass=${this.hass}
               .value=${((_o = this._config.speedometer) === null || _o === void 0 ? void 0 : _o.entity) || ""}
-              @change=${(e) => this._handleSpeedometerChange("entity", e.target.value)}
-            >
-              <option value="">Не показывать</option>
-              ${sensorEntities.map((entity) => {
-            var _a;
-            return b `
-                  <option
-                    value="${entity}"
-                    ?selected=${((_a = this._config.speedometer) === null || _a === void 0 ? void 0 : _a.entity) === entity}
-                  >
-                    ${entity}
-                  </option>
-                `;
-        })}
-            </select>
+              .include-filters=${["sensor", "number"]}
+              .allow-custom-entity=${true}
+              @value-changed=${(e) => { var _a; return this._handleSpeedometerChange("entity", ((_a = e.detail) === null || _a === void 0 ? void 0 : _a.value) || ""); }}
+            ></ha-entity-picker>
           </div>
 
           <div class="field">
@@ -594,14 +396,18 @@ let CarCardEditor = class CarCardEditor extends i {
     }
     _renderPositionFields() {
         const items = [
-            { key: "temperature", label: "🌡 Температура", defaults: { x: 25, y: 30 } },
-            { key: "fuel", label: "⛽ Топливо", defaults: { x: 75, y: 50 } },
-            { key: "battery", label: "🔋 АКБ", defaults: { x: 15, y: 50 } },
-            { key: "mileage", label: "📏 Пробег", defaults: { x: 50, y: 70 } },
-            { key: "lock", label: "🔒 Замки", defaults: { x: 50, y: 15 } },
-            { key: "engine", label: "🚗 Двигатель", defaults: { x: 50, y: 85 } },
-            { key: "lights", label: "💡 Свет", defaults: { x: 10, y: 20 } },
-            { key: "horn", label: "📯 Гудок", defaults: { x: 90, y: 20 } },
+            { key: "temperature", label: "🌡 Температура", defaults: { x: 45, y: 30 } },
+            { key: "fuel", label: "⛽ Топливо", defaults: { x: 45, y: 50 } },
+            { key: "battery", label: "🔋 АКБ", defaults: { x: 30, y: 50 } },
+            { key: "mileage", label: "📏 Пробег", defaults: { x: 48, y: 66 } },
+            { key: "lock", label: "🔒 Замки", defaults: { x: 60, y: 50 } },
+            { key: "engine", label: "🚗 Двигатель", defaults: { x: 83, y: 64 } },
+            { key: "lights", label: "💡 Свет", defaults: { x: 95, y: 50 } },
+            { key: "horn", label: "📯 Гудок", defaults: { x: 73, y: 43 } },
+            { key: "left", label: "🚪 Левая дверь", defaults: { x: 30, y: 35 } },
+            { key: "right", label: "🚪 Правая дверь", defaults: { x: 60, y: 35 } },
+            { key: "trunk", label: "📦 Багажник", defaults: { x: 10, y: 50 } },
+            { key: "hood", label: "🔧 Капот", defaults: { x: 85, y: 50 } },
         ];
         return b `
       <div class="position-grid">
@@ -801,22 +607,22 @@ const BINDING_TEMPLATES = {
     car: {
         image_file: "car-silhouette.png",
         sensors: {
-            temperature: { x: 25, y: 30, icon: "🌡", color: "#ef5350" },
-            fuel: { x: 75, y: 50, icon: "⛽", color: "#ffb74d" },
-            battery: { x: 15, y: 50, icon: "🔋", color: "#66bb6a" },
-            mileage: { x: 50, y: 70, icon: "📏", color: "#42a5f5" },
+            temperature: { x: 45, y: 30, icon: "🌡", color: "#ef5350" },
+            fuel: { x: 45, y: 50, icon: "⛽", color: "#ffb74d" },
+            battery: { x: 30, y: 50, icon: "🔋", color: "#66bb6a" },
+            mileage: { x: 48, y: 66, icon: "📏", color: "#42a5f5" },
         },
         doors: {
-            left: { x: 20, y: 45, icon: "🚪" },
-            right: { x: 80, y: 45, icon: "🚪" },
-            trunk: { x: 90, y: 50, icon: "📦" },
-            hood: { x: 10, y: 35, icon: "🔧" },
+            left: { x: 30, y: 35, icon: "🚪" },
+            right: { x: 60, y: 35, icon: "🚪" },
+            trunk: { x: 10, y: 50, icon: "📦" },
+            hood: { x: 85, y: 50, icon: "🔧" },
         },
         controls: {
-            lock: { x: 50, y: 15, icon: "🔒" },
-            engine: { x: 50, y: 85, icon: "🚗" },
-            lights: { x: 10, y: 20, icon: "💡" },
-            horn: { x: 90, y: 20, icon: "📯" },
+            lock: { x: 60, y: 50, icon: "🔒" },
+            engine: { x: 83, y: 64, icon: "🚗" },
+            lights: { x: 95, y: 50, icon: "💡" },
+            horn: { x: 73, y: 43, icon: "📯" },
         },
     },
     truck: {
@@ -871,40 +677,40 @@ let CarCard = class CarCard extends i {
             device: "device_tracker.my_car",
             name: "My Car",
             sensors: {
-                temperature: "sensor.car_temperature",
+                temperature: "sensor.car_cabin_temperature",
                 fuel: "sensor.car_fuel",
                 battery: "sensor.car_battery",
-                mileage: "sensor.car_mileage",
+                mileage: "sensor.car_range",
             },
             controls: {
-                lock: "lock.car_doors",
-                engine: "switch.car_engine",
-                lights: "light.car_headlights",
-                horn: "button.car_horn",
+                lock: "lock.car_doors_lock",
+                engine: "switch.car_drl",
+                lights: "switch.car_fog",
+                horn: "button.car_doors_lock",
             },
             doors: {
-                left: "binary_sensor.car_left_door",
-                right: "binary_sensor.car_right_door",
+                left: "binary_sensor.car_driver_door",
+                right: "binary_sensor.car_passenger_door",
                 trunk: "binary_sensor.car_trunk",
-                hood: "binary_sensor.car_hood",
+                hood: "binary_sensor.car_bonnet",
             },
             // Позиции иконок поверх картинки авто (x/y в процентах от картинки).
             // image_url — ссылка на свою картинку (PNG/JPG). В примере — стандартный
             // силуэт; замените на свою картинку, например /local/community/cartelemetry-card/my-car.png
             image_url: "/local/community/cartelemetry-card/assets/car-silhouette.png",
             binding_overrides: {
-                temperature: { x: 25, y: 30 },
-                fuel: { x: 75, y: 50 },
-                battery: { x: 15, y: 50 },
-                mileage: { x: 50, y: 70 },
-                lock: { x: 50, y: 15 },
-                engine: { x: 50, y: 85 },
-                lights: { x: 10, y: 20 },
-                horn: { x: 90, y: 20 },
-                left: { x: 20, y: 45 },
-                right: { x: 80, y: 45 },
-                trunk: { x: 90, y: 50 },
-                hood: { x: 10, y: 35 },
+                temperature: { x: 45, y: 30 },
+                fuel: { x: 45, y: 50 },
+                battery: { x: 30, y: 50 },
+                mileage: { x: 48, y: 66 },
+                lock: { x: 60, y: 50 },
+                engine: { x: 83, y: 64 },
+                lights: { x: 95, y: 50 },
+                horn: { x: 73, y: 43 },
+                left: { x: 30, y: 35 },
+                right: { x: 60, y: 35 },
+                trunk: { x: 10, y: 50 },
+                hood: { x: 85, y: 50 },
             },
         };
     }
@@ -1028,8 +834,22 @@ let CarCard = class CarCard extends i {
             return b ``;
         const isActive = this._getEntityState(entityId) === "on";
         const statusClass = isActive ? "active" : "inactive";
+        const domain = (entityId.split(".")[0] || "").toLowerCase();
+        // binary_sensor → read-only indicator (lights/signal state), no click.
+        if (domain === "binary_sensor") {
+            return b `
+        <div
+          class="control-button ${statusClass} control-readonly"
+          style="left: ${binding.x}%; top: ${binding.y}%"
+          title="${controlType}"
+        >
+          <span class="control-icon">${binding.icon || "🔘"}</span>
+        </div>
+      `;
+        }
         const handleClick = () => {
-            if (controlType === "horn") {
+            if (controlType === "horn" || domain === "button"
+                || domain === "scene" || domain === "script") {
                 this._pressButton(entityId);
             }
             else {
@@ -1159,10 +979,15 @@ let CarCard = class CarCard extends i {
       `);
         }
         if (controls.horn) {
+            const domain = (controls.horn.split(".")[0] || "").toLowerCase();
+            const isActive = this._getEntityState(controls.horn) === "on";
             items.push(b `
         <button
-          class="control-bar-button"
-          @click=${() => this._pressButton(controls.horn)}
+          class="control-bar-button ${isActive ? "active" : ""}"
+          @click=${() => {
+                if (domain !== "binary_sensor")
+                    this._pressButton(controls.horn);
+            }}
           title="Клаксон"
         >
           <span class="control-bar-icon">📯</span>
@@ -1455,6 +1280,13 @@ let CarCard = class CarCard extends i {
       .control-button:hover {
         transform: translate(-50%, -50%) scale(1.2);
         z-index: 10;
+      }
+
+      .control-readonly,
+      .control-readonly:hover {
+        cursor: default;
+        transform: translate(-50%, -50%);
+        z-index: auto;
       }
 
       .sensor-indicator {

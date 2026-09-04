@@ -71,28 +71,28 @@ doors:                  # binary_sensor: on = открыто
   right: binary_sensor.my_car_passenger_door
   trunk: binary_sensor.my_car_trunk
   hood: binary_sensor.my_car_bonnet
-controls:               # switch/lock/button
-  lock: lock.my_car_remote_lock_state
-  engine: switch.my_car_powertrain_mode
-  lights: switch.my_car_low_beam
-  horn: button.my_car_horn
+controls:               # lock/switch/button; horn может быть binary_sensor-индикатором
+  lock: lock.my_car_doors_lock
+  engine: switch.my_car_drl
+  lights: switch.my_car_fog
+  horn: binary_sensor.my_car_low_beam   # индикатор состояния (on/off) или button-кнопка
 speedometer:            # опционально
   entity: sensor.my_car_speed
   max: 220
 image_url: /local/community/cartelemetry-card/assets/car-silhouette.png  # своя картинка
 binding_overrides:      # позиции иконок (x/y в % от картинки)
-  temperature: { x: 25, y: 30 }
-  fuel: { x: 75, y: 50 }
-  battery: { x: 15, y: 50 }
-  mileage: { x: 50, y: 70 }
-  lock: { x: 50, y: 15 }
-  engine: { x: 50, y: 85 }
-  lights: { x: 10, y: 20 }
-  horn: { x: 90, y: 20 }
-  left: { x: 20, y: 45 }
-  right: { x: 80, y: 45 }
-  trunk: { x: 90, y: 50 }
-  hood: { x: 10, y: 35 }
+  temperature: { x: 45, y: 30 }
+  fuel: { x: 45, y: 50 }
+  battery: { x: 30, y: 50 }
+  mileage: { x: 48, y: 66 }
+  lock: { x: 60, y: 50 }
+  engine: { x: 83, y: 64 }
+  lights: { x: 95, y: 50 }
+  horn: { x: 73, y: 43 }
+  left: { x: 30, y: 35 }
+  right: { x: 60, y: 35 }
+  trunk: { x: 10, y: 50 }
+  hood: { x: 85, y: 50 }
 ```
 
 Позиции точек на кузове переопределяются через `binding_overrides` (например,
@@ -102,14 +102,16 @@ binding_overrides:      # позиции иконок (x/y в % от карти�
 
 ### Редактор карточки (в интерфейсе HA)
 
-У карточки есть визуальный редактор (кнопка «⋮» на карточке → «Редактировать» → раздел
-«Позиции иконок» и «Ссылка на картинку»):
+У карточки есть визуальный редактор (кнопка «⋮» на карточке → «Редактировать»):
 
+- **Тип транспорта, имя, устройство, маппинги сущностей** — выбор сущностей через
+  нативный поиск HA (можно набирать имя/entity_id).
 - **Ссылка на картинку** (`image_url`) — своё изображение (путь `/local/...` или
   `https://…`); если не указана — встроенный силуэт по `vehicle`.
-- **Позиции иконок** — для каждого сенсора/двери/кнопки поля `x`/`y` (в % от картинки);
-  пустое значение возвращает стандартную позицию.
-- Тип транспорта, имя, устройство и маппинги сущностей — в тех же настройках.
+- **Позиции иконок** — раздел «Позиции на изображении»: ползунки `x`/`y` (0–100 %) для
+  сенсоров, дверей и кнопок; пустое значение возвращает стандартную позицию.
+- **Управление** — слот «Гудок/Сигнал» автоматически подстраивается: `button` — кнопка,
+  `switch`/`light` — переключатель, `binary_sensor` — индикатор состояния (on/off).
 
 Эквивалент в YAML:
 ```yaml
