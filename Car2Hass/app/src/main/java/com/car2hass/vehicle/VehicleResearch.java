@@ -348,6 +348,7 @@ public final class VehicleResearch {
                 diag.put("obd_status", appConfigGet(ctx, "getObdStatus"));
                 diag.put("obd_protocol", appConfigGet(ctx, "getObdProtocol"));
                 diag.put("obd_last_error", appConfigGet(ctx, "getObdLastError"));
+                diag.put("obd_raw_sample", appConfigGet(ctx, "getObdRawSample"));
                 diag.put("obd_bt_name", appConfigGet(ctx, "getObdBtName"));
                 diag.put("obd_bt_addr", appConfigGet(ctx, "getObdBtAddress"));
                 String pids = appConfigGet(ctx, "getObdSupportedPids");

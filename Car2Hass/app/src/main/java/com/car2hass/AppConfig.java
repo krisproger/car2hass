@@ -811,6 +811,7 @@ public class AppConfig {
     private static final String KEY_OBD_LAST_ERROR = "obd_last_error";
     private static final String KEY_OBD_PROTOCOL = "obd_protocol";
     private static final String KEY_OBD_SUPPORTED_PIDS = "obd_supported_pids";
+    private static final String KEY_OBD_RAW_SAMPLE = "obd_raw_sample";
 
     /** OBD adapter link state: "connected", "connecting", "disconnected" or "". */
     public static String getObdStatus(Context ctx) {
@@ -845,6 +846,14 @@ public class AppConfig {
 
     public static void setObdSupportedPids(Context ctx, String json) {
         prefs(ctx).edit().putString(KEY_OBD_SUPPORTED_PIDS, json == null ? "" : json).apply();
+    }
+
+    public static String getObdRawSample(Context ctx) {
+        return prefs(ctx).getString(KEY_OBD_RAW_SAMPLE, "");
+    }
+
+    public static void setObdRawSample(Context ctx, String v) {
+        prefs(ctx).edit().putString(KEY_OBD_RAW_SAMPLE, v == null ? "" : v).apply();
     }
 
     private static final String KEY_SEND_HISTORY = "send_history";

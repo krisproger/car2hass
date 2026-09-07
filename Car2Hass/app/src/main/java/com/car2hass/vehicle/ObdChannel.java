@@ -117,6 +117,10 @@ public class ObdChannel implements DataChannel {
                 AppConfig.setObdStatus(ctx, "disconnected");
                 return out;
             }
+            if (!warmUpProtocol(ctx, s)) {
+                AppConfig.setObdStatus(ctx, "connected");
+                return out;
+            }
             for (Map.Entry<String, String> e : ObdPidCodec.PID_TO_KEY.entrySet()) {
                 String pid = e.getKey();
                 if (supported != null && !supported.contains(pid)) continue;
@@ -179,6 +183,12 @@ public class ObdChannel implements DataChannel {
                 }
                 return out;
             }
+            if (!warmUpProtocol(ctx, s)) {
+                for (String pid : pids) {
+                    out.put(pid, ProbeResult.error("нет данных OBD (протокол не определён)"));
+                }
+                return out;
+            }
             for (String pid : pids) {
                 String resp = s.transact(ObdPidCodec.command(pid).trim(), 1);
                 Integer value = resp != null ? ObdPidCodec.parse(pid, resp) : null;
@@ -194,6 +204,32 @@ public class ObdChannel implements DataChannel {
             for (String pid : pids) out.put(pid, ProbeResult.error(msg));
         }
         return out;
+    }
+
+    /**
+     * The ELM in AUTO protocol mode needs a moment to lock onto the vehicle bus;
+     * the very first mode-01 request often returns NO DATA. Retry 0100 (the
+     * supported-PID bitmap) until it answers, then batch-read the target PIDs.
+     * Stores the raw 0100 reply for diagnostics.
+     */
+    private static boolean warmUpProtocol(Context ctx, ObdSession s) {
+        for (int i = 0; i < 5; i++) {
+            String resp = s.transact("0100", 1);
+            AppConfig.setObdRawSample(ctx, firstLine(resp));
+            if (ObdPidCodec.responseData(resp).length > 0) return true;
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException ie) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static String firstLine(String raw) {
+        java.util.List<String> lines = com.car2hass.vehicle.Elm327Parser.splitLines(raw);
+        return lines.isEmpty() ? "?" : lines.get(0);
     }
 
     private static CANDataItem findByKey(List<CANDataItem> items, String key) {
