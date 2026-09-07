@@ -159,6 +159,7 @@
     <string name="settings_research_match">совпадение %1$d%%</string>
     <string name="settings_research_preliminary">предварительно</string>
     <string name="settings_research_status_manual">вручную</string>
+    <string name="settings_research_recommend">Выбранный источник данных (%1$s) не подходит для этого автомобиля — рекомендуем: %2$s</string>
     <string name="settings_research_restart">Перезапустить исследование</string>
     <string name="settings_research_export">Экспорт отчёта</string>
     <string name="settings_research_no_report">Отчёт исследования ещё не готов</string>

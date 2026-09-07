@@ -317,6 +317,21 @@ class VehicleDataView(HomeAssistantView):
                 status=404,
             )
 
+        # Any unexpected exception is surfaced as a JSON 500 with the reason
+        # (never a stack trace) and logged with the full traceback in HA.
+        try:
+            return await self._process_batch(hass, entry_id, car_name, vvn,
+                                             firmware, app_version, batch,
+                                             data.get("ts"))
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.exception("api:cartelemetry failed (car_name=%s)", car_name)
+            return self.json(
+                {"status": "error", "message": f"{type(err).__name__}: {err}"},
+                status=500,
+            )
+
+    async def _process_batch(self, hass, entry_id, car_name, vvn,
+                             firmware, app_version, batch, ts):
         buckets = hass.data[DOMAIN].setdefault("_rate_limits", {})
         if not core.check_rate_limit(
             buckets, entry_id, dt_util.utcnow().timestamp(),
@@ -354,7 +369,7 @@ class VehicleDataView(HomeAssistantView):
 
         store["data"] = {
             "timestamp": agg["timestamp"],
-            "ts": data.get("ts", agg["timestamp"]),
+            "ts": ts if ts is not None else agg["timestamp"],
             "latitude": agg["latitude"],
             "longitude": agg["longitude"],
             "accuracy": agg["accuracy"],

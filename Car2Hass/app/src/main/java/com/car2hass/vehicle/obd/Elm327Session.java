@@ -23,16 +23,20 @@ public class Elm327Session implements ObdSession {
     @Override
     public String initWarmUp() {
         for (int attempt = 0; attempt < 2; attempt++) {
+            String atz = null;
             try {
-                transact("ATZ", 1);
+                atz = transact("ATZ", 1);
                 Thread.sleep(800);
             } catch (InterruptedException ie) {
                 Thread.currentThread().interrupt();
             }
-            transact("ATE0", 0);
-            transact("ATH0", 0);
-            transact("ATL0", 0);
-            transact("ATSP0", 0);
+            // A fresh clone may drop the very first ATZ while it boots; the
+            // retry attempt must answer. ATE0/ATH0/ATL0/ATSP0 must confirm OK.
+            if (attempt == 1 && !cmdOk(atz, "ELM327")) continue;
+            if (!cmdOk(transact("ATE0", 0), "OK")) continue;
+            if (!cmdOk(transact("ATH0", 0), "OK")) continue;
+            if (!cmdOk(transact("ATL0", 0), "OK")) continue;
+            if (!cmdOk(transact("ATSP0", 0), "OK")) continue;
             String resp = transact("ATI", 1);
             if (resp != null && Elm327Parser.extractVersion(resp) != null) {
                 return Elm327Parser.extractVersion(resp);
@@ -43,12 +47,17 @@ public class Elm327Session implements ObdSession {
 
     @Override
     public String lightInit() {
-        transact("ATE0", 0);
-        transact("ATH0", 0);
-        transact("ATL0", 0);
-        transact("ATSP0", 0);
+        if (!cmdOk(transact("ATE0", 0), "OK")) return null;
+        if (!cmdOk(transact("ATH0", 0), "OK")) return null;
+        if (!cmdOk(transact("ATL0", 0), "OK")) return null;
+        if (!cmdOk(transact("ATSP0", 0), "OK")) return null;
         String resp = transact("ATI", 1);
         return resp != null ? Elm327Parser.extractVersion(resp) : null;
+    }
+
+    private static boolean cmdOk(String raw, String expected) {
+        if (raw == null) return false;
+        return raw.toUpperCase(java.util.Locale.ROOT).contains(expected);
     }
 
     @Override

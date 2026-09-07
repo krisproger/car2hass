@@ -168,6 +168,7 @@
     <string name="settings_research_match">%1$d%% match</string>
     <string name="settings_research_preliminary">preliminary</string>
     <string name="settings_research_status_manual">manual</string>
+    <string name="settings_research_recommend">The selected data source (%1$s) does not fit this car — recommended: %2$s</string>
     <string name="settings_research_restart">Restart research</string>
     <string name="settings_research_export">Export report</string>
     <string name="settings_research_no_report">No research report yet</string>

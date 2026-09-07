@@ -90,7 +90,7 @@ public class Elm327SessionTest {
                 ati[0]++;
                 return ati[0] == 1 ? "OK\r>" : "ELM327 v1.5\r\r>";
             }
-            if (cmd.equals("ATZ\r")) return "OK\r>";
+            if (cmd.equals("ATZ\r")) return "ELM327 v1.5\r\r>"; // ATZ echoes the version
             if (cmd.startsWith("ATE") || cmd.startsWith("ATH") || cmd.startsWith("ATL")
                     || cmd.startsWith("ATSP")) return "OK\r>";
             return "?";

@@ -71,6 +71,9 @@ public class VoyahChannel implements DataChannel {
     private volatile Object cachedIface;
     private volatile boolean probeFailed;
     private volatile boolean probed;
+    private volatile long lastProbeMs;
+    private volatile boolean probing;
+    private static final long PROBE_RETRY_MS = 60_000L;
 
     // ---- raw-transact fallback (per tsrman/voyah-telemetry-demo: the firmware
     // SDK jars are empty stubs, so reflection may fail even on Voyah heads). ----
@@ -96,6 +99,16 @@ public class VoyahChannel implements DataChannel {
 
     @Override
     public ChannelResult probe(Context ctx) {
+        probing = true;
+        lastProbeMs = System.currentTimeMillis();
+        try {
+            return probeInner(ctx);
+        } finally {
+            probing = false;
+        }
+    }
+
+    private ChannelResult probeInner(Context ctx) {
         // Primary: reflection into the device SDK classes.
         try {
             Class<?> iface = Class.forName(IFACE_CLASS);
@@ -134,11 +147,12 @@ public class VoyahChannel implements DataChannel {
     @Override
     public List<CANDataItem> read(Context ctx, List<CANDataItem> knownItems) {
         List<CANDataItem> out = new ArrayList<>();
-        if (probeFailed || knownItems == null) return out;
-        // Lazy init: the telemetry cycle may read the channel without the
-        // research probe having run (e.g. Voyah-only setups).
-        if (!probed && !probeFailed) {
-            try { probe(ctx); } catch (Exception ignored) {}
+        if (knownItems == null) return out;
+        // A failed probe is retried after a cooldown instead of latching forever:
+        // the CAN service may not be ready during early boot of the head unit.
+        long now = System.currentTimeMillis();
+        if ((probeFailed && now - lastProbeMs > PROBE_RETRY_MS) || !probed) {
+            if (!probing) probe(ctx);
         }
         if (probeFailed) return out;
         if (useRawTransact) return readRaw(ctx, knownItems);

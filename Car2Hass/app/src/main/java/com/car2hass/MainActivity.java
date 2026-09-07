@@ -3167,6 +3167,7 @@ public class MainActivity extends BaseLocalizedActivity {
                 results.add(VehicleResearch.run(this, java.util.Collections.singletonList(ch), profile).get(0));
             }
             String reportSummary = buildResearchSummary(outcome);
+            final String autoProfile = outcome.selectedProfile;
             runOnUiThread(() -> {
                 if (researchProgressDialog != null) {
                     researchProgressDialog.dismiss();
@@ -3175,6 +3176,16 @@ public class MainActivity extends BaseLocalizedActivity {
                 btnRestartResearch.setEnabled(true);
                 renderResearch();
                 maybeUploadReport(path);
+                // The user's manual profile choice is kept (never auto-changed);
+                // if auto-detection disagrees, recommend instead of overriding.
+                if (AppConfig.isUserOverridden(MainActivity.this)
+                        && autoProfile != null
+                        && !autoProfile.equals(AppConfig.getSelectedProfile(MainActivity.this))) {
+                    String cur = AppConfig.getSelectedProfile(MainActivity.this);
+                    Toast.makeText(MainActivity.this,
+                            getString(R.string.settings_research_recommend, cur, autoProfile),
+                            Toast.LENGTH_LONG).show();
+                }
                 showResearchSummaryDialog(reportSummary, path);
             });
         }).start();
@@ -4260,6 +4271,7 @@ public class MainActivity extends BaseLocalizedActivity {
                         + (body.isEmpty() ? "" : " body=" + body));
                 conn.disconnect();
 
+                final String errorDetail = body;
                 runOnUiThread(() -> {
                     if (code == 200 || code == 201) {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentGreen));
@@ -4273,7 +4285,8 @@ public class MainActivity extends BaseLocalizedActivity {
                                 + " — обновите интеграцию и перезапустите HA");
                     } else {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
-                        tvTestResult.setText(getString(R.string.settings_test_endpoint_http, code));
+                        String detail = errorDetail.isEmpty() ? "" : ": " + errorDetail;
+                        tvTestResult.setText(getString(R.string.settings_test_endpoint_http, code) + detail);
                     }
                 });
             } catch (Exception e) {

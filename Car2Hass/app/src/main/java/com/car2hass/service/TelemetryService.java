@@ -9,9 +9,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.pm.PackageManager;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.media.AudioManager;
 import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
@@ -635,7 +640,9 @@ public class TelemetryService extends Service {
         for (CANDataItem item : items) {
             if (item == null || item.key == null) continue;
             String k = item.key;
-            if (!k.startsWith("location_") && !"device_battery".equals(k)) continue;
+            if (!k.startsWith("location_") && !"device_battery".equals(k)
+                    && !"device_pressure".equals(k)
+                    && !"media_volume".equals(k)) continue;
             String v = snapshotStore.get(k);
             if (v != null && !v.isEmpty()) {
                 item.value = v;
@@ -768,6 +775,30 @@ public class TelemetryService extends Service {
         return CANDataReader.createSignalItems();
     }
 
+    /** One-shot barometer read: device_pressure has no producer otherwise. */
+    private void readDevicePressure() {
+        try {
+            SensorManager sm = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+            Sensor p = sm == null ? null : sm.getDefaultSensor(Sensor.TYPE_PRESSURE);
+            if (p == null) return;
+            sm.registerListener(new SensorEventListener() {
+                @Override
+                public void onSensorChanged(SensorEvent e) {
+                    try {
+                        locationSource.onDevicePressure(e.values[0]);
+                    } finally {
+                        SensorManager s = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
+                        if (s != null) s.unregisterListener(this);
+                    }
+                }
+
+                @Override
+                public void onAccuracyChanged(Sensor sensor, int accuracy) {
+                }
+            }, p, SensorManager.SENSOR_DELAY_NORMAL);
+        } catch (Exception ignored) {}
+    }
+
     /** 1 Hz snapshot ticker: keeps GPS/device at 1 Hz, batched via HassClient queue. */
     private void startSnapshotTicker() {
         mainHandler.postDelayed(new Runnable() {
@@ -800,6 +831,17 @@ public class TelemetryService extends Service {
                 }
             } catch (Exception ignored) {}
             if (battery >= 0) locationSource.onDeviceBattery(battery);
+            // Media volume: DiPlus often fails to report the live value, but the
+            // Android media stream is authoritative on the head unit.
+            try {
+                AudioManager am = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+                if (am != null) {
+                    int vol = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+                    int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
+                    if (max > 0) locationSource.onMediaVolume((int) (100f * vol / max));
+                }
+            } catch (Exception ignored) {}
+            readDevicePressure();
         } catch (Exception ignored) {}
 
         JSONObject sig = new JSONObject();

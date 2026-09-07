@@ -6,6 +6,7 @@ import android.content.pm.PackageManager;
 import android.location.LocationManager;
 
 import com.car2hass.CANDataItem;
+import com.car2hass.LogBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,11 +34,19 @@ public class SystemChannel implements DataChannel {
     @Override
     public ChannelResult probe(Context ctx) {
         if (!hasLocationPermission(ctx)) {
+            LogBuffer.w("SystemChannel", "probe: нет разрешения на локацию");
             return ChannelResult.dead("нет разрешения на локацию");
         }
+        // Device sensors (battery, pressure) never depend on GPS, so the channel
+        // is available whenever location permission is granted. GPS freshness is
+        // checked per field (location_*), not as a channel-wide gate — otherwise
+        // telemetry would drop device sensors whenever the fix is stale.
         long ageMs = lastFixAgeMs(ctx);
-        if (ageMs < 0) return ChannelResult.dead("GPS fix ещё не получен");
-        if (ageMs > FIX_MAX_AGE_MS) return ChannelResult.dead("GPS fix устарел (" + (ageMs / 1000) + " с)");
+        if (ageMs < 0) {
+            LogBuffer.i("SystemChannel", "probe: GPS fix ещё не получен — device-сенсоры доступны");
+        } else if (ageMs > FIX_MAX_AGE_MS) {
+            LogBuffer.i("SystemChannel", "probe: GPS fix устарел (" + (ageMs / 1000) + " с) — device-сенсоры доступны");
+        }
         return ChannelResult.ok(7);
     }
 
