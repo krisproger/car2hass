@@ -184,8 +184,12 @@ public class ObdChannel implements DataChannel {
                 return out;
             }
             if (!warmUpProtocol(ctx, s)) {
+                String raw = AppConfig.getObdRawSample(ctx);
+                String reason = raw != null && raw.contains("SEARCHING")
+                        ? "OBD: поиск протокола не завершился (SEARCHING…) — на этом авто OBD может не поддерживаться"
+                        : "нет данных OBD (протокол не определён)";
                 for (String pid : pids) {
-                    out.put(pid, ProbeResult.error("нет данных OBD (протокол не определён)"));
+                    out.put(pid, ProbeResult.error(reason));
                 }
                 return out;
             }
@@ -213,7 +217,7 @@ public class ObdChannel implements DataChannel {
      * Stores the raw 0100 reply for diagnostics.
      */
     private static boolean warmUpProtocol(Context ctx, ObdSession s) {
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 10; i++) {
             String resp = s.transact("0100", 1);
             AppConfig.setObdRawSample(ctx, firstLine(resp));
             if (ObdPidCodec.responseData(resp).length > 0) return true;

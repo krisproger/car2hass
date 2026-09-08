@@ -210,6 +210,12 @@ public class TelemetryService extends Service {
             startTelemetryLoop();
             startFlushLoop();
             startLocationUpdates();
+            // Baseline GPS: ensure telemetry carries a location even before the
+            // first live fix (Car Scanner-style "always have a position").
+            try {
+                LocationManager lm0 = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+                if (lm0 != null) updateLastKnownLocation(lm0);
+            } catch (Exception ignored) {}
             startSnapshotTicker();
             registerNetworkCallback();
             startCommandPoller();
@@ -717,7 +723,9 @@ public class TelemetryService extends Service {
                 LogBuffer.i("TelemetryService", "No power_state signal, assuming vehicle active");
             }
 
-            if (!hasValidLocation()) {
+            boolean fixStale = !hasValidLocation()
+                    || System.currentTimeMillis() - lastLocTime > 30_000L;
+            if (fixStale) {
                 long now = System.currentTimeMillis();
                 if (now - lastLocationRetryMs > LOCATION_RETRY_INTERVAL_MS) {
                     lastLocationRetryMs = now;
@@ -726,7 +734,9 @@ public class TelemetryService extends Service {
                         updateLastKnownLocation(lm);
                     }
                 }
-                LogBuffer.d("TelemetryService", "collectSnapshot: no valid GPS fix yet");
+                if (!hasValidLocation()) {
+                    LogBuffer.d("TelemetryService", "collectSnapshot: no valid GPS fix yet");
+                }
             }
 
             // Static metadata sensors
@@ -1040,6 +1050,13 @@ public class TelemetryService extends Service {
                 lastLon = loc.getLongitude();
                 lastAccuracy = loc.getAccuracy();
                 lastLocTime = loc.getTime();
+                // Keep the location_* signals in sync so telemetry always carries
+                // a baseline even when live GPS fixes are absent.
+                locationSource.onLocation(loc.getLatitude(), loc.getLongitude(),
+                        loc.hasSpeed() ? loc.getSpeed() : 0f,
+                        loc.hasBearing() ? loc.getBearing() : 0f,
+                        loc.hasAltitude() ? loc.getAltitude() : 0.0,
+                        loc.getAccuracy(), loc.getProvider(), loc.getTime());
                 LogBuffer.i("TelemetryService", "Last known GPS: " + lastLat + ", " + lastLon
                         + " (±" + lastAccuracy + "m) from " + loc.getProvider());
             } else {

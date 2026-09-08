@@ -934,6 +934,13 @@ public class MainActivity extends BaseLocalizedActivity {
         if (!serviceBound) {
             bindTelemetryService();
         }
+        // Car Scanner-style: with OBD enabled and an adapter configured, try to
+        // (re)connect right away so the user sees the live status on launch.
+        if (AppConfig.isObdEnabled(this)
+                && !AppConfig.getObdBtAddress(this).isEmpty()
+                && "bt".equals(AppConfig.getObdMode(this))) {
+            connectObdAuto();
+        }
     }
 
     @Override
@@ -3332,6 +3339,13 @@ public class MainActivity extends BaseLocalizedActivity {
                 // OBD checkbox is the enable switch for the protocol itself.
                 if ("obd".equals(cv.name)) {
                     AppConfig.setObdEnabled(this, isChecked);
+                    if (isChecked) {
+                        // Car Scanner-style: enabling the protocol immediately
+                        // connects to the (auto-detected) adapter and reports.
+                        connectObdAuto();
+                    } else {
+                        AppConfig.setObdStatus(this, "disconnected");
+                    }
                 }
                 renderResearch();
             });
@@ -3611,6 +3625,18 @@ public class MainActivity extends BaseLocalizedActivity {
                 .setItems(names, (d, which) -> connectObdDevice(devices.get(which)))
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    /** Car Scanner-style auto-connect: probe the configured/auto-detected OBD adapter. */
+    private void connectObdAuto() {
+        new Thread(() -> {
+            try {
+                new com.car2hass.vehicle.ObdChannel().probe(MainActivity.this);
+            } catch (Exception e) {
+                LogBuffer.e("MainActivity", "obd auto-connect: " + e.getMessage());
+            }
+            runOnUiThread(this::renderResearch);
+        }, "obd-auto-connect").start();
     }
 
     private void connectObdDevice(final BluetoothDevice dev) {
