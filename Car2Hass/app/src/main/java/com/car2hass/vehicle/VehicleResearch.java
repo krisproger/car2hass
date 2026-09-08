@@ -360,6 +360,37 @@ public final class VehicleResearch {
                     }
                 }
                 diag.put("obd_supported_pids", pidCount);
+                // Location baseline diagnostics: the live telemetry depends on the
+                // same getLastKnownLocation to carry a position without GPS fixes.
+                try {
+                    android.location.LocationManager lm = (android.location.LocationManager)
+                            ctx.getSystemService(android.content.Context.LOCATION_SERVICE);
+                    boolean perm = ctx.checkSelfPermission(
+                            android.Manifest.permission.ACCESS_FINE_LOCATION)
+                            == android.content.pm.PackageManager.PERMISSION_GRANTED
+                            || ctx.checkSelfPermission(
+                            android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                            == android.content.pm.PackageManager.PERMISSION_GRANTED;
+                    diag.put("loc_permission", perm);
+                    long best = -1;
+                    String prov = "";
+                    if (lm != null && perm) {
+                        for (String p : new String[]{"gps", "network", "passive"}) {
+                            try {
+                                android.location.Location l = lm.getLastKnownLocation(p);
+                                if (l != null) {
+                                    long age = (System.currentTimeMillis() - l.getTime()) / 1000;
+                                    if (best < 0 || age < best) {
+                                        best = age;
+                                        prov = l.getProvider();
+                                    }
+                                }
+                            } catch (Exception ignored) {}
+                        }
+                    }
+                    diag.put("loc_last_known_age_sec", best);
+                    diag.put("loc_provider", prov);
+                } catch (Exception ignored) {}
                 report.put("diagnostics", diag);
             }
             if (ctx != null) reportPath = ProbeReport.writeFile(ctx, report);

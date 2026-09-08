@@ -726,14 +726,7 @@ public class TelemetryService extends Service {
             boolean fixStale = !hasValidLocation()
                     || System.currentTimeMillis() - lastLocTime > 30_000L;
             if (fixStale) {
-                long now = System.currentTimeMillis();
-                if (now - lastLocationRetryMs > LOCATION_RETRY_INTERVAL_MS) {
-                    lastLocationRetryMs = now;
-                    LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-                    if (lm != null) {
-                        updateLastKnownLocation(lm);
-                    }
-                }
+                ensureLocationBaseline();
                 if (!hasValidLocation()) {
                     LogBuffer.d("TelemetryService", "collectSnapshot: no valid GPS fix yet");
                 }
@@ -785,6 +778,15 @@ public class TelemetryService extends Service {
         return CANDataReader.createSignalItems();
     }
 
+    /** Fallback to last-known GPS/NETWORK/PASSIVE (throttled); logs the result. */
+    private void ensureLocationBaseline() {
+        long now = System.currentTimeMillis();
+        if (now - lastLocationRetryMs < LOCATION_RETRY_INTERVAL_MS) return;
+        lastLocationRetryMs = now;
+        LocationManager lm = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+        if (lm != null) updateLastKnownLocation(lm);
+    }
+
     /** One-shot barometer read: device_pressure has no producer otherwise. */
     private void readDevicePressure() {
         try {
@@ -831,6 +833,11 @@ public class TelemetryService extends Service {
      */
     private void buildAndEnqueueSnapshot() {
         try {
+            // Baseline: even when live fixes are absent the last-known location
+            // must be carried (and logged) so HA always gets a position.
+            boolean fixStale = !hasValidLocation()
+                    || System.currentTimeMillis() - lastLocTime > 30_000L;
+            if (fixStale) ensureLocationBaseline();
             int battery = -1;
             try {
                 Intent bat = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -964,9 +971,10 @@ public class TelemetryService extends Service {
                     float accuracy = loc.getAccuracy();
                     String provider = loc.getProvider();
 
-                    // Ignore very inaccurate fixes.
-                    if (accuracy > 50) {
-                        LogBuffer.d("TelemetryService", "Ignoring low-accuracy location (±" + accuracy + "m) from " + provider);
+                    // Ignore absurd fixes; anything else becomes the baseline
+                    // (accuracy is recorded and forwarded, HA decides).
+                    if (accuracy > 1000) {
+                        LogBuffer.d("TelemetryService", "Ignoring absurd location (±" + accuracy + "m) from " + provider);
                         return;
                     }
 
