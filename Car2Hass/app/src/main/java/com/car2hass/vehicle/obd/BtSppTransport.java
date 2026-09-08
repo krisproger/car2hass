@@ -74,7 +74,15 @@ public final class BtSppTransport implements ObdTransport {
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("bad address " + address, e);
         }
-        return session(connect(device));
+        // The adapter's RFCOMM link intermittently fails right after the previous
+        // session closes ("read failed ... read ret: -1"); a single short retry
+        // makes probe/read/auto-connect resilient without the heavier forced init.
+        try {
+            return session(connect(device));
+        } catch (Exception e) {
+            Thread.sleep(700);
+            return session(connect(device));
+        }
     }
 
     /**

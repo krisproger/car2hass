@@ -228,6 +228,20 @@ public class ObdChannel implements DataChannel {
                 return false;
             }
         }
+        // AUTO detection never locked (BYD EV OBD port often ignores mode-01 auto
+        // search); try the two most common CAN protocols explicitly, like some
+        // OBD apps do, before giving up.
+        for (String proto : new String[]{"ATSP7", "ATSP6"}) {
+            s.transact(proto, 0);
+            for (int i = 0; i < 3; i++) {
+                String resp = s.transact("0100", 1);
+                AppConfig.setObdRawSample(ctx, firstLine(resp));
+                if (ObdPidCodec.responseData(resp).length > 0) {
+                    AppConfig.setObdProtocol(ctx, proto.substring(4));
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
