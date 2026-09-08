@@ -14,6 +14,7 @@ from homeassistant.core import HomeAssistant, ServiceCall
 from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers import entity_registry
 from homeassistant.util import dt as dt_util
 
 from . import core
@@ -367,6 +368,12 @@ class VehicleDataView(HomeAssistantView):
         if app_version:
             latest_signals["app_version"] = app_version
 
+        # Variant 1 sensor availability: remember every signal ever received so
+        # its sensor can be enabled once and never lost; unseen ones stay under
+        # the HA "disabled" spoiler (entity_registry_enabled_default=False).
+        old_seen = set(store["data"].get("seen_signals", set())) if store.get("data") else set()
+        seen = old_seen | set(latest_signals.keys())
+
         store["data"] = {
             "timestamp": agg["timestamp"],
             "ts": ts if ts is not None else agg["timestamp"],
@@ -375,6 +382,7 @@ class VehicleDataView(HomeAssistantView):
             "accuracy": agg["accuracy"],
             "fix_timestamp": agg["fix_timestamp"],
             "signals": latest_signals,
+            "seen_signals": seen,
             # Full chronological batch so platforms can replay intermediate
             # values / GPS points instead of only the final aggregated state.
             "batch": sorted_batch,
@@ -386,6 +394,9 @@ class VehicleDataView(HomeAssistantView):
         store["last_seen"] = dt_util.utcnow().isoformat()
 
         async_dispatcher_send(hass, SIGNAL_VEHICLE_DATA_UPDATED)
+        newly = set(latest_signals.keys()) - old_seen
+        if newly:
+            await _async_enable_sensors(hass, entry_id, newly)
 
         return self.json({
             "status": "ok",
@@ -402,6 +413,27 @@ class VehicleDataView(HomeAssistantView):
             if store.get("car_name") == car_name:
                 return entry_id
         return None
+
+
+async def _async_enable_sensors(hass: HomeAssistant, entry_id: str, signal_keys: set[str]) -> None:
+    """Enable newly-seen sensor entities (Variant 1 availability).
+
+    Sensors are created disabled-by-default (entity_registry_enabled_default=False),
+    so unseen signals stay under the HA "disabled" spoiler. As soon as a signal is
+    received the integration enables its entity; a user-disabled entity is kept off.
+    """
+    reg = entity_registry.async_get(hass)
+    for key in signal_keys:
+        unique = f"{entry_id}_{key}"
+        entity_id = reg.async_get_entity_id(Platform.SENSOR, DOMAIN, unique)
+        if entity_id is None:
+            entity_id = reg.async_get_entity_id(Platform.BINARY_SENSOR, DOMAIN, unique)
+        if entity_id is None:
+            continue
+        entry = reg.async_get(entity_id)
+        if entry is None or entry.disabled_by != "integration":
+            continue
+        reg.async_enable(entity_id)
 
 
 class VehicleCommandsView(HomeAssistantView):

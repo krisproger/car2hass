@@ -67,6 +67,7 @@ def test_aggregate_latest_value_wins_and_gps():
     assert agg["longitude"] == 37.0
     assert agg["accuracy"] == 5
     assert agg["timestamp"] == 2
+    assert agg["seen_signals"] == {"speed", "soc"}
 
 
 def test_aggregate_skips_invalid_gps():

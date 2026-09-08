@@ -20,6 +20,8 @@ public class CANDataItem {
     public boolean enabled = true;
     /** True when DiPlus reports this signal is not supported on the current firmware. */
     public boolean unsupported = false;
+    /** Channel that produced the current value (diplus/adb/dumpsys/voyah/obd/system). */
+    public String sourceChannel;
 
     public CANDataItem(int canId, String name, String unit, int route) {
         this.canId = canId;

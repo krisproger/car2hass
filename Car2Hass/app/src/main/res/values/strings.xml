@@ -141,6 +141,7 @@
     <string name="settings_debug_compare">Debug compare</string>
     <string name="settings_debug_compare_summary">Read both sources every tick and log per-signal comparison (NativeCompare) to find map errors.</string>
     <string name="settings_diplus_auth">DiPlus auth token (optional)</string>
+    <string name="settings_location_test">Location test</string>
     <string name="settings_diplus_auth_hint">Only if DiPlus requires authorization</string>
     <string name="settings_apply_background_mode">Apply background mode</string>
     <string name="settings_vehicle">Car</string>
@@ -267,6 +268,8 @@
 
     <!-- Attribute filter -->
     <string name="filter_title">Attribute filter for HA</string>
+    <string name="telemetry_show_unreachable">Show unreachable</string>
+    <string name="telemetry_hide_unreachable">Hide unreachable</string>
     <string name="filter_description">Checked attributes are sent to Home Assistant. By default all are selected.</string>
     <string name="filter_select_all">Select all</string>
     <string name="filter_deselect_all">Deselect all</string>

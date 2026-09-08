@@ -106,6 +106,11 @@ public class TelemetryService extends Service {
     private CommandPoller commandPoller;
     private RuleEngine ruleEngine;
     private final ConcurrentHashMap<String, String> cachedSignalValues = new ConcurrentHashMap<>();
+    /** Shared signal store (new architecture): workers write here, tab/snapshot read. */
+    public final com.car2hass.vehicle.ValueStore valueStore =
+            new com.car2hass.vehicle.ValueStore();
+    private com.car2hass.vehicle.SystemWorker systemWorker;
+    private com.car2hass.vehicle.ObdWorker obdWorker;
     private final SnapshotStore snapshotStore = new SnapshotStore();
     private final LocationSource locationSource = new LocationSource(snapshotStore);
 
@@ -210,6 +215,13 @@ public class TelemetryService extends Service {
             startTelemetryLoop();
             startFlushLoop();
             startLocationUpdates();
+            // System-first: the system worker always feeds location/device into the
+            // ValueStore so any Android device (plain phone) has telemetry.
+            systemWorker = new com.car2hass.vehicle.SystemWorker(this, valueStore);
+            systemWorker.start();
+            // OBD worker: persistent session + periodic PID polling when enabled.
+            obdWorker = new com.car2hass.vehicle.ObdWorker(this, valueStore);
+            obdWorker.start();
             // Baseline GPS: ensure telemetry carries a location even before the
             // first live fix (Car Scanner-style "always have a position").
             try {
@@ -587,6 +599,9 @@ public class TelemetryService extends Service {
 
     private void refreshData() {
         try {
+            // Worker architecture: feed the shared ValueStore with channel values
+            // so the telemetry tab and snapshot no longer depend on this callback.
+            com.car2hass.vehicle.ChannelWorker.runOnce(this, valueStore);
             // Defensive copy: CANDataReader creates subList() views that executor
             // workers iterate, while the main thread may add geofence items via
             // ensureGeofenceItem — sharing the live list caused CME (build 156+).
@@ -838,6 +853,10 @@ public class TelemetryService extends Service {
             boolean fixStale = !hasValidLocation()
                     || System.currentTimeMillis() - lastLocTime > 30_000L;
             if (fixStale) ensureLocationBaseline();
+            // System-first: refresh system signals into the ValueStore and mirror
+            // them into the snapshot pipeline.
+            if (systemWorker != null) systemWorker.tick();
+            mirrorSystemToSnapshot();
             int battery = -1;
             try {
                 Intent bat = registerReceiver(null, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -891,6 +910,43 @@ public class TelemetryService extends Service {
     }
 
     /** True when a string is a numeric literal that is NaN/Infinity. */
+    private void mirrorSystemToSnapshot() {
+        try {
+            for (String k : new String[]{"location_lat", "location_lon", "location_speed",
+                    "location_bearing", "location_altitude", "location_accuracy",
+                    "location_provider", "device_battery", "device_pressure", "media_volume"}) {
+                String v = valueStore.get(k);
+                if (v != null) locationSource.storePut(k, v);
+            }
+            com.car2hass.vehicle.SnapshotStore.Loc l = valueStoreLoc();
+            if (l != null) locationSource.storeSetLocation(l);
+        } catch (Exception ignored) {}
+    }
+
+    private com.car2hass.vehicle.SnapshotStore.Loc valueStoreLoc() {
+        String lat = valueStore.get("location_lat");
+        String lon = valueStore.get("location_lon");
+        if (lat == null || lon == null) return null;
+        try {
+            com.car2hass.vehicle.SnapshotStore.Loc loc = new com.car2hass.vehicle.SnapshotStore.Loc();
+            loc.lat = Double.parseDouble(lat);
+            loc.lon = Double.parseDouble(lon);
+            loc.alt = parseDoubleSafe(valueStore.get("location_altitude"));
+            loc.speed = (float) parseDoubleSafe(valueStore.get("location_speed"));
+            loc.bearing = (float) parseDoubleSafe(valueStore.get("location_bearing"));
+            loc.accuracy = (float) parseDoubleSafe(valueStore.get("location_accuracy"));
+            loc.provider = valueStore.get("location_provider") == null ? "" : valueStore.get("location_provider");
+            loc.timeMs = System.currentTimeMillis();
+            return loc;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static double parseDoubleSafe(String v) {
+        try { return Double.parseDouble(v); } catch (Exception e) { return 0.0; }
+    }
+
     private static boolean isNonFiniteNumeric(String v) {
         if (v == null) return false;
         String s = v.trim().toLowerCase(java.util.Locale.US);

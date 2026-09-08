@@ -292,6 +292,17 @@ public class CANDataReader {
     }
 
     /**
+     * Public wrapper for the worker architecture: refresh active channels and
+     * return items tagged with their source channel (values only).
+     */
+    public static List<CANDataItem> refreshWithSourceManagerForStore(Context context) {
+        if (AppConfig.getSelectedProfile(context) == null) {
+            return refreshSelected(context, CANDataReader.createSignalItems());
+        }
+        return refreshWithSourceManager(context, new ArrayList<>());
+    }
+
+    /**
      * Computes the last successful telemetry source so the auto mode starts
      * each cycle with the source that has been answering, avoiding a needless
      * round of failures on a healthy setup.
@@ -366,7 +377,14 @@ public class CANDataReader {
                 else if ("adb".equals(ch)) r = tryNativeOnce(context, items);
                 else if ("dumpsys".equals(ch)) r = tryDumpsys(items);
                 else if ("voyah".equals(ch)) r = voyahChannel().read(context, items);
-                if (r != null && !r.isEmpty()) return r;
+                if (r != null && !r.isEmpty()) {
+                for (CANDataItem it : r) {
+                    if (it != null && it.value != null && !"---".equals(it.value)) {
+                        it.sourceChannel = ch;
+                    }
+                }
+                return r;
+            }
             }
             return null;
         } catch (Exception e) {

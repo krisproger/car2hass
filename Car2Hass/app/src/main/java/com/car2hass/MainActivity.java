@@ -112,6 +112,8 @@ public class MainActivity extends BaseLocalizedActivity {
 
     // Signal enable filter state (in-memory; persisted every 5 s when changed)
     private final Set<String> pendingDisabledKeys = new HashSet<>();
+    /** Toggles the "known but unreachable" spoiler at the end of the telemetry list. */
+    private boolean showUnreachableSensors;
     private boolean enabledDirty = false;
     private final Runnable saveEnabledRunnable = this::saveEnabledState;
 
@@ -219,6 +221,7 @@ public class MainActivity extends BaseLocalizedActivity {
             try {
                 lastRefresh = timestamp;
                 applyEnabledStateToItems(items);
+                writeItemsToValueStore(items);
                 handler.post(() -> {
                     try {
                         long now = System.currentTimeMillis();
@@ -2691,6 +2694,90 @@ public class MainActivity extends BaseLocalizedActivity {
         }
     }
 
+    private void writeItemsToValueStore(List<CANDataItem> items) {
+        TelemetryService svc = getTelemetryService();
+        if (svc == null || items == null) return;
+        com.car2hass.vehicle.ValueStore store = svc.valueStore;
+        for (CANDataItem it : items) {
+            if (it == null || it.key == null) continue;
+            if (it.value == null || "---".equals(it.value)) continue;
+            store.put(it.key, it.value, "channel");
+        }
+    }
+
+    /** Tab list from the shared ValueStore: live first, expected below; disabled at the end. */
+    private List<CANDataItem> buildDisplayListFromValueStore() {
+        TelemetryService svc = getTelemetryService();
+        if (svc == null) return null;
+        List<CANDataItem> out = new ArrayList<>();
+        Set<String> active = new HashSet<>(AppConfig.getActiveChannels(this));
+        try {
+            RegistryStore reg = RegistryStore.load(this);
+            List<String> keys = reg.sensorKeys();
+            for (String key : keys) {
+                String label = key;
+                boolean unreachable = false;
+                try {
+                    org.json.JSONObject s = reg.getSensor(key);
+                    if (s != null) {
+                        label = s.optString("label_ru", s.optString("label_en", key));
+                        org.json.JSONObject channels = s.optJSONObject("channels");
+                        if (channels != null && !channels.has("system")) {
+                            boolean reachable = false;
+                            java.util.Iterator<String> it = channels.keys();
+                            while (it.hasNext()) {
+                                String c = it.next();
+                                if (active.contains(c)) { reachable = true; break; }
+                            }
+                            if (!reachable) unreachable = true;
+                        }
+                    }
+                } catch (Exception ignored) {}
+                CANDataItem it = new CANDataItem(0, key, label, 0);
+                it.key = key;
+                it.enabled = AppConfig.isSignalEnabled(this, key);
+                String v = svc.valueStore.get(key);
+                it.value = v == null ? "---" : v;
+                long age = v == null ? -1 : svc.valueStore.ageMs(key);
+                it.lastUpdate = v == null ? 0 : System.currentTimeMillis() - age;
+                it.rawData = unreachable ? "unreachable" : "";
+                out.add(it);
+            }
+        } catch (Exception e) {
+            LogBuffer.e("Main", "display list: " + e.getMessage());
+        }
+        java.util.List<CANDataItem> liveOn = new ArrayList<>(), liveOff = new ArrayList<>(),
+                expOn = new ArrayList<>(), expOff = new ArrayList<>();
+        for (CANDataItem it : out) {
+            boolean live = !"---".equals(it.value);
+            if (live && it.enabled) liveOn.add(it);
+            else if (live) liveOff.add(it);
+            else if (it.enabled) expOn.add(it);
+            else expOff.add(it);
+        }
+        java.util.Comparator<CANDataItem> byKey = (a, b) -> a.key.compareTo(b.key);
+        liveOn.sort(byKey);
+        liveOff.sort(byKey);
+        expOn.sort(byKey);
+        expOff.sort(byKey);
+        List<CANDataItem> result = new ArrayList<>();
+        result.addAll(liveOn);
+        result.addAll(liveOff);
+        result.addAll(expOn);
+        result.addAll(expOff);
+        // Known-but-unreachable sensors are shown only when the user expands the spoiler.
+        if (showUnreachableSensors) {
+            java.util.List<CANDataItem> unreach = new ArrayList<>();
+            for (CANDataItem it : out) {
+                if (!"---".equals(it.value)) continue;
+                if ("unreachable".equals(it.rawData)) unreach.add(it);
+            }
+            unreach.sort(byKey);
+            result.addAll(unreach);
+        }
+        return result;
+    }
+
     private void applyEnabledStateToItems(List<CANDataItem> items) {
         if (items == null) return;
         for (CANDataItem item : items) {
@@ -2770,6 +2857,20 @@ public class MainActivity extends BaseLocalizedActivity {
         findViewById(R.id.headerValue).setOnClickListener(v -> adapter.sortBy(CANDataAdapter.SortColumn.VALUE));
         findViewById(R.id.headerUnit).setOnClickListener(v -> adapter.sortBy(CANDataAdapter.SortColumn.UNIT));
         findViewById(R.id.headerRoute).setOnClickListener(v -> adapter.sortBy(CANDataAdapter.SortColumn.ROUTE));
+        // Spoiler toggle for sensors known but unreachable in the current config.
+        View spoilerBtn = findViewById(R.id.btnUnreachableSensors);
+        if (spoilerBtn != null) {
+            spoilerBtn.setOnClickListener(v -> {
+                showUnreachableSensors = !showUnreachableSensors;
+                TextView tv = spoilerBtn instanceof TextView ? (TextView) spoilerBtn : null;
+                if (tv != null) {
+                    tv.setText(getString(showUnreachableSensors
+                            ? R.string.telemetry_hide_unreachable : R.string.telemetry_show_unreachable));
+                }
+                List<CANDataItem> list = buildDisplayListFromValueStore();
+                if (list != null) adapter.setData(list);
+            });
+        }
     }
 
     private void setupEnabledFilterListeners() {
@@ -2813,6 +2914,19 @@ public class MainActivity extends BaseLocalizedActivity {
     private void postEnabledSave() {
         handler.removeCallbacks(saveEnabledRunnable);
         handler.postDelayed(saveEnabledRunnable, 5000);
+        // Telemetry tab reads the shared ValueStore on a fixed cadence so system
+        // sensors are always visible even when the CAN cycle yields no data.
+        handler.postDelayed(new Runnable() {
+            @Override public void run() {
+                try {
+                    List<CANDataItem> list = buildDisplayListFromValueStore();
+                    if (list != null) adapter.setData(list);
+                } catch (Exception e) {
+                    LogBuffer.e("Main", "valueStore tab refresh: " + e.getMessage());
+                }
+                handler.postDelayed(this, 2000);
+            }
+        }, 2000);
     }
 
     private void saveEnabledState() {
@@ -2927,6 +3041,7 @@ public class MainActivity extends BaseLocalizedActivity {
         attachAutoSaveListeners(tvHttpWarning);
 
         settingsView.findViewById(R.id.btnTest).setOnClickListener(v -> testConnection());
+        settingsView.findViewById(R.id.btnLocationTest).setOnClickListener(v -> showLocationTest());
         settingsView.findViewById(R.id.btnExportConfig).setOnClickListener(v -> exportConfig());
         settingsView.findViewById(R.id.btnImportConfig).setOnClickListener(v -> importConfig());
         settingsView.findViewById(R.id.btnCheckUpdate).setOnClickListener(v -> checkForUpdate(true));
@@ -4310,6 +4425,50 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         String scheme = switchHttps.isChecked() ? "https" : "http";
         return scheme + "://" + host + ":" + port;
+    }
+
+    private void showLocationTest() {
+        StringBuilder sb = new StringBuilder();
+        boolean perm = checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED
+            || checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+        sb.append("Permission: ").append(perm ? "granted" : "DENIED").append('\n');
+        TelemetryService svc = getTelemetryService();
+        long best = -1;
+        String prov = "";
+        try {
+            android.location.LocationManager lm = (android.location.LocationManager)
+                    getSystemService(android.content.Context.LOCATION_SERVICE);
+            if (lm != null && perm) {
+                android.location.Location b = null;
+                for (String p : new String[]{"gps", "network", "passive"}) {
+                    try {
+                        android.location.Location l = lm.getLastKnownLocation(p);
+                        if (l != null && (b == null || l.getTime() > b.getTime())) b = l;
+                    } catch (Exception ignored) {}
+                }
+                if (b != null) {
+                    best = (System.currentTimeMillis() - b.getTime()) / 1000;
+                    prov = b.getProvider();
+                }
+            }
+        } catch (Exception ignored) {}
+        sb.append("Last-known age: ").append(best < 0 ? "none" : best + "s").append('\n');
+        sb.append("Provider: ").append(prov.isEmpty() ? "—" : prov).append('\n');
+        sb.append("ValueStore: ").append('\n');
+        if (svc != null) {
+            sb.append("  lat=").append(svc.valueStore.get("location_lat")).append('\n');
+            sb.append("  lon=").append(svc.valueStore.get("location_lon")).append('\n');
+            sb.append("  battery=").append(svc.valueStore.get("device_battery")).append('\n');
+        } else {
+            sb.append("  (сервис не запущен)\n");
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.settings_location_test)
+                .setMessage(sb.toString())
+                .setPositiveButton(android.R.string.ok, null)
+                .show();
     }
 
     private void testConnection() {

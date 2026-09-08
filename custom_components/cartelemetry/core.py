@@ -101,6 +101,7 @@ def aggregate_batch(sorted_batch: list) -> dict:
         "accuracy": last_accuracy,
         "timestamp": last_timestamp,
         "fix_timestamp": last_fix_time,
+        "seen_signals": set(latest_signals.keys()),
     }
 
 

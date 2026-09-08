@@ -11,6 +11,14 @@ from .const import NUMERIC_SENSORS, ENUM_SENSORS, CONF_CAR_NAME, INTEGRATION_VER
 from .device_info import build_device_info
 from . import SIGNAL_VEHICLE_DATA_UPDATED, async_replay_state
 
+# Core signals are always present on any device and enabled from the start;
+# every other sensor starts disabled-by-default and is enabled on first data.
+_CORE_SIGNALS = {
+    "power_state", "app_version", "device_battery",
+    "location_lat", "location_lon", "location_speed", "location_bearing",
+    "location_altitude", "location_accuracy", "location_provider",
+}
+
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up sensors from config entry."""
@@ -40,6 +48,9 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
         self._attr_state_class = config.get("state_class")
         self._attr_icon = config.get("icon")
         self._attr_should_poll = False
+        # Variant 1 availability: non-core sensors start under the "disabled"
+        # spoiler and are enabled by the integration on their first value.
+        self._attr_entity_registry_enabled_default = signal_key in _CORE_SIGNALS
         self._attr_native_value = None
         self._attr_extra_state_attributes = {}
         self._attr_available = False

@@ -132,6 +132,7 @@
     <string name="settings_adb_port">ADB порт</string>
     <string name="settings_adb_port_hint">5555</string>
     <string name="settings_diplus_auth">Токен авторизации DiPlus (необязательно)</string>
+    <string name="settings_location_test">Тест локации</string>
     <string name="settings_diplus_auth_hint">Только если DiPlus требует авторизацию</string>
     <string name="settings_apply_background_mode">Применить режим фона</string>
     <string name="settings_vehicle">Авто</string>
@@ -260,6 +261,8 @@
 
     <!-- Attribute filter -->
     <string name="filter_title">Фильтр атрибутов для HA</string>
+    <string name="telemetry_show_unreachable">Показать недостижимые</string>
+    <string name="telemetry_hide_unreachable">Скрыть недостижимые</string>
     <string name="filter_description">Отмеченные атрибуты передаются в Home Assistant. По умолчанию выбраны все.</string>
     <string name="filter_select_all">Выбрать все</string>
     <string name="filter_deselect_all">Снять все</string>

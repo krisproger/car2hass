@@ -170,4 +170,14 @@
             android:gravity="center"
             android:textSize="14sp" />
     </LinearLayout>
+
+    <Button
+        android:id="@+id/btnLocationTest"
+        android:layout_width="match_parent"
+        android:layout_height="42dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_card"
+        android:text="@string/settings_location_test"
+        android:textColor="@color/textPrimary"
+        android:textSize="13sp" />
 </LinearLayout>

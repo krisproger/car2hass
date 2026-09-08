@@ -28,4 +28,13 @@ public final class LocationSource {
     public void onMediaVolume(int percent) {
         store.put("media_volume", String.valueOf(percent));
     }
+
+    public void storePut(String key, String value) {
+        store.put(key, value);
+    }
+
+    public void storeSetLocation(SnapshotStore.Loc loc) {
+        store.setLocation(loc.lat, loc.lon, loc.speed, loc.bearing,
+                loc.alt, loc.accuracy, loc.provider, loc.timeMs);
+    }
 }

@@ -79,7 +79,7 @@ public class ObdChannel implements DataChannel {
     }
 
     /** Supported mode-01 PIDs from prefs, or null (read everything). */
-    private static Set<String> supportedPids(Context ctx) {
+    public static Set<String> supportedPidsPref(Context ctx) {
         String json = AppConfig.getObdSupportedPids(ctx);
         if (json == null || json.isEmpty()) return null;
         try {
@@ -110,7 +110,7 @@ public class ObdChannel implements DataChannel {
         List<CANDataItem> out = new ArrayList<>();
         if (!AppConfig.isObdEnabled(ctx) || knownItems == null) return out;
         ObdTransport transport = ObdTransportFactory.create(ctx);
-        Set<String> supported = supportedPids(ctx);
+        Set<String> supported = supportedPidsPref(ctx);
         try (ObdSession s = transport.open()) {
             if (s.lightInit() == null && s.initWarmUp() == null) {
                 // adapter unreachable this cycle

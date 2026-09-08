@@ -73,6 +73,10 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
         self._attr_unique_id = f"{config_entry.entry_id}_{signal_key}"
         self._attr_device_class = config.get("device_class")
         self._attr_should_poll = False
+        # Variant 1 availability: dynamic geofences are enabled by default (they
+        # only exist once the app reports them); other signals start
+        # disabled-by-default and are enabled on their first data.
+        self._attr_entity_registry_enabled_default = signal_key.startswith(GEOFENCE_KEY_PREFIX)
         self._attr_is_on = None
         self._attr_available = False
         self._attr_extra_state_attributes = {}

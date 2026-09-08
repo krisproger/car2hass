@@ -271,6 +271,7 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 \
   "$SRC/com/car2hass/vehicle/VehicleProfile.java" \
   "$SRC/com/car2hass/vehicle/RegistryStore.java" \
   "$SRC/com/car2hass/vehicle/ProbeResult.java" \
+  "$SRC/com/car2hass/vehicle/ValueStore.java" \
   "$SRC/com/car2hass/vehicle/ProfileScorer.java" \
   "$SRC/com/car2hass/vehicle/BrandSelector.java" \
   "$SRC/com/car2hass/vehicle/CommandProber.java" \
@@ -302,6 +303,7 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
 
 echo "=== Compiling Phase-2 probe engine tests ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
+  "$TEST/com/car2hass/vehicle/ValueStoreTest.java" \
   "$TEST/com/car2hass/vehicle/RegistryStoreTest.java" \
   "$TEST/com/car2hass/vehicle/ProbeResultTest.java" \
   "$TEST/com/car2hass/vehicle/ProfileScorerTest.java" \
@@ -402,6 +404,9 @@ java -cp "$OUT:$ANDROID_JAR" com.car2hass.vehicle.VehicleProfileDetectTest
 
 echo "=== Running VehicleResearchTest ==="
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.VehicleResearchTest
+
+echo "=== Running ValueStoreTest ==="
+java -cp "$OUT" com.car2hass.vehicle.ValueStoreTest
 
 echo "=== Running Phase-2 probe engine tests ==="
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.RegistryStoreTest
