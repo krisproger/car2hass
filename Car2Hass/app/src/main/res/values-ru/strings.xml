@@ -176,6 +176,11 @@
     <string name="obd_connected_button">Адаптер: %1$s — сменить</string>
     <string name="obd_picker_title">Выберите OBD-адаптер</string>
     <string name="obd_no_devices">Нет сопряжённых Bluetooth-устройств</string>
+    <string name="obd_scan_new">Поиск новых устройств…</string>
+    <string name="obd_scanning">Сканирую Bluetooth-устройства…</string>
+    <string name="obd_scan_results">Найденные устройства</string>
+    <string name="obd_scan_failed">Не удалось начать поиск устройств</string>
+    <string name="obd_pairing">Сопряжение и подключение…</string>
     <string name="obd_bt_off">Включите Bluetooth для подключения адаптера</string>
     <string name="obd_not_elm">Это не ELM327-адаптер: %1$s</string>
     <string name="obd_connect_failed">Не удалось подключиться к %1$s</string>

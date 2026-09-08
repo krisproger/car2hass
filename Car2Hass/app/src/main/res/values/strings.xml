@@ -183,6 +183,11 @@
     <string name="obd_connected_button">Adapter: %1$s — change</string>
     <string name="obd_picker_title">Select OBD adapter</string>
     <string name="obd_no_devices">No paired Bluetooth devices</string>
+    <string name="obd_scan_new">Search for new devices…</string>
+    <string name="obd_scanning">Scanning Bluetooth devices…</string>
+    <string name="obd_scan_results">Found devices</string>
+    <string name="obd_scan_failed">Could not start device scan</string>
+    <string name="obd_pairing">Pairing and connecting…</string>
     <string name="obd_bt_off">Enable Bluetooth to connect the adapter</string>
     <string name="obd_not_elm">This is not an ELM327 adapter: %1$s</string>
     <string name="obd_connect_failed">Could not connect to %1$s</string>

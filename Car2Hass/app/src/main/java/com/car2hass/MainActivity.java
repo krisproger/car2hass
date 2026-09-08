@@ -6,10 +6,12 @@ import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.ClipData;
 import android.content.ClipboardManager;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
@@ -2484,6 +2486,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
     private static final int REQUEST_PERMISSIONS_CODE = 300;
     private static final int REQ_BT_CONNECT = 301;
+    private static final int REQ_BT_SCAN = 302;
 
     private void requestAllRuntimePermissions() {
         List<String> needed = new ArrayList<>();
@@ -2831,6 +2834,11 @@ public class MainActivity extends BaseLocalizedActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        if (requestCode == REQ_BT_SCAN && grantResults != null && grantResults.length > 0
+                && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+            startObdDiscovery();
+            return;
+        }
         if (requestCode == REQ_BT_CONNECT && grantResults != null && grantResults.length > 0
                 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             showObdPicker();
@@ -3611,20 +3619,99 @@ public class MainActivity extends BaseLocalizedActivity {
         java.util.Set<BluetoothDevice> bonded = adapter.getBondedDevices();
         List<BluetoothDevice> devices = new ArrayList<>();
         if (bonded != null) devices.addAll(bonded);
-        String[] names = new String[devices.size()];
+        String[] names = new String[devices.size() + 1];
         for (int i = 0; i < devices.size(); i++) {
             names[i] = devices.get(i).getName() != null
                     ? devices.get(i).getName() : devices.get(i).getAddress();
         }
-        if (names.length == 0) {
+        names[names.length - 1] = getString(R.string.obd_scan_new);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.obd_picker_title)
+                .setItems(names, (d, which) -> {
+                    if (which == devices.size()) {
+                        startObdDiscovery();
+                    } else {
+                        connectObdDevice(devices.get(which));
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .show();
+    }
+
+    /** Found-during-scan devices, excluding already-bonded ones. */
+    private final java.util.List<BluetoothDevice> discoveredObdDevices = new ArrayList<>();
+
+    private void startObdDiscovery() {
+        if (android.os.Build.VERSION.SDK_INT >= 31
+                && checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN)
+                    != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(
+                    new String[]{android.Manifest.permission.BLUETOOTH_SCAN}, REQ_BT_SCAN);
+            return;
+        }
+        try {
+            BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+            if (adapter == null) return;
+            discoveredObdDevices.clear();
+            if (adapter.isDiscovering()) adapter.cancelDiscovery();
+            IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+            registerReceiver(btDiscoveryReceiver, filter);
+            adapter.startDiscovery();
+            Toast.makeText(this, R.string.obd_scanning, Toast.LENGTH_LONG).show();
+            // Stop scanning after a bounded window and offer the found devices.
+            new android.os.Handler(Looper.getMainLooper()).postDelayed(this::finishObdDiscovery, 12000);
+        } catch (Exception e) {
+            LogBuffer.e("MainActivity", "startDiscovery: " + e.getMessage());
+            Toast.makeText(this, R.string.obd_scan_failed, Toast.LENGTH_LONG).show();
+        }
+    }
+
+    private final BroadcastReceiver btDiscoveryReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            if (!BluetoothDevice.ACTION_FOUND.equals(intent.getAction())) return;
+            BluetoothDevice dev = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+            if (dev == null) return;
+            if (dev.getBondState() == BluetoothDevice.BOND_BONDED) return;
+            for (BluetoothDevice d : discoveredObdDevices) {
+                if (d.getAddress().equals(dev.getAddress())) return;
+            }
+            discoveredObdDevices.add(dev);
+        }
+    };
+
+    private void finishObdDiscovery() {
+        try {
+            BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
+            if (adapter != null && adapter.isDiscovering()) adapter.cancelDiscovery();
+            try {
+                unregisterReceiver(btDiscoveryReceiver);
+            } catch (Exception ignored) {}
+        } catch (Exception ignored) {}
+        if (discoveredObdDevices.isEmpty()) {
             Toast.makeText(this, R.string.obd_no_devices, Toast.LENGTH_LONG).show();
             return;
         }
+        String[] names = new String[discoveredObdDevices.size()];
+        for (int i = 0; i < discoveredObdDevices.size(); i++) {
+            BluetoothDevice d = discoveredObdDevices.get(i);
+            names[i] = d.getName() != null ? d.getName() : d.getAddress();
+        }
         new AlertDialog.Builder(this)
-                .setTitle(R.string.obd_picker_title)
-                .setItems(names, (d, which) -> connectObdDevice(devices.get(which)))
+                .setTitle(R.string.obd_scan_results)
+                .setItems(names, (d, which) -> connectDiscoveredDevice(discoveredObdDevices.get(which)))
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    private void connectDiscoveredDevice(final BluetoothDevice dev) {
+        Toast.makeText(this, R.string.obd_pairing, Toast.LENGTH_SHORT).show();
+        try {
+            if (dev.getBondState() != BluetoothDevice.BOND_BONDED) {
+                dev.createBond(); // system pairing dialog appears
+            }
+        } catch (Exception ignored) {}
+        new android.os.Handler(Looper.getMainLooper()).postDelayed(() -> connectObdDevice(dev), 3000);
     }
 
     /** Car Scanner-style auto-connect: probe the configured/auto-detected OBD adapter. */
