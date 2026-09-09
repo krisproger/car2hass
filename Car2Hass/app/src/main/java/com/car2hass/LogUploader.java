@@ -19,16 +19,30 @@ public final class LogUploader {
 
     private LogUploader() {}
 
-    /** Sends the log; returns true on HTTP 200. */
-    public static boolean upload(Context ctx, String message, String logText) {
+    /** Sends the log in chunks; returns true when every chunk got HTTP 200. */
+    public static boolean upload(Context ctx, String message, String logText, String uploadId) {
         try {
             String anonId = com.car2hass.vehicle.DeviceAnon.fromContext(ctx);
-            JSONObject body = new JSONObject();
-            body.put("device_anon_id", anonId == null ? "" : anonId);
-            body.put("app_version", AppInfo.getVersionString(ctx));
-            body.put("message", message == null ? "" : message);
-            body.put("log", logText == null ? "" : logText);
-            return post(body.toString());
+            byte[] logBytes = (logText == null ? "" : logText).getBytes(StandardCharsets.UTF_8);
+            final int MAX_CHUNK = 2 * 1024 * 1024; // 2 MiB per chunk (server cap 4 MiB)
+            int total = Math.max(1, (logBytes.length + MAX_CHUNK - 1) / MAX_CHUNK);
+            String chunkId = uploadId == null || uploadId.isEmpty()
+                    ? "u" + System.currentTimeMillis() : uploadId;
+            for (int i = 0; i < total; i++) {
+                int from = i * MAX_CHUNK;
+                int len = Math.min(MAX_CHUNK, logBytes.length - from);
+                String chunk = new String(logBytes, from, len, StandardCharsets.UTF_8);
+                JSONObject body = new JSONObject();
+                body.put("device_anon_id", anonId == null ? "" : anonId);
+                body.put("app_version", AppInfo.getVersionString(ctx));
+                body.put("message", message == null ? "" : message);
+                body.put("log", chunk);
+                body.put("chunk_index", i);
+                body.put("chunk_total", total);
+                body.put("chunk_upload_id", chunkId);
+                if (!post(body.toString())) return false;
+            }
+            return true;
         } catch (Exception e) {
             LogBuffer.e("LogUploader", "upload: " + e.getMessage());
             return false;
@@ -59,7 +73,10 @@ public final class LogUploader {
         HttpURLConnection conn = null;
         try {
             URL u = new URL(AppApi.LOG_INTAKE);
-            if (NetSafety.isPrivateHost(u.getHost())) return false;
+            if (NetSafety.isPrivateHost(u.getHost())) {
+                LogBuffer.e("LogUploader", "post: private host blocked " + u.getHost());
+                return false;
+            }
             conn = (HttpURLConnection) u.openConnection();
             conn.setRequestMethod("POST");
             conn.setConnectTimeout(30000);
@@ -71,8 +88,9 @@ public final class LogUploader {
                 os.write(jsonBody.getBytes(StandardCharsets.UTF_8));
             }
             int code = conn.getResponseCode();
+            LogBuffer.i("LogUploader", "POST " + AppApi.LOG_INTAKE + " -> HTTP " + code
+                    + " bytes=" + jsonBody.length());
             if (code != 200) {
-                LogBuffer.w("LogUploader", "HTTP " + code);
                 return false;
             }
             return true;

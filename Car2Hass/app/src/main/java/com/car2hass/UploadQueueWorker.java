@@ -73,10 +73,10 @@ public final class UploadQueueWorker {
         try {
             if (UploadQueue.KIND_LOG.equals(e.kind)) {
                 // Full app journal (LogBuffer + logcat) with the research report
-                // appended when available — never empty, unlike the report alone.
+                // appended when available; delivered in 2 MiB chunks.
                 byte[] bytes = LogExportHelper.buildLogBytes(ctx, e.path);
                 return LogUploader.upload(ctx, e.message,
-                        new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
+                        new String(bytes, java.nio.charset.StandardCharsets.UTF_8), e.id);
             }
             return ProbeUploader.upload(ctx, e.path);
         } catch (Exception ex) {

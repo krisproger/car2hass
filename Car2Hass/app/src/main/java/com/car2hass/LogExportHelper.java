@@ -72,16 +72,7 @@ public class LogExportHelper {
             fullLog.append("(logcat error: ").append(e.getMessage()).append(")\n");
         }
 
-        return truncateToServerLimit(fullLog.toString()).getBytes();
-    }
-
-    /** Server intake rejects payloads > 4 MiB; keep the tail (most recent events). */
-    private static String truncateToServerLimit(String text) {
-        if (text == null) return "";
-        byte[] raw = text.getBytes(StandardCharsets.UTF_8);
-        if (raw.length <= 3 * 1024 * 1024) return text;
-        return new String(raw, raw.length - 3 * 1024 * 1024, 3 * 1024 * 1024,
-                StandardCharsets.UTF_8);
+        return fullLog.toString().getBytes();
     }
 
     /**
