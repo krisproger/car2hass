@@ -306,6 +306,7 @@ class VehicleDataView(HomeAssistantView):
         batch = data["batch"]
 
         if DOMAIN not in hass.data:
+            _LOGGER.warning("api:cartelemetry: integration not loaded (DOMAIN missing)")
             return self.json(
                 {"status": "error", "message": "integration not loaded"},
                 status=500,

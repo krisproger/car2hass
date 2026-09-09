@@ -114,6 +114,9 @@ public class MainActivity extends BaseLocalizedActivity {
     private final Set<String> pendingDisabledKeys = new HashSet<>();
     /** Toggles the "known but unreachable" spoiler at the end of the telemetry list. */
     private boolean showUnreachableSensors;
+    /** Sticky last-seen values (survive service restarts within the session). */
+    private final java.util.concurrent.ConcurrentHashMap<String, String> lastSeenValues =
+            new java.util.concurrent.ConcurrentHashMap<>();
     private boolean enabledDirty = false;
     private final Runnable saveEnabledRunnable = this::saveEnabledState;
 
@@ -2694,26 +2697,38 @@ public class MainActivity extends BaseLocalizedActivity {
         }
     }
 
+    /** Current value for a key: ValueStore → sticky last-seen → null. */
+    private String valueFor(String key, TelemetryService svc) {
+        if (key == null) return null;
+        if (svc != null) {
+            String v = svc.valueStore.get(key);
+            if (v != null) return v;
+        }
+        return lastSeenValues.get(key);
+    }
+
     private void writeItemsToValueStore(List<CANDataItem> items) {
+        if (items == null) return;
         TelemetryService svc = getTelemetryService();
-        if (svc == null || items == null) return;
-        com.car2hass.vehicle.ValueStore store = svc.valueStore;
         for (CANDataItem it : items) {
             if (it == null || it.key == null) continue;
             if (it.value == null || "---".equals(it.value)) continue;
-            store.put(it.key, it.value, "channel");
+            lastSeenValues.put(it.key, it.value);
+            if (svc != null) svc.valueStore.put(it.key, it.value, "channel");
         }
     }
 
     /** Tab list from the shared ValueStore: live first, expected below; disabled at the end. */
     private List<CANDataItem> buildDisplayListFromValueStore() {
         TelemetryService svc = getTelemetryService();
-        if (svc == null) return null;
         List<CANDataItem> out = new ArrayList<>();
-        Set<String> active = new HashSet<>(AppConfig.getActiveChannels(this));
+        // The tab must never be empty: fall back to the sticky/legacy item set.
+        boolean loaded = false;
         try {
             RegistryStore reg = RegistryStore.load(this);
             List<String> keys = reg.sensorKeys();
+            loaded = !keys.isEmpty();
+            java.util.Set<String> active = new HashSet<>(AppConfig.getActiveChannels(this));
             for (String key : keys) {
                 String label = key;
                 boolean unreachable = false;
@@ -2736,20 +2751,30 @@ public class MainActivity extends BaseLocalizedActivity {
                 CANDataItem it = new CANDataItem(0, key, label, 0);
                 it.key = key;
                 it.enabled = AppConfig.isSignalEnabled(this, key);
-                String v = svc.valueStore.get(key);
+                String v = valueFor(key, svc);
                 it.value = v == null ? "---" : v;
-                long age = v == null ? -1 : svc.valueStore.ageMs(key);
-                it.lastUpdate = v == null ? 0 : System.currentTimeMillis() - age;
+                it.lastUpdate = v == null ? 0 : System.currentTimeMillis();
                 it.rawData = unreachable ? "unreachable" : "";
                 out.add(it);
             }
         } catch (Exception e) {
             LogBuffer.e("Main", "display list: " + e.getMessage());
         }
+        if (!loaded || out.isEmpty()) {
+            // Fallback: legacy item set (never empty) with sticky values overlaid.
+            for (CANDataItem it : knownItems) {
+                if (it == null || it.key == null) continue;
+                String v = valueFor(it.key, svc);
+                if (v != null) it.value = v;
+            }
+            out.addAll(knownItems);
+        }
         java.util.List<CANDataItem> liveOn = new ArrayList<>(), liveOff = new ArrayList<>(),
                 expOn = new ArrayList<>(), expOff = new ArrayList<>();
+        java.util.List<CANDataItem> unreach = new ArrayList<>();
         for (CANDataItem it : out) {
             boolean live = !"---".equals(it.value);
+            if ("unreachable".equals(it.rawData)) { unreach.add(it); continue; }
             if (live && it.enabled) liveOn.add(it);
             else if (live) liveOff.add(it);
             else if (it.enabled) expOn.add(it);
@@ -2760,22 +2785,25 @@ public class MainActivity extends BaseLocalizedActivity {
         liveOff.sort(byKey);
         expOn.sort(byKey);
         expOff.sort(byKey);
+        unreach.sort(byKey);
         List<CANDataItem> result = new ArrayList<>();
-        result.addAll(liveOn);
-        result.addAll(liveOff);
-        result.addAll(expOn);
-        result.addAll(expOff);
-        // Known-but-unreachable sensors are shown only when the user expands the spoiler.
+        addGroup(result, R.string.telemetry_group_active, liveOn);
+        addGroup(result, R.string.telemetry_group_active_off, liveOff);
+        addGroup(result, R.string.telemetry_group_expected, expOn);
+        addGroup(result, R.string.telemetry_group_expected_off, expOff);
         if (showUnreachableSensors) {
-            java.util.List<CANDataItem> unreach = new ArrayList<>();
-            for (CANDataItem it : out) {
-                if (!"---".equals(it.value)) continue;
-                if ("unreachable".equals(it.rawData)) unreach.add(it);
-            }
-            unreach.sort(byKey);
-            result.addAll(unreach);
+            addGroup(result, R.string.telemetry_group_unreachable, unreach);
         }
         return result;
+    }
+
+    private void addGroup(List<CANDataItem> out, int titleRes, List<CANDataItem> items) {
+        if (items.isEmpty()) return;
+        CANDataItem header = new CANDataItem(0, "", "", 0);
+        header.isHeader = true;
+        header.headerText = getString(titleRes) + " (" + items.size() + ")";
+        out.add(header);
+        out.addAll(items);
     }
 
     private void applyEnabledStateToItems(List<CANDataItem> items) {

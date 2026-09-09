@@ -83,6 +83,9 @@ public final class SystemWorker {
         store.put("location_altitude", String.valueOf(alt), "system");
         store.put("location_accuracy", String.valueOf(acc), "system");
         store.put("location_provider", provider == null ? "" : provider, "system");
+        // Real GPS fix time (epoch seconds). Baseline/last-known positions must
+        // keep their true timestamp so HA never treats a stale fix as "now".
+        store.put("location_t", String.valueOf(timeMs / 1000), "system");
     }
 
     private void readBattery() {

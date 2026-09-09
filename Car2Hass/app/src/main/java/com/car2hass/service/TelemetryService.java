@@ -936,7 +936,11 @@ public class TelemetryService extends Service {
             loc.bearing = (float) parseDoubleSafe(valueStore.get("location_bearing"));
             loc.accuracy = (float) parseDoubleSafe(valueStore.get("location_accuracy"));
             loc.provider = valueStore.get("location_provider") == null ? "" : valueStore.get("location_provider");
-            loc.timeMs = System.currentTimeMillis();
+            // Real GPS fix time (epoch seconds) when available; only fall back to
+            // "now" if the worker never recorded a fix time. Using the true time
+            // keeps stale baseline positions in history instead of jumping "now".
+            String t = valueStore.get("location_t");
+            loc.timeMs = t == null ? System.currentTimeMillis() : Long.parseLong(t) * 1000L;
             return loc;
         } catch (Exception e) {
             return null;

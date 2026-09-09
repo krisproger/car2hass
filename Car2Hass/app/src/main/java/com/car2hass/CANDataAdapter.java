@@ -139,7 +139,25 @@ public class CANDataAdapter extends BaseAdapter {
     }
 
     @Override
+    public int getItemViewType(int position) {
+        return items.get(position) != null && items.get(position).isHeader ? 1 : 0;
+    }
+
+    @Override
+    public int getViewTypeCount() {
+        return 2;
+    }
+
+    @Override
     public View getView(int position, View convertView, ViewGroup parent) {
+        CANDataItem item = items.get(position);
+        if (item != null && item.isHeader) {
+            View hv = LayoutInflater.from(context).inflate(
+                    com.car2hass.R.layout.can_data_header, parent, false);
+            TextView tv = hv.findViewById(com.car2hass.R.id.rowName);
+            if (tv != null) tv.setText(item.headerText);
+            return hv;
+        }
         ViewHolder vh;
         if (convertView == null) {
             convertView = LayoutInflater.from(context).inflate(
@@ -156,26 +174,26 @@ public class CANDataAdapter extends BaseAdapter {
             vh = (ViewHolder) convertView.getTag();
         }
 
-        CANDataItem item = items.get(position);
-        vh.idText.setText(item.key != null && !item.key.isEmpty() ? item.key : item.diplusName);
-        vh.nameText.setText(item.name);
-        vh.valueText.setText(SignalTranslator.translateValue(item.value));
-        vh.unitText.setText(item.unit);
-        vh.routeText.setText(item.rawData != null && !item.rawData.isEmpty() ? item.rawData : "");
+        CANDataItem rowItem = items.get(position);
+        vh.idText.setText(rowItem.key != null && !rowItem.key.isEmpty() ? rowItem.key : rowItem.diplusName);
+        vh.nameText.setText(rowItem.name);
+        vh.valueText.setText(SignalTranslator.translateValue(rowItem.value));
+        vh.unitText.setText(rowItem.unit);
+        vh.routeText.setText(rowItem.rawData != null && !rowItem.rawData.isEmpty() ? rowItem.rawData : "");
 
-        boolean fresh = (System.currentTimeMillis() - item.lastUpdate) < 5000;
+        boolean fresh = (System.currentTimeMillis() - rowItem.lastUpdate) < 5000;
         vh.valueText.setTextColor(fresh ? 0xFF4CAF50 : 0xFFB0B0B0);
 
         // System sensors (GPS/device) are always collected on the device:
         // show a checked, non-toggleable checkbox and normal colors.
-        boolean systemKey = isSystemKey(item.key);
+        boolean systemKey = isSystemKey(rowItem.key);
         if (systemKey) {
             vh.checkBox.setVisibility(View.VISIBLE);
             vh.checkBox.setEnabled(false);
             vh.checkBox.setChecked(true);
             vh.nameText.setTextColor(0xFFFFFFFF);
             vh.checkBox.setOnCheckedChangeListener(null);
-        } else if (item.unsupported) {
+        } else if (rowItem.unsupported) {
             vh.checkBox.setVisibility(View.GONE);
             vh.nameText.setTextColor(0xFF808080);
             vh.valueText.setTextColor(0xFF808080);
@@ -187,13 +205,13 @@ public class CANDataAdapter extends BaseAdapter {
 
         // Bind checkbox without triggering the listener
         vh.checkBox.setOnCheckedChangeListener(null);
-        vh.checkBox.setChecked(systemKey ? true : item.enabled);
+        vh.checkBox.setChecked(systemKey ? true : rowItem.enabled);
         if (!systemKey) {
             vh.checkBox.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
                 @Override
                 public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                    if (item.unsupported) return;
-                    item.enabled = isChecked;
+                    if (rowItem.unsupported) return;
+                    rowItem.enabled = isChecked;
                     if (enabledChangeListener != null) {
                         enabledChangeListener.onEnabledChanged(item, isChecked);
                     }

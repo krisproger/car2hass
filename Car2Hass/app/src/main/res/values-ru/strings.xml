@@ -262,6 +262,11 @@
     <!-- Attribute filter -->
     <string name="filter_title">Фильтр атрибутов для HA</string>
     <string name="telemetry_show_unreachable">Показать недостижимые</string>
+    <string name="telemetry_group_active">Активные</string>
+    <string name="telemetry_group_active_off">Отключенные (с данными)</string>
+    <string name="telemetry_group_expected">Ожидаемые</string>
+    <string name="telemetry_group_expected_off">Отключенные</string>
+    <string name="telemetry_group_unreachable">Недостижимые</string>
     <string name="telemetry_hide_unreachable">Скрыть недостижимые</string>
     <string name="filter_description">Отмеченные атрибуты передаются в Home Assistant. По умолчанию выбраны все.</string>
     <string name="filter_select_all">Выбрать все</string>

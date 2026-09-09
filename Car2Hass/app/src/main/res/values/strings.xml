@@ -269,6 +269,11 @@
     <!-- Attribute filter -->
     <string name="filter_title">Attribute filter for HA</string>
     <string name="telemetry_show_unreachable">Show unreachable</string>
+    <string name="telemetry_group_active">Active</string>
+    <string name="telemetry_group_active_off">Disabled (with data)</string>
+    <string name="telemetry_group_expected">Expected</string>
+    <string name="telemetry_group_expected_off">Disabled</string>
+    <string name="telemetry_group_unreachable">Unreachable</string>
     <string name="telemetry_hide_unreachable">Hide unreachable</string>
     <string name="filter_description">Checked attributes are sent to Home Assistant. By default all are selected.</string>
     <string name="filter_select_all">Select all</string>

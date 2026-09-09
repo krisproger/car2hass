@@ -22,6 +22,9 @@ public class CANDataItem {
     public boolean unsupported = false;
     /** Channel that produced the current value (diplus/adb/dumpsys/voyah/obd/system). */
     public String sourceChannel;
+    /** Synthetic group-header row (rendered as a section title, not a sensor). */
+    public boolean isHeader;
+    public String headerText;
 
     public CANDataItem(int canId, String name, String unit, int route) {
         this.canId = canId;
