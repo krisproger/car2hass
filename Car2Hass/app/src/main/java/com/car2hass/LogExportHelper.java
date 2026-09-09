@@ -63,11 +63,18 @@ public class LogExportHelper {
                             "Car2Hass", "CANReader", "Main", "TelemetryService",
                             "BootReceiver", "BootActivity", "HassSettings", "HassClient"});
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            // Bound the read: logcat can block without EOF on some ROMs, which
+            // would hang the log send forever (the toast never appears).
+            int lines = 0;
+            long deadline = System.currentTimeMillis() + 3000;
             String line;
-            while ((line = br.readLine()) != null) {
+            while (lines < 500 && System.currentTimeMillis() < deadline
+                    && (line = br.readLine()) != null) {
                 fullLog.append(line).append('\n');
+                lines++;
             }
             br.close();
+            try { p.destroy(); } catch (Exception ignored) {}
         } catch (Exception e) {
             fullLog.append("(logcat error: ").append(e.getMessage()).append(")\n");
         }

@@ -24,7 +24,7 @@ public final class LogUploader {
         try {
             String anonId = com.car2hass.vehicle.DeviceAnon.fromContext(ctx);
             byte[] logBytes = (logText == null ? "" : logText).getBytes(StandardCharsets.UTF_8);
-            final int MAX_CHUNK = 2 * 1024 * 1024; // 2 MiB per chunk (server cap 4 MiB)
+            final int MAX_CHUNK = 500 * 1024; // 500 KiB per chunk (server cap 4 MiB)
             int total = Math.max(1, (logBytes.length + MAX_CHUNK - 1) / MAX_CHUNK);
             String chunkId = uploadId == null || uploadId.isEmpty()
                     ? "u" + System.currentTimeMillis() : uploadId;

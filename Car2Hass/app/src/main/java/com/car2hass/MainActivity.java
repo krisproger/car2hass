@@ -798,17 +798,21 @@ public class MainActivity extends BaseLocalizedActivity {
         final String logPath = takeResearchPath();
         final String msg = message != null && !message.isEmpty()
                 ? message : buildLogIdentifier();
+        LogBuffer.i("Main", "uploadLogToServer: path=" + logPath + " msg=" + msg);
         new Thread(() -> {
             try {
                 String anonId = com.car2hass.vehicle.DeviceAnon.fromContext(this);
                 final String entryId = UploadQueue.enqueue(this, UploadQueue.KIND_LOG,
                         AppInfo.getVersionString(this), anonId, msg, logPath);
+                LogBuffer.i("Main", "uploadLogToServer: enqueued " + entryId);
                 flushUploadQueue();
+                LogBuffer.i("Main", "uploadLogToServer: flush done");
                 handler.post(() -> {
                     boolean stillPending = false;
                     for (UploadQueue.Entry e : UploadQueue.load(this)) {
                         if (entryId.equals(e.id)) { stillPending = true; break; }
                     }
+                    LogBuffer.i("Main", "uploadLogToServer: stillPending=" + stillPending);
                     Toast.makeText(this, stillPending
                             ? R.string.log_server_pending : R.string.log_server_ok, Toast.LENGTH_LONG).show();
                 });
@@ -843,7 +847,7 @@ public class MainActivity extends BaseLocalizedActivity {
                         .show();
                 });
                 try {
-                    latch.await();
+                    latch.await(5, java.util.concurrent.TimeUnit.SECONDS);
                 } catch (InterruptedException ie) {
                     Thread.currentThread().interrupt();
                     keep[0] = false;
