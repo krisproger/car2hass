@@ -241,6 +241,27 @@ public class AppConfig {
         }
     }
 
+    private static final String KEY_EXPANDED_GROUPS = "telemetry_expanded_groups";
+
+    /** Telemetry tab groups that stay expanded (default: active only). */
+    public static Set<String> getExpandedGroups(Context ctx) {
+        String json = prefs(ctx).getString(KEY_EXPANDED_GROUPS, "[\"active\"]");
+        Set<String> set = new HashSet<>();
+        try {
+            JSONArray arr = new JSONArray(json);
+            for (int i = 0; i < arr.length(); i++) set.add(arr.optString(i));
+        } catch (Exception e) {
+            set.add("active");
+        }
+        return set;
+    }
+
+    public static void setExpandedGroups(Context ctx, Set<String> groups) {
+        JSONArray arr = new JSONArray();
+        if (groups != null) for (String g : groups) arr.put(g);
+        prefs(ctx).edit().putString(KEY_EXPANDED_GROUPS, arr.toString()).apply();
+    }
+
     /**
      * Persist the full set of disabled signal keys.
      */

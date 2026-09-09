@@ -97,6 +97,7 @@ import java.util.Set;
 
 public class MainActivity extends BaseLocalizedActivity {
     private CANDataAdapter adapter;
+    private TelemetryExpandableAdapter expAdapter;
     private TextView statusText, vinText, firmwareText, appVersionText, refreshTimeText, locationText;
     private ProgressBar queueBar;
     private TextView tvQueueBytes, tvLastSend, tvLastAttempt;
@@ -348,10 +349,17 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void initTelemetryList() {
-        ListView listView = findViewById(R.id.dataListView);
-        adapter = new CANDataAdapter(this);
-        adapter.setData(knownItems);
-        listView.setAdapter(adapter);
+        android.widget.ExpandableListView expList = findViewById(R.id.dataListView);
+        expAdapter = new TelemetryExpandableAdapter(this);
+        expAdapter.setOnHeaderClick(groupKey -> toggleGroupExpanded(groupKey));
+        expAdapter.setOnCheckChanged(item -> {
+            if (item.key == null) return;
+            java.util.Set<String> disabled = new HashSet<>(AppConfig.getDisabledSignals(this));
+            if (item.enabled) disabled.remove(item.key);
+            else disabled.add(item.key);
+            AppConfig.setDisabledSignals(this, disabled);
+        });
+        expList.setAdapter(expAdapter);
         // System-first: the tab reflects the shared ValueStore from the very
         // start (system sensors are always visible, groups included).
         startTelemetryTabTicker();
@@ -359,8 +367,6 @@ public class MainActivity extends BaseLocalizedActivity {
         checkSelectAll = findViewById(R.id.checkSendToHa);
         headerCheckAll = findViewById(R.id.rowHeaderCheck);
         loadAndApplyEnabledFilter();
-        setupHeaderCheckAll();
-        setupColumnSorting();
     }
 
     private void initTelemetryControls() {
@@ -2760,8 +2766,8 @@ public class MainActivity extends BaseLocalizedActivity {
         }
     }
 
-    /** Tab list from the shared ValueStore: live first, expected below; disabled at the end. */
-    private List<CANDataItem> buildDisplayListFromValueStore() {
+    /** Tab groups from the shared ValueStore: per-group sensor lists (expandable). */
+    private List<TelemetryExpandableAdapter.Group> buildDisplayGroups() {
         TelemetryService svc = getTelemetryService();
         List<CANDataItem> out = new ArrayList<>();
         boolean loaded = false;
@@ -2824,7 +2830,6 @@ public class MainActivity extends BaseLocalizedActivity {
             boolean live = !"---".equals(it.value);
             boolean system = it.rawData != null && it.rawData.contains("system");
             boolean reachable = it.rawData != null && it.rawData.contains("reachable");
-            // System sensors are non-disableable: always enabled, always green.
             boolean enabled = system || it.enabled;
             if (enabled && live) active.add(it);
             else if (enabled && reachable) expected.add(it);
@@ -2838,27 +2843,44 @@ public class MainActivity extends BaseLocalizedActivity {
         unreachable.sort(byKey);
         disWith.sort(byKey);
         dis.sort(byKey);
-        List<CANDataItem> result = new ArrayList<>();
-        addGroup(result, "active", R.string.telemetry_group_active, active);
-        addGroup(result, "expected", R.string.telemetry_group_expected, expected);
-        addGroup(result, "unreachable", R.string.telemetry_group_unreachable, unreachable);
-        addGroup(result, "diswith", R.string.telemetry_group_active_off, disWith);
-        addGroup(result, "dis", R.string.telemetry_group_expected_off, dis);
-        return result;
+        List<TelemetryExpandableAdapter.Group> groups = new ArrayList<>();
+        addGroup(groups, "active", R.string.telemetry_group_active, active);
+        addGroup(groups, "expected", R.string.telemetry_group_expected, expected);
+        addGroup(groups, "unreachable", R.string.telemetry_group_unreachable, unreachable);
+        addGroup(groups, "diswith", R.string.telemetry_group_active_off, disWith);
+        addGroup(groups, "dis", R.string.telemetry_group_expected_off, dis);
+        return groups;
     }
 
-    private final java.util.Set<String> collapsedGroups = new HashSet<>();
-
-    private void addGroup(List<CANDataItem> out, String groupKey, int titleRes, List<CANDataItem> items) {
+    private void addGroup(List<TelemetryExpandableAdapter.Group> out, String key, int titleRes,
+                          List<CANDataItem> items) {
         if (items.isEmpty()) return;
-        CANDataItem header = new CANDataItem(0, "", "", 0);
-        header.isHeader = true;
-        header.groupKey = groupKey;
-        header.headerText = getString(titleRes) + " (" + items.size() + ")"
-                + (collapsedGroups.contains(groupKey) ? " ▸" : " ▾");
-        out.add(header);
-        if (!collapsedGroups.contains(groupKey)) {
-            out.addAll(items);
+        TelemetryExpandableAdapter.Group g = new TelemetryExpandableAdapter.Group(key,
+                getString(titleRes) + " (" + items.size() + ")");
+        g.items.addAll(items);
+        out.add(g);
+    }
+
+    /** Toggles a group's expanded state and persists it across restarts. */
+    private void toggleGroupExpanded(String groupKey) {
+        java.util.Set<String> expanded = new HashSet<>(AppConfig.getExpandedGroups(this));
+        if (expanded.contains(groupKey)) expanded.remove(groupKey);
+        else expanded.add(groupKey);
+        AppConfig.setExpandedGroups(this, expanded);
+        applyExpandedState();
+    }
+
+    private void applyExpandedState() {
+        android.widget.ExpandableListView expList = findViewById(R.id.dataListView);
+        if (expList == null || expAdapter == null) return;
+        java.util.Set<String> expanded = AppConfig.getExpandedGroups(this);
+        List<TelemetryExpandableAdapter.Group> groups = expAdapter.getGroups();
+        for (int i = 0; i < groups.size(); i++) {
+            if (expanded.contains(groups.get(i).key)) {
+                expList.expandGroup(i);
+            } else {
+                expList.collapseGroup(i);
+            }
         }
     }
 
@@ -2941,16 +2963,6 @@ public class MainActivity extends BaseLocalizedActivity {
         findViewById(R.id.headerValue).setOnClickListener(v -> adapter.sortBy(CANDataAdapter.SortColumn.VALUE));
         findViewById(R.id.headerUnit).setOnClickListener(v -> adapter.sortBy(CANDataAdapter.SortColumn.UNIT));
         findViewById(R.id.headerRoute).setOnClickListener(v -> adapter.sortBy(CANDataAdapter.SortColumn.ROUTE));
-        // Collapsible group headers: tap to toggle a group.
-        adapter.setOnHeaderClick(groupKey -> {
-            if (collapsedGroups.contains(groupKey)) {
-                collapsedGroups.remove(groupKey);
-            } else {
-                collapsedGroups.add(groupKey);
-            }
-            List<CANDataItem> list = buildDisplayListFromValueStore();
-            if (list != null) adapter.setData(list);
-        });
     }
 
     private void setupEnabledFilterListeners() {
@@ -3001,8 +3013,11 @@ public class MainActivity extends BaseLocalizedActivity {
         handler.postDelayed(new Runnable() {
             @Override public void run() {
                 try {
-                    List<CANDataItem> list = buildDisplayListFromValueStore();
-                    if (list != null) adapter.setData(list);
+                    List<TelemetryExpandableAdapter.Group> groups = buildDisplayGroups();
+                    if (groups != null && expAdapter != null) {
+                        expAdapter.setGroups(groups);
+                        applyExpandedState();
+                    }
                 } catch (Exception e) {
                     LogBuffer.e("Main", "valueStore tab refresh: " + e.getMessage());
                 }
