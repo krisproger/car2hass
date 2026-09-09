@@ -185,7 +185,7 @@ async def async_setup_entry(hass: HomeAssistant, entry):
     }
 
     # Register REST API endpoints once globally
-    _install_card(hass)
+    await _install_card(hass)
     global _VIEW_REGISTERED
     if not _VIEW_REGISTERED:
         hass.http.register_view(VehicleDataView)
@@ -304,6 +304,7 @@ class VehicleDataView(HomeAssistantView):
         firmware = data["firmware"]
         app_version = data["app_version"]
         batch = data["batch"]
+        _LOGGER.debug("api:cartelemetry POST car_name=%s batch=%d", car_name, len(batch))
 
         if DOMAIN not in hass.data:
             _LOGGER.warning("api:cartelemetry: integration not loaded (DOMAIN missing)")
@@ -313,6 +314,7 @@ class VehicleDataView(HomeAssistantView):
             )
 
         entry_id = self._resolve_entry_id(hass, car_name)
+        _LOGGER.debug("api:cartelemetry entry_id for %s -> %s", car_name, entry_id)
         if entry_id is None:
             return self.json(
                 {"status": "error", "message": f"unknown car_name: {car_name}"},
@@ -374,6 +376,7 @@ class VehicleDataView(HomeAssistantView):
         # the HA "disabled" spoiler (entity_registry_enabled_default=False).
         old_seen = set(store["data"].get("seen_signals", set())) if store.get("data") else set()
         seen = old_seen | set(latest_signals.keys())
+        disabled = set(agg.get("disabled_signals") or set())
 
         store["data"] = {
             "timestamp": agg["timestamp"],
@@ -384,6 +387,7 @@ class VehicleDataView(HomeAssistantView):
             "fix_timestamp": agg["fix_timestamp"],
             "signals": latest_signals,
             "seen_signals": seen,
+            "disabled_signals": disabled,
             # Full chronological batch so platforms can replay intermediate
             # values / GPS points instead of only the final aggregated state.
             "batch": sorted_batch,
@@ -398,6 +402,7 @@ class VehicleDataView(HomeAssistantView):
         newly = set(latest_signals.keys()) - old_seen
         if newly:
             await _async_enable_sensors(hass, entry_id, newly)
+        await _async_sync_entity_availability(hass, entry_id, seen, disabled)
 
         return self.json({
             "status": "ok",
@@ -414,6 +419,87 @@ class VehicleDataView(HomeAssistantView):
             if store.get("car_name") == car_name:
                 return entry_id
         return None
+
+
+async def _async_enable_sensors(hass: HomeAssistant, entry_id: str, signal_keys: set[str]) -> None:
+    """Enable newly-seen sensor entities (Variant 1 availability).
+
+    Sensors are created disabled-by-default (entity_registry_enabled_default=False),
+    so unseen signals stay under the HA "disabled" spoiler. As soon as a signal is
+    received the integration enables its entity; a user-disabled entity is kept off.
+    """
+    reg = entity_registry.async_get(hass)
+    for key in signal_keys:
+        unique = f"{entry_id}_{key}"
+        entity_id = reg.async_get_entity_id(Platform.SENSOR, DOMAIN, unique)
+        if entity_id is None:
+            entity_id = reg.async_get_entity_id(Platform.BINARY_SENSOR, DOMAIN, unique)
+        if entity_id is None:
+            continue
+        entry = reg.async_get(entity_id)
+        if entry is None or entry.disabled_by != "integration":
+            continue
+        reg.async_enable(entity_id)
+
+
+async def _async_sync_entity_availability(
+    hass: HomeAssistant, entry_id: str, seen: set[str], disabled: set[str]
+) -> None:
+    """Deactivate entities for disabled signals and their dependent commands.
+
+    Disabled signals (user unchecked them in the app) are deactivated in HA so
+    they move under the "disabled" spoiler; dependent command entities are
+    deactivated too. A user's own disable choice is always respected.
+    """
+    from .const import COMMAND_DEPENDS_ON
+
+    reg = entity_registry.async_get(hass)
+
+    def _set_disabled(unique: str, platforms: list) -> None:
+        for pl in platforms:
+            eid = reg.async_get_entity_id(pl, DOMAIN, unique)
+            if eid is None:
+                continue
+            entry = reg.async_get(eid)
+            if entry is None or entry.disabled_by == "user":
+                continue
+            reg.async_update_entity(eid, disabled_by="integration")
+
+    def _set_enabled(unique: str, platforms: list) -> None:
+        for pl in platforms:
+            eid = reg.async_get_entity_id(pl, DOMAIN, unique)
+            if eid is None:
+                continue
+            entry = reg.async_get(eid)
+            if entry is None or entry.disabled_by != "integration":
+                continue
+            reg.async_enable(eid)
+
+    sensor_platforms = [Platform.SENSOR, Platform.BINARY_SENSOR]
+    command_platforms = [Platform.SWITCH, Platform.BUTTON, Platform.NUMBER]
+
+    # Sensors: deactivate disabled ones, re-enable enabled-and-seen ones.
+    for key in seen:
+        unique = f"{entry_id}_{key}"
+        if key in disabled:
+            _set_disabled(unique, sensor_platforms)
+        else:
+            _set_enabled(unique, sensor_platforms)
+
+    # Commands that depend on a deactivated sensor follow it.
+    def _command_targets(cmd_key: str) -> list[tuple[str, Platform]]:
+        out = [(f"{entry_id}_{pl}_{cmd_key}", pl) for pl in command_platforms]
+        if cmd_key == "doors_lock":
+            out.append((f"{entry_id}_doors_lock", Platform.LOCK))
+        return out
+
+    for cmd_key, sensor_key in COMMAND_DEPENDS_ON.items():
+        if sensor_key in disabled:
+            for unique, pl in _command_targets(cmd_key):
+                _set_disabled(unique, [pl])
+        elif sensor_key in seen:
+            for unique, pl in _command_targets(cmd_key):
+                _set_enabled(unique, [pl])
 
 
 async def _async_enable_sensors(hass: HomeAssistant, entry_id: str, signal_keys: set[str]) -> None:
@@ -566,11 +652,11 @@ class VehicleCommandsLegacyView(VehicleCommandsView):
 _STATIC_REGISTERED = False
 
 
-def _install_card(hass):
-    """Copy the bundled card assets into www/community and register the resource."""
+def _copy_card_assets(hass) -> bool:
+    """Copy the bundled card assets into www/community (blocking I/O → executor)."""
     global _STATIC_REGISTERED
     if _STATIC_REGISTERED:
-        return
+        return True
     _STATIC_REGISTERED = True
     src = Path(__file__).parent / "www"
     try:
@@ -590,14 +676,14 @@ def _install_card(hass):
             for asset in assets_src.iterdir():
                 if asset.is_file():
                     shutil.copy2(asset, dst / "assets" / asset.name)
+        return True
     except Exception as err:  # noqa: BLE001 - fall back to the legacy static path
         _LOGGER.warning("www/community copy failed (%s) — falling back to /cartelemetry", err)
-        try:
-            hass.http.register_static_path("/cartelemetry", str(src), cache_headers=False)
-        except Exception as e2:  # noqa: BLE001
-            _LOGGER.debug("static path fallback: %s", e2)
-        return
+        return False
 
+
+async def _register_card_resources(hass):
+    """Register the lovelace resource modules (event-loop safe)."""
     url = "/local/community/cartelemetry-card/car-card.js"
     try:
         lovelace = hass.data.get("lovelace")
@@ -625,3 +711,16 @@ def _install_card(hass):
             _LOGGER.info("CARTelemetry lovelace resources registered: %s", ", ".join(wanted))
     except Exception as err:  # noqa: BLE001
         _LOGGER.warning("lovelace resource registration failed: %s", err)
+
+
+async def _install_card(hass):
+    """Install card assets (in executor) and register lovelace resources (async)."""
+    ok = await hass.async_add_executor_job(_copy_card_assets, hass)
+    if not ok:
+        try:
+            hass.http.register_static_path(
+                "/cartelemetry", str(Path(__file__).parent / "www"), cache_headers=False
+            )
+        except Exception as e2:  # noqa: BLE001
+            _LOGGER.debug("static path fallback: %s", e2)
+    await _register_card_resources(hass)

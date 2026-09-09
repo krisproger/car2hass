@@ -138,6 +138,12 @@ public class CANDataAdapter extends BaseAdapter {
                 || "device_pressure".equals(key));
     }
 
+    private java.util.function.Consumer<String> onHeaderClick;
+
+    public void setOnHeaderClick(java.util.function.Consumer<String> listener) {
+        this.onHeaderClick = listener;
+    }
+
     @Override
     public int getItemViewType(int position) {
         return items.get(position) != null && items.get(position).isHeader ? 1 : 0;
@@ -156,6 +162,10 @@ public class CANDataAdapter extends BaseAdapter {
                     com.car2hass.R.layout.can_data_header, parent, false);
             TextView tv = hv.findViewById(com.car2hass.R.id.rowName);
             if (tv != null) tv.setText(item.headerText);
+            if (onHeaderClick != null) {
+                final String gk = item.groupKey;
+                hv.setOnClickListener(v -> onHeaderClick.accept(gk));
+            }
             return hv;
         }
         ViewHolder vh;
@@ -175,18 +185,29 @@ public class CANDataAdapter extends BaseAdapter {
         }
 
         CANDataItem rowItem = items.get(position);
+        boolean systemKey = isSystemKey(rowItem.key);
         vh.idText.setText(rowItem.key != null && !rowItem.key.isEmpty() ? rowItem.key : rowItem.diplusName);
         vh.nameText.setText(rowItem.name);
         vh.valueText.setText(SignalTranslator.translateValue(rowItem.value));
         vh.unitText.setText(rowItem.unit);
         vh.routeText.setText(rowItem.rawData != null && !rowItem.rawData.isEmpty() ? rowItem.rawData : "");
 
-        boolean fresh = (System.currentTimeMillis() - rowItem.lastUpdate) < 5000;
-        vh.valueText.setTextColor(fresh ? 0xFF4CAF50 : 0xFFB0B0B0);
+        // System sensors are always green; active rows green when fresh; disabled
+        // and unreachable rows grey.
+        if (systemKey) {
+            vh.valueText.setTextColor(0xFF4CAF50);
+            vh.nameText.setTextColor(0xFFFFFFFF);
+        } else if (rowItem.grey) {
+            vh.valueText.setTextColor(0xFF808080);
+            vh.nameText.setTextColor(0xFF808080);
+        } else {
+            boolean fresh = (System.currentTimeMillis() - rowItem.lastUpdate) < 5000;
+            vh.valueText.setTextColor(fresh ? 0xFF4CAF50 : 0xFFB0B0B0);
+            vh.nameText.setTextColor(0xFFFFFFFF);
+        }
 
         // System sensors (GPS/device) are always collected on the device:
         // show a checked, non-toggleable checkbox and normal colors.
-        boolean systemKey = isSystemKey(rowItem.key);
         if (systemKey) {
             vh.checkBox.setVisibility(View.VISIBLE);
             vh.checkBox.setEnabled(false);

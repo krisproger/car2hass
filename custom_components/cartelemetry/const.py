@@ -1,8 +1,31 @@
 DOMAIN = "cartelemetry"
 
+# Command key → feedback sensor it depends on. When the sensor is deactivated
+# (disabled by the user in the app / never seen), the command entity is
+# deactivated too so the UI shows no misleading controls.
+COMMAND_DEPENDS_ON = {
+    "drl": "drl",
+    "fog": "front_fog",
+    "hazard": "hazard",
+    "auto_high_beam": "low_beam",
+    "ac": "ac_state",
+    "front_defrost": "rear_defrost",
+    "steering_heat": "steering_wheel_heat",
+    "mirror_heat": "rear_defrost",
+    "interior_light": "footwell_light",
+    "ambilight": "footwell_light",
+    "dashcam": "dashcam_state",
+    "doors_lock": "remote_lock_state",
+    "doors_unlock": "remote_lock_state",
+    "trunk_open": "trunk",
+    "trunk_close": "trunk",
+    "windows_close_all": "window_fl",
+    "windows_vent": "window_fl",
+}
+
 CONF_CAR_NAME = "car_name"
 
-INTEGRATION_VERSION = "3.1.1"
+INTEGRATION_VERSION = "3.2.0"
 
 # Sensor considered offline after this many seconds without updates.
 ONLINE_OFFLINE_SECONDS = 60

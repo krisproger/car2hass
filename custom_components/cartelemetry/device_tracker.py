@@ -43,10 +43,19 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
     def device_info(self):
         # Separate device for the tracker (own identifiers): it is a
         # self-contained entity (map, zones, GPS history), but it is linked
-        # under the main vehicle device via via_device so both show as one car.
+        # under the main vehicle device (via_device_id) so both show as one car.
+        via = None
+        try:
+            from homeassistant.helpers import device_registry
+            dev_reg = device_registry.async_get(self.hass)
+            main = dev_reg.async_get_device({(DOMAIN, self._entry_id)})
+            if main is not None:
+                via = main.id
+        except Exception:  # noqa: BLE001
+            pass
         return build_device_info(
             f"{self._entry_id}_tracker", f"{self._car_name} Tracker", self._sw_version,
-            via=(DOMAIN, self._entry_id),
+            via_device_id=via,
         )
 
     @property

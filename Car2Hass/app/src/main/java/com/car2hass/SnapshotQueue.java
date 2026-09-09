@@ -16,7 +16,7 @@ public class SnapshotQueue {
     public static final int DEQUEUE_CHUNK_SIZE = 500;
 
     private static final String DB_NAME = "snapshot_queue.db";
-    private static final int DB_VERSION = 3;
+    private static final int DB_VERSION = 4;
     private static final String TABLE = "queue";
     private static final String COL_ID = "id";
     private static final String COL_TS = "ts";
@@ -26,6 +26,7 @@ public class SnapshotQueue {
     private static final String COL_FIX_TS = "fix_ts";
     private static final String COL_SIGNALS = "signals";
     private static final String COL_CREATED = "created";
+    private static final String COL_DISABLED = "disabled";
 
     private static QueueDbHelper dbHelper = null;
 
@@ -45,6 +46,7 @@ public class SnapshotQueue {
         cv.put(COL_ACCURACY, snap.accuracy);
         cv.put(COL_FIX_TS, snap.fixTimeSec);
         cv.put(COL_SIGNALS, snap.signalJson);
+        cv.put(COL_DISABLED, snap.disabledJson == null ? "" : snap.disabledJson);
         cv.put(COL_CREATED, System.currentTimeMillis());
         db.insert(TABLE, null, cv);
     }
@@ -69,6 +71,7 @@ public class SnapshotQueue {
                 cv.put(COL_ACCURACY, snap.accuracy);
                 cv.put(COL_FIX_TS, snap.fixTimeSec);
                 cv.put(COL_SIGNALS, snap.signalJson);
+        cv.put(COL_DISABLED, snap.disabledJson == null ? "" : snap.disabledJson);
                 cv.put(COL_CREATED, System.currentTimeMillis());
                 db.insert(TABLE, null, cv);
             }
@@ -106,7 +109,8 @@ public class SnapshotQueue {
                     lon,
                     accuracy,
                     fixTimeSec,
-                    cursor.getString(6)
+                    cursor.getString(6),
+                    cursor.isNull(7) ? "" : cursor.getString(7)
                 );
                 snap.queueId = cursor.getLong(0);
                 result.add(snap);
@@ -224,7 +228,8 @@ public class SnapshotQueue {
                 COL_ACCURACY + " REAL, " +
                 COL_FIX_TS + " INTEGER NOT NULL DEFAULT 0, " +
                 COL_SIGNALS + " TEXT NOT NULL, " +
-                COL_CREATED + " INTEGER NOT NULL" +
+                COL_CREATED + " INTEGER NOT NULL, " +
+                COL_DISABLED + " TEXT" +
                 ")");
             db.execSQL("CREATE INDEX idx_queue_created ON " + TABLE + "(" + COL_CREATED + ")");
         }
@@ -238,6 +243,9 @@ public class SnapshotQueue {
             if (oldVersion < 3) {
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN " + COL_FIX_TS +
                         " INTEGER NOT NULL DEFAULT 0");
+            }
+            if (oldVersion < 4) {
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN " + COL_DISABLED + " TEXT");
             }
         }
     }

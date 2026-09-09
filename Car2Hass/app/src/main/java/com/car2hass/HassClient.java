@@ -57,17 +57,20 @@ public class HassClient {
         /** GPS fix time in epoch seconds (0 when unknown — falls back to timestamp). */
         public final long fixTimeSec;
         public final String signalJson;  // JSON object of all signal key:value pairs
+        /** JSON array of disabled signal keys ("" when none). */
+        public final String disabledJson;
         /** Database row id when this snapshot came from the queue (-1 for in-memory). */
         public long queueId = -1;
 
         public Snapshot(long timestamp, double lat, double lon, float accuracy,
-                        long fixTimeSec, String signalJson) {
+                        long fixTimeSec, String signalJson, String disabledJson) {
             this.timestamp = timestamp;
             this.lat = lat;
             this.lon = lon;
             this.accuracy = accuracy;
             this.fixTimeSec = fixTimeSec;
             this.signalJson = signalJson;
+            this.disabledJson = disabledJson;
         }
 
         public JSONObject toJson() throws Exception {
@@ -88,6 +91,9 @@ public class HassClient {
                 obj.put("g", gps);
             }
             obj.put("s", new JSONObject(signalJson));
+            if (disabledJson != null && !disabledJson.isEmpty()) {
+                obj.put("d", new JSONArray(disabledJson));
+            }
             return obj;
         }
 
@@ -109,7 +115,8 @@ public class HassClient {
                 lon,
                 accuracy,
                 fixTimeSec,
-                obj.getJSONObject("s").toString()
+                obj.getJSONObject("s").toString(),
+                obj.has("d") ? obj.getJSONArray("d").toString() : ""
             );
         }
     }
@@ -127,8 +134,15 @@ public class HassClient {
     public static void collectSnapshot(Context ctx, double lat, double lon,
                                        float accuracy, long fixTimeSec, String signalJson) {
         try {
+            java.util.Set<String> disabled = com.car2hass.AppConfig.getDisabledSignals(ctx);
+            String disabledJson = "";
+            if (disabled != null && !disabled.isEmpty()) {
+                org.json.JSONArray arr = new org.json.JSONArray();
+                for (String k : disabled) arr.put(k);
+                disabledJson = arr.toString();
+            }
             Snapshot snap = new Snapshot(System.currentTimeMillis() / 1000, lat, lon,
-                    accuracy, fixTimeSec, signalJson);
+                    accuracy, fixTimeSec, signalJson, disabledJson);
             synchronized (bufferLock) {
                 buffer.add(snap);
                 if (buffer.size() > MAX_BUFFER) {

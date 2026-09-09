@@ -57,6 +57,7 @@ def aggregate_batch(sorted_batch: list) -> dict:
     maximum snapshot timestamp.
     """
     latest_signals: dict = {}
+    disabled_signals: set[str] = set()
     last_lat = None
     last_lon = None
     last_accuracy = 0
@@ -66,6 +67,9 @@ def aggregate_batch(sorted_batch: list) -> dict:
         timestamp = snapshot.get("t", 0)
         gps = snapshot.get("g", {})
         signals = snapshot.get("s", {})
+        d = snapshot.get("d")
+        if isinstance(d, list):
+            disabled_signals.update(str(x) for x in d if isinstance(x, str))
 
         try:
             lat = float(gps.get("lat")) if gps.get("lat") is not None else None
@@ -102,6 +106,7 @@ def aggregate_batch(sorted_batch: list) -> dict:
         "timestamp": last_timestamp,
         "fix_timestamp": last_fix_time,
         "seen_signals": set(latest_signals.keys()),
+        "disabled_signals": disabled_signals,
     }
 
 

@@ -894,6 +894,8 @@ public class TelemetryService extends Service {
             for (java.util.Map.Entry<String, String> e : cachedSignalValues.entrySet()) {
                 String key = e.getKey();
                 if (key == null || key.startsWith("geo_") || key.endsWith("_name")) continue;
+                // Disabled signals are never forwarded (both snapshot paths agree).
+                if (!AppConfig.isSignalEnabled(this, key)) continue;
                 String v = e.getValue();
                 if (v == null || "---".equals(v)) continue;
                 // Never forward non-finite numerics ("nan"/"inf"): HA rejects

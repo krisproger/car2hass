@@ -112,8 +112,6 @@ public class MainActivity extends BaseLocalizedActivity {
 
     // Signal enable filter state (in-memory; persisted every 5 s when changed)
     private final Set<String> pendingDisabledKeys = new HashSet<>();
-    /** Toggles the "known but unreachable" spoiler at the end of the telemetry list. */
-    private boolean showUnreachableSensors;
     /** Sticky last-seen values (survive service restarts within the session). */
     private final java.util.concurrent.ConcurrentHashMap<String, String> lastSeenValues =
             new java.util.concurrent.ConcurrentHashMap<>();
@@ -352,6 +350,9 @@ public class MainActivity extends BaseLocalizedActivity {
         adapter = new CANDataAdapter(this);
         adapter.setData(knownItems);
         listView.setAdapter(adapter);
+        // System-first: the tab reflects the shared ValueStore from the very
+        // start (system sensors are always visible, groups included).
+        startTelemetryTabTicker();
 
         checkSelectAll = findViewById(R.id.checkSendToHa);
         headerCheckAll = findViewById(R.id.rowHeaderCheck);
@@ -2697,6 +2698,39 @@ public class MainActivity extends BaseLocalizedActivity {
         }
     }
 
+    /** Available channels from the latest probe report (channelAvailability). */
+    private java.util.Set<String> loadAvailableChannels() {
+        java.util.Set<String> out = new HashSet<>();
+        try {
+            String path = AppConfig.getProbeReportPath(this);
+            if (path == null) return out;
+            java.io.File f = new java.io.File(path);
+            if (!f.exists()) return out;
+            String text = new String(java.nio.file.Files.readAllBytes(f.toPath()),
+                    java.nio.charset.StandardCharsets.UTF_8);
+            org.json.JSONObject report = new org.json.JSONObject(text);
+            org.json.JSONArray channels = report.optJSONArray("channels");
+            if (channels != null) {
+                for (int i = 0; i < channels.length(); i++) {
+                    org.json.JSONObject c = channels.optJSONObject(i);
+                    if (c != null && c.optBoolean("available", false)) {
+                        out.add(c.optString("id"));
+                    }
+                }
+            }
+        } catch (Exception e) {
+            LogBuffer.e("Main", "available channels: " + e.getMessage());
+        }
+        return out;
+    }
+
+    private boolean hasLocationPermission() {
+        return checkSelfPermission(android.Manifest.permission.ACCESS_FINE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED
+            || checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION)
+                == PackageManager.PERMISSION_GRANTED;
+    }
+
     /** Current value for a key: ValueStore → sticky last-seen → null. */
     private String valueFor(String key, TelemetryService svc) {
         if (key == null) return null;
@@ -2722,39 +2756,46 @@ public class MainActivity extends BaseLocalizedActivity {
     private List<CANDataItem> buildDisplayListFromValueStore() {
         TelemetryService svc = getTelemetryService();
         List<CANDataItem> out = new ArrayList<>();
-        // The tab must never be empty: fall back to the sticky/legacy item set.
         boolean loaded = false;
+        java.util.Set<String> availableChannels = loadAvailableChannels();
+        boolean systemAvailable = hasLocationPermission();
         try {
             RegistryStore reg = RegistryStore.load(this);
             List<String> keys = reg.sensorKeys();
             loaded = !keys.isEmpty();
-            java.util.Set<String> active = new HashSet<>(AppConfig.getActiveChannels(this));
             for (String key : keys) {
                 String label = key;
-                boolean unreachable = false;
+                boolean system = false;
+                boolean reachable = false;
                 try {
                     org.json.JSONObject s = reg.getSensor(key);
                     if (s != null) {
                         label = s.optString("label_ru", s.optString("label_en", key));
                         org.json.JSONObject channels = s.optJSONObject("channels");
-                        if (channels != null && !channels.has("system")) {
-                            boolean reachable = false;
-                            java.util.Iterator<String> it = channels.keys();
-                            while (it.hasNext()) {
-                                String c = it.next();
-                                if (active.contains(c)) { reachable = true; break; }
+                        if (channels != null) {
+                            if (channels.has("system")) {
+                                system = true;
+                                reachable = systemAvailable;
                             }
-                            if (!reachable) unreachable = true;
+                            if (!reachable && channels.length() > 0) {
+                                java.util.Iterator<String> it = channels.keys();
+                                while (it.hasNext()) {
+                                    if (availableChannels.contains(it.next())) { reachable = true; break; }
+                                }
+                            }
                         }
                     }
                 } catch (Exception ignored) {}
                 CANDataItem it = new CANDataItem(0, key, label, 0);
                 it.key = key;
-                it.enabled = AppConfig.isSignalEnabled(this, key);
+                it.enabled = system ? true : AppConfig.isSignalEnabled(this, key);
                 String v = valueFor(key, svc);
                 it.value = v == null ? "---" : v;
+                boolean live = v != null;
                 it.lastUpdate = v == null ? 0 : System.currentTimeMillis();
-                it.rawData = unreachable ? "unreachable" : "";
+                it.rawData = (system ? "system" : "") + (reachable ? "reachable" : "");
+                // Grey only for disabled or unavailable sensors; system stays green.
+                it.grey = !(system || it.enabled) || (!system && !reachable && !live);
                 out.add(it);
             }
         } catch (Exception e) {
@@ -2769,41 +2810,48 @@ public class MainActivity extends BaseLocalizedActivity {
             }
             out.addAll(knownItems);
         }
-        java.util.List<CANDataItem> liveOn = new ArrayList<>(), liveOff = new ArrayList<>(),
-                expOn = new ArrayList<>(), expOff = new ArrayList<>();
-        java.util.List<CANDataItem> unreach = new ArrayList<>();
+        java.util.List<CANDataItem> active = new ArrayList<>(), expected = new ArrayList<>(),
+                unreachable = new ArrayList<>(), disWith = new ArrayList<>(), dis = new ArrayList<>();
         for (CANDataItem it : out) {
             boolean live = !"---".equals(it.value);
-            if ("unreachable".equals(it.rawData)) { unreach.add(it); continue; }
-            if (live && it.enabled) liveOn.add(it);
-            else if (live) liveOff.add(it);
-            else if (it.enabled) expOn.add(it);
-            else expOff.add(it);
+            boolean system = it.rawData != null && it.rawData.contains("system");
+            boolean reachable = it.rawData != null && it.rawData.contains("reachable");
+            // System sensors are non-disableable: always enabled, always green.
+            boolean enabled = system || it.enabled;
+            if (enabled && live) active.add(it);
+            else if (enabled && reachable) expected.add(it);
+            else if (enabled) unreachable.add(it);
+            else if (live) disWith.add(it);
+            else dis.add(it);
         }
         java.util.Comparator<CANDataItem> byKey = (a, b) -> a.key.compareTo(b.key);
-        liveOn.sort(byKey);
-        liveOff.sort(byKey);
-        expOn.sort(byKey);
-        expOff.sort(byKey);
-        unreach.sort(byKey);
+        active.sort(byKey);
+        expected.sort(byKey);
+        unreachable.sort(byKey);
+        disWith.sort(byKey);
+        dis.sort(byKey);
         List<CANDataItem> result = new ArrayList<>();
-        addGroup(result, R.string.telemetry_group_active, liveOn);
-        addGroup(result, R.string.telemetry_group_active_off, liveOff);
-        addGroup(result, R.string.telemetry_group_expected, expOn);
-        addGroup(result, R.string.telemetry_group_expected_off, expOff);
-        if (showUnreachableSensors) {
-            addGroup(result, R.string.telemetry_group_unreachable, unreach);
-        }
+        addGroup(result, "active", R.string.telemetry_group_active, active);
+        addGroup(result, "expected", R.string.telemetry_group_expected, expected);
+        addGroup(result, "unreachable", R.string.telemetry_group_unreachable, unreachable);
+        addGroup(result, "diswith", R.string.telemetry_group_active_off, disWith);
+        addGroup(result, "dis", R.string.telemetry_group_expected_off, dis);
         return result;
     }
 
-    private void addGroup(List<CANDataItem> out, int titleRes, List<CANDataItem> items) {
+    private final java.util.Set<String> collapsedGroups = new HashSet<>();
+
+    private void addGroup(List<CANDataItem> out, String groupKey, int titleRes, List<CANDataItem> items) {
         if (items.isEmpty()) return;
         CANDataItem header = new CANDataItem(0, "", "", 0);
         header.isHeader = true;
-        header.headerText = getString(titleRes) + " (" + items.size() + ")";
+        header.groupKey = groupKey;
+        header.headerText = getString(titleRes) + " (" + items.size() + ")"
+                + (collapsedGroups.contains(groupKey) ? " ▸" : " ▾");
         out.add(header);
-        out.addAll(items);
+        if (!collapsedGroups.contains(groupKey)) {
+            out.addAll(items);
+        }
     }
 
     private void applyEnabledStateToItems(List<CANDataItem> items) {
@@ -2885,20 +2933,16 @@ public class MainActivity extends BaseLocalizedActivity {
         findViewById(R.id.headerValue).setOnClickListener(v -> adapter.sortBy(CANDataAdapter.SortColumn.VALUE));
         findViewById(R.id.headerUnit).setOnClickListener(v -> adapter.sortBy(CANDataAdapter.SortColumn.UNIT));
         findViewById(R.id.headerRoute).setOnClickListener(v -> adapter.sortBy(CANDataAdapter.SortColumn.ROUTE));
-        // Spoiler toggle for sensors known but unreachable in the current config.
-        View spoilerBtn = findViewById(R.id.btnUnreachableSensors);
-        if (spoilerBtn != null) {
-            spoilerBtn.setOnClickListener(v -> {
-                showUnreachableSensors = !showUnreachableSensors;
-                TextView tv = spoilerBtn instanceof TextView ? (TextView) spoilerBtn : null;
-                if (tv != null) {
-                    tv.setText(getString(showUnreachableSensors
-                            ? R.string.telemetry_hide_unreachable : R.string.telemetry_show_unreachable));
-                }
-                List<CANDataItem> list = buildDisplayListFromValueStore();
-                if (list != null) adapter.setData(list);
-            });
-        }
+        // Collapsible group headers: tap to toggle a group.
+        adapter.setOnHeaderClick(groupKey -> {
+            if (collapsedGroups.contains(groupKey)) {
+                collapsedGroups.remove(groupKey);
+            } else {
+                collapsedGroups.add(groupKey);
+            }
+            List<CANDataItem> list = buildDisplayListFromValueStore();
+            if (list != null) adapter.setData(list);
+        });
     }
 
     private void setupEnabledFilterListeners() {
@@ -2942,8 +2986,10 @@ public class MainActivity extends BaseLocalizedActivity {
     private void postEnabledSave() {
         handler.removeCallbacks(saveEnabledRunnable);
         handler.postDelayed(saveEnabledRunnable, 5000);
-        // Telemetry tab reads the shared ValueStore on a fixed cadence so system
-        // sensors are always visible even when the CAN cycle yields no data.
+    }
+
+    /** Starts the 2s telemetry-tab ticker (ValueStore → adapter). Runs at startup. */
+    private void startTelemetryTabTicker() {
         handler.postDelayed(new Runnable() {
             @Override public void run() {
                 try {
@@ -4585,7 +4631,8 @@ public class MainActivity extends BaseLocalizedActivity {
                                 + " — обновите интеграцию и перезапустите HA");
                     } else {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
-                        String detail = errorDetail.isEmpty() ? "" : ": " + errorDetail;
+                        String detail = errorDetail.isEmpty() ? " (тело ответа пустое)"
+                                : ": " + errorDetail;
                         tvTestResult.setText(getString(R.string.settings_test_endpoint_http, code) + detail);
                     }
                 });

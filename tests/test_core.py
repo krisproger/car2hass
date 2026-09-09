@@ -70,6 +70,15 @@ def test_aggregate_latest_value_wins_and_gps():
     assert agg["seen_signals"] == {"speed", "soc"}
 
 
+def test_aggregate_collects_disabled_signals():
+    batch = core.validate_batch([
+        {"t": 1, "s": {"speed": 10}, "d": ["drl", "fog"]},
+        {"t": 2, "s": {"soc": 80}, "d": ["drl"]},
+    ])
+    agg = core.aggregate_batch(batch)
+    assert agg["disabled_signals"] == {"drl", "fog"}
+
+
 def test_aggregate_skips_invalid_gps():
     batch = core.validate_batch([
         {"t": 1, "s": {}, "g": {"lat": "bad", "lon": 37.0}},

@@ -25,6 +25,9 @@ public class CANDataItem {
     /** Synthetic group-header row (rendered as a section title, not a sensor). */
     public boolean isHeader;
     public String headerText;
+    public String groupKey;
+    /** True for disabled/unreachable rows (rendered grey). */
+    public boolean grey;
 
     public CANDataItem(int canId, String name, String unit, int route) {
         this.canId = canId;
