@@ -13,8 +13,8 @@
 
 | Что | Файл | Ссылка |
 |-----|------|--------|
-| Android-приложение (текущая версия) | `car2hass-v3.2.3.apk` | [скачать](https://mytechnic.ru/cartelemetry/download.php?file=app) |
-| Интеграция HA (текущая версия) | `cartelemetry-v3.2.3.zip` | [скачать](https://mytechnic.ru/cartelemetry/download.php?file=integration) |
+| Android-приложение (текущая версия) | `car2hass-v3.2.4.apk` | [скачать](https://mytechnic.ru/cartelemetry/download.php?file=app) |
+| Интеграция HA (текущая версия) | `cartelemetry-v3.2.4.zip` | [скачать](https://mytechnic.ru/cartelemetry/download.php?file=integration) |
 | Приложение DiPlus (источник BYD DiLink, опционально) | `diplus.1.3.8-beta18.apk` | [скачать](https://mytechnic.ru/cartelemetry/download.php?file=diplus) |
 
 ??? note "Архив предыдущих версий"

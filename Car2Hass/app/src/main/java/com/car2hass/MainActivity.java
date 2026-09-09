@@ -2720,9 +2720,13 @@ public class MainActivity extends BaseLocalizedActivity {
             if (path == null) return out;
             java.io.File f = new java.io.File(path);
             if (!f.exists()) return out;
-            String text = new String(java.nio.file.Files.readAllBytes(f.toPath()),
-                    java.nio.charset.StandardCharsets.UTF_8);
-            org.json.JSONObject report = new org.json.JSONObject(text);
+            StringBuilder sb = new StringBuilder();
+            try (java.io.BufferedReader br = new java.io.BufferedReader(
+                    new java.io.FileReader(f))) {
+                String line;
+                while ((line = br.readLine()) != null) sb.append(line);
+            }
+            org.json.JSONObject report = new org.json.JSONObject(sb.toString());
             org.json.JSONArray channels = report.optJSONArray("channels");
             if (channels != null) {
                 for (int i = 0; i < channels.length(); i++) {
@@ -2909,7 +2913,7 @@ public class MainActivity extends BaseLocalizedActivity {
                     }
                 }
             }
-            adapter.setAllEnabled(isChecked);
+            if (adapter != null) adapter.setAllEnabled(isChecked);
             enabledDirty = true;
             postEnabledSave();
         });
@@ -2941,7 +2945,7 @@ public class MainActivity extends BaseLocalizedActivity {
                     }
                 }
             }
-            adapter.setAllEnabled(isChecked);
+            if (adapter != null) adapter.setAllEnabled(isChecked);
             enabledDirty = true;
             postEnabledSave();
         });
@@ -2990,17 +2994,9 @@ public class MainActivity extends BaseLocalizedActivity {
         checkSelectAll.setOnCheckedChangeListener(null);
         checkSelectAll.setChecked(AppConfig.isHassEnabled(this));
         checkSelectAll.setOnCheckedChangeListener(sendToHaListener);
-
-        adapter.setOnEnabledChangeListener((item, enabled) -> {
-            if (enabled) {
-                pendingDisabledKeys.remove(item.key);
-            } else {
-                pendingDisabledKeys.add(item.key);
-            }
-            enabledDirty = true;
-            updateHeaderCheckAllState();
-            postEnabledSave();
-        });
+        // Individual sensor checkboxes are handled by the expandable adapter's
+        // onCheckChanged callback (see initTelemetryList), which persists the
+        // disabled-signal set directly.
     }
 
     private void postEnabledSave() {
@@ -3018,7 +3014,7 @@ public class MainActivity extends BaseLocalizedActivity {
                         expAdapter.setGroups(groups);
                         applyExpandedState();
                     }
-                } catch (Exception e) {
+                } catch (Throwable e) {
                     LogBuffer.e("Main", "valueStore tab refresh: " + e.getMessage());
                 }
                 handler.postDelayed(this, 2000);
