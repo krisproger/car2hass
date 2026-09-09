@@ -230,7 +230,9 @@ public class MainActivity extends BaseLocalizedActivity {
                             return;
                         }
                         lastUiUpdateMs = now;
-                        adapter.setData(items);
+                        // The 2s ValueStore ticker owns the tab list; the CAN
+                        // cycle only feeds values into the store (no direct
+                        // setData here — it caused the fw/vvin blink on phones).
                         if (AppConfig.isHassEnabled(MainActivity.this)) {
                             statusText.setText(R.string.status_active_ha);
                             statusText.setTextColor(attrColor(R.attr.carAccentGreen));
@@ -793,11 +795,17 @@ public class MainActivity extends BaseLocalizedActivity {
         new Thread(() -> {
             try {
                 String anonId = com.car2hass.vehicle.DeviceAnon.fromContext(this);
-                UploadQueue.enqueue(this, UploadQueue.KIND_LOG,
+                final String entryId = UploadQueue.enqueue(this, UploadQueue.KIND_LOG,
                         AppInfo.getVersionString(this), anonId, msg, logPath);
                 flushUploadQueue();
-                handler.post(() -> Toast.makeText(this,
-                        R.string.log_server_ok, Toast.LENGTH_LONG).show());
+                handler.post(() -> {
+                    boolean stillPending = false;
+                    for (UploadQueue.Entry e : UploadQueue.load(this)) {
+                        if (entryId.equals(e.id)) { stillPending = true; break; }
+                    }
+                    Toast.makeText(this, stillPending
+                            ? R.string.log_server_pending : R.string.log_server_ok, Toast.LENGTH_LONG).show();
+                });
             } catch (Exception e) {
                 LogBuffer.e("Main", "uploadLogToServer failed: " + e.getMessage());
                 handler.post(() -> Toast.makeText(this,
@@ -3680,6 +3688,9 @@ public class MainActivity extends BaseLocalizedActivity {
         String path = pendingResearchPath;
         pendingResearchPath = null;
         if (path != null) return path;
+        // Reliable source: the saved probe report exists after any research.
+        String reportPath = AppConfig.getProbeReportPath(this);
+        if (reportPath != null && new java.io.File(reportPath).exists()) return reportPath;
         if (!"UNIVERSAL".equals(AppConfig.getVehicleProducer(this))) return null;
         return findLatestResearchFile();
     }

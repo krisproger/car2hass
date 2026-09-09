@@ -118,14 +118,16 @@ public final class UploadQueue {
         }
     }
 
-    public static void enqueue(Context ctx, String kind, String appVersion,
+    public static String enqueue(Context ctx, String kind, String appVersion,
                                String anonId, String message, String path) {
         List<Entry> all = load(ctx);
-        all.add(new Entry("u" + System.currentTimeMillis() + "-" + all.size(),
+        String id = "u" + System.currentTimeMillis() + "-" + all.size();
+        all.add(new Entry(id,
                 kind, appVersion, anonId, message, path,
                 System.currentTimeMillis(), 0, false));
         save(ctx, all);
         LogBuffer.i("UploadQueue", "enqueued " + kind + " (" + all.size() + " pending)");
+        return id;
     }
 
     public static void remove(Context ctx, String id) {

@@ -41,6 +41,7 @@
     <string name="log_shared_text">Log shared as text (%1$d bytes)</string>
     <string name="log_server_ok">Log sent to the developer. Thank you!</string>
     <string name="log_server_error">Failed to send the log. Try again later.</string>
+    <string name="log_server_pending">Log not delivered (empty or queued). Run a research first.</string>
     <string name="upload_queue_ask_title">Upload queue</string>
     <string name="upload_queue_ask_message">Could not send logs/research to the developer (no connection). Continue trying?</string>
     <string name="upload_queue_continue">Continue</string>

@@ -72,8 +72,11 @@ public final class UploadQueueWorker {
     private static boolean send(Context ctx, UploadQueue.Entry e) {
         try {
             if (UploadQueue.KIND_LOG.equals(e.kind)) {
-                String logText = LogUploader.readLogFile(e.path);
-                return LogUploader.upload(ctx, e.message, logText);
+                // Full app journal (LogBuffer + logcat) with the research report
+                // appended when available — never empty, unlike the report alone.
+                byte[] bytes = LogExportHelper.buildLogBytes(ctx, e.path);
+                return LogUploader.upload(ctx, e.message,
+                        new String(bytes, java.nio.charset.StandardCharsets.UTF_8));
             }
             return ProbeUploader.upload(ctx, e.path);
         } catch (Exception ex) {

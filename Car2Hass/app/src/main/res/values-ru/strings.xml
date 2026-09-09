@@ -41,6 +41,7 @@
     <string name="log_shared_text">Лог отправлен как текст (%1$d байт)</string>
     <string name="log_server_ok">Лог отправлен разработчику. Спасибо!</string>
     <string name="log_server_error">Не удалось отправить лог. Попробуйте позже.</string>
+    <string name="log_server_pending">Лог не доставлен (пуст или в очереди). Сначала запустите «Исследование».</string>
     <string name="upload_queue_ask_title">Очередь отправки</string>
     <string name="upload_queue_ask_message">Не удалось отправить журналы/исследования разработчику (нет связи). Продолжать попытку отправки?</string>
     <string name="upload_queue_continue">Продолжить</string>
