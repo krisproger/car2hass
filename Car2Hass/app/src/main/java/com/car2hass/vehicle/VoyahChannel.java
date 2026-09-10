@@ -65,6 +65,27 @@ public class VoyahChannel implements DataChannel {
         m.put("rear_defrost", "REAR_WINDOWN_HEAT_STATUS");
         m.put("charge_rate", "CHARGE_RATE");
         m.put("mirror_fold", "REAR_MIRROR_FOLD_SET");
+        m.put("speed", "GW_ESC_VEHSPD");
+        m.put("gear", "TGS_LEVER");
+        m.put("driver_seatbelt", "acu_driverSeatBeltSts");
+        m.put("passenger_seatbelt", "acu_passengerSeatBeltSts");
+        m.put("sunroof", "SUNROOF_OPEN_PERCENT");
+        m.put("sunshade", "ROLL_OPEN_PERCENT");
+        m.put("window_fl", "DRIVER_WINDOW_CONTROL");
+        m.put("window_fr", "PAS_WIDOW_CONTROL");
+        m.put("window_rl", "LEFT_BACK_WINDOW_CONTROL");
+        m.put("window_rr", "RIGHT_BACK_WINDOW_CONTROL");
+        m.put("fuel_charge_flap", "FUEL_PORT_CAP_STS");
+        m.put("sidelights", "POSITION_LAMP_SWITCH");
+        m.put("left_turn", "LEFT_DIRECTION_LIGHT");
+        m.put("right_turn", "RIGHT_DIRECTION_LIGHT");
+        m.put("hazard", "WARNING_LIGHT");
+        m.put("cruise_switch", "CRUISE_CONTROL");
+        m.put("acc_cruise_state", "IACC_OR_ACC_STATUS");
+        m.put("lane_keep_state", "LKSStatus");
+        m.put("auto_hold", "EPB_PARK_STATUS");
+        m.put("total_energy", "ENERGY_CON_SUM_AV");
+        m.put("drive_mode", "DRIVING_MODE_SET");
         VOYAH_PARAMS = java.util.Collections.unmodifiableMap(m);
     }
 

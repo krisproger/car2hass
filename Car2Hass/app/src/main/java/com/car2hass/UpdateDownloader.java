@@ -7,6 +7,7 @@ import android.net.Uri;
 import android.os.Environment;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
@@ -116,8 +117,26 @@ public final class UpdateDownloader {
             } catch (Exception ignored) {
             }
         }
-        File dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        File[] files = dir.listFiles((d, name) -> name.startsWith("Car2Hass-" + version));
+        File best = null;
+        // Public Downloads may not hold the file at all (Voyah head units save
+        // elsewhere); also scan the app-private dirs used by download().
+        File pub = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
+        best = better(best, bestMatch(pub, version));
+        if (ctx != null) {
+            File priv = ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            if (priv != null) best = better(best, bestMatch(priv, version));
+            best = better(best, bestMatch(ctx.getCacheDir(), version));
+        }
+        return best;
+    }
+
+    /** Largest candidate APK: name contains the version or the app prefix, any extension. */
+    private static File bestMatch(File dir, String version) {
+        File[] files = dir == null ? null : dir.listFiles((d, name) -> {
+            String lower = name.toLowerCase(Locale.ROOT);
+            return lower.contains("car2hass") || lower.startsWith("download")
+                    || (version != null && lower.contains(version.toLowerCase(Locale.ROOT)));
+        });
         File best = null;
         if (files != null) {
             for (File f : files) {
@@ -129,9 +148,10 @@ public final class UpdateDownloader {
         return best;
     }
 
-    /** True when an APK for the version already landed in public Downloads. */
-    public static boolean apkExists(String version) {
-        return findDownloadedFile(null, -1, version) != null;
+    private static File better(File a, File b) {
+        if (a == null) return b;
+        if (b == null) return a;
+        return b.length() > a.length() ? b : a;
     }
 
     /** Fires the package installer for an existing file; false on failure. */
@@ -149,6 +169,55 @@ public final class UpdateDownloader {
         } catch (Exception e) {
             LogBuffer.e("UpdateDownloader", "installFile: " + e.getMessage());
             return false;
+        }
+    }
+
+    /** Progress callback: done bytes / total bytes (total may be -1 when unknown). */
+    public interface DownloadProgress {
+        void onProgress(long done, long total);
+    }
+
+    /**
+     * Downloads the APK directly into app-private storage with an explicit
+     * ".apk" name, bypassing DownloadManager. DownloadManager on some head
+     * units (Voyah PATEO, Android 9) renames the file to "*.bin" or saves it
+     * somewhere the public-Downloads scan cannot see, so the app streams the
+     * file itself. Returns the ready-to-install file.
+     */
+    public static File download(Context ctx, UpdateChecker.UpdateInfo info,
+                                DownloadProgress progress) throws IOException {
+        File dir = ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+        if (dir == null) dir = ctx.getCacheDir();
+        if (!dir.exists() && !dir.mkdirs()) throw new IOException("cannot create " + dir);
+        File target = new File(dir, "Car2Hass-" + info.version + ".apk");
+        if (target.exists() && target.length() > 0) return target;
+        File tmp = new File(dir, target.getName() + ".part");
+        HttpURLConnection conn = (HttpURLConnection) new URL(info.apkUrl).openConnection();
+        try {
+            conn.setConnectTimeout(15_000);
+            conn.setReadTimeout(15_000);
+            conn.setInstanceFollowRedirects(true);
+            conn.setRequestProperty("User-Agent", "Car2Hass-Updater");
+            conn.setRequestProperty("X-Car2Hass-Id", AppConfig.getAppInstanceId(ctx));
+            int code = conn.getResponseCode();
+            if (code != 200) throw new IOException("HTTP " + code);
+            long total = conn.getContentLengthLong();
+            try (InputStream in = conn.getInputStream();
+                 java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) {
+                byte[] buf = new byte[8192];
+                long done = 0;
+                int n;
+                while ((n = in.read(buf)) > 0) {
+                    out.write(buf, 0, n);
+                    done += n;
+                    if (progress != null) progress.onProgress(done, total);
+                }
+                out.getFD().sync();
+            }
+            if (!tmp.renameTo(target)) throw new IOException("rename to " + target + " failed");
+            return target;
+        } finally {
+            conn.disconnect();
         }
     }
 

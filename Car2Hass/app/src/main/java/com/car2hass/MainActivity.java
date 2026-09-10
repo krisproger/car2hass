@@ -4045,44 +4045,35 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void downloadUpdate(UpdateChecker.UpdateInfo info) {
-        // Skip re-download when the file already landed (e.g. install failed
-        // earlier and left a copy in Downloads).
-        if (UpdateDownloader.apkExists(info.version)) {
-            UpdateDownloader.installFile(this,
-                    UpdateDownloader.findDownloadedFile(this, -1, info.version));
-            return;
-        }
-        long id = UpdateDownloader.enqueueDownload(this, info);
+        // Reuse an already-landed copy (e.g. install failed earlier) before
+        // downloading again.
+        File existing = UpdateDownloader.findDownloadedFile(this, -1, info.version);
+        if (existing != null && UpdateDownloader.installFile(this, existing)) return;
+
         android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
         progress.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
         progress.setTitle(getString(R.string.update_downloading, "0%"));
         progress.setCancelable(false);
         progress.show();
         new Thread(() -> {
-            while (true) {
-                String status = UpdateDownloader.downloadStatus(this, id);
-                runOnUiThread(() -> {
-                    if ("done".equals(status) || "failed".equals(status)) {
-                        progress.dismiss();
-                    } else {
-                        progress.setMessage(getString(R.string.update_downloading, status));
-                    }
-                });
-                if ("done".equals(status)) {
-                    File apk = UpdateDownloader.findDownloadedFile(this, id, info.version);
-                    boolean installed = UpdateDownloader.installFile(this, apk);
-                    if (!installed) {
-                        runOnUiThread(() -> Toast.makeText(this,
-                                R.string.update_install_failed, Toast.LENGTH_LONG).show());
-                    }
-                    return;
-                }
-                if ("failed".equals(status)) {
+            try {
+                File apk = UpdateDownloader.download(this, info, (done, total) ->
+                        runOnUiThread(() -> {
+                            String pct = total > 0 ? (done * 100 / total) + "%" : "...";
+                            progress.setMessage(getString(R.string.update_downloading, pct));
+                        }));
+                runOnUiThread(progress::dismiss);
+                if (!UpdateDownloader.installFile(this, apk)) {
                     runOnUiThread(() -> Toast.makeText(this,
-                            R.string.update_download_failed, Toast.LENGTH_LONG).show());
-                    return;
+                            R.string.update_install_failed, Toast.LENGTH_LONG).show());
                 }
-                try { Thread.sleep(500); } catch (InterruptedException ignored) { return; }
+            } catch (Exception e) {
+                LogBuffer.e("Main", "update download: " + e.getMessage());
+                runOnUiThread(() -> {
+                    progress.dismiss();
+                    Toast.makeText(this,
+                            R.string.update_download_failed, Toast.LENGTH_LONG).show();
+                });
             }
         }, "update-download").start();
     }
