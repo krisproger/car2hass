@@ -4628,17 +4628,20 @@ public class MainActivity extends BaseLocalizedActivity {
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);
 
-                String testJson = "{\"car_name\":\"test\",\"vvn\":\"test\",\"batch\":[]}";
+                // Realistic request: the real configured car name + one minimal
+                // valid snapshot (an empty batch is not what the app sends).
+                String carName = AppConfig.getCarName(this);
+                String testJson = "{\"car_name\":\"" + carName
+                        + "\",\"vvn\":\"test\",\"batch\":[{\"t\":" + (System.currentTimeMillis() / 1000)
+                        + ",\"s\":{\"power_state\":\"on\"}}]}";
                 try (OutputStream os = conn.getOutputStream()) {
                     os.write(testJson.getBytes("UTF-8"));
                 }
 
                 int code = conn.getResponseCode();
-                // Diagnose unexpected codes: 501 usually means the registered
-                // view lacks a POST handler (integration not updated/reloaded).
                 String body = code >= 400 ? readErrorSnippet(conn) : "";
                 String allow = conn.getHeaderField("Allow");
-                LogBuffer.w("Main", "Endpoint test HTTP " + code
+                LogBuffer.w("Main", "Endpoint test POST " + url + " -> HTTP " + code
                         + (allow != null ? " Allow=" + allow : "")
                         + (body.isEmpty() ? "" : " body=" + body));
                 conn.disconnect();

@@ -322,8 +322,6 @@ class VehicleDataView(HomeAssistantView):
                 status=404,
             )
 
-        # Any unexpected exception is surfaced as a JSON 500 with the reason
-        # (never a stack trace) and logged with the full traceback in HA.
         try:
             return await self._process_batch(hass, entry_id, car_name, vvn,
                                              firmware, app_version, batch,
