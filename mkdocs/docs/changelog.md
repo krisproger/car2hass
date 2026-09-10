@@ -2,7 +2,12 @@
 
 > **Скачать актуальное приложение Android:** <https://mytechnic.ru/cartelemetry/download.php?file=app>
 
-## v3.2.7 (текущая)
+## v3.2.8 (текущая)
+
+- Интеграция: исправлена ошибка "disabled_by must be a RegistryEntryDisabler value" —
+  деактивация сенсоров/команд теперь использует enum, а не строку.
+
+## v3.2.7
 
 - OBD-воркер: фоновая сессия использует обычный open() — не требует разрешения
   BLUETOOTH_SCAN на Android 12+ (раньше цикл падал каждые 2с с SecurityException).

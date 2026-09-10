@@ -15,6 +15,7 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.dispatcher import async_dispatcher_send
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers import entity_registry
+from homeassistant.helpers.entity_registry import RegistryEntryDisabler
 from homeassistant.util import dt as dt_util
 
 from . import core
@@ -437,7 +438,7 @@ async def _async_enable_sensors(hass: HomeAssistant, entry_id: str, signal_keys:
         if entity_id is None:
             continue
         entry = reg.async_get(entity_id)
-        if entry is None or entry.disabled_by != "integration":
+        if entry is None or entry.disabled_by != RegistryEntryDisabler.INTEGRATION:
             continue
         reg.async_enable(entity_id)
 
@@ -461,9 +462,9 @@ async def _async_sync_entity_availability(
             if eid is None:
                 continue
             entry = reg.async_get(eid)
-            if entry is None or entry.disabled_by == "user":
+            if entry is None or entry.disabled_by == RegistryEntryDisabler.USER:
                 continue
-            reg.async_update_entity(eid, disabled_by="integration")
+            reg.async_update_entity(eid, disabled_by=RegistryEntryDisabler.INTEGRATION)
 
     def _set_enabled(unique: str, platforms: list) -> None:
         for pl in platforms:
@@ -471,7 +472,7 @@ async def _async_sync_entity_availability(
             if eid is None:
                 continue
             entry = reg.async_get(eid)
-            if entry is None or entry.disabled_by != "integration":
+            if entry is None or entry.disabled_by != RegistryEntryDisabler.INTEGRATION:
                 continue
             reg.async_enable(eid)
 
@@ -518,7 +519,7 @@ async def _async_enable_sensors(hass: HomeAssistant, entry_id: str, signal_keys:
         if entity_id is None:
             continue
         entry = reg.async_get(entity_id)
-        if entry is None or entry.disabled_by != "integration":
+        if entry is None or entry.disabled_by != RegistryEntryDisabler.INTEGRATION:
             continue
         reg.async_enable(entity_id)
 
