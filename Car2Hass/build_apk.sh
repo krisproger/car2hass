@@ -24,7 +24,7 @@ OUTPUT_DIR=$BUILD/apk
 
 COUNTER_FILE=$PROJECT/build_counter.txt
 BUILD_NUM=$(cat "$COUNTER_FILE" 2>/dev/null || echo 1)
-VERSION_NAME=${VERSION_NAME:-3.2.6}
+VERSION_NAME=${VERSION_NAME:-3.2.7}
 
 # --- osmdroid (OpenStreetMap library for geofence editing) ---
 # The AAR is fetched once from Maven Central into libs/ and reused offline.

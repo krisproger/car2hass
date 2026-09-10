@@ -55,7 +55,10 @@ public final class ObdWorker {
             try {
                 if (session == null) {
                     ObdTransport t = ObdTransportFactory.create(ctx);
-                    session = t.openForced();
+                    // Plain open(): unlike openForced it never calls
+                    // adapter.isDiscovering(), which requires the runtime
+                    // BLUETOOTH_SCAN permission on Android 12+.
+                    session = t.open();
                     if (session.initWarmUp() == null) {
                         close(session);
                         session = null;
