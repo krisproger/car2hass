@@ -272,7 +272,9 @@ public class AdbShellExecutor {
                     "Accept the \"Allow USB debugging?\" / \"Allow ADB debugging?\" prompt on the head unit, " +
                     "or authorize this client on the target device."));
         } catch (SocketException e) {
-            LogBuffer.e(TAG, "Connection refused to ADB daemon: " + e.getMessage());
+            // Expected when the ADB daemon is not running (OBD-only / Voyah
+            // devices): warn, don't error. The reader applies its own backoff.
+            LogBuffer.w(TAG, "Connection refused to ADB daemon: " + e.getMessage());
             callbackOnMain(callback, () -> callback.onFailure(
                     "Connection refused to ADB daemon at " + host + ":" + port));
         } catch (InterruptedException e) {

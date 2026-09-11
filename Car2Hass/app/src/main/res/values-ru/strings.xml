@@ -238,6 +238,8 @@
     <string name="settings_test_api_ok">Подключение успешно. Endpoint /api/cartelemetry отвечает (HTTP %1$d)</string>
     <string name="settings_test_not_found">Сервер HA доступен, но /api/cartelemetry не найден (установите интеграцию)</string>
     <string name="settings_test_endpoint_http">Endpoint ответил HTTP %1$d</string>
+    <string name="settings_test_info_ok">Интеграция %1$s (api %2$d) — совместима</string>
+    <string name="settings_test_info_old">Интеграция %1$s (api %2$d) устарела — обновите до api ≥ %3$d</string>
     <string name="settings_test_api_error">API OK, /api/cartelemetry: %1$s</string>
     <string name="settings_test_error">Ошибка: %1$s</string>
     <string name="settings_invalid_port">Некорректный порт</string>

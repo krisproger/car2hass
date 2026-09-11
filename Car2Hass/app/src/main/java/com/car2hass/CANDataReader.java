@@ -486,6 +486,12 @@ public class CANDataReader {
 
     /** Runs the native reader once against the ADB daemon, updating knownItems in place. */
     private static NativeReader runNativeReader(Context context, List<CANDataItem> knownItems) {
+        long now = System.currentTimeMillis();
+        if (now < nativeNextAttemptMs) {
+            // ADB daemon has been unreachable — skip the connection attempt during
+            // the cooldown so a missing daemon doesn't spam the log every cycle.
+            return new NativeReader((h, p, cmd) -> null, "", 0, false);
+        }
         AdbShellExecutor.init(context);
         String host = AppConfig.getAdbHost(context);
         int port = AppConfig.getAdbPort(context);
@@ -493,7 +499,26 @@ public class CANDataReader {
         NativeReader nativeReader = new NativeReader(
                 (h, p, cmd) -> AdbShellExecutor.executeSync(h, p, cmd), host, port, debug);
         nativeReader.readAll(knownItems);
+        updateNativeBackoff(now, nativeReader.getLastOk() > 0);
         return nativeReader;
+    }
+
+    /**
+     * Exponential backoff for the native (ADB) reader: after a failed attempt
+     * skip ADB for 30s, then 60s, 120s, … up to 5 min. Reset on the first
+     * successful read.
+     */
+    private static volatile long nativeNextAttemptMs = 0;
+    private static volatile long nativeBackoffMs = 0;
+
+    private static void updateNativeBackoff(long now, boolean ok) {
+        if (ok) {
+            nativeBackoffMs = 0;
+            nativeNextAttemptMs = 0;
+            return;
+        }
+        nativeBackoffMs = nativeBackoffMs == 0 ? 30_000L : Math.min(nativeBackoffMs * 2, 300_000L);
+        nativeNextAttemptMs = now + nativeBackoffMs;
     }
 
     private static List<CANDataItem> tryNative(Context context, List<CANDataItem> knownItems) {

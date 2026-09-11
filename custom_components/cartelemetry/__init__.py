@@ -19,7 +19,7 @@ from homeassistant.helpers.entity_registry import RegistryEntryDisabler
 from homeassistant.util import dt as dt_util
 
 from . import core
-from .const import DOMAIN, INTEGRATION_VERSION
+from .const import API_VERSION, DOMAIN, INTEGRATION_VERSION
 from .core import BatchValidationError, QueueFullError
 
 PLATFORMS = [
@@ -191,6 +191,7 @@ async def async_setup_entry(hass: HomeAssistant, entry):
     if not _VIEW_REGISTERED:
         hass.http.register_view(VehicleDataView)
         hass.http.register_view(VehicleCommandsView)
+        hass.http.register_view(VehicleInfoView)
         # Deprecated: kept for pre-3.0 APKs; remove after transition period.
         hass.http.register_view(VehicleDataLegacyView)
         hass.http.register_view(VehicleCommandsLegacyView)
@@ -285,7 +286,18 @@ class VehicleDataView(HomeAssistantView):
     async def post(self, request):
         """Handle POST request with vehicle data batch."""
         hass = request.app["hass"]
+        try:
+            return await self._handle_post(hass, request)
+        except Exception as err:  # noqa: BLE001
+            # Catch-all so any unexpected failure returns a JSON error and its
+            # traceback lands in the HA log instead of aiohttp's opaque 500 page.
+            _LOGGER.exception("api:cartelemetry unhandled error")
+            return self.json(
+                {"status": "error", "message": f"{type(err).__name__}: {err}"},
+                status=500,
+            )
 
+    async def _handle_post(self, hass, request):
         try:
             raw = await request.json()
             data = _BATCH_SCHEMA(raw)
@@ -413,9 +425,9 @@ class VehicleDataView(HomeAssistantView):
     def _resolve_entry_id(self, hass: HomeAssistant, car_name: str):
         """Find config entry id by car_name."""
         for entry_id, store in hass.data.get(DOMAIN, {}).items():
-            if entry_id.startswith("_"):
+            if not isinstance(entry_id, str) or entry_id.startswith("_"):
                 continue
-            if store.get("car_name") == car_name:
+            if isinstance(store, dict) and store.get("car_name") == car_name:
                 return entry_id
         return None
 
@@ -529,17 +541,6 @@ class VehicleCommandsView(HomeAssistantView):
     name = "api:cartelemetry_commands"
     requires_auth = True
 
-
-# Deprecated: legacy paths for APKs older than 3.0; remove after transition.
-class VehicleDataLegacyView(VehicleDataView):
-    url = "/api/byd_diplus"
-    name = "api:byd_diplus_legacy"
-
-
-class VehicleCommandsLegacyView(VehicleCommandsView):
-    url = "/api/byd_diplus/commands"
-    name = "api:byd_diplus_legacy_commands"
-
     async def get(self, request):
         """Return pending commands for a given car_name and mark them delivered."""
         hass = request.app["hass"]
@@ -642,11 +643,40 @@ class VehicleCommandsLegacyView(VehicleCommandsView):
     def _resolve_entry_id(self, hass: HomeAssistant, car_name: str):
         """Find config entry id by car_name."""
         for entry_id, store in hass.data.get(DOMAIN, {}).items():
-            if entry_id.startswith("_"):
+            if not isinstance(entry_id, str) or entry_id.startswith("_"):
                 continue
-            if store.get("car_name") == car_name:
+            if isinstance(store, dict) and store.get("car_name") == car_name:
                 return entry_id
         return None
+
+
+# Deprecated: legacy paths for APKs older than 3.0; remove after transition.
+class VehicleDataLegacyView(VehicleDataView):
+    url = "/api/byd_diplus"
+    name = "api:byd_diplus_legacy"
+
+
+class VehicleCommandsLegacyView(VehicleCommandsView):
+    url = "/api/byd_diplus/commands"
+    name = "api:byd_diplus_legacy_commands"
+
+
+class VehicleInfoView(HomeAssistantView):
+    """Reports integration/API version so the app can check compatibility."""
+
+    url = "/api/cartelemetry/info"
+    name = "api:cartelemetry_info"
+    requires_auth = True
+
+    async def get(self, request):
+        """Return version + capabilities for the Android app."""
+        return self.json({
+            "status": "ok",
+            "integration_version": INTEGRATION_VERSION,
+            "api_version": API_VERSION,
+            "capabilities": {"batch": True, "commands": True},
+        })
+
 
 _STATIC_REGISTERED = False
 

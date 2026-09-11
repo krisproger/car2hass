@@ -245,6 +245,8 @@
     <string name="settings_test_api_ok">Connection successful. Endpoint /api/cartelemetry responds (HTTP %1$d)</string>
     <string name="settings_test_not_found">HA server reachable, but /api/cartelemetry not found (install integration)</string>
     <string name="settings_test_endpoint_http">Endpoint responded HTTP %1$d</string>
+    <string name="settings_test_info_ok">Integration %1$s (api %2$d) — compatible</string>
+    <string name="settings_test_info_old">Integration %1$s (api %2$d) is too old — update to api ≥ %3$d</string>
     <string name="settings_test_api_error">API OK, /api/cartelemetry: %1$s</string>
     <string name="settings_test_error">Error: %1$s</string>
     <string name="settings_invalid_port">Invalid port</string>

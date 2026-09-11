@@ -166,15 +166,14 @@ public class CommandPoller {
         } catch (Exception e) {
             String msg = e.getMessage() == null ? "" : e.getMessage();
             if (msg.contains("HTTP 404")) {
-                // Endpoint /api/cartelemetry/commands is missing — the installed
-                // integration predates it. Log once in a while and back off.
+                // Endpoint /api/cartelemetry/commands is missing. Determine the
+                // actual integration state via the info handshake and log a
+                // precise message instead of guessing from the HTTP code.
                 endpointMissing = true;
                 long now = System.currentTimeMillis();
                 if (now - last404LoggedMs > NOT_FOUND_LOG_INTERVAL_MS) {
                     last404LoggedMs = now;
-                    LogBuffer.w("CommandPoller",
-                            "Commands endpoint missing (HTTP 404) — update the "
-                            + "cartelemetry integration on HA; poll backed off to 5 min");
+                    logIntegrationMismatch(scheme, host, port, token);
                 }
             } else {
                 endpointMissing = false;
@@ -320,6 +319,26 @@ public class CommandPoller {
     private void notifyListener(String summary) {
         if (listener == null) return;
         mainHandler.post(() -> listener.onCommandExecuted(summary));
+    }
+
+    /** Log a precise reason why commands are unavailable via the info handshake. */
+    private void logIntegrationMismatch(String scheme, String host, int port, String token) {
+        String baseUrl = scheme + "://" + host + ":" + port;
+        IntegrationInfo info = IntegrationInfo.query(baseUrl, token);
+        if (info == null) {
+            LogBuffer.w("CommandPoller",
+                    "Commands endpoint missing — integration predates "
+                    + "/api/cartelemetry (update it on HA); poll backed off to 5 min");
+        } else if (!info.isCompatible()) {
+            LogBuffer.w("CommandPoller",
+                    "Integration " + info.integrationVersion + " (api "
+                    + info.apiVersion + ") too old, need api >= "
+                    + IntegrationInfo.MIN_API_VERSION + " — update it on HA");
+        } else {
+            LogBuffer.w("CommandPoller",
+                    "Commands endpoint missing despite compatible integration "
+                    + info.integrationVersion + " (api " + info.apiVersion + ")");
+        }
     }
 
     /**

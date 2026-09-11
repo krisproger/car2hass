@@ -4610,6 +4610,28 @@ public class MainActivity extends BaseLocalizedActivity {
     private void testVehicleEndpoint(String baseUrl, String token) {
         new Thread(() -> {
             try {
+                // Version handshake first: /api/cartelemetry/info reports the
+                // integration + wire API version so we can tell the user exactly
+                // whether an update is required (instead of guessing by HTTP code).
+                IntegrationInfo info = IntegrationInfo.query(baseUrl, token);
+                final IntegrationInfo fInfo = info;
+                if (info == null) {
+                    runOnUiThread(() -> {
+                        tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
+                        tvTestResult.setText(R.string.settings_test_not_found);
+                    });
+                    return;
+                }
+                if (!info.isCompatible()) {
+                    runOnUiThread(() -> {
+                        tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
+                        tvTestResult.setText(getString(R.string.settings_test_info_old,
+                                fInfo.integrationVersion, fInfo.apiVersion,
+                                IntegrationInfo.MIN_API_VERSION));
+                    });
+                    return;
+                }
+
                 URL url = new URL(baseUrl + "/api/cartelemetry");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
                 conn.setRequestMethod("POST");
@@ -4641,7 +4663,8 @@ public class MainActivity extends BaseLocalizedActivity {
                 runOnUiThread(() -> {
                     if (code == 200 || code == 201) {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentGreen));
-                        tvTestResult.setText(getString(R.string.settings_test_api_ok, code));
+                        tvTestResult.setText(getString(R.string.settings_test_info_ok,
+                                fInfo.integrationVersion, fInfo.apiVersion));
                     } else if (code == 404) {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
                         tvTestResult.setText(R.string.settings_test_not_found);

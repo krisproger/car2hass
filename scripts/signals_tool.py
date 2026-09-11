@@ -287,9 +287,36 @@ def _build_const_snippets(signals):
     lines = []
     lines.append('DOMAIN = "cartelemetry"')
     lines.append("")
+    lines.append("# Command key → feedback sensor it depends on. When the sensor is deactivated")
+    lines.append("# (disabled by the user in the app / never seen), the command entity is")
+    lines.append("# deactivated too so the UI shows no misleading controls.")
+    lines.append("COMMAND_DEPENDS_ON = " + _dict_repr({
+        "drl": "drl",
+        "fog": "front_fog",
+        "hazard": "hazard",
+        "auto_high_beam": "low_beam",
+        "ac": "ac_state",
+        "front_defrost": "rear_defrost",
+        "steering_heat": "steering_wheel_heat",
+        "mirror_heat": "rear_defrost",
+        "interior_light": "footwell_light",
+        "ambilight": "footwell_light",
+        "dashcam": "dashcam_state",
+        "doors_lock": "remote_lock_state",
+        "doors_unlock": "remote_lock_state",
+        "trunk_open": "trunk",
+        "trunk_close": "trunk",
+        "windows_close_all": "windows_all_state",
+        "windows_vent": "windows_all_state",
+    }))
+    lines.append("")
     lines.append('CONF_CAR_NAME = "car_name"')
     lines.append("")
     lines.append(f'INTEGRATION_VERSION = "{_integration_version()}"')
+    lines.append("")
+    lines.append("# Wire protocol version reported by /api/cartelemetry/info. Bump only on")
+    lines.append("# breaking changes; the Android app compares it against MIN_API_VERSION.")
+    lines.append("API_VERSION = 3")
     lines.append("")
     lines.append("# Sensor considered offline after this many seconds without updates.")
     lines.append("ONLINE_OFFLINE_SECONDS = 60")
