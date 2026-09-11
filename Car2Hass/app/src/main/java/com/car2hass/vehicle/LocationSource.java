@@ -26,7 +26,7 @@ public final class LocationSource {
     }
 
     public void onMediaVolume(int percent) {
-        store.put("media_volume", String.valueOf(percent));
+        store.put("system_media_volume", String.valueOf(percent));
     }
 
     public void storePut(String key, String value) {

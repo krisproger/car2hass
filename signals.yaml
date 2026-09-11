@@ -1752,6 +1752,59 @@ signals:
   key: location_provider
   labels: {}
   ha_type: sensor
+- id: 9109
+  name: System media volume
+  description: System media volume level from Android
+  type: num
+  synthetic: true
+  key: system_media_volume
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:volume-high
+  state_class: measurement
+- id: 9110
+  name: Windows open count
+  description: Number of open windows (derived from CAN signals)
+  type: num
+  synthetic: true
+  key: windows_state
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-door
+  state_class: measurement
+- id: 9111
+  name: Doors open count
+  description: Number of open doors (derived from CAN signals)
+  type: num
+  synthetic: true
+  key: doors_state
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-door
+  state_class: measurement
+- id: 9112
+  name: Windows all closed
+  description: Whether all windows are closed (derived from CAN signals)
+  type: enum
+  synthetic: true
+  key: windows_all_state
+  labels:
+    'open': open
+    'closed': closed
+  ha_type: binary_sensor
+  device_class: window
+- id: 9113
+  name: Doors all closed
+  description: Whether all doors are closed (derived from CAN signals)
+  type: enum
+  synthetic: true
+  key: doors_all_state
+  labels:
+    'open': open
+    'closed': closed
+  ha_type: binary_sensor
+  device_class: door
 - id: 30001
   name: 发动机负荷
   description: Engine load

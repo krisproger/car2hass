@@ -3,6 +3,7 @@
   "generic_sensors": [
     "device_battery",
     "device_pressure",
+    "system_media_volume",
     "location_lat",
     "location_lon",
     "location_speed",
@@ -188,7 +189,8 @@
         "location_accuracy",
         "location_provider",
         "device_battery",
-        "device_pressure"
+        "device_pressure",
+        "system_media_volume"
       ],
       "base_channels": [
         "diplus",
@@ -356,7 +358,8 @@
         "location_accuracy",
         "location_provider",
         "device_battery",
-        "device_pressure"
+        "device_pressure",
+        "system_media_volume"
       ],
       "base_channels": [
         "diplus",

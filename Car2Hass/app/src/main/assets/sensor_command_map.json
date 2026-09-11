@@ -85,29 +85,32 @@
     {
       "sensor_key": "window_fl",
       "commands": [
-        { "command_id": "window_driver", "value_source": "parameter" },
-        { "command_id": "windows_close_all", "value": "0" }
+        { "command_id": "window_driver", "value_source": "parameter" }
       ]
     },
     {
       "sensor_key": "window_fr",
       "commands": [
-        { "command_id": "window_passenger", "value_source": "parameter" },
-        { "command_id": "windows_close_all", "value": "0" }
+        { "command_id": "window_passenger", "value_source": "parameter" }
       ]
     },
     {
       "sensor_key": "window_rl",
       "commands": [
-        { "command_id": "window_rear_left", "value_source": "parameter" },
-        { "command_id": "windows_close_all", "value": "0" }
+        { "command_id": "window_rear_left", "value_source": "parameter" }
       ]
     },
     {
       "sensor_key": "window_rr",
       "commands": [
-        { "command_id": "window_rear_right", "value_source": "parameter" },
-        { "command_id": "windows_close_all", "value": "0" }
+        { "command_id": "window_rear_right", "value_source": "parameter" }
+      ]
+    },
+    {
+      "sensor_key": "windows_all_state",
+      "commands": [
+        { "command_id": "windows_close_all", "value": "0" },
+        { "command_id": "windows_vent", "value": "vent" }
       ]
     },
     {

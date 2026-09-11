@@ -270,7 +270,7 @@
       "id": "windows_close_all",
       "label_en": "windows_close_all",
       "label_ru": "windows_close_all",
-      "state_sensor": "window_rr",
+      "state_sensor": "windows_all_state",
       "param": null,
       "channels": {
         "diplus": {
@@ -324,7 +324,7 @@
       "id": "windows_vent",
       "label_en": "windows_vent",
       "label_ru": "windows_vent",
-      "state_sensor": null,
+      "state_sensor": "windows_all_state",
       "param": null,
       "channels": {
         "diplus": {

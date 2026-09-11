@@ -33,9 +33,9 @@
       "label_ru": "Двери",
       "icon": "car-door",
       "behavior": "toggle",
-      "sensors": ["driver_door_lock", "driver_door", "passenger_door", "rear_left_door", "rear_right_door", "trunk"],
+      "sensors": ["remote_lock_state", "driver_door_lock", "driver_door", "passenger_door", "rear_left_door", "rear_right_door", "trunk"],
       "state": {
-        "primary_sensor": "driver_door_lock",
+        "primary_sensor": "remote_lock_state",
         "truthy": ["locked", "on", "true", "1"],
         "display": {
           "on":  { "label": "Locked",   "label_ru": "Заблокировано",  "sub": "{door_status}" },
@@ -53,9 +53,9 @@
       "label_ru": "Замки дверей",
       "icon": "lock",
       "behavior": "toggle",
-      "sensors": ["driver_door_lock", "passenger_door_lock", "rear_left_door_lock", "rear_right_door_lock"],
+      "sensors": ["remote_lock_state", "driver_door_lock", "passenger_door_lock", "rear_left_door_lock", "rear_right_door_lock"],
       "state": {
-        "primary_sensor": "driver_door_lock",
+        "primary_sensor": "remote_lock_state",
         "truthy": ["locked", "on", "true", "1"],
         "display": {
           "on":  { "label": "Locked",   "label_ru": "Заблокировано",  "sub": null },
@@ -189,11 +189,11 @@
         "truthy": [],
         "truthy_mode": "numeric_gt_0",
         "display": {
-          "value": "{value}%"
+          "value": "{value}"
         }
       },
       "commands": {
-        "on":  { "id": "volume", "value": "50" },
+        "on":  { "id": "volume", "value": "15" },
         "off": { "id": "volume", "value": "0" }
       },
       "zones": [
@@ -365,13 +365,13 @@
       "label_ru": "Подогрев руля",
       "icon": "steering",
       "behavior": "toggle",
-      "sensors": [],
+      "sensors": ["steering_wheel_heat"],
       "state": {
-        "primary_sensor": null,
-        "truthy": [],
+        "primary_sensor": "steering_wheel_heat",
+        "truthy": ["on", "open", "true", "1"],
         "display": {
-          "on":  { "label": "Steering heat ON",  "label_ru": "Подогрев руля ВКЛ" },
-          "off": { "label": "Steering heat OFF", "label_ru": "Подогрев руля ВЫКЛ" }
+          "on":  { "label": "Steering heat ON",  "label_ru": "Подогрев руля ВКЛ",  "sub": null },
+          "off": { "label": "Steering heat OFF", "label_ru": "Подогрев руля ВЫКЛ", "sub": null, "alert": true }
         }
       },
       "commands": {
@@ -385,13 +385,13 @@
       "label_ru": "Подогрев зеркал",
       "icon": "mirror",
       "behavior": "toggle",
-      "sensors": [],
+      "sensors": ["rear_defrost"],
       "state": {
-        "primary_sensor": null,
-        "truthy": [],
+        "primary_sensor": "rear_defrost",
+        "truthy": ["on", "open", "true", "1"],
         "display": {
-          "on":  { "label": "Mirror heat ON",  "label_ru": "Подогрев зеркал ВКЛ" },
-          "off": { "label": "Mirror heat OFF", "label_ru": "Подогрев зеркал ВЫКЛ" }
+          "on":  { "label": "Mirror heat ON",  "label_ru": "Подогрев зеркал ВКЛ",  "sub": null },
+          "off": { "label": "Mirror heat OFF", "label_ru": "Подогрев зеркал ВЫКЛ", "sub": null, "alert": true }
         }
       },
       "commands": {
@@ -405,13 +405,13 @@
       "label_ru": "Обогрев лобового",
       "icon": "car-windshield",
       "behavior": "toggle",
-      "sensors": [],
+      "sensors": ["rear_defrost"],
       "state": {
-        "primary_sensor": null,
-        "truthy": [],
+        "primary_sensor": "rear_defrost",
+        "truthy": ["on", "open", "true", "1"],
         "display": {
-          "on":  { "label": "Front defrost ON",  "label_ru": "Обогрев лобового ВКЛ" },
-          "off": { "label": "Front defrost OFF", "label_ru": "Обогрев лобового ВЫКЛ" }
+          "on":  { "label": "Front defrost ON",  "label_ru": "Обогрев лобового ВКЛ",  "sub": null },
+          "off": { "label": "Front defrost OFF", "label_ru": "Обогрев лобового ВЫКЛ", "sub": null, "alert": true }
         }
       },
       "commands": {

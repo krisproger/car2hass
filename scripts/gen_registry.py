@@ -14,8 +14,14 @@ GPS_SENSORS = [
     ("location_altitude", "Altitude", "gps", "m"),
     ("location_accuracy", "Location accuracy", "gps", "m"),
     ("location_provider", "Location provider", "gps", None),
-    ("device_battery", "Device battery level", "gps", "%"),
-    ("device_pressure", "Barometric pressure", "gps", "hPa"),
+]
+
+# Android OS device sensors, emitted by the always-on system channel worker
+# (SystemWorker). They are device-level, not GPS-related.
+DEVICE_SENSORS = [
+    ("device_battery", "Device battery level", "device", "%"),
+    ("device_pressure", "Barometric pressure", "device", "hPa"),
+    ("system_media_volume", "System media volume", "device", "%"),
 ]
 
 # Standard OBD-II mode-01 PIDs for keys already present in SIGNAL_REGISTRY.
@@ -37,7 +43,7 @@ OBD_PIDS = {
 # Sensors readable on any car (system/device + cross-brand), excluded from
 # car-profile scoring (see car_profiles.json generic_sensors).
 GENERIC_SENSORS = [
-    "device_battery", "device_pressure",
+    "device_battery", "device_pressure", "system_media_volume",
     "location_lat", "location_lon", "location_speed", "location_bearing",
     "location_altitude", "location_accuracy", "location_provider",
     "screen_width", "screen_height", "ui_config_version", "weather",
@@ -134,8 +140,8 @@ CORE_SENSORS = {
 }
 
 # Canonical channel priority order (sync with SourceManager/ResearchUiModel).
-CHANNELS_PRIORITY = ["diplus", "adb", "dumpsys", "system",
-                     "obd", "diplus_push", "byd_cloud", "voyah"]
+CHANNELS_PRIORITY = ["system", "dumpsys", "adb", "diplus", "voyah",
+                     "obd", "diplus_push", "byd_cloud"]
 
 def build_sensors():
     rows = parse_signal_registry()
@@ -164,7 +170,7 @@ def build_sensors():
             "core": key in CORE_SENSORS,
             "channels": channels, "expected_on": expected,
         })
-    for key, english, stype, unit in GPS_SENSORS:
+    for key, english, stype, unit in GPS_SENSORS + DEVICE_SENSORS:
         sensors.append({
             "key": key, "label_en": english, "label_ru": english,
             "type": stype, "unit": unit,

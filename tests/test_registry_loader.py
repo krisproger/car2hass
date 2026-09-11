@@ -9,7 +9,7 @@ ASSETS = os.path.join(os.path.dirname(__file__), "..",
 def test_load_sensors():
     sensors = load_sensors(ASSETS)
     assert "speed" in sensors
-    assert sensors["speed"]["type"] in ("num", "enum", "gps")
+    assert sensors["speed"]["type"] in ("num", "enum", "gps", "device")
 
 def test_load_commands():
     commands = load_commands(ASSETS)

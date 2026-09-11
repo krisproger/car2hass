@@ -14,12 +14,19 @@ def test_unique_command_ids():
     commands = load_commands(ASSETS)
     assert len(commands) == len({c["id"] for c in commands.values()})
 
+def _derived_sensor_keys():
+    """Keys computed in TelemetryService.java (not in sensors_registry.json)."""
+    return {"windows_state", "windows_all_state", "doors_state", "doors_all_state"}
+
+
 def test_state_sensor_references_exist():
     sensors = load_sensors(ASSETS)
     commands = load_commands(ASSETS)
+    derived = _derived_sensor_keys()
     for cid, c in commands.items():
         ss = c.get("state_sensor")
-        assert ss is None or ss in sensors, f"{cid}: state_sensor {ss} missing"
+        assert ss is None or ss in sensors or ss in derived, \
+            f"{cid}: state_sensor {ss} missing"
 
 def test_every_sensor_has_at_least_one_channel():
     sensors = load_sensors(ASSETS)

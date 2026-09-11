@@ -19,8 +19,8 @@ COMMAND_DEPENDS_ON = {
     "doors_unlock": "remote_lock_state",
     "trunk_open": "trunk",
     "trunk_close": "trunk",
-    "windows_close_all": "window_fl",
-    "windows_vent": "window_fl",
+    "windows_close_all": "windows_all_state",
+    "windows_vent": "windows_all_state",
 }
 
 CONF_CAR_NAME = "car_name"
@@ -345,6 +345,16 @@ NUMERIC_SENSORS = {
         "icon": "mdi:car-door",
         "state_class": "measurement",
     },
+    "windows_state": {
+        "name": "Windows open count",
+        "icon": "mdi:car-door",
+        "state_class": "measurement",
+    },
+    "doors_state": {
+        "name": "Doors open count",
+        "icon": "mdi:car-door",
+        "state_class": "measurement",
+    },
     "sunroof": {
         "name": "Sunroof open (%)",
         "unit": "%",
@@ -445,6 +455,12 @@ NUMERIC_SENSORS = {
     },
     "media_volume": {
         "name": "Media volume",
+        "unit": "%",
+        "icon": "mdi:volume-high",
+        "state_class": "measurement",
+    },
+    "system_media_volume": {
+        "name": "System media volume",
         "unit": "%",
         "icon": "mdi:volume-high",
         "state_class": "measurement",
@@ -766,6 +782,14 @@ BINARY_SENSORS = {
         "name": "Trunk",
         "device_class": "door",
     },
+    "windows_all_state": {
+        "name": "Windows all closed",
+        "device_class": "window",
+    },
+    "doors_all_state": {
+        "name": "Doors all closed",
+        "device_class": "door",
+    },
     "fuel_charge_flap": {
         "name": "Fuel/charge flap",
         "device_class": "door",
@@ -878,7 +902,7 @@ BINARY_SENSORS = {
 
 # Map from binary sensor key → list of "truthy" string values
 # Used by binary_sensor.py _value_to_bool()
-BINARY_ON_MAP: dict[str, list[str]] = {'power_state': ['on', 'driving'], 'driver_seatbelt': ['buckled'], 'remote_lock_state': ['locked'], 'charging_state': ['Ready', 'started', 'charging', 'full'], 'left_turn': ['on', 'open'], 'right_turn': ['on', 'open'], 'driver_door_lock': ['locked'], 'passenger_seatbelt_warning': ['alarm'], 'seatbelt_2nd_left': ['buckled'], 'seatbelt_2nd_right': ['buckled'], 'seatbelt_2nd_center': ['buckled'], 'ac_state': ['on', 'open'], 'ac_recirculation': ['recirculation', 'recirc'], 'driver_door': ['open', 'on'], 'passenger_door': ['open', 'on'], 'rear_left_door': ['open', 'on'], 'rear_right_door': ['open', 'on'], 'bonnet': ['open', 'on'], 'trunk': ['open', 'on'], 'fuel_charge_flap': ['open', 'on'], 'auto_hold': ['active'], 'rear_left_approach_warning': ['car approaching', 'alarm'], 'rear_right_approach_warning': ['car approaching', 'alarm'], 'lane_keep_state': ['active1', 'active2'], 'rear_left_door_lock': ['locked'], 'passenger_door_lock': ['locked'], 'rear_right_door_lock': ['locked'], 'trunk_lock': ['locked'], 'rear_left_child_lock': ['locked'], 'rear_right_child_lock': ['locked'], 'sidelights': ['on', 'open'], 'low_beam': ['on', 'open'], 'high_beam': ['on', 'open'], 'front_fog': ['on', 'open'], 'rear_fog': ['on', 'open'], 'footwell_light': ['on', 'open'], 'drl': ['on', 'open'], 'hazard': ['on', 'open'], 'passenger_seatbelt': ['buckled'], 'turn_signal': ['left', 'left2', 'right', 'right2', 'hazard', 'emergency', 'rear flash', 'flash'], 'surround_view_state': ['shown'], 'wifi_state': ['connected'], 'bluetooth_state': ['connected'], 'dashcam_state': ['running'], 'wireless_adb_switch': ['on'], 'online': ['on']}
+BINARY_ON_MAP: dict[str, list[str]] = {'power_state': ['on', 'driving'], 'driver_seatbelt': ['buckled'], 'remote_lock_state': ['locked'], 'charging_state': ['Ready', 'started', 'charging', 'full'], 'left_turn': ['on', 'open'], 'right_turn': ['on', 'open'], 'driver_door_lock': ['locked'], 'passenger_seatbelt_warning': ['alarm'], 'seatbelt_2nd_left': ['buckled'], 'seatbelt_2nd_right': ['buckled'], 'seatbelt_2nd_center': ['buckled'], 'ac_state': ['on', 'open'], 'ac_recirculation': ['recirculation', 'recirc'], 'driver_door': ['open', 'on'], 'passenger_door': ['open', 'on'], 'rear_left_door': ['open', 'on'], 'rear_right_door': ['open', 'on'], 'bonnet': ['open', 'on'], 'trunk': ['open', 'on'], 'fuel_charge_flap': ['open', 'on'], 'windows_all_state': ['open', 'on'], 'doors_all_state': ['open', 'on'], 'auto_hold': ['active'], 'rear_left_approach_warning': ['car approaching', 'alarm'], 'rear_right_approach_warning': ['car approaching', 'alarm'], 'lane_keep_state': ['active1', 'active2'], 'rear_left_door_lock': ['locked'], 'passenger_door_lock': ['locked'], 'rear_right_door_lock': ['locked'], 'trunk_lock': ['locked'], 'rear_left_child_lock': ['locked'], 'rear_right_child_lock': ['locked'], 'sidelights': ['on', 'open'], 'low_beam': ['on', 'open'], 'high_beam': ['on', 'open'], 'front_fog': ['on', 'open'], 'rear_fog': ['on', 'open'], 'footwell_light': ['on', 'open'], 'drl': ['on', 'open'], 'hazard': ['on', 'open'], 'passenger_seatbelt': ['buckled'], 'turn_signal': ['left', 'left2', 'right', 'right2', 'hazard', 'emergency', 'rear flash', 'flash'], 'surround_view_state': ['shown'], 'wifi_state': ['connected'], 'bluetooth_state': ['connected'], 'dashcam_state': ['running'], 'wireless_adb_switch': ['on'], 'online': ['on']}
 
 # Dynamic geofence virtual sensors sent by the Android app.
 # Keys look like "geo_<zoneId>" with values "inside"/"outside"; the optional

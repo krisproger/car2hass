@@ -1,14 +1,14 @@
 {
   "version": 1,
   "channels_priority": [
-    "diplus",
-    "adb",
-    "dumpsys",
     "system",
+    "dumpsys",
+    "adb",
+    "diplus",
+    "voyah",
     "obd",
     "diplus_push",
-    "byd_cloud",
-    "voyah"
+    "byd_cloud"
   ],
   "sensors": [
     {
@@ -3660,7 +3660,7 @@
       "key": "device_battery",
       "label_en": "Device battery level",
       "label_ru": "Device battery level",
-      "type": "gps",
+      "type": "device",
       "unit": "%",
       "core": true,
       "channels": {
@@ -3683,7 +3683,7 @@
       "key": "device_pressure",
       "label_en": "Barometric pressure",
       "label_ru": "Barometric pressure",
-      "type": "gps",
+      "type": "device",
       "unit": "hPa",
       "core": false,
       "channels": {
@@ -3696,6 +3696,29 @@
         "byd_cloud": null,
         "system": {
           "field": "device_pressure"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "system_media_volume",
+      "label_en": "System media volume",
+      "label_ru": "System media volume",
+      "type": "device",
+      "unit": "%",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "system_media_volume"
         }
       },
       "expected_on": [

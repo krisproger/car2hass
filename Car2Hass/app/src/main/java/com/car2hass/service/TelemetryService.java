@@ -188,6 +188,7 @@ public class TelemetryService extends Service {
         acquireWifiLock();
         knownItems = buildKnownItems();
         preregisterGeofenceItems();
+        preregisterDerivedItems();
         shutdownExecutors();
         telemetryExecutor = Executors.newSingleThreadExecutor();
         flushExecutor = Executors.newSingleThreadExecutor();
@@ -663,7 +664,7 @@ public class TelemetryService extends Service {
             String k = item.key;
             if (!k.startsWith("location_") && !"device_battery".equals(k)
                     && !"device_pressure".equals(k)
-                    && !"media_volume".equals(k)) continue;
+                    && !"system_media_volume".equals(k)) continue;
             String v = snapshotStore.get(k);
             if (v != null && !v.isEmpty()) {
                 item.value = v;
@@ -763,6 +764,11 @@ public class TelemetryService extends Service {
                 if (value == null || value.isEmpty() || "---".equals(value)) continue;
                 sig.put(key, value);
             }
+
+            // Derived aggregate sensors (windows_state/doors_state) are computed
+            // locally from the raw signals above and injected like geo_ items.
+            refreshDerivedSensors();
+            injectDerivedSensors(sig);
 
             // Fix time (ms) is only meaningful when we have a fix; pass it in
             // epoch seconds so HA can attribute the location to the real
@@ -890,6 +896,9 @@ public class TelemetryService extends Service {
             }
             String batt = snapshotStore.get("device_battery");
             if (batt != null) sig.put("device_battery", batt);
+            // Derived aggregates must be refreshed before the cache loop picks
+            // up the cached value for the current batch.
+            refreshDerivedSensors();
             // most recent auto-sensor values
             for (java.util.Map.Entry<String, String> e : cachedSignalValues.entrySet()) {
                 String key = e.getKey();
@@ -916,7 +925,7 @@ public class TelemetryService extends Service {
         try {
             for (String k : new String[]{"location_lat", "location_lon", "location_speed",
                     "location_bearing", "location_altitude", "location_accuracy",
-                    "location_provider", "device_battery", "device_pressure", "media_volume"}) {
+                    "location_provider", "device_battery", "device_pressure", "system_media_volume"}) {
                 String v = valueStore.get(k);
                 if (v != null) locationSource.storePut(k, v);
             }
@@ -1326,5 +1335,90 @@ public class TelemetryService extends Service {
         item.diplusName = null;
         item.value = cachedSignalValues.getOrDefault(key, "---");
         knownItems.add(item);
+    }
+
+    private static final String[] DERIVED_WINDOW_KEYS =
+            {"window_fl", "window_fr", "window_rl", "window_rr", "sunroof", "sunshade"};
+    private static final String[] DERIVED_DOOR_KEYS =
+            {"driver_door", "passenger_door", "rear_left_door", "rear_right_door", "trunk"};
+    private static final String[] DERIVED_COUNT_KEYS =
+            {"windows_state", "doors_state"};
+    private static final String[] DERIVED_SENSOR_KEYS =
+            {"windows_state", "windows_all_state", "doors_state", "doors_all_state"};
+
+    // Pre-register one telemetry item per derived aggregate sensor so the
+    // knownItems list stays stable while CANDataReader workers iterate it.
+    // Their values are computed locally (never read from a vehicle channel),
+    // which is why diplusName stays null — the same contract as geo_ items.
+    private void preregisterDerivedItems() {
+        try {
+            for (String key : DERIVED_SENSOR_KEYS) {
+                ensureDerivedItem(key);
+            }
+        } catch (Exception e) {
+            LogBuffer.w("TelemetryService", "preregisterDerivedItems failed: " + e.getMessage());
+        }
+    }
+
+    private void ensureDerivedItem(String key) {
+        for (CANDataItem item : knownItems) {
+            if (key.equals(item.key)) return;
+        }
+        CANDataItem item = new CANDataItem(0, key, "", 0);
+        item.key = key;
+        item.diplusName = null;
+        item.value = cachedSignalValues.getOrDefault(key, "---");
+        knownItems.add(item);
+    }
+
+    /**
+     * Computes aggregate door/window sensors from the raw values cached above
+     * (windows_state/doors_state open counts and their *_all_state enums) and
+     * stores them in the cache so both snapshot paths and rules see them.
+     * Derived sensors are computed locally — never read from a vehicle channel.
+     */
+    private void refreshDerivedSensors() {
+        try {
+            int openWindows = 0, totalWindows = 0;
+            for (String k : DERIVED_WINDOW_KEYS) {
+                String v = cachedSignalValues.get(k);
+                if (v == null || v.isEmpty() || "---".equals(v)) continue;
+                totalWindows++;
+                if (parseDoubleSafe(v) > 0) openWindows++;
+            }
+            if (totalWindows > 0) {
+                cachedSignalValues.put("windows_state", String.valueOf(openWindows));
+                cachedSignalValues.put("windows_all_state", openWindows == 0 ? "closed" : "open");
+            }
+
+            int openDoors = 0, totalDoors = 0;
+            for (String k : DERIVED_DOOR_KEYS) {
+                String v = cachedSignalValues.get(k);
+                if (v == null || v.isEmpty() || "---".equals(v)) continue;
+                totalDoors++;
+                if ("open".equals(v)) openDoors++;
+            }
+            if (totalDoors > 0) {
+                cachedSignalValues.put("doors_state", String.valueOf(openDoors));
+                cachedSignalValues.put("doors_all_state", openDoors == 0 ? "closed" : "open");
+            }
+        } catch (Exception ignored) {}
+    }
+
+    /** Puts derived aggregate sensors into the snapshot (numeric counts as numbers). */
+    private void injectDerivedSensors(JSONObject sig) {
+        try {
+            java.util.Set<String> countKeys = new java.util.HashSet<>(
+                    java.util.Arrays.asList(DERIVED_COUNT_KEYS));
+            for (String key : DERIVED_SENSOR_KEYS) {
+                String v = cachedSignalValues.get(key);
+                if (v == null || v.isEmpty() || "---".equals(v)) continue;
+                if (countKeys.contains(key)) {
+                    sig.put(key, Integer.parseInt(v));
+                } else {
+                    sig.put(key, v);
+                }
+            }
+        } catch (Exception ignored) {}
     }
 }

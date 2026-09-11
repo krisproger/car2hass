@@ -107,7 +107,7 @@ public final class SystemWorker {
             if (am != null) {
                 int v = am.getStreamVolume(AudioManager.STREAM_MUSIC);
                 int m = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
-                if (m > 0) store.put("media_volume", String.valueOf((int) (100f * v / m)), "system");
+                if (m > 0) store.put("system_media_volume", String.valueOf((int) (100f * v / m)), "system");
             }
         } catch (Exception ignored) {}
     }
