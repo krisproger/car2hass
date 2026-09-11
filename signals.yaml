@@ -61,6 +61,11 @@ value_trans:
   左转: left
   右转: right
   雨天: rain
+  多云: cloudy
+  阴: overcast
+  雪: snow
+  雾: fog
+  雷雨: thunderstorm
   未连接: disconnected
   显示中: shown
   待激活: pending
@@ -310,6 +315,12 @@ signals:
   labels:
     0: clear
     1: rain
+    2: sunny
+    3: cloudy
+    4: overcast
+    5: snow
+    6: fog
+    7: thunderstorm
   ha_type: sensor
   icon: mdi:weather-partly-cloudy
 - id: 21

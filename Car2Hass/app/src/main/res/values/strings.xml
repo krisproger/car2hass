@@ -114,6 +114,7 @@
     <string name="settings_send_to_ha">Send data to HA</string>
     <string name="settings_use_https">Use HTTPS</string>
     <string name="settings_http_warning">HTTP without encryption — only for local network. Enable HTTPS for remote access.</string>
+    <string name="settings_integration_update_hint">Update the CARTelemetry integration in Home Assistant to the latest version (Settings → Devices &amp; Services → CARTelemetry → Update/Reinstall) — otherwise commands and new sensors will not work.</string>
     <string name="settings_queue_bytes">Queued: %1$s</string>
     <string name="settings_last_send">Last send: %1$s</string>
     <string name="settings_last_attempt">Last attempt: %1$s</string>

@@ -114,6 +114,7 @@
     <string name="settings_send_to_ha">Отправлять данные в HA</string>
     <string name="settings_use_https">Использовать HTTPS</string>
     <string name="settings_http_warning">HTTP без шифрования — только для локальной сети. Для удалённого доступа включите HTTPS.</string>
+    <string name="settings_integration_update_hint">Обновите интеграцию CARTelemetry в Home Assistant до последней версии (Настройки → Устройства и службы → CARTelemetry → Обновить/Переустановить) — иначе команды и новые сенсоры не будут работать.</string>
     <string name="settings_queue_bytes">В очереди: %1$s</string>
     <string name="settings_last_send">Последняя отправка: %1$s</string>
     <string name="settings_last_attempt">Последняя попытка: %1$s</string>

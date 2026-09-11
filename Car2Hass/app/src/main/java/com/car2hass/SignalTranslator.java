@@ -83,6 +83,11 @@ public class SignalTranslator {
         VALUE_TRANS.put("左转", "left");
         VALUE_TRANS.put("右转", "right");
         VALUE_TRANS.put("雨天", "rain");
+        VALUE_TRANS.put("多云", "cloudy");
+        VALUE_TRANS.put("阴", "overcast");
+        VALUE_TRANS.put("雪", "snow");
+        VALUE_TRANS.put("雾", "fog");
+        VALUE_TRANS.put("雷雨", "thunderstorm");
         VALUE_TRANS.put("未连接", "disconnected");
         VALUE_TRANS.put("显示中", "shown");
         VALUE_TRANS.put("待激活", "pending");
@@ -126,7 +131,7 @@ public class SignalTranslator {
         ENUM_LABELS.put("power_state", "0:off,1:on,2:driving");
         ENUM_LABELS.put("gear", "0:—,1:P,2:R,3:N,4:D,5:M,6:S");
         ENUM_LABELS.put("charge_gun_state", "0:—,1:disconnected,2:AC gun,3:DC gun,4:adapter gun,5:discharge gun");
-        ENUM_LABELS.put("weather", "0:clear,1:rain");
+        ENUM_LABELS.put("weather", "0:clear,1:rain,2:sunny,3:cloudy,4:overcast,5:snow,6:fog,7:thunderstorm");
         ENUM_LABELS.put("driver_seatbelt", "0:unbuckled,1:buckled,2:invalid");
         ENUM_LABELS.put("remote_lock_state", "0:unlocked,1:locked");
         ENUM_LABELS.put("temp_unit", "0:°F,1:°C");

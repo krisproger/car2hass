@@ -34,7 +34,7 @@ GET http://127.0.0.1:8988/api/getVal?name=车速&status=true   →  {"success":t
 | 17 | `最高电池电压` | Max cell voltage | num |  |
 | 18 | `最低电池电压` | Min cell voltage | num |  |
 | 19 | `上次雨刮时间` | Last wiper time | num |  |
-| 20 | `天气` | Weather | enum | 0=clear, 1=rain |
+| 20 | `天气` | Weather | enum | 0=clear, 1=rain, 2=sunny, 3=cloudy, 4=overcast, 5=snow, 6=fog, 7=thunderstorm |
 | 21 | `主驾驶安全带状态` | Driver seatbelt state | enum | 0=unbuckled, 1=buckled, 2=invalid |
 | 22 | `远程锁车状态` | Remote lock state | enum | 0=unlocked, 1=locked |
 | 25 | `车内温度` | Cabin temperature | num |  |

@@ -30,6 +30,9 @@ public class CommandPoller {
 
     private static final long POLL_INTERVAL_MS = 10000;
     private static final long POLL_INTERVAL_ERROR_MS = 30000;
+    /** Commands endpoint missing (integration too old): poll rarely, log rarely. */
+    private static final long NOT_FOUND_BACKOFF_MS = 5 * 60 * 1000L;
+    private static final long NOT_FOUND_LOG_INTERVAL_MS = 10 * 60 * 1000L;
     private static final int CONNECT_TIMEOUT_MS = 5000;
     private static final int READ_TIMEOUT_MS = 15000;
 
@@ -38,6 +41,8 @@ public class CommandPoller {
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Runnable pollRunnable = this::pollLoop;
+    private volatile boolean endpointMissing;
+    private volatile long last404LoggedMs;
 
     private OnCommandExecutedListener listener;
 
@@ -107,7 +112,12 @@ public class CommandPoller {
                     hadError = true;
                 }
                 try {
-                    long sleepMs = hadError ? POLL_INTERVAL_ERROR_MS : POLL_INTERVAL_MS;
+                    long sleepMs;
+                    if (endpointMissing) {
+                        sleepMs = NOT_FOUND_BACKOFF_MS;
+                    } else {
+                        sleepMs = hadError ? POLL_INTERVAL_ERROR_MS : POLL_INTERVAL_MS;
+                    }
                     LogBuffer.d("CommandPoller", "Sleeping " + sleepMs + " ms (hadError=" + hadError + ")");
                     Thread.sleep(sleepMs);
                 } catch (InterruptedException e) {
@@ -154,7 +164,22 @@ public class CommandPoller {
         try {
             response = httpGet(pollUrl, token);
         } catch (Exception e) {
-            LogBuffer.d("CommandPoller", "Poll failed: " + e.getMessage());
+            String msg = e.getMessage() == null ? "" : e.getMessage();
+            if (msg.contains("HTTP 404")) {
+                // Endpoint /api/cartelemetry/commands is missing — the installed
+                // integration predates it. Log once in a while and back off.
+                endpointMissing = true;
+                long now = System.currentTimeMillis();
+                if (now - last404LoggedMs > NOT_FOUND_LOG_INTERVAL_MS) {
+                    last404LoggedMs = now;
+                    LogBuffer.w("CommandPoller",
+                            "Commands endpoint missing (HTTP 404) — update the "
+                            + "cartelemetry integration on HA; poll backed off to 5 min");
+                }
+            } else {
+                endpointMissing = false;
+                LogBuffer.d("CommandPoller", "Poll failed: " + msg);
+            }
             return false;
         }
 

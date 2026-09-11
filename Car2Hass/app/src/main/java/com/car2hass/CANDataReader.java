@@ -899,6 +899,7 @@ public class CANDataReader {
 
     private static List<CANDataItem> diplusGetDiPars(Context context, List<CANDataItem> items) {
         if (items == null || items.isEmpty()) return null;
+        ensureExecutors(); // executors may be nulled by shutdown() between cycles
 
         // Unsupported signals are still polled: they stay visible in the telemetry
         // list and may become supported after a firmware update. They are filtered
