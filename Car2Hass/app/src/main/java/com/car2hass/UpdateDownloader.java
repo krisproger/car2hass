@@ -130,22 +130,39 @@ public final class UpdateDownloader {
         return best;
     }
 
-    /** Largest candidate APK: name contains the version or the app prefix, any extension. */
+    /** Largest valid candidate: name contains the version or the app prefix, any
+     *  extension (DownloadManager may save "*.bin"), but the bytes must be a zip
+     *  (APK). Stale/corrupt leftovers are skipped instead of being installed. */
     private static File bestMatch(File dir, String version) {
         File[] files = dir == null ? null : dir.listFiles((d, name) -> {
             String lower = name.toLowerCase(Locale.ROOT);
-            return lower.contains("car2hass") || lower.startsWith("download")
-                    || (version != null && lower.contains(version.toLowerCase(Locale.ROOT)));
+            boolean versionMatch = version != null
+                    && lower.contains(version.toLowerCase(Locale.ROOT));
+            boolean appMatch = lower.contains("car2hass") || lower.startsWith("download");
+            return versionMatch || appMatch;
         });
         File best = null;
         if (files != null) {
             for (File f : files) {
-                if (f.isFile() && f.length() > 0 && (best == null || f.length() > best.length())) {
+                if (f.isFile() && isValidApk(f) && (best == null || f.length() > best.length())) {
                     best = f;
                 }
             }
         }
         return best;
+    }
+
+    /** True when the file starts with a zip local-file header (an APK is a zip). */
+    private static boolean isValidApk(File f) {
+        if (f == null || !f.exists() || f.length() < 4) return false;
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(f)) {
+            byte[] head = new byte[4];
+            int n = fis.read(head);
+            return n == 4 && head[0] == 0x50 && head[1] == 0x4B
+                    && head[2] == 0x03 && head[3] == 0x04;
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     private static File better(File a, File b) {
@@ -156,7 +173,10 @@ public final class UpdateDownloader {
 
     /** Fires the package installer for an existing file; false on failure. */
     public static boolean installFile(Context ctx, File file) {
-        if (file == null || !file.exists()) return false;
+        if (file == null || !isValidApk(file)) {
+            LogBuffer.e("UpdateDownloader", "installFile: not a valid APK, refusing to install");
+            return false;
+        }
         try {
             android.net.Uri uri = androidx.core.content.FileProvider.getUriForFile(
                     ctx, ctx.getPackageName() + ".fileprovider", file);
@@ -190,7 +210,12 @@ public final class UpdateDownloader {
         if (dir == null) dir = ctx.getCacheDir();
         if (!dir.exists() && !dir.mkdirs()) throw new IOException("cannot create " + dir);
         File target = new File(dir, "Car2Hass-" + info.version + ".apk");
-        if (target.exists() && target.length() > 0) return target;
+        if (target.exists()) {
+            // Reuse a complete download; drop a corrupt/stale leftover so it
+            // cannot be installed ("broken APK") and re-download it below.
+            if (isValidApk(target) && target.length() > 0) return target;
+            target.delete();
+        }
         File tmp = new File(dir, target.getName() + ".part");
         HttpURLConnection conn = (HttpURLConnection) new URL(info.apkUrl).openConnection();
         try {
@@ -202,6 +227,11 @@ public final class UpdateDownloader {
             int code = conn.getResponseCode();
             if (code != 200) throw new IOException("HTTP " + code);
             long total = conn.getContentLengthLong();
+            java.security.MessageDigest digest = null;
+            try {
+                digest = java.security.MessageDigest.getInstance("SHA-256");
+            } catch (java.security.NoSuchAlgorithmException ignored) {
+            }
             try (InputStream in = conn.getInputStream();
                  java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) {
                 byte[] buf = new byte[8192];
@@ -209,16 +239,38 @@ public final class UpdateDownloader {
                 int n;
                 while ((n = in.read(buf)) > 0) {
                     out.write(buf, 0, n);
+                    if (digest != null) digest.update(buf, 0, n);
                     done += n;
                     if (progress != null) progress.onProgress(done, total);
                 }
                 out.getFD().sync();
+            }
+            if (!isValidApk(tmp)) {
+                tmp.delete();
+                throw new IOException("downloaded file is not a valid APK");
+            }
+            // Verify the published SHA-256 when the server provides one; a
+            // truncated/mangled transfer must fail instead of installing a
+            // broken APK.
+            if (digest != null && info.sha256 != null && !info.sha256.isEmpty()) {
+                String got = toHex(digest.digest());
+                if (!got.equalsIgnoreCase(info.sha256)) {
+                    tmp.delete();
+                    throw new IOException("SHA-256 mismatch (got " + got
+                            + ", expected " + info.sha256 + ")");
+                }
             }
             if (!tmp.renameTo(target)) throw new IOException("rename to " + target + " failed");
             return target;
         } finally {
             conn.disconnect();
         }
+    }
+
+    private static String toHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder(bytes.length * 2);
+        for (byte b : bytes) sb.append(String.format(Locale.ROOT, "%02x", b & 0xff));
+        return sb.toString();
     }
 
     /** Polls the download status; "done", "failed" or a progress percentage. */

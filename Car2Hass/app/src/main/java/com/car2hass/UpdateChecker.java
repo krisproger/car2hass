@@ -28,12 +28,15 @@ public final class UpdateChecker {
     public static final class UpdateInfo {
         public final String version;
         public final String apkUrl;
+        public final String sha256;
         public final String notesRu;
         public final String notesEn;
 
-        UpdateInfo(String version, String apkUrl, String notesRu, String notesEn) {
+        UpdateInfo(String version, String apkUrl, String sha256,
+                   String notesRu, String notesEn) {
             this.version = version;
             this.apkUrl = apkUrl;
+            this.sha256 = sha256;
             this.notesRu = notesRu;
             this.notesEn = notesEn;
         }
@@ -58,6 +61,7 @@ public final class UpdateChecker {
             JSONObject wn = o.optJSONObject("whats_new");
             return new UpdateInfo(version,
                     o.optString("apk_url", ""),
+                    o.optString("sha256", ""),
                     wn == null ? "" : wn.optString("ru", ""),
                     wn == null ? "" : wn.optString("en", ""));
         } catch (Exception e) {
