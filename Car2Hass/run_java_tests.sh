@@ -252,12 +252,6 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/c
 echo "=== Compiling ChannelResultTest ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ChannelResultTest.java"
 
-echo "=== Compiling VehicleProfileDetect ==="
-javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/VehicleProfileDetect.java"
-
-echo "=== Compiling VehicleProfileDetectTest ==="
-javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/VehicleProfileDetectTest.java"
-
 echo "=== Compiling test-only BuildConfig stub ==="
 javac -d "$OUT" -classpath "$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/BuildConfig.java"
 
@@ -398,9 +392,6 @@ java -cp "$OUT:$ANDROID_JAR" com.car2hass.vehicle.VehicleProfileTest
 
 echo "=== Running ChannelResultTest ==="
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.vehicle.ChannelResultTest
-
-echo "=== Running VehicleProfileDetectTest ==="
-java -cp "$OUT:$ANDROID_JAR" com.car2hass.vehicle.VehicleProfileDetectTest
 
 echo "=== Running VehicleResearchTest ==="
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.VehicleResearchTest

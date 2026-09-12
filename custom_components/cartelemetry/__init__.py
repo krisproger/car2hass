@@ -432,27 +432,6 @@ class VehicleDataView(HomeAssistantView):
         return None
 
 
-async def _async_enable_sensors(hass: HomeAssistant, entry_id: str, signal_keys: set[str]) -> None:
-    """Enable newly-seen sensor entities (Variant 1 availability).
-
-    Sensors are created disabled-by-default (entity_registry_enabled_default=False),
-    so unseen signals stay under the HA "disabled" spoiler. As soon as a signal is
-    received the integration enables its entity; a user-disabled entity is kept off.
-    """
-    reg = entity_registry.async_get(hass)
-    for key in signal_keys:
-        unique = f"{entry_id}_{key}"
-        entity_id = reg.async_get_entity_id(Platform.SENSOR, DOMAIN, unique)
-        if entity_id is None:
-            entity_id = reg.async_get_entity_id(Platform.BINARY_SENSOR, DOMAIN, unique)
-        if entity_id is None:
-            continue
-        entry = reg.async_get(entity_id)
-        if entry is None or entry.disabled_by != RegistryEntryDisabler.INTEGRATION:
-            continue
-        reg.async_enable(entity_id)
-
-
 async def _async_sync_entity_availability(
     hass: HomeAssistant, entry_id: str, seen: set[str], disabled: set[str]
 ) -> None:
