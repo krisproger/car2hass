@@ -53,7 +53,7 @@ GENERIC_SENSORS = [
 ]
 
 # Voyah VehicleState parameter names for existing integration keys only
-# (source: info/apk/Voyah/VOYAH_FIRMWARE_ANALYSIS.md, section 4).
+# (source: info/brands/voyah/VOYAH_FIRMWARE_ANALYSIS.md, section 4).
 # Sync with VoyahChannel.VOYAH_PARAMS (vehicle/VoyahChannel.java).
 VOYAH_PARAMS = {
     "engine_coolant_temp": "ENG_COOLANT_TEMP",

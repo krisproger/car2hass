@@ -351,7 +351,6 @@ public class MainActivity extends BaseLocalizedActivity {
     private void initTelemetryList() {
         android.widget.ExpandableListView expList = findViewById(R.id.dataListView);
         expAdapter = new TelemetryExpandableAdapter(this);
-        expAdapter.setOnHeaderClick(groupKey -> toggleGroupExpanded(groupKey));
         expAdapter.setOnCheckChanged(item -> {
             if (item.key == null) return;
             java.util.Set<String> disabled = new HashSet<>(AppConfig.getDisabledSignals(this));
@@ -360,6 +359,16 @@ public class MainActivity extends BaseLocalizedActivity {
             AppConfig.setDisabledSignals(this, disabled);
         });
         expList.setAdapter(expAdapter);
+        // Persist the expand/collapse of a group. Returning true consumes the
+        // click so the default in-memory toggle doesn't fight the saved state
+        // (which the 2s ticker re-applies via applyExpandedState).
+        expList.setOnGroupClickListener((parent, v, groupPosition, id) -> {
+            java.util.List<TelemetryExpandableAdapter.Group> gs = expAdapter.getGroups();
+            if (groupPosition >= 0 && groupPosition < gs.size()) {
+                toggleGroupExpanded(gs.get(groupPosition).key);
+            }
+            return true;
+        });
         // System-first: the tab reflects the shared ValueStore from the very
         // start (system sensors are always visible, groups included).
         startTelemetryTabTicker();
@@ -3015,8 +3024,15 @@ public class MainActivity extends BaseLocalizedActivity {
                 try {
                     List<TelemetryExpandableAdapter.Group> groups = buildDisplayGroups();
                     if (groups != null && expAdapter != null) {
-                        expAdapter.setGroups(groups);
-                        applyExpandedState();
+                        // Skip the full list rebuild (notifyDataSetChanged) when
+                        // nothing changed — a redundant redraw every 2s made the
+                        // rows flicker/blink on devices with slow DiPlus cycles.
+                        String fp = groupsFingerprint(groups);
+                        if (!fp.equals(lastGroupsFingerprint)) {
+                            lastGroupsFingerprint = fp;
+                            expAdapter.setGroups(groups);
+                            applyExpandedState();
+                        }
                     }
                 } catch (Throwable e) {
                     LogBuffer.e("Main", "valueStore tab refresh: " + e.getMessage());
@@ -3024,6 +3040,22 @@ public class MainActivity extends BaseLocalizedActivity {
                 handler.postDelayed(this, 2000);
             }
         }, 2000);
+    }
+
+    /** Stable fingerprint of the displayed groups so unchanged data skips a redraw. */
+    private String lastGroupsFingerprint = "";
+
+    private String groupsFingerprint(List<TelemetryExpandableAdapter.Group> groups) {
+        StringBuilder sb = new StringBuilder(512);
+        for (TelemetryExpandableAdapter.Group g : groups) {
+            sb.append(g.key).append('|');
+            for (CANDataItem it : g.items) {
+                sb.append(it.key).append('=').append(it.value).append(',')
+                        .append(it.enabled).append(',').append(it.grey).append(';');
+            }
+            sb.append('#');
+        }
+        return sb.toString();
     }
 
     private void saveEnabledState() {
@@ -4565,8 +4597,9 @@ public class MainActivity extends BaseLocalizedActivity {
     private void testConnection() {
         String token = editToken.getText().toString().trim();
         String baseUrl = getBaseUrl();
+        String host = editHost.getText().toString().trim();
 
-        if (editHost.getText().toString().trim().isEmpty() || token.isEmpty()) {
+        if (host.isEmpty() || token.isEmpty()) {
             tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
             tvTestResult.setText(R.string.settings_test_fill_host_token);
             return;
@@ -4574,6 +4607,11 @@ public class MainActivity extends BaseLocalizedActivity {
 
         tvTestResult.setText(R.string.settings_test_testing);
         tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
+
+        // Warn early when the configured host looks like a legacy/redirected
+        // domain — a 301/302 on POST silently drops the body and produces the
+        // confusing "500 Server got itself in trouble" symptom.
+        final boolean legacyDomain = isLegacyDomain(host);
 
         final String finalBaseUrl = baseUrl;
         new Thread(() -> {
@@ -4584,15 +4622,27 @@ public class MainActivity extends BaseLocalizedActivity {
                 conn.setRequestProperty("Authorization", "Bearer " + token);
                 conn.setConnectTimeout(5000);
                 conn.setReadTimeout(5000);
+                // Surface redirects instead of silently following them (a moved
+                // domain is the most common cause of the intermittent 500/SSL
+                // failures we see in the field).
+                conn.setInstanceFollowRedirects(false);
 
                 int code = conn.getResponseCode();
+                String location = conn.getHeaderField("Location");
                 conn.disconnect();
 
                 runOnUiThread(() -> {
                     if (code == 200) {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentGreen));
                         tvTestResult.setText(getString(R.string.settings_test_ok, code));
-                        testVehicleEndpoint(finalBaseUrl, token);
+                        testVehicleEndpoint(finalBaseUrl, token, legacyDomain);
+                    } else if (code >= 300 && code < 400) {
+                        tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
+                        String where = location != null && !location.isEmpty() ? " → " + location : "";
+                        tvTestResult.setText(getString(R.string.settings_test_redirect, code) + where);
+                    } else if (legacyDomain) {
+                        tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
+                        tvTestResult.setText(R.string.settings_test_legacy_domain);
                     } else {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentRed));
                         tvTestResult.setText(getString(R.string.settings_test_error, "HTTP " + code));
@@ -4601,13 +4651,34 @@ public class MainActivity extends BaseLocalizedActivity {
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     tvTestResult.setTextColor(attrColor(R.attr.carAccentRed));
-                    tvTestResult.setText(getString(R.string.settings_test_error, e.getMessage()));
+                    tvTestResult.setText(diagnoseConnectionError(e));
                 });
             }
         }).start();
     }
 
-    private void testVehicleEndpoint(String baseUrl, String token) {
+    /** Legacy/redirected domain (the old teplitzky.ru site host) — warn, don't block. */
+    private static boolean isLegacyDomain(String host) {
+        if (host == null) return false;
+        return host.toLowerCase(Locale.US).contains("teplitzky.ru");
+    }
+
+    /** Map a connection exception to a clear, user-facing message. */
+    private CharSequence diagnoseConnectionError(Exception e) {
+        String msg = e.getMessage() == null ? "" : e.getMessage().toLowerCase(Locale.US);
+        if (msg.contains("ssl") || msg.contains("handshake") || msg.contains("certificate")
+                || msg.contains("trust")) {
+            return getString(R.string.settings_test_ssl_error);
+        }
+        if (msg.contains("refused") || msg.contains("timed out") || msg.contains("timeout")
+                || msg.contains("unreachable") || msg.contains("unknownhost")
+                || msg.contains("no route")) {
+            return getString(R.string.settings_test_conn_error);
+        }
+        return getString(R.string.settings_test_error, e.getMessage());
+    }
+
+    private void testVehicleEndpoint(String baseUrl, String token, boolean legacyDomain) {
         new Thread(() -> {
             try {
                 // Version handshake first: /api/cartelemetry/info reports the
@@ -4672,6 +4743,11 @@ public class MainActivity extends BaseLocalizedActivity {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
                         tvTestResult.setText(getString(R.string.settings_test_endpoint_http, code)
                                 + " — обновите интеграцию и перезапустите HA");
+                    } else if (code == 500) {
+                        tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
+                        String hint = legacyDomain ? "\n" + getString(R.string.settings_test_legacy_domain) : "";
+                        tvTestResult.setText(getString(R.string.settings_test_endpoint_http, code)
+                                + " — проверьте версию интеграции CARTelemetry" + hint);
                     } else {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
                         String detail = errorDetail.isEmpty() ? " (тело ответа пустое)"
@@ -4682,7 +4758,7 @@ public class MainActivity extends BaseLocalizedActivity {
             } catch (Exception e) {
                 runOnUiThread(() -> {
                     tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
-                    tvTestResult.setText(getString(R.string.settings_test_api_error, e.getMessage()));
+                    tvTestResult.setText(diagnoseConnectionError(e));
                 });
             }
         }).start();

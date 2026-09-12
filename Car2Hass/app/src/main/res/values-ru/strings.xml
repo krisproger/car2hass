@@ -242,6 +242,10 @@
     <string name="settings_test_info_old">Интеграция %1$s (api %2$d) устарела — обновите до api ≥ %3$d</string>
     <string name="settings_test_api_error">API OK, /api/cartelemetry: %1$s</string>
     <string name="settings_test_error">Ошибка: %1$s</string>
+    <string name="settings_test_ssl_error">Не удалось установить защищённое соединение (SSL) — проверьте адрес/порт и схему (http/https)</string>
+    <string name="settings_test_conn_error">Нет соединения с HA — проверьте адрес/порт</string>
+    <string name="settings_test_legacy_domain">Внимание: адрес содержит устаревший домен (teplitzky.ru) — проверьте актуальный адрес Home Assistant</string>
+    <string name="settings_test_redirect">HA ответил редиректом (HTTP %1$d) — адрес, возможно, изменился</string>
     <string name="settings_invalid_port">Некорректный порт</string>
     <string name="settings_enter_host">Укажите адрес сервера</string>
     <string name="settings_enter_token">Укажите токен</string>

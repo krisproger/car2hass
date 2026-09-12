@@ -25,7 +25,7 @@ COMMAND_DEPENDS_ON = {
 
 CONF_CAR_NAME = "car_name"
 
-INTEGRATION_VERSION = "3.3.3"
+INTEGRATION_VERSION = "3.3.4"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.

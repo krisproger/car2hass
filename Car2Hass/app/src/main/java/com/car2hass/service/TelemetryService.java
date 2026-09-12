@@ -1125,6 +1125,15 @@ public class TelemetryService extends Service {
                 } catch (Exception ignored) {}
             }
             if (loc != null) {
+                // Only adopt the last-known fix if it is newer than what we already
+                // have. A stale PASSIVE/NETWORK last-known location would otherwise
+                // overwrite a fresher GPS fix and make the HA track jump back to an
+                // old position with an old fix time.
+                if (lastLocTime != 0 && loc.getTime() <= lastLocTime) {
+                    LogBuffer.d("TelemetryService", "Skipping stale last-known location ("
+                            + loc.getTime() + " <= " + lastLocTime + ")");
+                    return;
+                }
                 lastLat = loc.getLatitude();
                 lastLon = loc.getLongitude();
                 lastAccuracy = loc.getAccuracy();

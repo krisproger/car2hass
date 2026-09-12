@@ -218,9 +218,12 @@ def build_gps_track(sorted_batch: list) -> list:
 
     Each point is attributed to the GPS fix time (``g.t``) when the app
     provided one, falling back to the snapshot collection time so older
-    payloads keep working.
+    payloads keep working. Points whose fix time is not strictly newer than
+    the previous one are skipped — a re-sent/stale snapshot must not make the
+    tracker jump back to an earlier position.
     """
     track = []
+    last_t = None
     for snapshot in sorted_batch:
         gps = snapshot.get("g", {})
         try:
@@ -234,6 +237,9 @@ def build_gps_track(sorted_batch: list) -> list:
                 t = float(fix_time) if fix_time is not None else float(snap_time)
             except (ValueError, TypeError):
                 t = float(snap_time)
+            if last_t is not None and t <= last_t:
+                continue
+            last_t = t
             track.append(
                 (
                     t,

@@ -303,6 +303,18 @@ def test_gps_track_uses_fix_time_when_present():
     assert track == [(9, 55.0, 37.0, 5.0), (11, 55.5, 37.5, 8.0)]
 
 
+def test_gps_track_skips_backward_points():
+    """A re-sent/stale snapshot with an older fix time must not jump the track back."""
+    batch = core.validate_batch([
+        {"t": 10, "s": {}, "g": {"lat": 55.0, "lon": 37.0, "t": 100}},
+        {"t": 11, "s": {}, "g": {"lat": 56.0, "lon": 38.0, "t": 90}},  # older fix -> skip
+        {"t": 12, "s": {}, "g": {"lat": 57.0, "lon": 39.0, "t": 110}},
+        {"t": 13, "s": {}, "g": {"lat": 57.0, "lon": 39.0, "t": 110}},  # duplicate fix -> skip
+    ])
+    track = core.build_gps_track(batch)
+    assert track == [(100, 55.0, 37.0, 0.0), (110, 57.0, 39.0, 0.0)]
+
+
 # --- geofence dynamic keys ---
 
 def test_find_geofence_keys_detects_geo_keys():

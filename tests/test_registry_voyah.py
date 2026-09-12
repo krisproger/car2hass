@@ -1,5 +1,5 @@
 """Voyah registry mapping: channels.voyah.vs must reference real VehicleState
-parameters from info/apk/Voyah/VOYAH_FIRMWARE_ANALYSIS.md (section 4 table)."""
+parameters from info/brands/voyah/VOYAH_FIRMWARE_ANALYSIS.md (section 4 table)."""
 
 import json
 import os
@@ -7,7 +7,7 @@ import re
 
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 ASSETS = os.path.join(REPO, "Car2Hass", "app", "src", "main", "assets")
-MD = os.path.join(REPO, "info", "apk", "Voyah", "VOYAH_FIRMWARE_ANALYSIS.md")
+MD = os.path.join(REPO, "info", "brands", "voyah", "VOYAH_FIRMWARE_ANALYSIS.md")
 
 
 def _voyah_table_params():
