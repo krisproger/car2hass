@@ -170,6 +170,7 @@ public class MainActivity extends BaseLocalizedActivity {
     // Settings UI
     private EditText editHost, editPort, editToken, editCarName;
     private Switch switchEnabled;
+    private android.widget.TextView tvIntegrationUpdateHint;
     private CompoundButton switchHttps;
     private Switch switchBootAutoStart, switchCarControl, switchQueueEnabled, switchBackgroundMode;
     private Spinner spinnerFileLogMode;
@@ -3156,6 +3157,7 @@ public class MainActivity extends BaseLocalizedActivity {
         switchDebugCompare = settingsView.findViewById(R.id.switchDebugCompare);
         tvTestResult = settingsView.findViewById(R.id.tvTestResult);
         tvPresetVersion = settingsView.findViewById(R.id.tvPresetVersion);
+        tvIntegrationUpdateHint = settingsView.findViewById(R.id.tvIntegrationUpdateHint);
         TextView tvHttpWarning = settingsView.findViewById(R.id.tvHttpWarning);
         tvQueueBytes = settingsView.findViewById(R.id.tvQueueBytes);
         tvLastSend = settingsView.findViewById(R.id.tvLastSend);
@@ -3168,6 +3170,8 @@ public class MainActivity extends BaseLocalizedActivity {
         }
 
         attachAutoSaveListeners(tvHttpWarning);
+
+        refreshIntegrationUpdateHint();
 
         settingsView.findViewById(R.id.btnTest).setOnClickListener(v -> testConnection());
         settingsView.findViewById(R.id.btnLocationTest).setOnClickListener(v -> showLocationTest());
@@ -4678,6 +4682,38 @@ public class MainActivity extends BaseLocalizedActivity {
         return getString(R.string.settings_test_error, e.getMessage());
     }
 
+    /**
+     * Shows/hides the "update the integration" hint by asking the version
+     * handshake (GET /api/cartelemetry/info). Hidden when the integration is
+     * compatible; shown when it is missing or too old.
+     */
+    private void refreshIntegrationUpdateHint() {
+        if (tvIntegrationUpdateHint == null) return;
+        String token = editToken.getText().toString().trim();
+        String host = editHost.getText().toString().trim();
+        if (host.isEmpty() || token.isEmpty()) {
+            tvIntegrationUpdateHint.setVisibility(View.VISIBLE);
+            return;
+        }
+        String scheme = switchHttps.isChecked() ? "https" : "http";
+        int port;
+        try {
+            port = Integer.parseInt(editPort.getText().toString().trim());
+        } catch (Exception e) {
+            port = 8123;
+        }
+        final String baseUrl = scheme + "://" + host + ":" + port;
+        new Thread(() -> {
+            IntegrationInfo info = IntegrationInfo.query(baseUrl, token);
+            final boolean compatible = info != null && info.isCompatible();
+            runOnUiThread(() -> {
+                if (tvIntegrationUpdateHint != null) {
+                    tvIntegrationUpdateHint.setVisibility(compatible ? View.GONE : View.VISIBLE);
+                }
+            });
+        }).start();
+    }
+
     private void testVehicleEndpoint(String baseUrl, String token, boolean legacyDomain) {
         new Thread(() -> {
             try {
@@ -4702,6 +4738,12 @@ public class MainActivity extends BaseLocalizedActivity {
                     });
                     return;
                 }
+                // Integration is compatible: clear the "update" hint.
+                runOnUiThread(() -> {
+                    if (tvIntegrationUpdateHint != null) {
+                        tvIntegrationUpdateHint.setVisibility(View.GONE);
+                    }
+                });
 
                 URL url = new URL(baseUrl + "/api/cartelemetry");
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();

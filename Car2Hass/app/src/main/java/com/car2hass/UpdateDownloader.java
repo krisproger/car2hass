@@ -132,14 +132,17 @@ public final class UpdateDownloader {
 
     /** Largest valid candidate: name contains the version or the app prefix, any
      *  extension (DownloadManager may save "*.bin"), but the bytes must be a zip
-     *  (APK). Stale/corrupt leftovers are skipped instead of being installed. */
+     *  (APK). Stale/corrupt leftovers are skipped instead of being installed.
+     *  When a specific version is requested, only files carrying that version in
+     *  their name qualify — a leftover "Car2Hass-<old>.apk" from a previous
+     *  update must never be picked up and installed over the requested one. */
     private static File bestMatch(File dir, String version) {
-        File[] files = dir == null ? null : dir.listFiles((d, name) -> {
+        File[] files = dir.listFiles((d, name) -> {
             String lower = name.toLowerCase(Locale.ROOT);
-            boolean versionMatch = version != null
-                    && lower.contains(version.toLowerCase(Locale.ROOT));
-            boolean appMatch = lower.contains("car2hass") || lower.startsWith("download");
-            return versionMatch || appMatch;
+            if (version != null && !version.isEmpty()) {
+                return lower.contains(version.toLowerCase(Locale.ROOT));
+            }
+            return lower.contains("car2hass") || lower.startsWith("download");
         });
         File best = null;
         if (files != null) {
