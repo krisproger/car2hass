@@ -183,9 +183,9 @@
       "label_ru": "Громкость",
       "icon": "volume-high",
       "behavior": "dual_action_toggle",
-      "sensors": ["media_volume"],
+      "sensors": ["system_media_volume"],
       "state": {
-        "primary_sensor": "media_volume",
+        "primary_sensor": "system_media_volume",
         "truthy": [],
         "truthy_mode": "numeric_gt_0",
         "display": {

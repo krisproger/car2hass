@@ -140,7 +140,10 @@ public class CANDataReader {
             String cachedVersion = prefs.getString(KEY_CACHE_APP_VERSION, "");
             String currentVersion = BuildConfig.VERSION_NAME;
             if (currentVersion != null && !currentVersion.equals(cachedVersion)) {
-                prefs.edit().remove(KEY_UNSUPPORTED_NAMES).remove(KEY_CACHE_APP_VERSION).apply();
+                prefs.edit()
+                        .remove(KEY_UNSUPPORTED_NAMES)
+                        .putString(KEY_CACHE_APP_VERSION, currentVersion)
+                        .apply();
                 LogBuffer.i("CANReader", "Cleared unsupported signal cache (app version changed: "
                         + cachedVersion + " -> " + currentVersion + ")");
                 return;

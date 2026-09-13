@@ -251,7 +251,6 @@
     <string name="settings_test_error">Error: %1$s</string>
     <string name="settings_test_ssl_error">Secure connection (SSL) failed — check the address/port and the http/https scheme</string>
     <string name="settings_test_conn_error">No connection to HA — check the address/port</string>
-    <string name="settings_test_legacy_domain">Warning: the address uses a legacy domain (teplitzky.ru) — check the current Home Assistant address</string>
     <string name="settings_test_redirect">HA redirected the request (HTTP %1$d) — the address may have changed</string>
     <string name="settings_invalid_port">Invalid port</string>
     <string name="settings_enter_host">Enter server address</string>

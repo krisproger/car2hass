@@ -2790,6 +2790,10 @@ public class MainActivity extends BaseLocalizedActivity {
         List<CANDataItem> out = new ArrayList<>();
         boolean loaded = false;
         java.util.Set<String> availableChannels = loadAvailableChannels();
+        // The probe report is a stale research snapshot: if DiPlus is alive right
+        // now, its sensors must not be classified "unreachable" (which hides them
+        // in a collapsed group and reads as "sensors disappeared").
+        if (CANDataReader.isDiplusAlive()) availableChannels.add("diplus");
         boolean systemAvailable = hasLocationPermission();
         try {
             RegistryStore reg = RegistryStore.load(this);
@@ -4612,11 +4616,6 @@ public class MainActivity extends BaseLocalizedActivity {
         tvTestResult.setText(R.string.settings_test_testing);
         tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
 
-        // Warn early when the configured host looks like a legacy/redirected
-        // domain — a 301/302 on POST silently drops the body and produces the
-        // confusing "500 Server got itself in trouble" symptom.
-        final boolean legacyDomain = isLegacyDomain(host);
-
         final String finalBaseUrl = baseUrl;
         new Thread(() -> {
             try {
@@ -4639,14 +4638,11 @@ public class MainActivity extends BaseLocalizedActivity {
                     if (code == 200) {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentGreen));
                         tvTestResult.setText(getString(R.string.settings_test_ok, code));
-                        testVehicleEndpoint(finalBaseUrl, token, legacyDomain);
+                        testVehicleEndpoint(finalBaseUrl, token);
                     } else if (code >= 300 && code < 400) {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
                         String where = location != null && !location.isEmpty() ? " → " + location : "";
                         tvTestResult.setText(getString(R.string.settings_test_redirect, code) + where);
-                    } else if (legacyDomain) {
-                        tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
-                        tvTestResult.setText(R.string.settings_test_legacy_domain);
                     } else {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentRed));
                         tvTestResult.setText(getString(R.string.settings_test_error, "HTTP " + code));
@@ -4659,12 +4655,6 @@ public class MainActivity extends BaseLocalizedActivity {
                 });
             }
         }).start();
-    }
-
-    /** Legacy/redirected domain (the old teplitzky.ru site host) — warn, don't block. */
-    private static boolean isLegacyDomain(String host) {
-        if (host == null) return false;
-        return host.toLowerCase(Locale.US).contains("teplitzky.ru");
     }
 
     /** Map a connection exception to a clear, user-facing message. */
@@ -4714,7 +4704,7 @@ public class MainActivity extends BaseLocalizedActivity {
         }).start();
     }
 
-    private void testVehicleEndpoint(String baseUrl, String token, boolean legacyDomain) {
+    private void testVehicleEndpoint(String baseUrl, String token) {
         new Thread(() -> {
             try {
                 // Version handshake first: /api/cartelemetry/info reports the
@@ -4787,9 +4777,8 @@ public class MainActivity extends BaseLocalizedActivity {
                                 + " — обновите интеграцию и перезапустите HA");
                     } else if (code == 500) {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
-                        String hint = legacyDomain ? "\n" + getString(R.string.settings_test_legacy_domain) : "";
                         tvTestResult.setText(getString(R.string.settings_test_endpoint_http, code)
-                                + " — проверьте версию интеграции CARTelemetry" + hint);
+                                + " — проверьте версию интеграции CARTelemetry");
                     } else {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
                         String detail = errorDetail.isEmpty() ? " (тело ответа пустое)"
