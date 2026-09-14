@@ -105,7 +105,6 @@ public class TelemetryService extends Service {
     private TelemetryCallback callback;
     private CommandPoller commandPoller;
     private RuleEngine ruleEngine;
-    private final ConcurrentHashMap<String, String> cachedSignalValues = new ConcurrentHashMap<>();
     /** Shared signal store (new architecture): workers write here, tab/snapshot read. */
     public final com.car2hass.vehicle.ValueStore valueStore =
             new com.car2hass.vehicle.ValueStore();
@@ -192,7 +191,13 @@ public class TelemetryService extends Service {
         shutdownExecutors();
         telemetryExecutor = Executors.newSingleThreadExecutor();
         flushExecutor = Executors.newSingleThreadExecutor();
-        ruleEngine = new RuleEngine(getApplicationContext(), cachedSignalValues::get);
+        ruleEngine = new RuleEngine(getApplicationContext(), valueStore::get);
+        com.car2hass.vehicle.ValueStore.setMain(valueStore);
+        // Event-driven rules: re-evaluate affected rules as soon as a channel
+        // writes a changed value, instead of waiting for the 1s engine tick.
+        valueStore.addListener((key, value, source) -> {
+            if (ruleEngine != null) ruleEngine.signalChanged(key);
+        });
         SensorValueHistory.ensureLoaded(AppConfig.getSensorValueHistoryJson(this));
     }
 
@@ -646,9 +651,47 @@ public class TelemetryService extends Service {
                         }
                     }
                 });
+            // Periodically re-probe disabled channels so a source that comes
+            // online later (ADB turned on, DiPlus installed) is picked up.
+            maybeProbeDisabledChannels();
         } catch (Exception e) {
             LogBuffer.e("TelemetryService", "refreshData failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
+    }
+
+    private int cycleCounter = 0;
+    private static final int DISABLED_PROBE_EVERY = 5;
+    private volatile boolean disabledProbeInFlight = false;
+
+    /** Light availability probe of channels not currently active, every few cycles. */
+    private void maybeProbeDisabledChannels() {
+        if (++cycleCounter < DISABLED_PROBE_EVERY) return;
+        cycleCounter = 0;
+        if (disabledProbeInFlight) return;
+        disabledProbeInFlight = true;
+        new Thread(() -> {
+            try {
+                java.util.Set<String> active = new java.util.HashSet<>(AppConfig.getActiveChannels(this));
+                java.util.List<String> newlyAlive = new java.util.ArrayList<>();
+                for (DataChannel ch : buildResearchChannels()) {
+                    if (active.contains(ch.id())) continue;
+                    try {
+                        if (ch.probe(this).isAlive()) newlyAlive.add(ch.id());
+                    } catch (Exception ignored) {
+                    }
+                }
+                if (!newlyAlive.isEmpty()) {
+                    AppConfig.updateActiveChannels(this,
+                            com.car2hass.vehicle.ResearchUiModel.unionActive(
+                                    AppConfig.getActiveChannels(this), newlyAlive));
+                    LogBuffer.i("TelemetryService", "Disabled channels became available: " + newlyAlive);
+                }
+            } catch (Exception e) {
+                LogBuffer.d("TelemetryService", "disabled-probe: " + e.getMessage());
+            } finally {
+                disabledProbeInFlight = false;
+            }
+        }, "probe-disabled").start();
     }
 
     /**
@@ -726,7 +769,7 @@ public class TelemetryService extends Service {
                             sig.put(key, num);
                         }
                     }
-                    cachedSignalValues.put(key, translated);
+                    valueStore.put(key, translated, "channel");
                     SensorValueHistory.recordValue(key, translated);
                 } catch (Exception e) {
                     LogBuffer.d("TelemetryService", "Skipping signal " + key + " with value '" + rawValue + "': " + e.getMessage());
@@ -757,7 +800,7 @@ public class TelemetryService extends Service {
             // pipeline (their items have no diplusName and are dropped from batch
             // reads), so inject them into the snapshot directly from the cache.
             // geo_<id>_name keys carry the zone name for friendly naming in HA.
-            for (Map.Entry<String, String> e : cachedSignalValues.entrySet()) {
+            for (Map.Entry<String, String> e : valueStore.entries()) {
                 String key = e.getKey();
                 String value = e.getValue();
                 if (key == null || !key.startsWith("geo_")) continue;
@@ -900,7 +943,7 @@ public class TelemetryService extends Service {
             // up the cached value for the current batch.
             refreshDerivedSensors();
             // most recent auto-sensor values
-            for (java.util.Map.Entry<String, String> e : cachedSignalValues.entrySet()) {
+            for (java.util.Map.Entry<String, String> e : valueStore.entries()) {
                 String key = e.getKey();
                 if (key == null || key.startsWith("geo_") || key.endsWith("_name")) continue;
                 // Disabled signals are never forwarded (both snapshot paths agree).
@@ -1280,7 +1323,7 @@ public class TelemetryService extends Service {
                 float dist = results[0];
                 String state = dist <= z.radius ? "inside" : "outside";
                 String key = "geo_" + z.id;
-                String prevState = cachedSignalValues.get(key);
+                String prevState = valueStore.get(key);
                 if (!state.equals(prevState)) {
                     LogBuffer.i("TelemetryService", "Geofence '" + z.name + "': "
                         + (prevState != null ? prevState : "unknown") + "→" + state);
@@ -1290,21 +1333,21 @@ public class TelemetryService extends Service {
                     z.lastVisitedAtMs = now;
                     visitedChanged = true;
                 }
-                cachedSignalValues.put(key, state);
+                valueStore.put(key, state, "channel");
                 // Zone name travels alongside the state so Home Assistant can
                 // build a friendly entity name for the dynamic geo_<id> key.
-                cachedSignalValues.put(key + "_name", z.name);
+                valueStore.put(key + "_name", z.name, "channel");
                 ensureGeofenceItem(key);
             }
             // Remove stale geo_ keys for zones that no longer exist.
-            for (Iterator<Map.Entry<String, String>> it = cachedSignalValues.entrySet().iterator(); it.hasNext(); ) {
+            for (Iterator<Map.Entry<String, String>> it = valueStore.entries().iterator(); it.hasNext(); ) {
                 Map.Entry<String, String> entry = it.next();
                 String k = entry.getKey();
                 if (k.startsWith("geo_") && !k.endsWith("_name")) {
                     String zoneId = k.substring("geo_".length());
                     if (!activeZoneIds.contains(zoneId)) {
                         it.remove();
-                        cachedSignalValues.remove(k + "_name");
+                        valueStore.remove(k + "_name");
                         LogBuffer.i("TelemetryService", "Removed stale geo_ keys for deleted zone: " + zoneId);
                     }
                 }
@@ -1342,7 +1385,7 @@ public class TelemetryService extends Service {
         // "0x000" fallback name is sent to DiPlus, which answers
         // {"success":false} and bloats the logs with group errors.
         item.diplusName = null;
-        item.value = cachedSignalValues.getOrDefault(key, "---");
+        item.value = (valueStore.get(key) != null ? valueStore.get(key) : "---");
         knownItems.add(item);
     }
 
@@ -1376,7 +1419,7 @@ public class TelemetryService extends Service {
         CANDataItem item = new CANDataItem(0, key, "", 0);
         item.key = key;
         item.diplusName = null;
-        item.value = cachedSignalValues.getOrDefault(key, "---");
+        item.value = (valueStore.get(key) != null ? valueStore.get(key) : "---");
         knownItems.add(item);
     }
 
@@ -1390,26 +1433,26 @@ public class TelemetryService extends Service {
         try {
             int openWindows = 0, totalWindows = 0;
             for (String k : DERIVED_WINDOW_KEYS) {
-                String v = cachedSignalValues.get(k);
+                String v = valueStore.get(k);
                 if (v == null || v.isEmpty() || "---".equals(v)) continue;
                 totalWindows++;
                 if (parseDoubleSafe(v) > 0) openWindows++;
             }
             if (totalWindows > 0) {
-                cachedSignalValues.put("windows_state", String.valueOf(openWindows));
-                cachedSignalValues.put("windows_all_state", openWindows == 0 ? "closed" : "open");
+                valueStore.put("windows_state", String.valueOf(openWindows), "channel");
+                valueStore.put("windows_all_state", openWindows == 0 ? "closed" : "open", "channel");
             }
 
             int openDoors = 0, totalDoors = 0;
             for (String k : DERIVED_DOOR_KEYS) {
-                String v = cachedSignalValues.get(k);
+                String v = valueStore.get(k);
                 if (v == null || v.isEmpty() || "---".equals(v)) continue;
                 totalDoors++;
                 if ("open".equals(v)) openDoors++;
             }
             if (totalDoors > 0) {
-                cachedSignalValues.put("doors_state", String.valueOf(openDoors));
-                cachedSignalValues.put("doors_all_state", openDoors == 0 ? "closed" : "open");
+                valueStore.put("doors_state", String.valueOf(openDoors), "channel");
+                valueStore.put("doors_all_state", openDoors == 0 ? "closed" : "open", "channel");
             }
         } catch (Exception ignored) {}
     }
@@ -1420,7 +1463,7 @@ public class TelemetryService extends Service {
             java.util.Set<String> countKeys = new java.util.HashSet<>(
                     java.util.Arrays.asList(DERIVED_COUNT_KEYS));
             for (String key : DERIVED_SENSOR_KEYS) {
-                String v = cachedSignalValues.get(key);
+                String v = valueStore.get(key);
                 if (v == null || v.isEmpty() || "---".equals(v)) continue;
                 if (countKeys.contains(key)) {
                     sig.put(key, Integer.parseInt(v));

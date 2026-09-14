@@ -125,7 +125,6 @@ public class CANDataReader {
 
     // Latest raw values received from DiPlus, keyed by stable HA signal key.
     // Used for command verification without blocking on another telemetry cycle.
-    private static final ConcurrentHashMap<String, String> lastKnownRawValues = new ConcurrentHashMap<>();
 
     private static final String SIGNAL_CACHE_PREFS = "signal_cache";
     private static final String KEY_UNSUPPORTED_NAMES = "unsupported_names";
@@ -1218,7 +1217,7 @@ public class CANDataReader {
                 copy.lastUpdate = System.currentTimeMillis();
                 cacheSupported(context, item.diplusName);
                 if (copy.key != null && !copy.key.isEmpty()) {
-                    lastKnownRawValues.put(copy.key, rawValue);
+                    com.car2hass.vehicle.ValueStore.putRaw(copy.key, rawValue);
                 }
                 result.add(copy);
             }
@@ -1426,7 +1425,7 @@ public class CANDataReader {
             copy.value = applyScale(item.key, val);
             copy.lastUpdate = System.currentTimeMillis();
             if (copy.key != null && !copy.key.isEmpty()) {
-                lastKnownRawValues.put(copy.key, val);
+                com.car2hass.vehicle.ValueStore.putRaw(copy.key, val);
             }
             return copy;
         } catch (DiplusUnavailableException e) {
@@ -1462,7 +1461,7 @@ public class CANDataReader {
             if (result != null && result.value != null) {
                 // result.value is scaled; return the raw value from the cache
                 // which was stored before scaling.
-                String raw = lastKnownRawValues.get(sensorKey);
+                String raw = com.car2hass.vehicle.ValueStore.getRaw(sensorKey);
                 LogBuffer.d("CANReader", "querySensorValueSync " + sensorKey + " -> raw=" + raw + " scaled=" + result.value);
                 return raw;
             }
@@ -1474,7 +1473,7 @@ public class CANDataReader {
 
     /** Return the last known raw value for a sensor, or null if never received. */
     public static String getLastKnownRawValue(String sensorKey) {
-        return sensorKey != null ? lastKnownRawValues.get(sensorKey) : null;
+        return sensorKey != null ? com.car2hass.vehicle.ValueStore.getRaw(sensorKey) : null;
     }
 
     /**

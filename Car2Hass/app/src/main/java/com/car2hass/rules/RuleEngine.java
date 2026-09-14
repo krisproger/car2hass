@@ -40,6 +40,10 @@ public class RuleEngine {
     // rules keep using the configurable minIntervalSec cooldown.
     private static final long EDGE_ANTI_BOUNCE_MS = 5000;
 
+    // sensor key → rule ids referencing it, so a value change re-evaluates only
+    // the affected rules instead of the whole set every second.
+    private final java.util.HashMap<String, Set<String>> sensorRuleIndex = new java.util.HashMap<>();
+
     private static final String PREFS_NAME = "rule_engine_state";
     private static final String KEY_PREV_CONDITIONS = "previous_conditions";
 
@@ -125,12 +129,45 @@ public class RuleEngine {
         if (!started) return;
         try {
             List<Rule> rules = RuleRegistry.load(appContext);
+            buildIndex(rules);
             for (Rule r : rules) {
                 evaluateRule(r);
             }
         } catch (Exception e) {
             LogBuffer.e("RuleEngine", "tick error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
+    }
+
+    /** Rebuild sensorKey → rule ids for event-driven evaluation. */
+    private void buildIndex(List<Rule> rules) {
+        sensorRuleIndex.clear();
+        for (Rule r : rules) {
+            for (RuleCondition c : r.conditions) {
+                if (c.sensorKey == null || c.sensorKey.isEmpty()) continue;
+                sensorRuleIndex.computeIfAbsent(c.sensorKey, k -> new HashSet<>()).add(r.id);
+            }
+        }
+    }
+
+    /**
+     * Event-driven entry point: a sensor value changed, so re-evaluate the rules
+     * that reference it right away (instead of waiting for the next 1s tick).
+     * The work is posted to the rule executor to keep the engine single-threaded.
+     */
+    public void signalChanged(String key) {
+        if (!started || executor == null || executor.isShutdown() || key == null) return;
+        executor.execute(() -> {
+            try {
+                Set<String> ids = sensorRuleIndex.get(key);
+                if (ids == null || ids.isEmpty()) return;
+                List<Rule> rules = RuleRegistry.load(appContext);
+                for (Rule r : rules) {
+                    if (ids.contains(r.id)) evaluateRule(r);
+                }
+            } catch (Exception e) {
+                LogBuffer.e("RuleEngine", "signalChanged error: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+            }
+        });
     }
 
     private void evaluateRule(Rule rule) {

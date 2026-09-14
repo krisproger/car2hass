@@ -214,6 +214,14 @@ public class CommandExecutor {
             return new Verification(false, ctx.getString(R.string.command_verify_no_link), null, null);
         }
 
+        // Status-based verification: wait for the channel worker to write the
+        // expected value into the live ValueStore (no extra getVal round-trips).
+        com.car2hass.vehicle.ValueStore store = com.car2hass.vehicle.ValueStore.main();
+        if (store != null) {
+            return verifyViaStore(ctx, chosen.sensorKey, expected);
+        }
+
+        // No live store yet — fall back to the legacy polling verification.
         // Give DiPlus a moment to apply the command before reading the sensor.
         sleep(VERIFY_INITIAL_DELAY_MS);
 
@@ -252,6 +260,46 @@ public class CommandExecutor {
         return new Verification(false,
             ctx.getString(R.string.command_verify_mismatch),
             expected, translatedActual);
+    }
+
+    /** Wait for the live ValueStore to report the expected value (or timeout). */
+    private static Verification verifyViaStore(Context ctx, String sensorKey, String expected) {
+        com.car2hass.vehicle.ValueStore store = com.car2hass.vehicle.ValueStore.main();
+        boolean window = isWindowSensor(sensorKey);
+        long timeoutMs = window ? 12000 : 6000;
+
+        String cur = store.get(sensorKey);
+        if (cur != null && (valuesMatch(expected, cur, sensorKey)
+                || isAcceptableInactiveState(sensorKey, cur))) {
+            return new Verification(true, ctx.getString(R.string.command_verify_ok), expected, cur);
+        }
+
+        final java.util.concurrent.atomic.AtomicReference<String> actual =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        final java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
+        com.car2hass.vehicle.ValueStore.Listener listener = (k, v, src) -> {
+            if (!sensorKey.equals(k)) return;
+            actual.set(v);
+            if (valuesMatch(expected, v, sensorKey)
+                    || isAcceptableInactiveState(sensorKey, v)) {
+                latch.countDown();
+            }
+        };
+        store.addListener(listener);
+        try {
+            latch.await(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            store.removeListener(listener);
+        }
+
+        String finalVal = actual.get();
+        if (finalVal != null && (valuesMatch(expected, finalVal, sensorKey)
+                || isAcceptableInactiveState(sensorKey, finalVal))) {
+            return new Verification(true, ctx.getString(R.string.command_verify_ok), expected, finalVal);
+        }
+        return new Verification(false, ctx.getString(R.string.command_verify_mismatch), expected, finalVal);
     }
 
     /**

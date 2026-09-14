@@ -200,45 +200,41 @@ public class CommandPoller {
         // Always log command reception at INFO so it is visible even without detailed logs.
         LogBuffer.i("CommandPoller", "Received " + commands.length() + " command(s)");
 
-        boolean allAcked = true;
         for (int i = 0; i < commands.length(); i++) {
             JSONObject cmd = commands.optJSONObject(i);
             if (cmd == null) continue;
             try {
-                if (!processSingleCommand(cmd)) {
-                    allAcked = false;
-                }
+                enqueueSingleCommand(cmd);
             } catch (Exception e) {
                 LogBuffer.e("CommandPoller", "Single command failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-                allAcked = false;
             }
         }
-        return allAcked;
+        // Commands are enqueued for serial execution; the poll itself succeeded.
+        return true;
     }
 
-    private boolean processSingleCommand(JSONObject cmd) throws Exception {
+    private void enqueueSingleCommand(JSONObject cmd) {
         String commandId = cmd.optString("id");
         String commandKey = cmd.optString("command");
         JSONObject params = cmd.optJSONObject("params");
         String value = params != null ? params.optString("value", "") : "";
 
-        CommandExecutor.Result result = CommandExecutor.execute(
-            appContext, commandKey, value, CommandExecutor.Source.HA);
+        CommandQueue.enqueue(appContext, commandKey, value, CommandExecutor.Source.HA, result -> {
+            String status = result.success ? "ok" : "error";
+            String message = result.success
+                ? (result.verified
+                    ? appContext.getString(R.string.commands_result_ok_short) + " (" + result.verificationMessage + ")"
+                    : appContext.getString(R.string.commands_result_ok_short) + " [" + result.verificationMessage + "]")
+                : (result.error != null ? result.error : appContext.getString(R.string.commands_result_fail));
 
-        String status = result.success ? "ok" : "error";
-        String message = result.success
-            ? (result.verified
-                ? appContext.getString(R.string.commands_result_ok_short) + " (" + result.verificationMessage + ")"
-                : appContext.getString(R.string.commands_result_ok_short) + " [" + result.verificationMessage + "]")
-            : (result.error != null ? result.error : appContext.getString(R.string.commands_result_fail));
+            String summary = commandId + " " + commandKey + "=" + value + " -> "
+                + status + " " + message;
+            CommandLog.append(appContext, summary);
+            notifyListener(summary);
+            LogBuffer.i("CommandPoller", "HA command result: " + summary);
 
-        String summary = commandId + " " + commandKey + "=" + value + " -> "
-            + status + " " + message;
-        CommandLog.append(appContext, summary);
-        notifyListener(summary);
-        LogBuffer.i("CommandPoller", "HA command result: " + summary);
-
-        return acknowledgeCommand(commandId, status, message);
+            acknowledgeCommand(commandId, status, message);
+        });
     }
 
     private boolean acknowledgeCommand(String commandId, String status, String message) {

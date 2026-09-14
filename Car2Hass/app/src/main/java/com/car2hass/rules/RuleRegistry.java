@@ -107,12 +107,25 @@ public class RuleRegistry {
     // process — the 1s engine tick reloads rules constantly and the notices
     // must not spam the log.
     private static final java.util.Set<String> loadNoticesLogged = new java.util.HashSet<>();
+    // Cache of the parsed rules keyed by the raw JSON string (see load()).
+    private static volatile String cachedJson = null;
+    private static volatile List<Rule> cachedRules = null;
 
     public static synchronized List<Rule> load(Context ctx) {
         String json = com.car2hass.AppConfig.getRulesJson(ctx);
         if (json == null || json.isEmpty()) {
+            cachedJson = "";
+            cachedRules = null;
             return new ArrayList<>();
         }
+        // Cache the parsed rules keyed by the raw JSON: the engine re-loads every
+        // second and on every signal change, so re-parsing the same JSON is pure
+        // waste. Return a shallow copy so callers can iterate without holding
+        // the lock while a concurrent save replaces the cached list.
+        if (cachedRules != null && json.equals(cachedJson)) {
+            return new ArrayList<>(cachedRules);
+        }
+        cachedJson = json;
         List<Rule> rules = new ArrayList<>();
         try {
             JSONArray arr = new JSONArray(json);
@@ -149,7 +162,8 @@ public class RuleRegistry {
         } catch (Exception e) {
             com.car2hass.LogBuffer.e("RuleRegistry", "load error: " + e.getMessage());
         }
-        return rules;
+        cachedRules = rules;
+        return new ArrayList<>(rules);
     }
 
     public static synchronized void save(Context ctx, List<Rule> rules) {
@@ -159,7 +173,10 @@ public class RuleRegistry {
                 arr.put(r.toJson());
             }
         }
-        com.car2hass.AppConfig.saveRulesJson(ctx, arr.toString());
+        String out = arr.toString();
+        com.car2hass.AppConfig.saveRulesJson(ctx, out);
+        cachedJson = out;
+        cachedRules = rules != null ? new ArrayList<>(rules) : new ArrayList<>();
     }
 
     public static synchronized void upsert(Context ctx, Rule rule) {

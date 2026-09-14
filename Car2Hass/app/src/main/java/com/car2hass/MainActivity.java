@@ -2316,34 +2316,24 @@ public class MainActivity extends BaseLocalizedActivity {
             textCommandResult.setText(getString(R.string.commands_sending,
                 finalEntry.getDisplayName(this) + (finalValue.isEmpty() ? "" : "=" + finalValue)));
             textCommandResult.setTextColor(attrColor(R.attr.carAccentYellow));
-            new Thread(() -> {
-                try {
-                    CommandExecutor.Result result = CommandExecutor.execute(
-                        MainActivity.this, commandId, finalValue, CommandExecutor.Source.UI);
-                    String line = finalEntry.getDisplayName(MainActivity.this)
-                        + "=" + finalValue + " -> "
-                        + (result.success ? getString(R.string.commands_result_ok_short)
-                                          : getString(R.string.commands_result_fail))
-                        + " [" + result.verificationMessage + "]"
-                        + (result.error != null ? ": " + result.error : "");
-                    CommandLog.append(MainActivity.this, line);
-                    handler.post(() -> {
-                        try {
-                            textCommandResult.setText(formatCommandResult(result));
-                            textCommandResult.setTextColor(result.success ? attrColor(R.attr.carAccentGreen) : attrColor(R.attr.carAccentRed));
-                            refreshCommandJournal();
-                        } catch (Exception e) {
-                            LogBuffer.e("Main", "Quick command result UI failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-                        }
-                    });
-                } catch (Exception e) {
-                    LogBuffer.e("Main", "sendQuickCommand thread failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-                    handler.post(() -> {
-                        textCommandResult.setText(getString(R.string.commands_result_error, e.getMessage()));
-                        textCommandResult.setTextColor(attrColor(R.attr.carAccentRed));
-                    });
-                }
-            }).start();
+            CommandQueue.enqueue(this, commandId, finalValue, CommandExecutor.Source.UI, result -> {
+                String line = finalEntry.getDisplayName(MainActivity.this)
+                    + "=" + finalValue + " -> "
+                    + (result.success ? getString(R.string.commands_result_ok_short)
+                                      : getString(R.string.commands_result_fail))
+                    + " [" + result.verificationMessage + "]"
+                    + (result.error != null ? ": " + result.error : "");
+                CommandLog.append(MainActivity.this, line);
+                handler.post(() -> {
+                    try {
+                        textCommandResult.setText(formatCommandResult(result));
+                        textCommandResult.setTextColor(result.success ? attrColor(R.attr.carAccentGreen) : attrColor(R.attr.carAccentRed));
+                        refreshCommandJournal();
+                    } catch (Exception e) {
+                        LogBuffer.e("Main", "Quick command result UI failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+                    }
+                });
+            });
         } catch (Exception e) {
             LogBuffer.e("Main", "sendQuickCommand failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
@@ -2471,34 +2461,24 @@ public class MainActivity extends BaseLocalizedActivity {
                 entry.getDisplayName(this) + (finalValue.isEmpty() ? "" : "=" + finalValue)));
             textCommandResult.setTextColor(attrColor(R.attr.carAccentYellow));
 
-            new Thread(() -> {
-                try {
-                    CommandExecutor.Result result = CommandExecutor.execute(
-                        MainActivity.this, commandId, finalValue, CommandExecutor.Source.UI);
-                    String line = entry.getDisplayName(MainActivity.this)
-                        + "=" + finalValue + " -> "
-                        + (result.success ? getString(R.string.commands_result_ok_short)
-                                          : getString(R.string.commands_result_fail))
-                        + " [" + result.verificationMessage + "]"
-                        + (result.error != null ? ": " + result.error : "");
-                    CommandLog.append(MainActivity.this, line);
-                    handler.post(() -> {
-                        try {
-                            textCommandResult.setText(formatCommandResult(result));
-                            textCommandResult.setTextColor(result.success ? attrColor(R.attr.carAccentGreen) : attrColor(R.attr.carAccentRed));
-                            refreshCommandJournal();
-                        } catch (Exception e) {
-                            LogBuffer.e("Main", "Command result UI failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-                        }
-                    });
-                } catch (Exception e) {
-                    LogBuffer.e("Main", "sendSelectedCommand thread failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-                    handler.post(() -> {
-                        textCommandResult.setText(getString(R.string.commands_result_error, e.getMessage()));
-                        textCommandResult.setTextColor(attrColor(R.attr.carAccentRed));
-                    });
-                }
-            }).start();
+            CommandQueue.enqueue(this, commandId, finalValue, CommandExecutor.Source.UI, result -> {
+                String line = entry.getDisplayName(MainActivity.this)
+                    + "=" + finalValue + " -> "
+                    + (result.success ? getString(R.string.commands_result_ok_short)
+                                      : getString(R.string.commands_result_fail))
+                    + " [" + result.verificationMessage + "]"
+                    + (result.error != null ? ": " + result.error : "");
+                CommandLog.append(MainActivity.this, line);
+                handler.post(() -> {
+                    try {
+                        textCommandResult.setText(formatCommandResult(result));
+                        textCommandResult.setTextColor(result.success ? attrColor(R.attr.carAccentGreen) : attrColor(R.attr.carAccentRed));
+                        refreshCommandJournal();
+                    } catch (Exception e) {
+                        LogBuffer.e("Main", "Command result UI failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
+                    }
+                });
+            });
         } catch (Exception e) {
             LogBuffer.e("Main", "sendSelectedCommand failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
