@@ -373,23 +373,29 @@ public class CANDataReader {
             if (cycle.isEmpty()) return refreshSelected(context, knownItems);
             List<CANDataItem> items = sm.buildSignalItems();
             if (items.isEmpty()) return refreshSelected(context, knownItems);
+
+            // Read ALL enabled channels and merge their values. The cycle order
+            // is the polling priority: the first channel that provides a value
+            // for a key wins, so a higher-priority channel is never overridden by
+            // a lower one. No short-circuit — a metadata channel (dumpsys) must
+            // not stop the data channels (diplus/adb/voyah/obd) from being read.
+            java.util.Map<String, CANDataItem> merged = new java.util.LinkedHashMap<>();
             for (String ch : cycle) {
                 if ("system".equals(ch)) continue; // handled by LocationSource
                 List<CANDataItem> r = null;
-                if ("diplus".equals(ch)) r = mergeWithDumpsys(items, tryHttpApi(context, items));
+                if ("diplus".equals(ch)) r = tryHttpApi(context, items);
                 else if ("adb".equals(ch)) r = tryNativeOnce(context, items);
                 else if ("dumpsys".equals(ch)) r = tryDumpsys(items);
                 else if ("voyah".equals(ch)) r = voyahChannel().read(context, items);
-                if (r != null && !r.isEmpty()) {
+                if (r == null) continue;
                 for (CANDataItem it : r) {
-                    if (it != null && it.value != null && !"---".equals(it.value)) {
-                        it.sourceChannel = ch;
-                    }
+                    if (it == null || it.key == null || it.value == null || "---".equals(it.value)) continue;
+                    if (merged.containsKey(it.key)) continue;
+                    it.sourceChannel = ch;
+                    merged.put(it.key, it);
                 }
-                return r;
             }
-            }
-            return null;
+            return merged.isEmpty() ? null : new ArrayList<>(merged.values());
         } catch (Exception e) {
             LogBuffer.e("CANReader", "SourceManager refresh failed, fallback: " + e.getMessage());
             return refreshSelected(context, knownItems);
