@@ -2,6 +2,13 @@
 
 > **Скачать актуальное приложение Android:** <https://mytechnic.ru/cartelemetry/download.php?file=app>
 
+## v3.3.9 (текущая)
+
+- **Исправлена ошибка интеграции:** при первом появлении нового сенсора интеграция падала
+  с `AttributeError: 'EntityRegistry' object has no attribute 'async_enable'` и
+  `TypeError: HomeAssistantView.json() ... 'status'` — сенсоры не включались. Заменено на
+  корректные вызовы (`async_update_entity(..., disabled_by=None)` и `status_code=`).
+
 ## v3.3.8 (текущая)
 
 - **Единый источник данных сенсоров:** все хранилища (значения/сырые/кэш) сведены в один

@@ -294,7 +294,7 @@ class VehicleDataView(HomeAssistantView):
             _LOGGER.exception("api:cartelemetry unhandled error")
             return self.json(
                 {"status": "error", "message": f"{type(err).__name__}: {err}"},
-                status=500,
+                status_code=500,
             )
 
     async def _handle_post(self, hass, request):
@@ -304,12 +304,12 @@ class VehicleDataView(HomeAssistantView):
         except vol.Invalid as err:
             return self.json(
                 {"status": "error", "message": f"invalid payload: {err}"},
-                status=400,
+                status_code=400,
             )
         except ValueError:
             return self.json(
                 {"status": "error", "message": "invalid json"},
-                status=400,
+                status_code=400,
             )
 
         car_name = data["car_name"]
@@ -323,7 +323,7 @@ class VehicleDataView(HomeAssistantView):
             _LOGGER.warning("api:cartelemetry: integration not loaded (DOMAIN missing)")
             return self.json(
                 {"status": "error", "message": "integration not loaded"},
-                status=500,
+                status_code=500,
             )
 
         entry_id = self._resolve_entry_id(hass, car_name)
@@ -331,7 +331,7 @@ class VehicleDataView(HomeAssistantView):
         if entry_id is None:
             return self.json(
                 {"status": "error", "message": f"unknown car_name: {car_name}"},
-                status=404,
+                status_code=404,
             )
 
         try:
@@ -342,7 +342,7 @@ class VehicleDataView(HomeAssistantView):
             _LOGGER.exception("api:cartelemetry failed (car_name=%s)", car_name)
             return self.json(
                 {"status": "error", "message": f"{type(err).__name__}: {err}"},
-                status=500,
+                status_code=500,
             )
 
     async def _process_batch(self, hass, entry_id, car_name, vvn,
@@ -354,7 +354,7 @@ class VehicleDataView(HomeAssistantView):
         ):
             return self.json(
                 {"status": "error", "message": "rate limit exceeded"},
-                status=429,
+                status_code=429,
             )
 
         store = hass.data[DOMAIN][entry_id]
@@ -372,7 +372,7 @@ class VehicleDataView(HomeAssistantView):
         except BatchValidationError as err:
             return self.json(
                 {"status": "error", "message": str(err)},
-                status=400,
+                status_code=400,
             )
 
         agg = core.aggregate_batch(sorted_batch)
@@ -463,7 +463,7 @@ async def _async_sync_entity_availability(
             entry = reg.async_get(eid)
             if entry is None or entry.disabled_by != RegistryEntryDisabler.INTEGRATION:
                 continue
-            reg.async_enable(eid)
+            reg.async_update_entity(eid, disabled_by=None)
 
     sensor_platforms = [Platform.SENSOR, Platform.BINARY_SENSOR]
     command_platforms = [Platform.SWITCH, Platform.BUTTON, Platform.NUMBER]
@@ -510,7 +510,7 @@ async def _async_enable_sensors(hass: HomeAssistant, entry_id: str, signal_keys:
         entry = reg.async_get(entity_id)
         if entry is None or entry.disabled_by != RegistryEntryDisabler.INTEGRATION:
             continue
-        reg.async_enable(entity_id)
+        reg.async_update_entity(entity_id, disabled_by=None)
 
 
 class VehicleCommandsView(HomeAssistantView):
@@ -528,14 +528,14 @@ class VehicleCommandsView(HomeAssistantView):
         if not car_name:
             return self.json(
                 {"status": "error", "message": "missing car_name"},
-                status=400,
+                status_code=400,
             )
 
         entry_id = self._resolve_entry_id(hass, car_name)
         if entry_id is None:
             return self.json(
                 {"status": "error", "message": f"unknown car_name: {car_name}"},
-                status=404,
+                status_code=404,
             )
 
         store = hass.data[DOMAIN][entry_id]
@@ -578,12 +578,12 @@ class VehicleCommandsView(HomeAssistantView):
         except vol.Invalid as err:
             return self.json(
                 {"status": "error", "message": f"invalid payload: {err}"},
-                status=400,
+                status_code=400,
             )
         except ValueError:
             return self.json(
                 {"status": "error", "message": "invalid json"},
-                status=400,
+                status_code=400,
             )
 
         command_id = data["command_id"]
@@ -610,7 +610,7 @@ class VehicleCommandsView(HomeAssistantView):
         if not updated:
             return self.json(
                 {"status": "error", "message": f"unknown command_id: {command_id}"},
-                status=404,
+                status_code=404,
             )
 
         _LOGGER.info("Command %s acknowledged: %s (%s)", command_id, status, message)

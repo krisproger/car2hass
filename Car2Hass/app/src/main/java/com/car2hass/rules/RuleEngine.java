@@ -289,7 +289,10 @@ public class RuleEngine {
                 continue;
             }
             LogBuffer.i("RuleEngine", "Rule '" + rule.name + "' " + (fireBranch ? "action" : "else") + ": " + chineseCmd);
-            DiPlusCommandSender.send(appContext, chineseCmd);
+            // Route through the serial command queue (native/diplus fallback +
+            // status verification) instead of a fire-and-forget DiPlus send.
+            com.car2hass.CommandQueue.enqueue(appContext, action.commandId,
+                    action.commandValue, com.car2hass.CommandExecutor.Source.RULE, null);
             guard.record(action.commandId, action.commandValue, now);
         }
 

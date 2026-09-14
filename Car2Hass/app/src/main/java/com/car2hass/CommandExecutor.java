@@ -15,7 +15,7 @@ import java.util.Locale;
 public class CommandExecutor {
 
     /** Source of the command, used only for logging. */
-    public enum Source { HA, UI }
+    public enum Source { HA, UI, RULE }
 
     private static final long VERIFY_INITIAL_DELAY_MS = 600;
     private static final long VERIFY_RETRY_DELAY_MS = 600;
