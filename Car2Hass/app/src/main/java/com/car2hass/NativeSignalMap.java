@@ -75,7 +75,7 @@ public final class NativeSignalMap {
         add(m, "engine_power", 1012, 339738656, 5, ParamDecoder.INT_RAW, 1.0);
         add(m, "charge_gun_state", 1009, 876609586, 5, ParamDecoder.INT_ENUM, 1.0);
         add(m, "total_energy", 1014, 1032871984, 7, ParamDecoder.FLOAT_KWH, 1.0);
-        add(m, "battery_voltage", 1001, 1128267816, 7, ParamDecoder.FLOAT_VOLT, 1.0);
+        add(m, "battery_12v_voltage", 1001, 1128267816, 7, ParamDecoder.FLOAT_VOLT, 1.0);
         add(m, "battery_temp_max", 1014, 1148190752, 5, ParamDecoder.INT_TEMP_C_OFS40, 1.0);
         add(m, "battery_temp_min", 1014, 1148190736, 5, ParamDecoder.INT_TEMP_C_OFS40, 1.0);
         add(m, "cell_voltage_max", 1014, 1147142192, 5, ParamDecoder.INT_SCALED, 0.001);

@@ -62,6 +62,7 @@ public class AppConfig {
     private static final String KEY_DASHBOARD_TILES = "dashboard_tiles";
     private static final String KEY_RULES_JSON = "rules_json";
     private static final String KEY_SENSOR_VALUE_HISTORY_JSON = "sensor_value_history_json";
+    private static final String KEY_LAST_VALUES_JSON = "last_values_json";
     private static final String KEY_REGISTRY_VERSION = "registry_version";
     private static final String KEY_REGISTRY_LAST_CHECK = "registry_last_check";
     private static final String KEY_GEOFENCES = "geofences";
@@ -632,6 +633,14 @@ public class AppConfig {
 
     public static void saveSensorValueHistoryJson(Context ctx, String json) {
         prefs(ctx).edit().putString(KEY_SENSOR_VALUE_HISTORY_JSON, json).apply();
+    }
+
+    public static String getLastValuesJson(Context ctx) {
+        return prefs(ctx).getString(KEY_LAST_VALUES_JSON, null);
+    }
+
+    public static void saveLastValuesJson(Context ctx, String json) {
+        prefs(ctx).edit().putString(KEY_LAST_VALUES_JSON, json).apply();
     }
 
     public static void saveGeofences(Context ctx, List<GeofenceZone> zones) {

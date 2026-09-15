@@ -193,6 +193,7 @@ public class TelemetryService extends Service {
         flushExecutor = Executors.newSingleThreadExecutor();
         ruleEngine = new RuleEngine(getApplicationContext(), valueStore::get);
         com.car2hass.vehicle.ValueStore.setMain(valueStore);
+        restoreLastValues();
         // Event-driven rules: re-evaluate affected rules as soon as a channel
         // writes a changed value, instead of waiting for the 1s engine tick.
         valueStore.addListener((key, value, source) -> {
@@ -437,6 +438,7 @@ public class TelemetryService extends Service {
                 LogBuffer.w("TelemetryService", "value history final flush failed: " + e.getMessage());
             }
         }
+        saveLastValues();
         shutdownExecutors();
         releaseWakeLock();
         releaseWifiLock();
@@ -692,6 +694,36 @@ public class TelemetryService extends Service {
                 disabledProbeInFlight = false;
             }
         }, "probe-disabled").start();
+    }
+
+    /** Restore the last-known values so the UI shows them before the first CAN cycle. */
+    private void restoreLastValues() {
+        try {
+            String json = AppConfig.getLastValuesJson(this);
+            if (json == null || json.isEmpty()) return;
+            org.json.JSONObject obj = new org.json.JSONObject(json);
+            java.util.Iterator<String> keys = obj.keys();
+            while (keys.hasNext()) {
+                String k = keys.next();
+                valueStore.put(k, obj.optString(k), "restored");
+            }
+            LogBuffer.i("TelemetryService", "Restored last values: " + obj.length());
+        } catch (Exception e) {
+            LogBuffer.d("TelemetryService", "restore last values: " + e.getMessage());
+        }
+    }
+
+    private void saveLastValues() {
+        try {
+            org.json.JSONObject obj = new org.json.JSONObject();
+            for (java.util.Map.Entry<String, String> e : valueStore.snapshot().entrySet()) {
+                if (e.getKey() == null || e.getValue() == null || "---".equals(e.getValue())) continue;
+                obj.put(e.getKey(), e.getValue());
+            }
+            AppConfig.saveLastValuesJson(this, obj.toString());
+        } catch (Exception e) {
+            LogBuffer.d("TelemetryService", "save last values: " + e.getMessage());
+        }
     }
 
     /**

@@ -23,9 +23,13 @@ COMMAND_DEPENDS_ON = {
     "windows_vent": "windows_all_state",
 }
 
+# Native signals: command-linked + common across most cars. Exposed as
+# regular entities; every other received signal is a diagnostics attribute.
+NATIVE_SENSORS = {'windows_state', 'gear', 'battery_12v_voltage', 'outside_temp', 'tyre_pressure_fr', 'location_altitude', 'soc', 'charging_state', 'window_fl', 'hazard', 'fan_speed', 'ac_set_temp', 'window_rl', 'passenger_door', 'rear_left_door', 'power_state', 'location_lat', 'total_energy', 'location_accuracy', 'location_provider', 'sunroof', 'charge_gun_state', 'window_fr', 'tyre_pressure_fl', 'doors_state', 'drl', 'speed', 'low_beam', 'window_rr', 'rear_defrost', 'driver_door_lock', 'location_lon', 'driver_seatbelt', 'app_version', 'footwell_light', 'location_speed', 'tyre_pressure_rl', 'driver_door', 'front_fog', 'rear_right_door', 'cabin_temp', 'dashcam_state', 'device_battery', 'engine_rpm', 'range', 'trunk', 'engine_coolant_temp', 'steering_wheel_heat', 'remote_lock_state', 'battery_temp_max', 'windows_all_state', 'tyre_pressure_rr', 'ac_state', 'location_bearing'}
+
 CONF_CAR_NAME = "car_name"
 
-INTEGRATION_VERSION = "3.3.9"
+INTEGRATION_VERSION = "3.3.10"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.
@@ -220,7 +224,7 @@ NUMERIC_SENSORS = {
         "icon": "mdi:road-variant",
         "state_class": "measurement",
     },
-    "battery_voltage": {
+    "battery_12v_voltage": {
         "name": "12V battery voltage",
         "unit": "V",
         "icon": "mdi:car",
@@ -555,6 +559,37 @@ NUMERIC_SENSORS = {
         "icon": "mdi:car-door",
         "state_class": "measurement",
     },
+    "battery_remaining_charge_time": {
+        "name": "Battery remaining charge time",
+        "unit": "min",
+        "icon": "mdi:battery-clock",
+        "state_class": "measurement",
+    },
+    "avg_speed": {
+        "name": "Average speed",
+        "unit": "km/h",
+        "icon": "mdi:speedometer",
+        "device_class": "speed",
+        "state_class": "measurement",
+    },
+    "avg_power": {
+        "name": "Average power",
+        "unit": "kW",
+        "icon": "mdi:flash",
+        "state_class": "measurement",
+    },
+    "traction_battery_voltage": {
+        "name": "Traction battery voltage",
+        "unit": "V",
+        "icon": "mdi:lightning-bolt",
+        "state_class": "measurement",
+    },
+    "traction_battery_current": {
+        "name": "Traction battery current",
+        "unit": "A",
+        "icon": "mdi:current-ac",
+        "state_class": "measurement",
+    },
     "engine_load": {
         "name": "Engine load",
         "unit": "%",
@@ -668,6 +703,14 @@ ENUM_SENSORS = {
     "location_provider": {
         "name": "Location provider",
         "icon": "mdi:car",
+    },
+    "energy_recovery_gear": {
+        "name": "Energy recovery gear",
+        "icon": "mdi:battery-charging",
+    },
+    "energy_flow": {
+        "name": "Energy flow",
+        "icon": "mdi:transit-connection-variant",
     },
     "driver_seat_heat": {
         "name": "Driver seat heating",

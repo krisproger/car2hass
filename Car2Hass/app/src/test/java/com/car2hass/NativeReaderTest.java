@@ -83,14 +83,14 @@ public class NativeReaderTest {
     }
 
     private static void testFormatting() {
-        List<CANDataItem> items = itemsWith("soc", "battery_voltage");
+        List<CANDataItem> items = itemsWith("soc", "battery_12v_voltage");
         String output = "@soc\n"
                 + "Result: Parcel(00000000 42480000)\n"          // 50.0
-                + "@battery_voltage\n"
+                + "@battery_12v_voltage\n"
                 + "Result: Parcel(00000000 4141999A)\n";         // 12.1
         new NativeReader((host, port, cmd) -> output, "127.0.0.1", 5555, false).readAll(items);
         assertEquals("50", byKey(items, "soc").value, "integer value no .0");
-        assertEquals("12.1", byKey(items, "battery_voltage").value, "1-decimal float");
+        assertEquals("12.1", byKey(items, "battery_12v_voltage").value, "1-decimal float");
     }
 
     private static List<CANDataItem> itemsWith(String... keys) {

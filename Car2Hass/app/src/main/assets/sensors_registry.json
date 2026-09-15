@@ -844,7 +844,7 @@
       ]
     },
     {
-      "key": "battery_voltage",
+      "key": "battery_12v_voltage",
       "label_en": "12V battery voltage",
       "label_ru": "12V battery voltage",
       "type": "num",
@@ -3723,6 +3723,213 @@
       },
       "expected_on": [
         "system"
+      ]
+    },
+    {
+      "key": "windows_state",
+      "label_en": "Windows open count",
+      "label_ru": "Windows open count",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "windows_state"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "doors_state",
+      "label_en": "Doors open count",
+      "label_ru": "Doors open count",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "doors_state"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "windows_all_state",
+      "label_en": "Windows all closed",
+      "label_ru": "Windows all closed",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "windows_all_state"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "doors_all_state",
+      "label_en": "Doors all closed",
+      "label_ru": "Doors all closed",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "doors_all_state"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "battery_remaining_charge_time",
+      "label_en": "Battery remaining charge time",
+      "label_ru": "Battery remaining charge time",
+      "type": "num",
+      "unit": "min",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "BMS_REMAIN_CHARGE_TIME"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "avg_speed",
+      "label_en": "Average speed",
+      "label_ru": "Average speed",
+      "type": "num",
+      "unit": "km/h",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "AVG_SPEED"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "avg_power",
+      "label_en": "Average power",
+      "label_ru": "Average power",
+      "type": "num",
+      "unit": "kW",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "AVG_POWER"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "energy_recovery_gear",
+      "label_en": "Energy recovery gear",
+      "label_ru": "Energy recovery gear",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "ENERGY_RECOVERY_GEAR"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "energy_flow",
+      "label_en": "Energy flow",
+      "label_ru": "Energy flow",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "ENERGY_FLOW"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
       ]
     }
   ]

@@ -2808,7 +2808,10 @@ public class MainActivity extends BaseLocalizedActivity {
                 String v = valueFor(key, svc);
                 it.value = v == null ? "---" : v;
                 boolean live = v != null;
-                it.lastUpdate = v == null ? 0 : System.currentTimeMillis();
+                // Keep the actual write time (not "now") so a value that stopped
+                // updating fades to grey — "possibly not actual" but still shown.
+                long ageMs = svc != null ? svc.valueStore.ageMs(key) : -1;
+                it.lastUpdate = v == null ? 0 : (ageMs >= 0 ? System.currentTimeMillis() - ageMs : System.currentTimeMillis());
                 it.rawData = (system ? "system" : "") + (reachable ? "reachable" : "");
                 // Grey only for disabled or unavailable sensors; system stays green.
                 it.grey = !(system || it.enabled) || (!system && !reachable && !live);

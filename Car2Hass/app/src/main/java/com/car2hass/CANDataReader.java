@@ -744,7 +744,7 @@ public class CANDataReader {
         {"车道线曲率", "Lane curvature", "lane_curvature", "num"},
         {"右侧线距离", "Right lane distance", "right_lane_distance", "num"},
         {"左侧线距离", "Left lane distance", "left_lane_distance", "num"},
-        {"蓄电池电压", "12V battery voltage", "battery_voltage", "num"},
+        {"蓄电池电压", "12V battery voltage", "battery_12v_voltage", "num"},
         {"雷达左前", "Radar front-left", "radar_fl", "num"},
         {"雷达右前", "Radar front-right", "radar_fr", "num"},
         {"雷达左后", "Radar rear-left", "radar_rl", "num"},
@@ -879,11 +879,24 @@ public class CANDataReader {
                 item.rawData = sig[3]; // type (num/enum)
                 list.add(item);
             }
+            // Derived aggregate sensors (computed locally in TelemetryService,
+            // no DiPlus name) — expose them to the rules editor + telemetry.
+            addDerivedSignal(list, "windows_state", "Windows open count", "num");
+            addDerivedSignal(list, "doors_state", "Doors open count", "num");
+            addDerivedSignal(list, "windows_all_state", "Windows all closed", "enum");
+            addDerivedSignal(list, "doors_all_state", "Doors all closed", "enum");
             return list;
         } catch (Exception e) {
             LogBuffer.e("CANReader", "createSignalItems failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
             return new ArrayList<>();
         }
+    }
+
+    private static void addDerivedSignal(List<CANDataItem> list, String key, String label, String type) {
+        CANDataItem item = new CANDataItem(0, label, "", -1);
+        item.key = key;
+        item.rawData = type;
+        list.add(item);
     }
 
     // ─── DiPlus clean API ───

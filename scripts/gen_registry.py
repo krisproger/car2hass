@@ -24,6 +24,24 @@ DEVICE_SENSORS = [
     ("system_media_volume", "System media volume", "device", "%"),
 ]
 
+# Locally computed aggregate sensors (refreshDerivedSensors in TelemetryService):
+# never read from a channel, always available while the app runs.
+DERIVED_SENSORS = [
+    ("windows_state", "Windows open count", "num", None),
+    ("doors_state", "Doors open count", "num", None),
+    ("windows_all_state", "Windows all closed", "enum", None),
+    ("doors_all_state", "Doors all closed", "enum", None),
+]
+
+# Universal sensors read from Voyah (not in the shared CAN SIGNAL_REGISTRY).
+VOYAH_ONLY_SENSORS = [
+    ("battery_remaining_charge_time", "Battery remaining charge time", "num", "min"),
+    ("avg_speed", "Average speed", "num", "km/h"),
+    ("avg_power", "Average power", "num", "kW"),
+    ("energy_recovery_gear", "Energy recovery gear", "enum", None),
+    ("energy_flow", "Energy flow", "enum", None),
+]
+
 # Standard OBD-II mode-01 PIDs for keys already present in SIGNAL_REGISTRY.
 # Sync with ObdPidCodec.PID_TO_KEY (vehicle/ObdPidCodec.java).
 OBD_PIDS = {
@@ -106,6 +124,11 @@ VOYAH_PARAMS = {
     "auto_hold": "EPB_PARK_STATUS",
     "total_energy": "ENERGY_CON_SUM_AV",
     "drive_mode": "DRIVING_MODE_SET",
+    "battery_remaining_charge_time": "BMS_REMAIN_CHARGE_TIME",
+    "avg_speed": "AVG_SPEED",
+    "avg_power": "AVG_POWER",
+    "energy_recovery_gear": "ENERGY_RECOVERY_GEAR",
+    "energy_flow": "ENERGY_FLOW",
 }
 
 def parse_signal_registry():
@@ -170,7 +193,7 @@ def build_sensors():
             "core": key in CORE_SENSORS,
             "channels": channels, "expected_on": expected,
         })
-    for key, english, stype, unit in GPS_SENSORS + DEVICE_SENSORS:
+    for key, english, stype, unit in GPS_SENSORS + DEVICE_SENSORS + DERIVED_SENSORS:
         sensors.append({
             "key": key, "label_en": english, "label_ru": english,
             "type": stype, "unit": unit,
@@ -179,6 +202,17 @@ def build_sensors():
                 ["diplus", "adb", "dumpsys", "obd", "voyah", "diplus_push", "byd_cloud"]}
                 | {"system": {"field": key}},
             "expected_on": ["system"],
+        })
+    for key, english, stype, unit in VOYAH_ONLY_SENSORS:
+        vs = VOYAH_PARAMS.get(key)
+        sensors.append({
+            "key": key, "label_en": english, "label_ru": english,
+            "type": stype, "unit": unit,
+            "core": False,
+            "channels": {k: None for k in
+                ["diplus", "adb", "dumpsys", "obd", "diplus_push", "byd_cloud", "system"]}
+                | {"voyah": ({"vs": vs} if vs else None)},
+            "expected_on": ["voyah_generic"],
         })
     return sensors
 

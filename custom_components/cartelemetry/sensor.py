@@ -7,7 +7,7 @@ from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import DOMAIN
 
-from .const import NUMERIC_SENSORS, ENUM_SENSORS, CONF_CAR_NAME, INTEGRATION_VERSION
+from .const import NUMERIC_SENSORS, ENUM_SENSORS, NATIVE_SENSORS, CONF_CAR_NAME, INTEGRATION_VERSION
 from .device_info import build_device_info
 from . import SIGNAL_VEHICLE_DATA_UPDATED, async_replay_state
 
@@ -23,7 +23,7 @@ _CORE_SIGNALS = {
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Set up sensors from config entry."""
     car_name = config_entry.data.get(CONF_CAR_NAME, "byd_car")
-    sensors = []
+    sensors = [DiagnosticsSensor(config_entry, car_name)]
     for signal_key, cfg in NUMERIC_SENSORS.items():
         sensors.append(CarTelemetrySensor(signal_key, cfg, config_entry, car_name))
     for signal_key, cfg in ENUM_SENSORS.items():
@@ -159,6 +159,54 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
                 }
             if not written:
                 self.async_write_ha_state()
+
+        self.async_on_remove(
+            async_dispatcher_connect(self.hass, SIGNAL_VEHICLE_DATA_UPDATED, update)
+        )
+        await update()
+
+
+class DiagnosticsSensor(SensorEntity, RestoreEntity):
+    """Composite entity exposing non-native vehicle signals as attributes.
+
+    Native signals (command-linked + common) are first-class entities; every
+    other received signal is carried as an attribute here so any car's extra
+    sensors are visible without an entity explosion.
+    """
+
+    def __init__(self, config_entry, car_name):
+        self._entry_id = config_entry.entry_id
+        self._car_name = car_name
+        self._attr_name = f"{car_name} Diagnostics"
+        self._attr_unique_id = f"{config_entry.entry_id}_diagnostics"
+        self._attr_icon = "mdi:car-info"
+        self._attr_should_poll = False
+        self._attr_native_value = 0
+        self._attr_extra_state_attributes = {}
+        self._attr_available = False
+        self._sw_version = INTEGRATION_VERSION
+
+    @property
+    def device_info(self):
+        return build_device_info(self._entry_id, self._car_name, self._sw_version)
+
+    async def async_added_to_hass(self):
+        await super().async_added_to_hass()
+
+        async def update():
+            store = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {})
+            data = store.get("data", {})
+            signals = data.get("signals", {})
+            if signals:
+                self._attr_available = True
+                attrs = {}
+                for key, value in signals.items():
+                    if key in NATIVE_SENSORS:
+                        continue
+                    attrs[key] = value
+                self._attr_extra_state_attributes = attrs
+                self._attr_native_value = len(signals)
+            self.async_write_ha_state()
 
         self.async_on_remove(
             async_dispatcher_connect(self.hass, SIGNAL_VEHICLE_DATA_UPDATED, update)

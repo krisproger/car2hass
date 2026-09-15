@@ -310,6 +310,24 @@ def _build_const_snippets(signals):
         "windows_vent": "windows_all_state",
     }))
     lines.append("")
+    lines.append("# Native signals: command-linked + common across most cars. Exposed as")
+    lines.append("# regular entities; every other received signal is a diagnostics attribute.")
+    lines.append("NATIVE_SENSORS = " + repr({
+        "power_state", "app_version", "device_battery",
+        "location_lat", "location_lon", "location_speed", "location_bearing",
+        "location_altitude", "location_accuracy", "location_provider",
+        "drl", "front_fog", "hazard", "low_beam", "ac_state", "rear_defrost",
+        "steering_wheel_heat", "footwell_light", "dashcam_state", "remote_lock_state",
+        "trunk", "windows_all_state", "windows_state", "doors_state",
+        "speed", "soc", "range", "gear", "charge_gun_state", "charging_state",
+        "driver_door", "passenger_door", "rear_left_door", "rear_right_door",
+        "driver_door_lock", "driver_seatbelt", "outside_temp", "cabin_temp",
+        "ac_set_temp", "fan_speed", "window_fl", "window_fr", "window_rl", "window_rr",
+        "sunroof", "engine_coolant_temp", "engine_rpm", "battery_12v_voltage",
+        "total_energy", "battery_temp_max", "tyre_pressure_fl", "tyre_pressure_fr",
+        "tyre_pressure_rl", "tyre_pressure_rr",
+    }))
+    lines.append("")
     lines.append('CONF_CAR_NAME = "car_name"')
     lines.append("")
     lines.append(f'INTEGRATION_VERSION = "{_integration_version()}"')

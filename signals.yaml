@@ -496,7 +496,7 @@ signals:
   name: 蓄电池电压
   description: 12V battery voltage
   type: num
-  key: battery_voltage
+  key: battery_12v_voltage
   labels: {}
   ha_type: sensor
   unit: V
@@ -1811,6 +1811,80 @@ signals:
   truthy:
   - open
   - 'on'
+- id: 9114
+  name: Battery remaining charge time
+  description: Battery remaining charge time
+  type: num
+  synthetic: true
+  key: battery_remaining_charge_time
+  labels: {}
+  ha_type: sensor
+  unit: min
+  icon: mdi:battery-clock
+  state_class: measurement
+- id: 9115
+  name: Average speed
+  description: Average speed
+  type: num
+  synthetic: true
+  key: avg_speed
+  labels: {}
+  ha_type: sensor
+  unit: km/h
+  icon: mdi:speedometer
+  device_class: speed
+  state_class: measurement
+- id: 9116
+  name: Average power
+  description: Average power
+  type: num
+  synthetic: true
+  key: avg_power
+  labels: {}
+  ha_type: sensor
+  unit: kW
+  icon: mdi:flash
+  state_class: measurement
+- id: 9117
+  name: Energy recovery gear
+  description: Energy recovery gear
+  type: enum
+  synthetic: true
+  key: energy_recovery_gear
+  labels: {}
+  ha_type: sensor
+  icon: mdi:battery-charging
+- id: 9118
+  name: Energy flow
+  description: Energy flow
+  type: enum
+  synthetic: true
+  key: energy_flow
+  labels: {}
+  ha_type: sensor
+  icon: mdi:transit-connection-variant
+- id: 9119
+  name: Traction battery voltage
+  description: Traction battery voltage
+  type: num
+  synthetic: true
+  key: traction_battery_voltage
+  labels: {}
+  ha_type: sensor
+  unit: V
+  icon: mdi:lightning-bolt
+  state_class: measurement
+- id: 9120
+  name: Traction battery current
+  description: Traction battery current
+  type: num
+  synthetic: true
+  key: traction_battery_current
+  labels: {}
+  ha_type: sensor
+  unit: A
+  icon: mdi:current-ac
+  state_class: measurement
 - id: 30001
   name: 发动机负荷
   description: Engine load
