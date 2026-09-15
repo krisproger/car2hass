@@ -28,6 +28,7 @@ public class AppConfig {
     private static final String KEY_TELEMETRY_SOURCE = "telemetry_source";
     private static final String KEY_AUTO_FALLBACK = "auto_fallback_sources";
     private static final String KEY_UPDATE_LAST_CHECK = "update_last_check_ms";
+    private static final String KEY_UPDATE_CHANNEL = "update_channel";
     private static final String KEY_DEBUG_COMPARE = "debug_compare";
     private static final String KEY_PROBE_UPLOAD = "probe_upload_enabled";
     private static final String KEY_OBD_ENABLED = "obd_enabled";
@@ -45,6 +46,8 @@ public class AppConfig {
     private static final String KEY_PROBE_RUNS_COUNT = "probe_runs_count";
     private static final String KEY_PROBE_LAST_FULL_SCAN = "probe_last_full_scan_ms";
     private static final String KEY_PROBE_REPORT_PATH = "probe_report_path";
+    private static final String KEY_SOURCES_ADDED = "sources_added";
+    private static final String KEY_RESEARCH_DONE = "research_done";
     // Token is stored encrypted via SecureStorage; legacy key kept for migration.
     static final String KEY_TOKEN = "hass_token";
     private static final String KEY_CAR_NAME = "car_name";
@@ -406,6 +409,14 @@ public class AppConfig {
 
     public static void setUpdateLastCheckMs(Context ctx, long ms) {
         prefs(ctx).edit().putLong(KEY_UPDATE_LAST_CHECK, ms).apply();
+    }
+
+    public static String getUpdateChannel(Context ctx) {
+        return prefs(ctx).getString(KEY_UPDATE_CHANNEL, "stable");
+    }
+
+    public static void setUpdateChannel(Context ctx, String channel) {
+        prefs(ctx).edit().putString(KEY_UPDATE_CHANNEL, channel).apply();
     }
 
     public static String getVehicleProducer(Context ctx) {
@@ -778,6 +789,36 @@ public class AppConfig {
 
     public static void setUserOverridden(Context ctx, boolean v) {
         prefs(ctx).edit().putBoolean(KEY_PROBE_USER_OVERRIDDEN, v).apply();
+    }
+
+    /** Sources the user explicitly added in the settings tab (system is always present). */
+    public static List<String> getAddedSources(Context ctx) {
+        String s = prefs(ctx).getString(KEY_SOURCES_ADDED, null);
+        List<String> out = new ArrayList<>();
+        if (s == null) return out;
+        try {
+            org.json.JSONArray a = new org.json.JSONArray(s);
+            for (int i = 0; i < a.length(); i++) out.add(a.getString(i));
+        } catch (Exception e) {
+            // ignore malformed
+        }
+        return out;
+    }
+
+    public static void setAddedSources(Context ctx, List<String> sources) {
+        if (sources == null) {
+            prefs(ctx).edit().remove(KEY_SOURCES_ADDED).apply();
+            return;
+        }
+        prefs(ctx).edit().putString(KEY_SOURCES_ADDED, new org.json.JSONArray(sources).toString()).apply();
+    }
+
+    public static boolean isResearchDone(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_RESEARCH_DONE, false);
+    }
+
+    public static void setResearchDone(Context ctx, boolean done) {
+        prefs(ctx).edit().putBoolean(KEY_RESEARCH_DONE, done).apply();
     }
 
     public static int getRunsCount(Context ctx) {

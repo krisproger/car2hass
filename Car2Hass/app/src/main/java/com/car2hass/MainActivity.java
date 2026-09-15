@@ -102,6 +102,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private ProgressBar queueBar;
     private TextView tvQueueBytes, tvLastSend, tvLastAttempt;
     private Button obdButton;
+    private boolean firstLaunchResearch = false;
     private Button btnSendLog;
     private CheckBox checkSelectAll;
     private CheckBox headerCheckAll;
@@ -3165,6 +3166,7 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsView.findViewById(R.id.btnExportConfig).setOnClickListener(v -> exportConfig());
         settingsView.findViewById(R.id.btnImportConfig).setOnClickListener(v -> importConfig());
         settingsView.findViewById(R.id.btnCheckUpdate).setOnClickListener(v -> checkForUpdate(true));
+        setupUpdateChannelSpinner(settingsView);
         settingsView.findViewById(R.id.btnRequestPermissions).setOnClickListener(v -> {
             // Re-request even if previously denied: the cached denial is cleared.
             AppConfig.clearDeniedPermissions(this);
@@ -3257,6 +3259,7 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         if (index == 1) {
             renderResearch();
+            maybeRunFirstLaunchResearch();
         }
     }
 
@@ -3354,6 +3357,13 @@ public class MainActivity extends BaseLocalizedActivity {
                 .setVisibility(universal ? View.VISIBLE : View.GONE);
     }
 
+    private void maybeRunFirstLaunchResearch() {
+        if (AppConfig.isResearchDone(this)) return;
+        AppConfig.setResearchDone(this, true);
+        firstLaunchResearch = true;
+        runVehicleResearch();
+    }
+
     private void runVehicleResearch() {
         btnRestartResearch.setEnabled(false);
         List<DataChannel> channels;
@@ -3425,6 +3435,11 @@ public class MainActivity extends BaseLocalizedActivity {
                 }
                 btnRestartResearch.setEnabled(true);
                 renderResearch();
+                if (firstLaunchResearch) {
+                    firstLaunchResearch = false;
+                    List<String> added = new ArrayList<>(AppConfig.getActiveChannels(MainActivity.this));
+                    if (!added.isEmpty()) AppConfig.setAddedSources(MainActivity.this, added);
+                }
                 maybeUploadReport(path);
                 // The user's manual profile choice is kept (never auto-changed);
                 // if auto-detection disagrees, recommend instead of overriding.
@@ -3561,48 +3576,77 @@ public class MainActivity extends BaseLocalizedActivity {
             @Override public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        // Channel checkboxes in SourceManager priority order.
+        // Sources: system (always on) + explicitly added sources with toggle/remove.
         channelContainer.removeAllViews();
-        for (ResearchUiModel.ChannelView cv : channels) {
+
+        LinearLayout sysRow = new LinearLayout(this);
+        sysRow.setOrientation(LinearLayout.HORIZONTAL);
+        sysRow.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        CheckBox sysBox = new CheckBox(this);
+        sysBox.setText(R.string.channel_system);
+        sysBox.setChecked(true);
+        sysBox.setEnabled(false);
+        sysBox.setTextColor(getResources().getColor(R.color.textPrimary));
+        sysRow.addView(sysBox, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        Button locBtn = new Button(this);
+        locBtn.setText(R.string.settings_location_test);
+        locBtn.setAllCaps(false);
+        locBtn.setOnClickListener(v -> showLocationTest());
+        sysRow.addView(locBtn);
+        channelContainer.addView(sysRow);
+
+        List<String> addedSources = AppConfig.getAddedSources(this);
+        for (String name : addedSources) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
             CheckBox box = new CheckBox(this);
-            box.setText(channelLabel(cv.name));
-            box.setChecked(cv.checked);
-            // system is always-on: cannot be unchecked, but color shows availability
-            boolean locked = "system".equals(cv.name);
-            box.setEnabled(!locked);
-            box.setTextColor(getResources().getColor(cv.available
-                    ? R.color.textPrimary : R.color.textTertiary));
+            box.setText(channelLabel(name));
+            boolean on = AppConfig.getActiveChannels(this).contains(name);
+            box.setChecked(on);
+            box.setTextColor(getResources().getColor(on ? R.color.textPrimary : R.color.textTertiary));
             box.setOnCheckedChangeListener((CompoundButton b, boolean isChecked) -> {
-                List<String> active = new ArrayList<>();
-                for (ResearchUiModel.ChannelView c : channels) {
-                    boolean nowChecked = c.name.equals(cv.name) ? isChecked : c.checked;
-                    if (nowChecked && !"system".equals(c.name)) active.add(c.name);
+                List<String> active = new ArrayList<>(AppConfig.getActiveChannels(MainActivity.this));
+                if (isChecked) {
+                    if (!active.contains(name)) active.add(name);
+                } else {
+                    active.remove(name);
                 }
-                AppConfig.updateActiveChannels(this, active);
-                // OBD checkbox is the enable switch for the protocol itself.
-                if ("obd".equals(cv.name)) {
-                    AppConfig.setObdEnabled(this, isChecked);
-                    if (isChecked) {
-                        // Car Scanner-style: enabling the protocol immediately
-                        // connects to the (auto-detected) adapter and reports.
-                        connectObdAuto();
-                    } else {
-                        AppConfig.setObdStatus(this, "disconnected");
-                    }
+                AppConfig.updateActiveChannels(MainActivity.this, active);
+                if ("obd".equals(name)) {
+                    AppConfig.setObdEnabled(MainActivity.this, isChecked);
+                    if (isChecked) connectObdAuto();
+                    else AppConfig.setObdStatus(MainActivity.this, "disconnected");
                 }
                 renderResearch();
             });
-            channelContainer.addView(box);
-            // OBD: when the protocol is enabled, show a connect/device button.
-            if ("obd".equals(cv.name) && cv.checked) {
+            row.addView(box, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+
+            TextView cnt = new TextView(this);
+            cnt.setText(getString(R.string.settings_sources_expected_sensors, channelSensorCount(name)));
+            cnt.setTextColor(getResources().getColor(R.color.textTertiary));
+            cnt.setTextSize(12);
+            row.addView(cnt);
+
+            Button rm = new Button(this);
+            rm.setText("−");
+            rm.setAllCaps(false);
+            rm.setOnClickListener(v -> removeSource(name));
+            row.addView(rm);
+
+            channelContainer.addView(row);
+
+            // OBD: when the source is added, show a connect/device button.
+            if ("obd".equals(name) && on) {
                 Button obdBtn = new Button(this);
                 obdButton = obdBtn;
-                String name = AppConfig.getObdBtName(this);
+                String btName = AppConfig.getObdBtName(this);
                 boolean hasBt = "bt".equals(AppConfig.getObdMode(this))
                         && !AppConfig.getObdBtAddress(this).isEmpty();
                 obdBtn.setText(hasBt
                         ? getString(R.string.obd_connected_button,
-                                name != null && !name.isEmpty() ? name
+                                btName != null && !btName.isEmpty() ? btName
                                         : AppConfig.getObdBtAddress(this))
                         : getString(R.string.obd_connect_button));
                 updateObdButton();
@@ -3617,7 +3661,91 @@ public class MainActivity extends BaseLocalizedActivity {
             }
         }
 
+        Button addBtn = new Button(this);
+        addBtn.setText(R.string.settings_sources_add);
+        addBtn.setAllCaps(false);
+        addBtn.setOnClickListener(v -> showAddSourceDialog());
+        LinearLayout.LayoutParams ap = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        ap.topMargin = dp(6);
+        addBtn.setLayoutParams(ap);
+        channelContainer.addView(addBtn);
+
+        updateSourceSettingsVisibility();
+
         status.setText(buildResearchStatus());
+    }
+
+    /** Supported source ids the user can add (system is always present). */
+    private static final List<String> ADDABLE_SOURCES = java.util.Arrays.asList(
+            "diplus", "adb", "obd", "voyah", "dumpsys", "diplus_push", "byd_cloud");
+
+    private void showAddSourceDialog() {
+        List<String> added = AppConfig.getAddedSources(this);
+        List<String> available = new ArrayList<>();
+        for (String id : ADDABLE_SOURCES) {
+            if (!added.contains(id)) available.add(id);
+        }
+        if (available.isEmpty()) {
+            Toast.makeText(this, R.string.settings_sources_add, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        String[] labels = new String[available.size()];
+        for (int i = 0; i < available.size(); i++) {
+            labels[i] = getString(channelLabel(available.get(i)));
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.settings_sources_add)
+                .setItems(labels, (d, which) -> {
+                    List<String> cur = new ArrayList<>(AppConfig.getAddedSources(MainActivity.this));
+                    cur.add(available.get(which));
+                    AppConfig.setAddedSources(MainActivity.this, cur);
+                    List<String> active = new ArrayList<>(AppConfig.getActiveChannels(MainActivity.this));
+                    if (!active.contains(available.get(which))) active.add(available.get(which));
+                    AppConfig.updateActiveChannels(MainActivity.this, active);
+                    renderResearch();
+                })
+                .show();
+    }
+
+    private void removeSource(String name) {
+        List<String> cur = new ArrayList<>(AppConfig.getAddedSources(this));
+        cur.remove(name);
+        AppConfig.setAddedSources(this, cur);
+        List<String> active = new ArrayList<>(AppConfig.getActiveChannels(this));
+        active.remove(name);
+        AppConfig.updateActiveChannels(this, active);
+        if ("obd".equals(name)) AppConfig.setObdEnabled(this, false);
+        renderResearch();
+    }
+
+    /** Expected sensor count for a channel from the last probe report. */
+    private int channelSensorCount(String channel) {
+        JSONObject report = loadProbeReportJson();
+        if (report == null) return 0;
+        JSONObject sensors = report.optJSONObject("sensors");
+        if (sensors == null) return 0;
+        int n = 0;
+        JSONArray keys = sensors.names();
+        for (int i = 0; keys != null && i < keys.length(); i++) {
+            JSONObject ch = sensors.optJSONObject(keys.optString(i));
+            if (ch != null && "ok".equals(ch.optString(channel))) n++;
+        }
+        return n;
+    }
+
+    /** Shows per-source settings (ADB host/port, DiPlus token) only when added. */
+    private void updateSourceSettingsVisibility() {
+        List<String> added = AppConfig.getAddedSources(this);
+        setRowVisibility(R.id.rowAdbHost, added.contains("adb"));
+        setRowVisibility(R.id.rowAdbPort, added.contains("adb"));
+        setRowVisibility(R.id.rowDiplusAuth, added.contains("diplus") || added.contains("diplus_push"));
+    }
+
+    private void setRowVisibility(int id, boolean visible) {
+        View v = settingsView.findViewById(id);
+        if (v != null) v.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
     private int channelLabel(String name) {
@@ -3761,6 +3889,26 @@ public class MainActivity extends BaseLocalizedActivity {
         runUpdateCheck(false, true);
     }
 
+    /** Wires the update-channel spinner (stable/beta) in the tech settings section. */
+    private void setupUpdateChannelSpinner(View settingsView) {
+        Spinner spinner = settingsView.findViewById(R.id.spUpdateChannel);
+        final String[] channelValues = {"stable", "beta"};
+        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item,
+                new String[]{getString(R.string.settings_update_channel_stable),
+                        getString(R.string.settings_update_channel_beta)});
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        String current = AppConfig.getUpdateChannel(this);
+        spinner.setSelection("beta".equals(current) ? 1 : 0);
+        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
+                AppConfig.setUpdateChannel(MainActivity.this, channelValues[pos]);
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) { }
+        });
+    }
+
     private void runUpdateCheck(boolean quiet, boolean toastUpToDate) {
         if (!quiet) {
             Toast.makeText(this, R.string.update_checking, Toast.LENGTH_SHORT).show();
@@ -3768,7 +3916,7 @@ public class MainActivity extends BaseLocalizedActivity {
         new Thread(() -> {
             UpdateChecker.UpdateInfo info = null;
             try {
-                UpdateChecker.UpdateInfo attempt = UpdateDownloader.check(this);
+                UpdateChecker.UpdateInfo attempt = UpdateDownloader.check(this, AppConfig.getUpdateChannel(this));
                 if (attempt == null) {
                     if (toastUpToDate) {
                         runOnUiThread(() -> Toast.makeText(this,
@@ -3782,7 +3930,7 @@ public class MainActivity extends BaseLocalizedActivity {
                 LogBuffer.w("Main", "update check retry after: " + first.getMessage());
                 try { Thread.sleep(2000); } catch (InterruptedException ie) { return; }
                 try {
-                    info = UpdateDownloader.check(this);
+                    info = UpdateDownloader.check(this, AppConfig.getUpdateChannel(this));
                 } catch (Exception e) {
                     LogBuffer.w("Main", "update check: " + e.getMessage());
                     if (!quiet) {
@@ -3996,7 +4144,7 @@ public class MainActivity extends BaseLocalizedActivity {
         Toast.makeText(this, R.string.update_checking, Toast.LENGTH_SHORT).show();
         new Thread(() -> {
             try {
-                UpdateChecker.UpdateInfo info = UpdateDownloader.fetchLatest(this);
+                UpdateChecker.UpdateInfo info = UpdateDownloader.fetchLatest(this, AppConfig.getUpdateChannel(this));
                 runOnUiThread(() -> {
                     if (info == null) {
                         Toast.makeText(this, R.string.whatsnew_none, Toast.LENGTH_LONG).show();

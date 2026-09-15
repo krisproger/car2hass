@@ -181,6 +181,8 @@
     <string name="channel_adb">ADB (service call)</string>
     <string name="channel_dumpsys">Dumpsys</string>
     <string name="channel_system">System (GPS, device)</string>
+    <string name="settings_sources_add">Add source</string>
+    <string name="settings_sources_expected_sensors">Expected sensors: %1$d</string>
     <string name="channel_obd">OBD</string>
     <string name="obd_connect_button">Connect OBD adapter (Bluetooth)</string>
     <string name="obd_connected_button">Adapter: %1$s — change</string>
@@ -223,6 +225,9 @@
     <string name="settings_import_config">Import config</string>
     <string name="settings_request_permissions">Request permissions</string>
     <string name="update_check">Check for updates</string>
+    <string name="settings_update_channel">Update channel</string>
+    <string name="settings_update_channel_stable">Stable</string>
+    <string name="settings_update_channel_beta">Beta</string>
     <string name="update_checking">Checking for updates…</string>
     <string name="update_up_to_date">You have the latest version</string>
     <string name="update_available">Update %1$s available</string>
@@ -322,6 +327,7 @@
     <string name="notification_text">Collecting BYD telemetry</string>
     <string name="notification_active">Active — %1$d signals</string>
     <string name="notification_error">Error: %1$s</string>
+    <string name="notification_system_only">System sensors active</string>
 
     <!-- Service -->
     <string name="service_bound">TelemetryService bound</string>

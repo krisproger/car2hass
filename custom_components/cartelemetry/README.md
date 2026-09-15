@@ -109,7 +109,16 @@ BYD head unit (DiLink)
 | `fuel_level` | Fuel Level | % |
 | `steering_angle` | Steering Wheel Angle | ° |
 | `distance_to_car_ahead` | Distance to Car Ahead | m |
-| `battery_voltage` | 12V Battery Voltage | V |
+| `battery_12v_voltage` | 12V Battery Voltage | V |
+| `traction_battery_voltage` | Traction Battery Voltage | V |
+| `traction_battery_current` | Traction Battery Current | A |
+| `battery_remaining_charge_time` | Remaining Charge Time | min |
+| `avg_speed` | Average Speed | km/h |
+| `avg_power` | Average Power | kW |
+| `energy_recovery_gear` | Energy Recovery Gear | — |
+| `energy_flow` | Energy Flow | kW |
+| `windows_state` | Windows Aggregate State | — |
+| `doors_state` | Doors Aggregate State | — |
 
 Full list: see `NUMERIC_SENSORS` in `const.py`.
 
@@ -136,6 +145,12 @@ Full list: see `BINARY_SENSORS` and `BINARY_ON_MAP` in `const.py`.
 ### Device tracker
 
 GPS latitude/longitude are exposed as a `device_tracker` entity named `<car_name> Location`.
+
+### Diagnostics entity
+
+Signals unique to a car model are exposed as attributes of a single diagnostics
+entity (`<car_name> Diagnostics`) rather than individual entities. Native
+sensors (commands + universal core sensors) remain regular entities.
 
 ## Services
 

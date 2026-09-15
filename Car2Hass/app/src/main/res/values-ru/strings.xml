@@ -174,6 +174,8 @@
     <string name="settings_auto_fallback_summary">Если источник дал сбой — используется следующий выбранный, и так по кругу. Выкл: только канал с наивысшим приоритетом.</string>
     <string name="channel_dumpsys">Dumpsys</string>
     <string name="channel_system">Система (GPS, устройство)</string>
+    <string name="settings_sources_add">Добавить источник</string>
+    <string name="settings_sources_expected_sensors">Ожидается сенсоров: %1$d</string>
     <string name="channel_obd">OBD</string>
     <string name="obd_connect_button">Подключить OBD-адаптер (Bluetooth)</string>
     <string name="obd_connected_button">Адаптер: %1$s — сменить</string>
@@ -217,6 +219,9 @@
     <string name="settings_export_config">Экспорт конфига</string>
     <string name="settings_request_permissions">Запросить разрешения</string>
     <string name="update_check">Проверить обновления</string>
+    <string name="settings_update_channel">Канал обновлений</string>
+    <string name="settings_update_channel_stable">Стабильный</string>
+    <string name="settings_update_channel_beta">Бета</string>
     <string name="update_checking">Проверка обновлений…</string>
     <string name="update_up_to_date">У вас последняя версия</string>
     <string name="update_available">Доступно обновление %1$s</string>
@@ -315,6 +320,7 @@
     <string name="notification_text">Сбор телеметрии BYD</string>
     <string name="notification_active">Активно — %1$d сигналов</string>
     <string name="notification_error">Ошибка: %1$s</string>
+    <string name="notification_system_only">Системные датчики активны</string>
 
     <!-- Service -->
     <string name="service_bound">TelemetryService подключен</string>

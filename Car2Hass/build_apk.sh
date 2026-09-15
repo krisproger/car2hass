@@ -1,5 +1,11 @@
 #!/bin/bash
 set -euo pipefail
+# BETA BUILD (clean, no test credentials):
+#   VERSION_NAME=3.3.11-beta.1 bash build_apk.sh
+# This builds the same clean `release` variant (assets from src/main/assets,
+# release signing) but with a "-beta.N" versionName. It does NOT bundle
+# test/config.json (that is only the private `test` variant, built when the
+# first argument is "test").
 
 SDK=${ANDROID_SDK:-/opt/AndroidStudio/Android/sdk}
 BUILD_TOOLS_VERSION=${BUILD_TOOLS_VERSION:-36.1.0}
@@ -24,7 +30,7 @@ OUTPUT_DIR=$BUILD/apk
 
 COUNTER_FILE=$PROJECT/build_counter.txt
 BUILD_NUM=$(cat "$COUNTER_FILE" 2>/dev/null || echo 1)
-VERSION_NAME=${VERSION_NAME:-3.3.10}
+VERSION_NAME=${VERSION_NAME:-3.3.11}
 
 # --- osmdroid (OpenStreetMap library for geofence editing) ---
 # The AAR is fetched once from Maven Central into libs/ and reused offline.

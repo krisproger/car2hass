@@ -640,7 +640,10 @@ public class TelemetryService extends Service {
                         try {
                             mainHandler.post(() -> {
                                 try {
-                                    updateNotification(getString(R.string.notification_error, message));
+                                    boolean systemActive = hasSystemValues();
+                                    updateNotification(systemActive
+                                            ? getString(R.string.notification_system_only)
+                                            : getString(R.string.notification_error, message));
                                     if (callback != null) {
                                         callback.onError(message);
                                     }
@@ -664,6 +667,14 @@ public class TelemetryService extends Service {
     private int cycleCounter = 0;
     private static final int DISABLED_PROBE_EVERY = 5;
     private volatile boolean disabledProbeInFlight = false;
+
+    /** True when at least one sensor value came from the system channel (GPS/device). */
+    private boolean hasSystemValues() {
+        for (java.util.Map.Entry<String, String> e : valueStore.entries()) {
+            if ("system".equals(valueStore.sourceOf(e.getKey()))) return true;
+        }
+        return false;
+    }
 
     /** Light availability probe of channels not currently active, every few cycles. */
     private void maybeProbeDisabledChannels() {

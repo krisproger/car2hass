@@ -91,6 +91,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/rowAdbHost"
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:gravity="center_vertical"
@@ -119,6 +120,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/rowAdbPort"
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:gravity="center_vertical">
@@ -145,6 +147,7 @@
     </LinearLayout>
 
     <LinearLayout
+        android:id="@+id/rowDiplusAuth"
         android:layout_width="match_parent"
         android:layout_height="44dp"
         android:gravity="center_vertical">

@@ -29,9 +29,9 @@ public final class UpdateDownloader {
      * Fetches the endpoint and returns update info when the site version is
      * newer than the installed one; null when up to date / nothing published.
      */
-    public static UpdateChecker.UpdateInfo check(Context ctx) throws Exception {
+    public static UpdateChecker.UpdateInfo check(Context ctx, String channel) throws Exception {
         AppConfig.setUpdateLastCheckMs(ctx, System.currentTimeMillis());
-        String body = httpGet(ctx, UpdateChecker.VERSION_URL);
+        String body = httpGet(ctx, UpdateChecker.versionUrl(channel));
         UpdateChecker.UpdateInfo info = UpdateChecker.parseResponse(body);
         if (info == null) return null;
         if (!UpdateChecker.isNewer(info.version, AppInfo.getVersionName(ctx))) return null;
@@ -39,8 +39,8 @@ public final class UpdateDownloader {
     }
 
     /** Fetches the latest published release info, regardless of installed version. */
-    public static UpdateChecker.UpdateInfo fetchLatest(Context ctx) throws Exception {
-        String body = httpGet(ctx, UpdateChecker.VERSION_URL);
+    public static UpdateChecker.UpdateInfo fetchLatest(Context ctx, String channel) throws Exception {
+        String body = httpGet(ctx, UpdateChecker.versionUrl(channel));
         return UpdateChecker.parseResponse(body);
     }
 

@@ -16,6 +16,13 @@ public class UpdateCheckerTest {
         check(UpdateChecker.isNewer("v2.5.0", "2.4.0"), "v-prefix tolerated");
         check(UpdateChecker.isNewer("2.5", "2.4.3"), "short remote padded with zeros");
         check(UpdateChecker.isNewer("2.5.0-beta", "2.4.9"), "suffix stripped");
+
+        // Prerelease ordering (beta channel).
+        check(UpdateChecker.isNewer("3.3.11", "3.3.11-beta.1"), "release newer than beta");
+        check(UpdateChecker.isNewer("3.3.11-beta.2", "3.3.11-beta.1"), "beta.2 newer than beta.1");
+        check(!UpdateChecker.isNewer("3.3.11-beta.1", "3.3.11"), "beta older than release");
+        check(!UpdateChecker.isNewer("3.3.11-beta.1", "3.3.11-beta.1"), "equal beta not newer");
+        check(!UpdateChecker.isNewer("3.3.10", "3.3.11-beta.1"), "older numeric not newer");
     }
 
     private static void testParseResponse() {

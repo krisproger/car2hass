@@ -286,6 +286,26 @@
         android:textSize="14sp"
         android:text="@string/settings_request_permissions" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:gravity="center_vertical"
+        android:layout_marginTop="8dp">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/settings_update_channel"
+            android:textColor="@color/textSecondary"
+            android:textSize="14sp" />
+
+        <Spinner
+            android:id="@+id/spUpdateChannel"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
     <Button
         android:id="@+id/btnCheckUpdate"
         android:layout_width="match_parent"

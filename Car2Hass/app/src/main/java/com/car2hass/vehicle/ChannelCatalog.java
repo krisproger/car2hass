@@ -26,6 +26,16 @@ public final class ChannelCatalog {
         return null;
     }
 
+    /** Creates only the requested channels (lazy); unknown ids are skipped. */
+    public static List<DataChannel> createFor(List<String> ids) {
+        List<DataChannel> out = new ArrayList<>();
+        for (String id : ids) {
+            DataChannel ch = create(id);
+            if (ch != null) out.add(ch);
+        }
+        return out;
+    }
+
     /** All probeable channels in registry priority order + experimental last. */
     public static List<DataChannel> createAll(RegistryStore reg) {
         List<DataChannel> out = new ArrayList<>();

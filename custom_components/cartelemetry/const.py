@@ -25,11 +25,11 @@ COMMAND_DEPENDS_ON = {
 
 # Native signals: command-linked + common across most cars. Exposed as
 # regular entities; every other received signal is a diagnostics attribute.
-NATIVE_SENSORS = {'windows_state', 'gear', 'battery_12v_voltage', 'outside_temp', 'tyre_pressure_fr', 'location_altitude', 'soc', 'charging_state', 'window_fl', 'hazard', 'fan_speed', 'ac_set_temp', 'window_rl', 'passenger_door', 'rear_left_door', 'power_state', 'location_lat', 'total_energy', 'location_accuracy', 'location_provider', 'sunroof', 'charge_gun_state', 'window_fr', 'tyre_pressure_fl', 'doors_state', 'drl', 'speed', 'low_beam', 'window_rr', 'rear_defrost', 'driver_door_lock', 'location_lon', 'driver_seatbelt', 'app_version', 'footwell_light', 'location_speed', 'tyre_pressure_rl', 'driver_door', 'front_fog', 'rear_right_door', 'cabin_temp', 'dashcam_state', 'device_battery', 'engine_rpm', 'range', 'trunk', 'engine_coolant_temp', 'steering_wheel_heat', 'remote_lock_state', 'battery_temp_max', 'windows_all_state', 'tyre_pressure_rr', 'ac_state', 'location_bearing'}
+NATIVE_SENSORS = {'rear_left_door', 'dashcam_state', 'driver_door', 'ac_state', 'drl', 'tyre_pressure_rr', 'range', 'location_lon', 'cabin_temp', 'location_lat', 'windows_all_state', 'ac_set_temp', 'sunroof', 'tyre_pressure_fr', 'window_rl', 'location_provider', 'battery_temp_max', 'driver_door_lock', 'location_accuracy', 'charge_gun_state', 'engine_rpm', 'window_fr', 'app_version', 'rear_right_door', 'trunk', 'outside_temp', 'power_state', 'tyre_pressure_rl', 'location_speed', 'device_battery', 'battery_12v_voltage', 'remote_lock_state', 'location_bearing', 'speed', 'location_altitude', 'hazard', 'total_energy', 'window_fl', 'rear_defrost', 'doors_state', 'window_rr', 'steering_wheel_heat', 'driver_seatbelt', 'windows_state', 'charging_state', 'soc', 'fan_speed', 'front_fog', 'low_beam', 'passenger_door', 'tyre_pressure_fl', 'gear', 'footwell_light', 'engine_coolant_temp'}
 
 CONF_CAR_NAME = "car_name"
 
-INTEGRATION_VERSION = "3.3.10"
+INTEGRATION_VERSION = "3.3.11"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.

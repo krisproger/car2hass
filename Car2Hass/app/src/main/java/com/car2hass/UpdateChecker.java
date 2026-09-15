@@ -24,6 +24,12 @@ public final class UpdateChecker {
 
     public static final String VERSION_URL =
             "https://mytechnic.ru/cartelemetry/api/version/index.php";
+
+    /** Endpoint URL for a channel; null/"stable" → the plain release endpoint. */
+    public static String versionUrl(String channel) {
+        if (channel == null || channel.isEmpty() || "stable".equals(channel)) return VERSION_URL;
+        return VERSION_URL + "?channel=" + channel;
+    }
     /** Latest release info from the site. */
     public static final class UpdateInfo {
         public final String version;
@@ -78,7 +84,19 @@ public final class UpdateChecker {
             int lv = i < l.length ? l[i] : 0;
             if (rv != lv) return rv > lv;
         }
-        return false;
+        // Numeric parts equal — decide by prerelease tag: a stable release
+        // outranks any "-beta.N", and beta.N orders by N.
+        return preRank(remote) > preRank(local);
+    }
+
+    private static long preRank(String v) {
+        String clean = (v == null ? "" : v.trim()).replaceFirst("^v", "");
+        int dash = clean.indexOf('-');
+        if (dash < 0) return Long.MAX_VALUE; // stable release
+        String tag = clean.substring(dash + 1).toLowerCase(Locale.ROOT);
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("beta\\.?(\\d+)").matcher(tag);
+        if (m.find()) return Integer.parseInt(m.group(1)); // beta.1 -> 1, beta.2 -> 2
+        return 0; // unknown prerelease
     }
 
     private static int[] parseParts(String v) {

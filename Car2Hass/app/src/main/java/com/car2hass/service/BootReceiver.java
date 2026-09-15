@@ -29,6 +29,20 @@ public class BootReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         LogBuffer.init(context);
         String action = intent.getAction();
+        if (Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) {
+            LogBuffer.i("BootReceiver", "MY_PACKAGE_REPLACED received — restarting service");
+            try {
+                Intent serviceIntent = new Intent(context, TelemetryService.class);
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    context.startForegroundService(serviceIntent);
+                } else {
+                    context.startService(serviceIntent);
+                }
+            } catch (Exception e) {
+                LogBuffer.w("BootReceiver", "restart after update failed: " + e.getMessage());
+            }
+            return;
+        }
         if (Intent.ACTION_BOOT_COMPLETED.equals(action)
                 || Intent.ACTION_LOCKED_BOOT_COMPLETED.equals(action)
                 || (QUICKBOOT_ACTION.equals(action) && isSystemSender(intent))) {
