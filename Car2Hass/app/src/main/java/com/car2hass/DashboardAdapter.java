@@ -184,14 +184,24 @@ public class DashboardAdapter extends BaseAdapter {
         }
 
         boolean showZones = !editMode && hasZones(tile);
+        String leftIcon = "minus", rightIcon = "plus";
+        if (showZones) {
+            try {
+                DashboardPresetRegistry.DashboardPreset zp =
+                        DashboardPresetRegistry.getInstance(context).getPreset(tile.presetId);
+                if (zp != null && zp.zones != null && zp.zones.size() >= 2) {
+                    if (!zp.zones.get(0).icon.isEmpty()) leftIcon = zp.zones.get(0).icon;
+                    if (!zp.zones.get(zp.zones.size() - 1).icon.isEmpty())
+                        rightIcon = zp.zones.get(zp.zones.size() - 1).icon;
+                }
+            } catch (Exception ignored) {}
+        }
         if (vh.zoneLeft != null) {
-            Bitmap minus = showZones ? PresetIconResolver.resolve(context, "minus") : null;
-            vh.zoneLeft.setImageBitmap(minus);
+            vh.zoneLeft.setImageBitmap(showZones ? PresetIconResolver.resolve(context, leftIcon) : null);
             vh.zoneLeft.setVisibility(showZones ? View.VISIBLE : View.GONE);
         }
         if (vh.zoneRight != null) {
-            Bitmap plus = showZones ? PresetIconResolver.resolve(context, "plus") : null;
-            vh.zoneRight.setImageBitmap(plus);
+            vh.zoneRight.setImageBitmap(showZones ? PresetIconResolver.resolve(context, rightIcon) : null);
             vh.zoneRight.setVisibility(showZones ? View.VISIBLE : View.GONE);
         }
 

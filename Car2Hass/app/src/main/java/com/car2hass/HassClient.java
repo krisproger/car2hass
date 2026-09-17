@@ -9,6 +9,7 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.OutputStream;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import android.os.Handler;
@@ -359,12 +360,23 @@ public class HassClient {
                 int code = conn.getResponseCode();
 
                 boolean success = (code == 200 || code == 201 || code == 202);
+                String errBody = "";
                 if (success) {
                     currentFlushBackoffMs = MIN_FLUSH_BACKOFF_MS;
                 } else {
                     currentFlushBackoffMs = Math.min(currentFlushBackoffMs * 2, MAX_FLUSH_BACKOFF_MS);
+                    // The integration returns {"status":"error","message":"<Exc>: <msg>"}
+                    // on 500 — log the body so the exact exception is visible in the device log.
+                    try (InputStream es = conn.getErrorStream()) {
+                        if (es != null) {
+                            byte[] b = new byte[2048];
+                            int n = es.read(b);
+                            if (n > 0) errBody = new String(b, 0, n, "UTF-8");
+                        }
+                    } catch (Exception ignored) {}
                 }
                 LogBuffer.i("HassClient", "Flush " + batch.size() + " snapshots → HTTP " + code
+                        + (errBody.isEmpty() ? "" : " body=" + errBody)
                         + " (backoff=" + currentFlushBackoffMs + "ms)");
                 SendHistory.recordAttempt(ctx, "HTTP " + code);
                 if (callback != null) callback.onResult(success, "HTTP " + code);

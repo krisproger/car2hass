@@ -10,6 +10,7 @@
     <string name="status_active_ha">● Активно — отправка в HA</string>
     <string name="status_active_no_ha">● Активно — HA отключён</string>
     <string name="status_error">● Ошибка: %1$s</string>
+    <string name="status_system_only">● Системные датчики активны</string>
     <string name="location_no_gps">Нет GPS</string>
     <string name="send_to_ha">Отправлять в HA</string>
     <string name="tab_telemetry">Телеметрия</string>

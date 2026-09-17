@@ -198,6 +198,9 @@ public class TelemetryService extends Service {
         // writes a changed value, instead of waiting for the 1s engine tick.
         valueStore.addListener((key, value, source) -> {
             if (ruleEngine != null) ruleEngine.signalChanged(key);
+            // Derived door/window aggregates must react to a source change at once,
+            // not only on the CAN / 1 Hz snapshot cycles.
+            if (isDerivedSourceKey(key)) refreshDerivedSensors();
         });
         SensorValueHistory.ensureLoaded(AppConfig.getSensorValueHistoryJson(this));
     }
@@ -767,6 +770,11 @@ public class TelemetryService extends Service {
                 String key = item.key;
                 if (key == null || key.isEmpty()) continue;
                 if (item.value == null || "---".equals(item.value)) continue;
+
+                // Locally computed sensors (derived door/window aggregates, virtual
+                // geofences) are already final values — never run them through the
+                // DiPlus enum translation (they have no labels -> warning spam).
+                if (isDerivedKey(key) || key.startsWith("geo_")) continue;
 
                 // Signals that DiPlus currently reports as unsupported are still
                 // polled (they may become available after a firmware update) but
@@ -1479,11 +1487,13 @@ public class TelemetryService extends Service {
                 String v = valueStore.get(k);
                 if (v == null || v.isEmpty() || "---".equals(v)) continue;
                 totalWindows++;
-                if (parseDoubleSafe(v) > 0) openWindows++;
+                if (parseDoubleSafe(v) > 0 || isOpenState(v)) openWindows++;
             }
             if (totalWindows > 0) {
                 valueStore.put("windows_state", String.valueOf(openWindows), "channel");
                 valueStore.put("windows_all_state", openWindows == 0 ? "closed" : "open", "channel");
+                SensorValueHistory.recordValue("windows_state", String.valueOf(openWindows));
+                SensorValueHistory.recordValue("windows_all_state", openWindows == 0 ? "closed" : "open");
             }
 
             int openDoors = 0, totalDoors = 0;
@@ -1491,13 +1501,52 @@ public class TelemetryService extends Service {
                 String v = valueStore.get(k);
                 if (v == null || v.isEmpty() || "---".equals(v)) continue;
                 totalDoors++;
-                if ("open".equals(v)) openDoors++;
+                if (isOpenState(v)) openDoors++;
             }
             if (totalDoors > 0) {
                 valueStore.put("doors_state", String.valueOf(openDoors), "channel");
                 valueStore.put("doors_all_state", openDoors == 0 ? "closed" : "open", "channel");
+                SensorValueHistory.recordValue("doors_state", String.valueOf(openDoors));
+                SensorValueHistory.recordValue("doors_all_state", openDoors == 0 ? "closed" : "open");
             }
+            updateDerivedItems();
         } catch (Exception ignored) {}
+    }
+
+    /** True for a raw source key of a derived aggregate (window/door/sunroof/trunk). */
+    private static boolean isDerivedSourceKey(String key) {
+        if (key == null) return false;
+        for (String k : DERIVED_WINDOW_KEYS) if (k.equals(key)) return true;
+        for (String k : DERIVED_DOOR_KEYS) if (k.equals(key)) return true;
+        return false;
+    }
+
+    private static boolean isDerivedKey(String key) {
+        for (String k : DERIVED_SENSOR_KEYS) if (k.equals(key)) return true;
+        return false;
+    }
+
+    /** Treats numeric >0 and textual open/on/true/1 as "open". */
+    private static boolean isOpenState(String v) {
+        if (v == null) return false;
+        String s = v.trim().toLowerCase(java.util.Locale.ROOT);
+        return s.startsWith("open") || "1".equals(s) || "true".equals(s) || "on".equals(s);
+    }
+
+    /** Mirrors the computed aggregates onto knownItems so the UI/telemetry see them. */
+    private void updateDerivedItems() {
+        synchronized (knownItems) {
+            long now = System.currentTimeMillis();
+            for (CANDataItem item : knownItems) {
+                if (item == null || item.key == null) continue;
+                if (!isDerivedKey(item.key)) continue;
+                String v = valueStore.get(item.key);
+                if (v != null && !v.isEmpty() && !"---".equals(v)) {
+                    item.value = v;
+                    item.lastUpdate = now;
+                }
+            }
+        }
     }
 
     /** Puts derived aggregate sensors into the snapshot (numeric counts as numbers). */

@@ -95,8 +95,9 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
         vh.nameText.setText(rowItem.name);
         vh.valueText.setText(SignalTranslator.translateValue(rowItem.value));
         vh.unitText.setText(rowItem.unit);
-        vh.routeText.setText(rowItem.rawData != null && !rowItem.rawData.isEmpty()
-                ? rowItem.rawData : "");
+        vh.routeText.setText(rowItem.sourceChannel != null && !rowItem.sourceChannel.isEmpty()
+                ? rowItem.sourceChannel
+                : (rowItem.rawData != null && !rowItem.rawData.isEmpty() ? rowItem.rawData : ""));
 
         if (systemKey) {
             vh.valueText.setTextColor(0xFF4CAF50);

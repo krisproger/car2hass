@@ -15,6 +15,21 @@ public final class Elm327Io {
 
     public static String transact(InputStream is, OutputStream os,
                                   String command, int expectedLines) {
+        // Soft-fail: a single empty/short response is retried once before the
+        // caller treats it as a session failure (avoids needless reconnects).
+        String r = transactOnce(is, os, command, expectedLines);
+        if (r != null) return r;
+        try {
+            Thread.sleep(80);
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
+            return null;
+        }
+        return transactOnce(is, os, command, expectedLines);
+    }
+
+    private static String transactOnce(InputStream is, OutputStream os,
+                                       String command, int expectedLines) {
         try {
             os.write((command + "\r").getBytes(StandardCharsets.US_ASCII));
             os.flush();

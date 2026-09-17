@@ -288,6 +288,17 @@ def i_plus(c: Canvas):
     c.line([16, 32, 48, 32], width=6)
 
 
+def i_toggle_on(c: Canvas):
+    # MDI "power": ring with a gap at the top + stem
+    c.arc([10, 10, 54, 54], start=112, end=68, width=5)
+    c.line([32, 6, 32, 33], width=5)
+
+
+def i_toggle_off(c: Canvas):
+    # MDI "power-off": plain ring
+    c.ellipse([10, 10, 54, 54], width=5)
+
+
 def i_speedometer(c: Canvas):
     c.arc([12, 12, 52, 52], start=160, end=20)
     for ang in (180, 225, 270, 315, 0):
@@ -382,6 +393,8 @@ ICONS = {
     "steering": i_steering,
     "thermometer": i_thermometer,
     "tire": i_tire,
+    "toggle-off": i_toggle_off,
+    "toggle-on": i_toggle_on,
     "volume-high": i_volume_high,
     "window-closed": i_window_closed,
     "window-open": i_window_open,

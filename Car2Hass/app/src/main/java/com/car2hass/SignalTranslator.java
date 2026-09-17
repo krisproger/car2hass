@@ -183,6 +183,8 @@ public class SignalTranslator {
         ENUM_LABELS.put("dashcam_state", "0:stop,1:starting,2:running,3:storage error");
         ENUM_LABELS.put("wireless_adb_switch", "0:off,1:on");
         ENUM_LABELS.put("online", "0:off,1:on");
+        ENUM_LABELS.put("windows_all_state", "closed:closed,open:open");
+        ENUM_LABELS.put("doors_all_state", "closed:closed,open:open");
         // AUTO-GENERATED ENUM LABELS END
     }
 

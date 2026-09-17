@@ -1885,6 +1885,15 @@ signals:
   unit: A
   icon: mdi:current-ac
   state_class: measurement
+- id: 9121
+  name: VIN (OBD)
+  description: Vehicle Identification Number read over OBD-II (Mode 09 PID 02 / UDS F190)
+  type: enum
+  synthetic: true
+  key: vin
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-info
 - id: 30001
   name: 发动机负荷
   description: Engine load

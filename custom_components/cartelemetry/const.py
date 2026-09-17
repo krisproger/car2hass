@@ -25,11 +25,11 @@ COMMAND_DEPENDS_ON = {
 
 # Native signals: command-linked + common across most cars. Exposed as
 # regular entities; every other received signal is a diagnostics attribute.
-NATIVE_SENSORS = {'rear_left_door', 'dashcam_state', 'driver_door', 'ac_state', 'drl', 'tyre_pressure_rr', 'range', 'location_lon', 'cabin_temp', 'location_lat', 'windows_all_state', 'ac_set_temp', 'sunroof', 'tyre_pressure_fr', 'window_rl', 'location_provider', 'battery_temp_max', 'driver_door_lock', 'location_accuracy', 'charge_gun_state', 'engine_rpm', 'window_fr', 'app_version', 'rear_right_door', 'trunk', 'outside_temp', 'power_state', 'tyre_pressure_rl', 'location_speed', 'device_battery', 'battery_12v_voltage', 'remote_lock_state', 'location_bearing', 'speed', 'location_altitude', 'hazard', 'total_energy', 'window_fl', 'rear_defrost', 'doors_state', 'window_rr', 'steering_wheel_heat', 'driver_seatbelt', 'windows_state', 'charging_state', 'soc', 'fan_speed', 'front_fog', 'low_beam', 'passenger_door', 'tyre_pressure_fl', 'gear', 'footwell_light', 'engine_coolant_temp'}
+NATIVE_SENSORS = {'soc', 'gear', 'rear_right_door', 'battery_temp_max', 'location_accuracy', 'window_rr', 'location_speed', 'location_lat', 'power_state', 'ac_set_temp', 'tyre_pressure_rl', 'steering_wheel_heat', 'location_provider', 'windows_all_state', 'range', 'driver_door', 'location_bearing', 'ac_state', 'driver_seatbelt', 'tyre_pressure_fr', 'tyre_pressure_fl', 'cabin_temp', 'app_version', 'engine_coolant_temp', 'trunk', 'battery_12v_voltage', 'drl', 'fan_speed', 'charge_gun_state', 'dashcam_state', 'hazard', 'driver_door_lock', 'windows_state', 'doors_state', 'low_beam', 'engine_rpm', 'sunroof', 'rear_defrost', 'remote_lock_state', 'outside_temp', 'front_fog', 'rear_left_door', 'window_fl', 'tyre_pressure_rr', 'charging_state', 'location_altitude', 'location_lon', 'passenger_door', 'total_energy', 'window_fr', 'window_rl', 'device_battery', 'footwell_light', 'speed'}
 
 CONF_CAR_NAME = "car_name"
 
-INTEGRATION_VERSION = "3.3.11"
+INTEGRATION_VERSION = "3.3.12-beta.1"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.
@@ -711,6 +711,10 @@ ENUM_SENSORS = {
     "energy_flow": {
         "name": "Energy flow",
         "icon": "mdi:transit-connection-variant",
+    },
+    "vin": {
+        "name": "Vehicle Identification Number read over OBD-II (Mode 09 PID 02 / UDS F190)",
+        "icon": "mdi:car-info",
     },
     "driver_seat_heat": {
         "name": "Driver seat heating",

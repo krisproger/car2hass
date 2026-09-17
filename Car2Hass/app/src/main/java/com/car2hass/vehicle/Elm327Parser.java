@@ -46,4 +46,47 @@ public final class Elm327Parser {
         }
         return false;
     }
+
+    /**
+     * Extracts the VIN from a Mode 09 PID 02 response. The VIN arrives
+     * multi-frame (ISO-TP); ELM327 prints the data bytes per line, optionally
+     * with the {@code 49 02} header and frame-index bytes. We collect every hex
+     * byte, drop the {@code 49 02} header, keep only VIN-legal ASCII
+     * (0-9 A-Z) and return the first 17-char run (SAE VIN excludes I/O/Q).
+     */
+    public static String parseVin(String raw) {
+        if (raw == null) return null;
+        StringBuilder hex = new StringBuilder();
+        for (String line : splitLines(raw)) {
+            for (String tok : line.split("\\s+")) {
+                if (tok.matches("[0-9A-F]{2}")) hex.append(tok);
+            }
+        }
+        String h = hex.toString();
+        // Mode 09 PID 02 → "49 02 ...", or UDS ReadDataByIdentifier → "62 F1 90 ...".
+        int start;
+        int idx = h.indexOf("4902");
+        if (idx >= 0) {
+            start = idx + 4;
+        } else {
+            idx = h.indexOf("62F190");
+            if (idx < 0) return null;
+            start = idx + 6;
+        }
+        StringBuilder ascii = new StringBuilder();
+        for (int i = start; i + 1 < h.length(); i += 2) {
+            int b;
+            try {
+                b = Integer.parseInt(h.substring(i, i + 2), 16);
+            } catch (NumberFormatException e) {
+                break;
+            }
+            if ((b >= 0x30 && b <= 0x39) || (b >= 0x41 && b <= 0x5A)) {
+                ascii.append((char) b);
+            }
+        }
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("[A-HJ-NPR-Z0-9]{17}").matcher(ascii.toString());
+        return m.find() ? m.group() : null;
+    }
 }

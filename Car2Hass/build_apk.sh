@@ -1,11 +1,10 @@
 #!/bin/bash
 set -euo pipefail
-# BETA BUILD (clean, no test credentials):
-#   VERSION_NAME=3.3.11-beta.1 bash build_apk.sh
-# This builds the same clean `release` variant (assets from src/main/assets,
-# release signing) but with a "-beta.N" versionName. It does NOT bundle
-# test/config.json (that is only the private `test` variant, built when the
-# first argument is "test").
+# Builds ONE clean release APK (assets from src/main/assets, release signing).
+# BETA/STABLE are distinguished only by VERSION_NAME:
+#   VERSION_NAME=3.3.13-beta.3 bash build_apk.sh   # beta
+#   bash build_apk.sh                              # stable (manifest fallback)
+# No test-credentials variant is built anymore — the beta channel covers testing.
 
 SDK=${ANDROID_SDK:-/opt/AndroidStudio/Android/sdk}
 BUILD_TOOLS_VERSION=${BUILD_TOOLS_VERSION:-36.1.0}
@@ -151,14 +150,6 @@ build_variant() {
     if [[ -d "$SRC_ASSETS" ]]; then
         cp -r "$SRC_ASSETS"/* "$assets/"
     fi
-    if [[ "$variant" == "test" ]]; then
-        if [[ -f "$PROJECT/test/config.json" ]]; then
-            cp "$PROJECT/test/config.json" "$assets/config.json"
-            echo "=== Replaced assets/config.json with test/config.json ==="
-        else
-            echo "WARNING: test/config.json not found, using template assets/config.json" >&2
-        fi
-    fi
 
     # Generate BuildConfig.java
     echo "=== Generating BuildConfig (DEBUG=$build_debug) ==="
@@ -246,7 +237,7 @@ EOF
 }
 
 echo "=== Build project: $PROJECT (build #$BUILD_NUM, version $VERSION_NAME, Java $JAVA_VERSION) ==="
-echo "=== Both release and test APKs will be built into $OUTPUT_DIR ==="
+echo "=== Release APK will be built into $OUTPUT_DIR ==="
 
 # Clean intermediate files from previous single-variant builds but keep output dir
 rm -rf "$BUILD/release" "$BUILD/test" "$BUILD/gen" "$BUILD/classes" "$BUILD/assets" "$BUILD/resources.zip" \
@@ -256,9 +247,8 @@ mkdir -p "$OUTPUT_DIR"
 prepare_osmdroid
 prepare_androidx_core
 
-# Build release and test variants into the same output directory, versioned
+# Build the clean release variant, versioned
 build_variant "release" "false" "$OUTPUT_DIR/Car2Hass_v$VERSION_NAME.apk"
-build_variant "test" "true" "$OUTPUT_DIR/Car2Hass_v${VERSION_NAME}_test.apk"
 
 # --- Prune old APK versions: keep the current one + the 3 previous ones ---
 # and drop legacy non-versioned files. Version-sorted so 3.0.9 < 3.0.10.

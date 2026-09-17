@@ -15,7 +15,7 @@ def test_signals_yaml_exists_and_has_expected_count():
     yaml_path = ROOT / "signals.yaml"
     assert yaml_path.exists(), "signals.yaml not found"
     data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
-    assert len(data["signals"]) == 173
+    assert len(data["signals"]) == 174
 
 
 def test_java_registry_matches_yaml_keys():

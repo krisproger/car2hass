@@ -59,7 +59,26 @@ public class Elm327SessionTest {
         testInitOrderAndVersion();
         testInitRetriesAfterNonElmReply();
         testTransactEmptyIsNull();
+        testParseVin();
         System.out.println("All Elm327Session tests passed.");
+    }
+
+    private static void testParseVin() {
+        // Mode 09 PID 02, multi-frame ("49 02 01" header + VIN bytes).
+        String mode09 = "49 02 01 57 50 30 5A 5A 5A 39 39 5A\r"
+                + "54 53 33 39 33 30 30 30\r>";
+        String vin = Elm327Parser.parseVin(mode09);
+        if (!"WP0ZZZ99ZTS393000".equals(vin)) throw new AssertionError("mode09 VIN=" + vin);
+
+        // UDS ReadDataByIdentifier "62 F1 90" + VIN.
+        String uds = "62 F1 90 4C 47 58 43 45 45 45 30 34 4D\r"
+                + "41 30 30 31 30 30 30\r>";
+        String vin2 = Elm327Parser.parseVin(uds);
+        if (!"LGXCEEE04MA001000".equals(vin2)) throw new AssertionError("uds VIN=" + vin2);
+
+        // Garbage / no data → null.
+        if (Elm327Parser.parseVin("NO DATA\r>") != null) throw new AssertionError("garbage must be null");
+        if (Elm327Parser.parseVin(null) != null) throw new AssertionError("null must be null");
     }
 
     private static void testInitOrderAndVersion() throws Exception {

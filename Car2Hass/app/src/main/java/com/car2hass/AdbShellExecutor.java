@@ -45,6 +45,14 @@ public class AdbShellExecutor {
     private static final int OVERALL_TIMEOUT_MS = 30000;
     private static final int MAX_OUTPUT_LOG_CHARS = 400;
 
+    // When the ADB daemon is down (OBD-only / plain phone), every poll fails with
+    // "Connection refused". Back off connects briefly and throttle the log so the
+    // device log is not flooded.
+    private static final long REFUSED_BACKOFF_MS = 20_000L;
+    private static final long REFUSED_LOG_INTERVAL_MS = 60_000L;
+    private static volatile long lastRefusedMs = 0L;
+    private static volatile long lastRefusedLogMs = 0L;
+
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     private static final ScheduledExecutorService watchdogExecutor = Executors.newSingleThreadScheduledExecutor();
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -141,6 +149,17 @@ public class AdbShellExecutor {
             return;
         }
 
+        // Fail fast while the daemon is known-down, so a dead ADB does not keep
+        // opening sockets (and spamming) on every poll cycle.
+        long sinceRefused = System.currentTimeMillis() - lastRefusedMs;
+        if (lastRefusedMs != 0L && sinceRefused < REFUSED_BACKOFF_MS) {
+            LogBuffer.d(TAG, "ADB daemon unavailable — skipping (backoff "
+                    + (REFUSED_BACKOFF_MS - sinceRefused) + " ms left)");
+            callbackOnMain(callback, () -> callback.onFailure(
+                    "ADB daemon unavailable at " + trimmedHost + ":" + port));
+            return;
+        }
+
         LogBuffer.i(TAG, "Scheduling ADB shell execution to " + trimmedHost + ":" + port);
         final String finalCommand = command;
         executor.execute(() -> runShell(trimmedHost, port, finalCommand, callback));
@@ -222,6 +241,7 @@ public class AdbShellExecutor {
             // Infinite read timeout: the one-shot shell stream closes itself when the
             // command exits. The overall watchdog handles truly stuck commands.
             socket.setSoTimeout(0);
+            lastRefusedMs = 0L; // connected — clear the backoff
             LogBuffer.i(TAG, "TCP socket connected to " + host + ":" + port);
 
             AdbCrypto crypto = loadOrGenerateCrypto();
@@ -273,8 +293,16 @@ public class AdbShellExecutor {
                     "or authorize this client on the target device."));
         } catch (SocketException e) {
             // Expected when the ADB daemon is not running (OBD-only / Voyah
-            // devices): warn, don't error. The reader applies its own backoff.
-            LogBuffer.w(TAG, "Connection refused to ADB daemon: " + e.getMessage());
+            // devices): warn (throttled), don't error. Polling backs off.
+            long now = System.currentTimeMillis();
+            lastRefusedMs = now;
+            if (now - lastRefusedLogMs > REFUSED_LOG_INTERVAL_MS) {
+                lastRefusedLogMs = now;
+                LogBuffer.w(TAG, "Connection refused to ADB daemon: " + e.getMessage()
+                        + " — backing off ADB polling for " + (REFUSED_BACKOFF_MS / 1000) + " s");
+            } else {
+                LogBuffer.d(TAG, "Connection refused to ADB daemon (throttled)");
+            }
             callbackOnMain(callback, () -> callback.onFailure(
                     "Connection refused to ADB daemon at " + host + ":" + port));
         } catch (InterruptedException e) {

@@ -13,6 +13,8 @@ import json
 import re
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parent.parent
 MANIFEST = ROOT / "custom_components" / "cartelemetry" / "manifest.json"
 APP_DIR = ROOT / "Car2Hass"
@@ -22,6 +24,14 @@ def _manifest_version():
     return json.loads(MANIFEST.read_text(encoding="utf-8"))["version"]
 
 
+# Prerelease (beta) manifest: the release-only artifacts (gradle/build_apk
+# fallbacks, README/site download links, changelog "current") intentionally stay
+# on the last stable version during a beta. Only const.py must track the beta.
+_IS_PRERELEASE = "-" in _manifest_version()
+_release_only = pytest.mark.skipif(
+    _IS_PRERELEASE, reason="prerelease manifest: release artifacts not bumped")
+
+
 def test_const_py_matches_manifest():
     text = (MANIFEST.parent / "const.py").read_text(encoding="utf-8")
     match = re.search(r'INTEGRATION_VERSION\s*=\s*"([^"]+)"', text)
@@ -29,6 +39,7 @@ def test_const_py_matches_manifest():
     assert match.group(1) == _manifest_version()
 
 
+@_release_only
 def test_gradle_fallback_matches_manifest():
     text = (APP_DIR / "app" / "build.gradle.kts").read_text(encoding="utf-8")
     match = re.search(r'getenv\("VERSION_NAME"\)\s*\?:\s*"([^"]+)"', text)
@@ -36,6 +47,7 @@ def test_gradle_fallback_matches_manifest():
     assert match.group(1) == _manifest_version()
 
 
+@_release_only
 def test_build_apk_fallback_matches_manifest():
     text = (APP_DIR / "build_apk.sh").read_text(encoding="utf-8")
     match = re.search(r"VERSION_NAME=\$\{VERSION_NAME:-([^}]+)\}", text)
@@ -43,6 +55,7 @@ def test_build_apk_fallback_matches_manifest():
     assert match.group(1) == _manifest_version()
 
 
+@_release_only
 def test_readme_latest_release_matches_manifest():
     text = (ROOT / "README.md").read_text(encoding="utf-8")
     match = re.search(r"Latest release — v([0-9][0-9.]*)", text)
@@ -60,6 +73,7 @@ def _current_release_text(text: str, archive_marker: str) -> str:
     return text if idx == -1 else text[:idx]
 
 
+@_release_only
 def test_readme_download_links_match_manifest():
     text = _current_release_text(
         (ROOT / "README.md").read_text(encoding="utf-8"),
@@ -69,6 +83,7 @@ def test_readme_download_links_match_manifest():
     assert links == {_manifest_version()}, f"stale download links: {links}"
 
 
+@_release_only
 def test_site_index_matches_manifest():
     text = _current_release_text(
         (ROOT / "docs" / "cartelemetry" / "index.php").read_text(encoding="utf-8"),
@@ -78,12 +93,14 @@ def test_site_index_matches_manifest():
     assert links == {_manifest_version()}, f"stale site download links: {links}"
 
 
+@_release_only
 def test_site_download_php_matches_manifest():
     text = (ROOT / "docs" / "cartelemetry" / "download.php").read_text(encoding="utf-8")
     links = set(re.findall(r"(?:car2hass|cartelemetry)-v([0-9][0-9.]*)\.(?:apk|zip)", text))
     assert links == {_manifest_version()}, f"stale download.php entries: {links}"
 
 
+@_release_only
 def test_manual_changelog_current_matches_manifest():
     text = (ROOT / "mkdocs" / "docs" / "changelog.md").read_text(encoding="utf-8")
     match = re.search(r"^## v([0-9][0-9.]*) \(текущая\)", text, re.MULTILINE)
@@ -91,6 +108,7 @@ def test_manual_changelog_current_matches_manifest():
     assert match.group(1) == _manifest_version()
 
 
+@_release_only
 def test_manual_download_links_match_manifest():
     markers = {"index.md": '??? note "Архив', "quickstart.md": None}
     for page, marker in markers.items():

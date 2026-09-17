@@ -149,7 +149,6 @@ public class MainActivity extends BaseLocalizedActivity {
     private final Map<String, String> pendingCommandValues = new HashMap<>();
     private final Map<String, Integer> lastSelectOptionIdx = new HashMap<>();
     // Track last sent command for stateless toggle presets (mirror_heat, steering_heat, front_defrost, auto_high_beam)
-    private final Map<String, Boolean> statelessToggleOn = new HashMap<>();
     private boolean dashboardEditMode = false;
     private static final int DASHBOARD_GRID_CAPACITY = 16;
     private static final long DASHBOARD_EDIT_TIMEOUT_MS = 15000;
@@ -176,7 +175,6 @@ public class MainActivity extends BaseLocalizedActivity {
     private Switch switchBootAutoStart, switchCarControl, switchQueueEnabled, switchBackgroundMode;
     private Spinner spinnerFileLogMode;
     private EditText editQueueMaxMb, editQueueMaxDays;
-    private EditText editAdbHost, editAdbPort, editDiplusAuth;
     private android.widget.Switch swAutoFallback;
     private Switch switchDebugCompare;
     private TextView tvTestResult;
@@ -262,8 +260,13 @@ public class MainActivity extends BaseLocalizedActivity {
             try {
                 handler.post(() -> {
                     try {
-                        statusText.setText(getString(R.string.status_error, message));
-                        statusText.setTextColor(attrColor(R.attr.carAccentRed));
+                        if (hasSystemValues()) {
+                            statusText.setText(R.string.status_system_only);
+                            statusText.setTextColor(attrColor(R.attr.carAccentYellow));
+                        } else {
+                            statusText.setText(getString(R.string.status_error, message));
+                            statusText.setTextColor(attrColor(R.attr.carAccentRed));
+                        }
                         vinText.setText(getString(R.string.vvin_prefix, CANDataReader.sVin));
                         firmwareText.setText(getString(R.string.fw_prefix, CANDataReader.sFirmware));
                         updateLocationText();
@@ -276,6 +279,16 @@ public class MainActivity extends BaseLocalizedActivity {
             }
         }
     };
+
+    /** True when at least one ValueStore value came from the system channel. */
+    private boolean hasSystemValues() {
+        com.car2hass.vehicle.ValueStore store = com.car2hass.vehicle.ValueStore.main();
+        if (store == null) return false;
+        for (Map.Entry<String, String> e : store.entries()) {
+            if ("system".equals(store.sourceOf(e.getKey()))) return true;
+        }
+        return false;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -1359,25 +1372,14 @@ public class MainActivity extends BaseLocalizedActivity {
                 }
                 DashboardPresetRegistry.PresetStateCommands cmds = preset.commands;
                 if (cmds == null) return;
-                boolean isOn;
-                if (preset.state.primarySensor != null) {
-                    // Stateful toggle: determine current state from primary sensor.
-                    String state = getPresetSensorState(preset);
-                    isOn = isPresetStateTruthy(state, preset);
-                } else {
-                    // Stateless toggle: track state in-memory.
-                    isOn = Boolean.TRUE.equals(statelessToggleOn.get(preset.id));
-                }
+                boolean isOn = isPresetOn(preset);
                 String cmdId = isOn ? cmds.offId : cmds.onId;
                 String cmdValue = isOn ? cmds.offValue : cmds.onValue;
                 if (cmdId.isEmpty()) return;
                 pendingCommandValues.put(cmdId, cmdValue != null ? cmdValue : "");
                 sendQuickCommand(cmdId);
                 pendingCommandValues.remove(cmdId);
-                // Update stateless tracking.
-                if (preset.state.primarySensor == null) {
-                    statelessToggleOn.put(preset.id, !isOn);
-                }
+                AppConfig.setPresetFlag(this, preset.id, isOn ? "off" : "on");
                 break;
             }
             case "command": {
@@ -1419,26 +1421,30 @@ public class MainActivity extends BaseLocalizedActivity {
                 TileZone zone = detectTileZone(view, x);
                 String cmdId;
                 String cmdValue;
+                String newState = null;
                 switch (zone) {
                     case LEFT:
                         cmdId = preset.zones.get(0).command;
                         cmdValue = preset.zones.get(0).value;
+                        newState = zoneStateFor(preset, cmdId);
                         break;
                     case RIGHT:
                         cmdId = preset.zones.get(preset.zones.size() - 1).command;
                         cmdValue = preset.zones.get(preset.zones.size() - 1).value;
+                        newState = zoneStateFor(preset, cmdId);
                         break;
                     default:
-                        String state = getPresetSensorState(preset);
-                        boolean isOn = isPresetStateTruthy(state, preset);
+                        boolean isOn = isPresetOn(preset);
                         cmdId = isOn ? preset.commands.offId : preset.commands.onId;
                         cmdValue = isOn ? preset.commands.offValue : preset.commands.onValue;
+                        newState = isOn ? "off" : "on";
                         break;
                 }
                 if (cmdId == null || cmdId.isEmpty()) return;
                 pendingCommandValues.put(cmdId, cmdValue != null ? cmdValue : "");
                 sendQuickCommand(cmdId);
                 pendingCommandValues.remove(cmdId);
+                if (newState != null) AppConfig.setPresetFlag(this, preset.id, newState);
                 break;
             }
             case "select": {
@@ -1479,6 +1485,25 @@ public class MainActivity extends BaseLocalizedActivity {
                 }
                 break;
         }
+    }
+
+    /** Tile on-state: the flag is the source; a live sensor value updates the flag. */
+    private boolean isPresetOn(DashboardPresetRegistry.DashboardPreset preset) {
+        String sensorState = getPresetSensorState(preset);
+        if (sensorState != null && !sensorState.isEmpty()) {
+            boolean on = isPresetStateTruthy(sensorState, preset);
+            AppConfig.setPresetFlag(this, preset.id, on ? "on" : "off");
+            return on;
+        }
+        return "on".equals(AppConfig.getPresetFlag(this, preset.id));
+    }
+
+    /** "on"/"off" when a zone command matches the preset on/off command, else null. */
+    private String zoneStateFor(DashboardPresetRegistry.DashboardPreset preset, String cmdId) {
+        if (preset.commands == null || cmdId == null) return null;
+        if (cmdId.equals(preset.commands.onId)) return "on";
+        if (cmdId.equals(preset.commands.offId)) return "off";
+        return null;
     }
 
     private String getPresetSensorState(DashboardPresetRegistry.DashboardPreset preset) {
@@ -1901,6 +1926,29 @@ public class MainActivity extends BaseLocalizedActivity {
                 }
             }
 
+            // Unified collector: the ValueStore is the single source of truth. Overlay
+            // its values (including system sensors like system_media_volume / location_*
+            // / device_battery, which never come through the CAN cycle) so the dashboard
+            // reads the same values as the telemetry tab.
+            TelemetryService svc = getTelemetryService();
+            if (svc != null) {
+                for (Map.Entry<String, String> e : svc.valueStore.entries()) {
+                    String k = e.getKey();
+                    String v = e.getValue();
+                    if (k == null || v == null || v.isEmpty() || "---".equals(v)) continue;
+                    CANDataItem it = byKey.get(k);
+                    if (it == null) {
+                        it = new CANDataItem(0, k, k, 0);
+                        it.key = k;
+                        it.diplusName = null;
+                        byKey.put(k, it);
+                    }
+                    it.value = v;
+                    long age = svc.valueStore.ageMs(k);
+                    it.lastUpdate = age >= 0 ? System.currentTimeMillis() - age : it.lastUpdate;
+                }
+            }
+
             DashboardPresetRegistry presetRegistry = DashboardPresetRegistry.getInstance(this);
 
             for (DashboardTile tile : dashboardTiles) {
@@ -2107,38 +2155,22 @@ public class MainActivity extends BaseLocalizedActivity {
         DashboardPresetRegistry.PresetStateDisplay display = preset.state.display;
         String format = DashboardPresetRegistry.pick(this, display.valueFormat, display.valueFormatRu);
 
-        if (preset.state.primarySensor == null) {
-            // Stateless toggle (mirror_heat, steering_heat, front_defrost, auto_high_beam)
-            // — track state in-memory and display current state.
-            boolean isOn = Boolean.TRUE.equals(statelessToggleOn.get(preset.id));
-            String label = isOn
-                    ? DashboardPresetRegistry.pick(this, display.onLabel, display.onLabelRu)
-                    : DashboardPresetRegistry.pick(this, display.offLabel, display.offLabelRu);
-            tile.setValue(label, "");
-            tile.setSub("");
-            tile.setAlert(false);
-            return;
-        }
-
-        CANDataItem item = byKey.get(preset.state.primarySensor);
-        if (item == null || "---".equals(item.value)) {
-            tile.setValue("—", "");
-            tile.setSub("");
-            tile.setAlert(false);
-            return;
-        }
-
-        String translated = SignalTranslator.translateEnumValue(preset.state.primarySensor, item.value);
-
-        // Formatted-value display wins when configured (volume %, fan level, temp °C).
+        // Formatted-value display wins when configured (volume %, fan level, temp °C):
+        // always render the format — show "—" rather than falling back to on/off.
         if (format != null && !format.isEmpty()) {
-            tile.setValue(format.replace("{value}", translated), "");
+            CANDataItem item = preset.state.primarySensor != null
+                    ? byKey.get(preset.state.primarySensor) : null;
+            String v = (item != null && !"---".equals(item.value))
+                    ? SignalTranslator.translateEnumValue(preset.state.primarySensor, item.value)
+                    : "—";
+            tile.setValue(format.replace("{value}", v), "");
             tile.setSub("");
             tile.setAlert(false);
             return;
         }
 
-        boolean isOn = isPresetStateTruthy(translated, preset);
+        // On/off comes from the local flag; a live sensor value keeps the flag in sync.
+        boolean isOn = isPresetOn(preset);
         String label = isOn
                 ? DashboardPresetRegistry.pick(this, display.onLabel, display.onLabelRu)
                 : DashboardPresetRegistry.pick(this, display.offLabel, display.offLabelRu);
@@ -2146,8 +2178,16 @@ public class MainActivity extends BaseLocalizedActivity {
                 ? DashboardPresetRegistry.pick(this, display.onSub, display.onSubRu)
                 : DashboardPresetRegistry.pick(this, display.offSub, display.offSubRu);
         boolean alert = isOn ? display.onAlert : display.offAlert;
-        if (!label.isEmpty()) tile.setValue(label, "");
-        else tile.setValue(translated, "");
+        if (!label.isEmpty()) {
+            tile.setValue(label, "");
+        } else {
+            CANDataItem item = preset.state.primarySensor != null
+                    ? byKey.get(preset.state.primarySensor) : null;
+            String v = (item != null && !"---".equals(item.value))
+                    ? SignalTranslator.translateEnumValue(preset.state.primarySensor, item.value)
+                    : (isOn ? "On" : "Off");
+            tile.setValue(v, "");
+        }
         tile.setSub(sub != null ? substituteSensorPlaceholders(sub, byKey) : "");
         tile.setAlert(alert);
     }
@@ -2814,6 +2854,9 @@ public class MainActivity extends BaseLocalizedActivity {
                 long ageMs = svc != null ? svc.valueStore.ageMs(key) : -1;
                 it.lastUpdate = v == null ? 0 : (ageMs >= 0 ? System.currentTimeMillis() - ageMs : System.currentTimeMillis());
                 it.rawData = (system ? "system" : "") + (reachable ? "reachable" : "");
+                // Source channel that actually produced the current value (single
+                // collector): diplus / adb / system / voyah / obd / …
+                it.sourceChannel = svc != null ? svc.valueStore.sourceOf(key) : null;
                 // Grey only for disabled or unavailable sensors; system stays green.
                 it.grey = !(system || it.enabled) || (!system && !reachable && !live);
                 out.add(it);
@@ -3138,9 +3181,6 @@ public class MainActivity extends BaseLocalizedActivity {
         switchQueueEnabled = settingsView.findViewById(R.id.switchQueueEnabled);
         editQueueMaxMb = settingsView.findViewById(R.id.editQueueMaxMb);
         editQueueMaxDays = settingsView.findViewById(R.id.editQueueMaxDays);
-        editAdbHost = settingsView.findViewById(R.id.editAdbHost);
-        editAdbPort = settingsView.findViewById(R.id.editAdbPort);
-        editDiplusAuth = settingsView.findViewById(R.id.editDiplusAuth);
         swAutoFallback = settingsView.findViewById(R.id.swAutoFallback);
         switchDebugCompare = settingsView.findViewById(R.id.switchDebugCompare);
         tvTestResult = settingsView.findViewById(R.id.tvTestResult);
@@ -3434,12 +3474,15 @@ public class MainActivity extends BaseLocalizedActivity {
                     researchProgressDialog = null;
                 }
                 btnRestartResearch.setEnabled(true);
-                renderResearch();
                 if (firstLaunchResearch) {
                     firstLaunchResearch = false;
-                    List<String> added = new ArrayList<>(AppConfig.getActiveChannels(MainActivity.this));
-                    if (!added.isEmpty()) AppConfig.setAddedSources(MainActivity.this, added);
+                    List<String> added = new ArrayList<>();
+                    for (String ch : AppConfig.getActiveChannels(MainActivity.this)) {
+                        if (!"system".equals(ch)) added.add(ch);
+                    }
+                    AppConfig.setAddedSources(MainActivity.this, added);
                 }
+                renderResearch();
                 maybeUploadReport(path);
                 // The user's manual profile choice is kept (never auto-changed);
                 // if auto-detection disagrees, recommend instead of overriding.
@@ -3494,18 +3537,8 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         // Phone-only case (no DiPlus/Voyah alive): guide the user to OBD2.
         if (outcome.report != null) {
-            JSONArray channels = outcome.report.optJSONArray("channels");
-            boolean hasDiplus = false;
-            boolean hasVoyah = false;
-            if (channels != null) {
-                for (int i = 0; i < channels.length(); i++) {
-                    JSONObject c = channels.optJSONObject(i);
-                    if (c == null) continue;
-                    String id = c.optString("id");
-                    if ("diplus".equals(id) && c.optBoolean("available", false)) hasDiplus = true;
-                    if ("voyah".equals(id) && c.optBoolean("available", false)) hasVoyah = true;
-                }
-            }
+            boolean hasDiplus = channelHasData(outcome.report, "diplus");
+            boolean hasVoyah = channelHasData(outcome.report, "voyah");
             String addr = AppConfig.getObdBtAddress(this);
             boolean obdSet = addr != null && !addr.isEmpty();
             if (!hasDiplus && !hasVoyah && !obdSet) {
@@ -3513,6 +3546,31 @@ public class MainActivity extends BaseLocalizedActivity {
             }
         }
         return sb.toString();
+    }
+
+    /** True when the channel is available OR reported at least one "ok" sensor.
+     *  DiPlus availability can flap transiently, so a single `available:false`
+     *  must not make the OBD2-only hint appear for a working DiPlus. */
+    private static boolean channelHasData(JSONObject report, String id) {
+        if (report == null) return false;
+        JSONArray chans = report.optJSONArray("channels");
+        if (chans != null) {
+            for (int i = 0; i < chans.length(); i++) {
+                JSONObject c = chans.optJSONObject(i);
+                if (c != null && id.equals(c.optString("id")) && c.optBoolean("available", false)) {
+                    return true;
+                }
+            }
+        }
+        JSONObject sensors = report.optJSONObject("sensors");
+        if (sensors != null) {
+            JSONArray keys = sensors.names();
+            for (int i = 0; keys != null && i < keys.length(); i++) {
+                JSONObject ch = sensors.optJSONObject(keys.optString(i));
+                if (ch != null && "ok".equals(ch.optString(id))) return true;
+            }
+        }
+        return false;
     }
 
     private void showResearchSummaryDialog(String message, String path) {
@@ -3659,6 +3717,26 @@ public class MainActivity extends BaseLocalizedActivity {
                 obdBtn.setLayoutParams(bp);
                 channelContainer.addView(obdBtn);
             }
+
+            // Inline per-source settings, right under the source row.
+            if ("adb".equals(name)) {
+                channelContainer.addView(createInlineField(R.string.settings_adb_host,
+                        AppConfig.getAdbHost(this), "127.0.0.1",
+                        v -> AppConfig.saveAdbHost(this, v.isEmpty() ? "127.0.0.1" : v.trim())));
+                channelContainer.addView(createInlineField(R.string.settings_adb_port,
+                        String.valueOf(AppConfig.getAdbPort(this)), "5555",
+                        v -> {
+                            try {
+                                AppConfig.saveAdbPort(this, Integer.parseInt(v.trim()));
+                            } catch (Exception ignored) {
+                            }
+                        }));
+            }
+            if ("diplus".equals(name) || "diplus_push".equals(name)) {
+                channelContainer.addView(createInlineField(R.string.settings_diplus_auth,
+                        AppConfig.getDiplusAuth(this), "",
+                        v -> AppConfig.setDiplusAuth(this, v)));
+            }
         }
 
         Button addBtn = new Button(this);
@@ -3671,8 +3749,6 @@ public class MainActivity extends BaseLocalizedActivity {
         ap.topMargin = dp(6);
         addBtn.setLayoutParams(ap);
         channelContainer.addView(addBtn);
-
-        updateSourceSettingsVisibility();
 
         status.setText(buildResearchStatus());
     }
@@ -3735,17 +3811,31 @@ public class MainActivity extends BaseLocalizedActivity {
         return n;
     }
 
-    /** Shows per-source settings (ADB host/port, DiPlus token) only when added. */
-    private void updateSourceSettingsVisibility() {
-        List<String> added = AppConfig.getAddedSources(this);
-        setRowVisibility(R.id.rowAdbHost, added.contains("adb"));
-        setRowVisibility(R.id.rowAdbPort, added.contains("adb"));
-        setRowVisibility(R.id.rowDiplusAuth, added.contains("diplus") || added.contains("diplus_push"));
-    }
-
-    private void setRowVisibility(int id, boolean visible) {
-        View v = settingsView.findViewById(id);
-        if (v != null) v.setVisibility(visible ? View.VISIBLE : View.GONE);
+    /** Inline labelled EditText that persists on every text change. */
+    private View createInlineField(int labelRes, String value, String hint,
+                                   java.util.function.Consumer<String> saver) {
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+        TextView label = new TextView(this);
+        label.setText(labelRes);
+        label.setTextColor(getResources().getColor(R.color.textSecondary));
+        label.setTextSize(12);
+        row.addView(label, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1));
+        EditText edit = new EditText(this);
+        edit.setText(value);
+        if (hint != null) edit.setHint(hint);
+        edit.setSingleLine(true);
+        edit.setTextSize(13);
+        edit.setTextColor(getResources().getColor(R.color.textPrimary));
+        edit.setBackgroundResource(R.drawable.bg_row);
+        edit.addTextChangedListener(new TextWatcher() {
+            @Override public void afterTextChanged(android.text.Editable s) { saver.accept(s.toString()); }
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+        });
+        row.addView(edit, new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 2));
+        return row;
     }
 
     private int channelLabel(String name) {
@@ -4224,14 +4314,17 @@ public class MainActivity extends BaseLocalizedActivity {
         android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
         progress.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
         progress.setTitle(getString(R.string.update_downloading, "0%"));
+        progress.setMax(100);
         progress.setCancelable(false);
         progress.show();
         new Thread(() -> {
             try {
                 File apk = UpdateDownloader.download(this, info, (done, total) ->
                         runOnUiThread(() -> {
-                            String pct = total > 0 ? (done * 100 / total) + "%" : "...";
-                            progress.setMessage(getString(R.string.update_downloading, pct));
+                            int pct = total > 0 ? (int) (done * 100 / total) : 0;
+                            progress.setProgress(pct);
+                            progress.setTitle(getString(R.string.update_downloading,
+                                    total > 0 ? pct + "%" : "..."));
                         }));
                 runOnUiThread(progress::dismiss);
                 if (!UpdateDownloader.installFile(this, apk)) {
@@ -4479,9 +4572,6 @@ public class MainActivity extends BaseLocalizedActivity {
         });
         editQueueMaxMb.addTextChangedListener(autoSaveWatcher);
         editQueueMaxDays.addTextChangedListener(autoSaveWatcher);
-        editAdbHost.addTextChangedListener(autoSaveWatcher);
-        editAdbPort.addTextChangedListener(autoSaveWatcher);
-        editDiplusAuth.addTextChangedListener(autoSaveWatcher);
         swAutoFallback.setOnCheckedChangeListener((b, checked) -> scheduleSave());
         switchDebugCompare.setOnCheckedChangeListener(listener);
     }
@@ -4547,20 +4637,6 @@ public class MainActivity extends BaseLocalizedActivity {
         AppConfig.saveQueueMaxMb(this, queueMaxMb);
         AppConfig.saveQueueMaxDays(this, queueMaxDays);
 
-        String adbHost = editAdbHost.getText().toString().trim();
-        if (adbHost.isEmpty()) {
-            adbHost = "127.0.0.1";
-        }
-        int adbPort;
-        try {
-            adbPort = Integer.parseInt(editAdbPort.getText().toString().trim());
-        } catch (Exception e) {
-            adbPort = 5555;
-        }
-        AppConfig.saveAdbHost(this, adbHost);
-        AppConfig.saveAdbPort(this, adbPort);
-        AppConfig.setDiplusAuth(this, editDiplusAuth.getText().toString());
-
         if (swAutoFallback != null) {
             AppConfig.setAutoFallback(this, swAutoFallback.isChecked());
         }
@@ -4569,7 +4645,7 @@ public class MainActivity extends BaseLocalizedActivity {
         EditText editMake = settingsView.findViewById(R.id.editVehicleMake);
         EditText editYear = settingsView.findViewById(R.id.editVehicleYear);
         AppConfig.saveVehicleProfile(this,
-                "UNIVERSAL".equals(AppConfig.getVehicleProducer(this)) ? VehicleProducer.UNIVERSAL : VehicleProducer.BYD,
+                AppConfig.getVehicleProfile(this).getProducer(),
                 editMake != null ? editMake.getText().toString().trim() : "",
                 editYear != null ? editYear.getText().toString().trim() : "");
 
@@ -4652,9 +4728,6 @@ public class MainActivity extends BaseLocalizedActivity {
         switchQueueEnabled.setChecked(AppConfig.isQueueEnabled(this));
         editQueueMaxMb.setText(String.valueOf(AppConfig.getQueueMaxMb(this)));
         editQueueMaxDays.setText(String.valueOf(AppConfig.getQueueMaxDays(this)));
-        editAdbHost.setText(AppConfig.getAdbHost(this));
-        editAdbPort.setText(String.valueOf(AppConfig.getAdbPort(this)));
-        editDiplusAuth.setText(AppConfig.getDiplusAuth(this));
 
         if (swAutoFallback != null) {
             swAutoFallback.setChecked(AppConfig.isAutoFallback(this));
@@ -4665,8 +4738,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
         Spinner spinnerProducer = settingsView.findViewById(R.id.spinnerVehicleProducer);
         if (spinnerProducer != null) {
-            boolean universal = AppConfig.getVehicleProducer(this).equals("UNIVERSAL");
-            spinnerProducer.setSelection(universal ? 1 : 0);
+            spinnerProducer.setSelection(producerIndex(AppConfig.getVehicleProducer(this)));
         }
         EditText editMake = settingsView.findViewById(R.id.editVehicleMake);
         if (editMake != null) editMake.setText(AppConfig.getVehicleMake(this));

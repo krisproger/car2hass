@@ -48,6 +48,7 @@ public class AppConfig {
     private static final String KEY_PROBE_REPORT_PATH = "probe_report_path";
     private static final String KEY_SOURCES_ADDED = "sources_added";
     private static final String KEY_RESEARCH_DONE = "research_done";
+    private static final String KEY_PRESET_FLAGS = "preset_flags";
     // Token is stored encrypted via SecureStorage; legacy key kept for migration.
     static final String KEY_TOKEN = "hass_token";
     private static final String KEY_CAR_NAME = "car_name";
@@ -819,6 +820,30 @@ public class AppConfig {
 
     public static void setResearchDone(Context ctx, boolean done) {
         prefs(ctx).edit().putBoolean(KEY_RESEARCH_DONE, done).apply();
+    }
+
+    /** Last known on/off state of a toggle preset ("on"/"off"/"" — unknown). */
+    public static String getPresetFlag(Context ctx, String presetId) {
+        if (presetId == null) return "";
+        String s = prefs(ctx).getString(KEY_PRESET_FLAGS, null);
+        if (s == null) return "";
+        try {
+            return new org.json.JSONObject(s).optString(presetId, "");
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    public static void setPresetFlag(Context ctx, String presetId, String state) {
+        if (presetId == null || state == null || state.isEmpty()) return;
+        if (state.equals(getPresetFlag(ctx, presetId))) return;
+        try {
+            String s = prefs(ctx).getString(KEY_PRESET_FLAGS, null);
+            org.json.JSONObject o = s == null ? new org.json.JSONObject() : new org.json.JSONObject(s);
+            o.put(presetId, state);
+            prefs(ctx).edit().putString(KEY_PRESET_FLAGS, o.toString()).apply();
+        } catch (Exception ignored) {
+        }
     }
 
     public static int getRunsCount(Context ctx) {

@@ -10,6 +10,7 @@
     <string name="status_active_ha">● Active — sending to HA</string>
     <string name="status_active_no_ha">● Active — HA disabled</string>
     <string name="status_error">● Error: %1$s</string>
+    <string name="status_system_only">● System sensors active</string>
     <string name="location_no_gps">No GPS</string>
     <string name="send_to_ha">Send to HA</string>
     <string name="tab_telemetry">Telemetry</string>

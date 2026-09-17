@@ -30,16 +30,29 @@ public class BootReceiver extends BroadcastReceiver {
         LogBuffer.init(context);
         String action = intent.getAction();
         if (Intent.ACTION_MY_PACKAGE_REPLACED.equals(action)) {
-            LogBuffer.i("BootReceiver", "MY_PACKAGE_REPLACED received — restarting service");
+            LogBuffer.i("BootReceiver", "MY_PACKAGE_REPLACED received — restarting service/UI");
             try {
-                Intent serviceIntent = new Intent(context, TelemetryService.class);
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    context.startForegroundService(serviceIntent);
-                } else {
-                    context.startService(serviceIntent);
-                }
+                // Same trampoline as boot: BootActivity starts TelemetryService AND
+                // brings MainActivity up (direct service start is not enough — the
+                // user expects the app to reappear after the update).
+                Intent trampoline = new Intent(context, BootActivity.class);
+                trampoline.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                        | Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+                trampoline.putExtra("keep_foreground", true);
+                context.startActivity(trampoline);
             } catch (Exception e) {
                 LogBuffer.w("BootReceiver", "restart after update failed: " + e.getMessage());
+                try {
+                    Intent serviceIntent = new Intent(context, TelemetryService.class);
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        context.startForegroundService(serviceIntent);
+                    } else {
+                        context.startService(serviceIntent);
+                    }
+                } catch (Exception e2) {
+                    LogBuffer.w("BootReceiver", "service restart after update failed: " + e2.getMessage());
+                }
             }
             return;
         }

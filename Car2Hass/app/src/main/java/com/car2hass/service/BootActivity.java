@@ -55,7 +55,11 @@ public class BootActivity extends Activity {
         main.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                 | Intent.FLAG_ACTIVITY_CLEAR_TOP
                 | Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
-        main.putExtra("from_boot", true);
+        // Boot shows the UI briefly then minimizes; after an app update the user
+        // expects the freshly installed version to stay in the foreground.
+        if (!getIntent().getBooleanExtra("keep_foreground", false)) {
+            main.putExtra("from_boot", true);
+        }
         try {
             startActivity(main);
             LogBuffer.i("BootActivity", "MainActivity started");
