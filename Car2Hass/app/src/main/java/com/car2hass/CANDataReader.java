@@ -1573,17 +1573,27 @@ public class CANDataReader {
             String host = AppConfig.getAdbHost(context);
             int port = AppConfig.getAdbPort(context);
             if (host == null || host.trim().isEmpty()) return false;
+
+            // Remember what the user is looking at so a launch that pulls DiPlus'
+            // task to the front can be undone right away.
+            String focusBefore = focusedWindow(host, port);
             String[][] commands = {
+                // Service-only starts keep DiPlus working without any window.
+                {"am", "start-foreground-service", "-n",
+                 "com.van.diplus/.service.P2000Service"},
+                {"am", "start-foreground-service", "-n",
+                 "com.van.diplus/.service.MainService"},
+                {"am", "startservice", "-n", "com.van.diplus/.service.MainService"},
+                // Transparent 1x1 activity (the API>=30 recipe) as a last resort.
                 {"am", "start", "-n",
                  "com.van.diplus/com.van.diplus.activity.StartMainServiceActivity"},
-                {"am", "start", "-a", "android.intent.action.MAIN", "com.van.diplus"},
-                {"monkey", "-p", "com.van.diplus", "-c", "android.intent.category.LAUNCHER", "1"},
             };
             for (String[] parts : commands) {
                 String cmd = String.join(" ", parts);
                 String out = AdbShellExecutor.executeSync(host, port, cmd, 5000);
-                if (out != null && !out.contains("Error") && !out.contains("Exception")) {
+                if (launchSucceeded(out)) {
                     LogBuffer.i("CANReader", "launchDiplus (shell): " + cmd);
+                    restoreFocus(host, port, focusBefore);
                     return true;
                 }
             }
@@ -1591,6 +1601,42 @@ public class CANDataReader {
             LogBuffer.d("CANReader", "launchDiplus shell launch failed: " + e.getMessage());
         }
         return false;
+    }
+
+    /** True when the am command actually started something (not an error, not a no-op). */
+    private static boolean launchSucceeded(String out) {
+        if (out == null) return false;
+        if (out.contains("Error") || out.contains("Exception")) return false;
+        // "Warning: Activity not started, its current task has been brought to
+        // the front" means nothing was started and DiPlus stole the focus.
+        return !out.contains("not started");
+    }
+
+    /** Current focused window line from dumpsys (may be null). */
+    private static String focusedWindow(String host, int port) {
+        String out = AdbShellExecutor.executeSync(host, port,
+                "dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp'", 4000);
+        return out == null ? null : out.replace('\n', ' ').trim();
+    }
+
+    /** Brings back whatever was focused before a launch that stole it. */
+    private static void restoreFocus(String host, int port, String focusBefore) {
+        if (focusBefore == null || focusBefore.isEmpty()) return;
+        String focusAfter = focusedWindow(host, port);
+        if (focusAfter == null || !focusAfter.contains("com.van.diplus")) return;
+        if (focusAfter.contains("StartMainServiceActivity")) return;
+        String pkg = extractPackage(focusBefore);
+        if (pkg == null || pkg.isEmpty() || "com.van.diplus".equals(pkg)) return;
+        AdbShellExecutor.executeSync(host, port,
+                "monkey -p " + pkg + " -c android.intent.category.LAUNCHER 1", 4000);
+        LogBuffer.i("CANReader", "DiPlus stole focus, restored " + pkg);
+    }
+
+    /** Package name from a dumpsys focus line (u0 package/activity). */
+    private static String extractPackage(String focusLine) {
+        java.util.regex.Matcher m = java.util.regex.Pattern
+                .compile("([a-zA-Z][a-zA-Z0-9_]*(?:\\.[a-zA-Z0-9_]+)+)/").matcher(focusLine);
+        return m.find() ? m.group(1) : null;
     }
 
     // ─── System properties (VVIN, FW, getprop attributes) ───

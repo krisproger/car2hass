@@ -802,4 +802,41 @@
         <item>Gauge</item>
         <item>Graph</item>
     </string-array>
+    <string name="sensor_battery_12v_voltage">12V battery voltage</string>
+    <string name="sensor_engine_load">Engine load</string>
+    <string name="sensor_intake_air_temp">Intake air temperature</string>
+    <string name="sensor_maf">MAF air flow</string>
+    <string name="sensor_ambient_temp">Ambient temperature</string>
+    <string name="sensor_engine_oil_temp">Engine oil temperature</string>
+    <string name="sensor_fuel_rate">Fuel consumption rate</string>
+    <string name="sensor_driver_seat_heat">Driver seat heating</string>
+    <string name="sensor_passenger_seat_heat">Passenger seat heating</string>
+    <string name="sensor_driver_seat_vent">Driver seat ventilation</string>
+    <string name="sensor_passenger_seat_vent">Passenger seat ventilation</string>
+    <string name="sensor_rear_left_seat_heat">Rear-left seat heating</string>
+    <string name="sensor_rear_right_seat_heat">Rear-right seat heating</string>
+    <string name="sensor_steering_wheel_heat">Steering wheel heating</string>
+    <string name="sensor_rear_defrost">Rear window defrost</string>
+    <string name="sensor_charge_rate">Charge rate</string>
+    <string name="sensor_mirror_fold">Rear mirror fold</string>
+    <string name="sensor_location_lat">GPS latitude</string>
+    <string name="sensor_location_lon">GPS longitude</string>
+    <string name="sensor_location_speed">GPS speed</string>
+    <string name="sensor_location_bearing">GPS bearing</string>
+    <string name="sensor_location_altitude">GPS altitude</string>
+    <string name="sensor_location_accuracy">GPS accuracy</string>
+    <string name="sensor_location_provider">Location provider</string>
+    <string name="sensor_device_battery">Head unit battery level</string>
+    <string name="sensor_device_pressure">Device pressure</string>
+    <string name="sensor_system_media_volume">System media volume</string>
+    <string name="sensor_windows_state">Windows open count</string>
+    <string name="sensor_doors_state">Doors open count</string>
+    <string name="sensor_windows_all_state">Windows all closed</string>
+    <string name="sensor_doors_all_state">Doors all closed</string>
+    <string name="sensor_doors_all_lock">Doors all locked</string>
+    <string name="sensor_battery_remaining_charge_time">Battery remaining charge time</string>
+    <string name="sensor_avg_speed">Average speed</string>
+    <string name="sensor_avg_power">Average power</string>
+    <string name="sensor_energy_recovery_gear">Energy recovery gear</string>
+    <string name="sensor_energy_flow">Energy flow</string>
 </resources>

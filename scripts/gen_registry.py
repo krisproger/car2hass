@@ -6,6 +6,23 @@ APP = os.path.join(REPO, "Car2Hass", "app", "src", "main")
 ASSETS = os.path.join(APP, "assets")
 JAVA = os.path.join(APP, "java", "com", "car2hass")
 
+SENSOR_LABELS = {"en": {}, "ru": {}}
+
+
+def _load_sensor_labels():
+    for lang, folder in (("en", "values"), ("ru", "values-ru")):
+        path = os.path.join(APP, "res", folder, "strings.xml")
+        try:
+            text = open(path, encoding="utf-8").read()
+        except OSError:
+            continue
+        for key, value in re.findall(
+                r'<string name="sensor_([a-z0-9_]+)">(.*?)</string>', text):
+            SENSOR_LABELS[lang].setdefault(key, value)
+
+
+_load_sensor_labels()
+
 GPS_SENSORS = [
     ("location_lat", "Latitude", "gps", None),
     ("location_lon", "Longitude", "gps", None),
@@ -189,14 +206,16 @@ def build_sensors():
             channels["voyah"] = {"vs": voyah}
             expected.append("voyah_generic")
         sensors.append({
-            "key": key, "label_en": english, "label_ru": english,
+            "key": key, "label_en": SENSOR_LABELS["en"].get(key, english),
+            "label_ru": SENSOR_LABELS["ru"].get(key, english),
             "type": stype, "unit": None,
             "core": key in CORE_SENSORS,
             "channels": channels, "expected_on": expected,
         })
     for key, english, stype, unit in GPS_SENSORS + DEVICE_SENSORS + DERIVED_SENSORS:
         sensors.append({
-            "key": key, "label_en": english, "label_ru": english,
+            "key": key, "label_en": SENSOR_LABELS["en"].get(key, english),
+            "label_ru": SENSOR_LABELS["ru"].get(key, english),
             "type": stype, "unit": unit,
             "core": key in CORE_SENSORS,
             "channels": {k: None for k in
@@ -207,7 +226,8 @@ def build_sensors():
     for key, english, stype, unit in VOYAH_ONLY_SENSORS:
         vs = VOYAH_PARAMS.get(key)
         sensors.append({
-            "key": key, "label_en": english, "label_ru": english,
+            "key": key, "label_en": SENSOR_LABELS["en"].get(key, english),
+            "label_ru": SENSOR_LABELS["ru"].get(key, english),
             "type": stype, "unit": unit,
             "core": False,
             "channels": {k: None for k in

@@ -14,7 +14,7 @@
     {
       "key": "power_state",
       "label_en": "Power state",
-      "label_ru": "Power state",
+      "label_ru": "Состояние питания",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -36,7 +36,7 @@
     {
       "key": "speed",
       "label_en": "Speed (km/h)",
-      "label_ru": "Speed (km/h)",
+      "label_ru": "Скорость (км/ч)",
       "type": "num",
       "unit": null,
       "core": true,
@@ -64,7 +64,7 @@
     {
       "key": "range",
       "label_en": "Range / mileage",
-      "label_ru": "Range / mileage",
+      "label_ru": "Пробег",
       "type": "num",
       "unit": null,
       "core": true,
@@ -90,7 +90,7 @@
     {
       "key": "gear",
       "label_en": "Gear",
-      "label_ru": "Gear",
+      "label_ru": "Передача",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -116,7 +116,7 @@
     {
       "key": "engine_rpm",
       "label_en": "Engine RPM",
-      "label_ru": "Engine RPM",
+      "label_ru": "Обороты двигателя",
       "type": "num",
       "unit": null,
       "core": true,
@@ -140,7 +140,7 @@
     {
       "key": "brake_pedal",
       "label_en": "Brake pedal depth",
-      "label_ru": "Brake pedal depth",
+      "label_ru": "Глубина педали тормоза",
       "type": "num",
       "unit": null,
       "core": false,
@@ -166,7 +166,7 @@
     {
       "key": "accel_pedal",
       "label_en": "Accelerator pedal depth",
-      "label_ru": "Accelerator pedal depth",
+      "label_ru": "Глубина педали газа",
       "type": "num",
       "unit": null,
       "core": false,
@@ -194,7 +194,7 @@
     {
       "key": "front_motor_rpm",
       "label_en": "Front motor RPM",
-      "label_ru": "Front motor RPM",
+      "label_ru": "Обороты переднего мотора",
       "type": "num",
       "unit": null,
       "core": false,
@@ -216,7 +216,7 @@
     {
       "key": "rear_motor_rpm",
       "label_en": "Rear motor RPM",
-      "label_ru": "Rear motor RPM",
+      "label_ru": "Обороты заднего мотора",
       "type": "num",
       "unit": null,
       "core": false,
@@ -238,7 +238,7 @@
     {
       "key": "engine_power",
       "label_en": "Engine power",
-      "label_ru": "Engine power",
+      "label_ru": "Мощность двигателя",
       "type": "num",
       "unit": null,
       "core": false,
@@ -260,7 +260,7 @@
     {
       "key": "front_motor_torque",
       "label_en": "Front motor torque",
-      "label_ru": "Front motor torque",
+      "label_ru": "Момент переднего мотора",
       "type": "num",
       "unit": null,
       "core": false,
@@ -282,7 +282,7 @@
     {
       "key": "charge_gun_state",
       "label_en": "Charge gun plug state",
-      "label_ru": "Charge gun plug state",
+      "label_ru": "Состояние зарядного пистолета",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -308,7 +308,7 @@
     {
       "key": "energy_per_100km",
       "label_en": "Energy per 100 km",
-      "label_ru": "Energy per 100 km",
+      "label_ru": "Расход на 100 км",
       "type": "num",
       "unit": null,
       "core": false,
@@ -330,7 +330,7 @@
     {
       "key": "battery_temp_max",
       "label_en": "Max battery temp",
-      "label_ru": "Max battery temp",
+      "label_ru": "Макс. температура батареи",
       "type": "num",
       "unit": null,
       "core": false,
@@ -352,7 +352,7 @@
     {
       "key": "battery_temp_avg",
       "label_en": "Avg battery temp",
-      "label_ru": "Avg battery temp",
+      "label_ru": "Сред. температура батареи",
       "type": "num",
       "unit": null,
       "core": false,
@@ -374,7 +374,7 @@
     {
       "key": "battery_temp_min",
       "label_en": "Min battery temp",
-      "label_ru": "Min battery temp",
+      "label_ru": "Мин. температура батареи",
       "type": "num",
       "unit": null,
       "core": false,
@@ -396,7 +396,7 @@
     {
       "key": "cell_voltage_max",
       "label_en": "Max cell voltage",
-      "label_ru": "Max cell voltage",
+      "label_ru": "Макс. напряжение ячейки",
       "type": "num",
       "unit": null,
       "core": false,
@@ -418,7 +418,7 @@
     {
       "key": "cell_voltage_min",
       "label_en": "Min cell voltage",
-      "label_ru": "Min cell voltage",
+      "label_ru": "Мин. напряжение ячейки",
       "type": "num",
       "unit": null,
       "core": false,
@@ -440,7 +440,7 @@
     {
       "key": "last_wiper_time",
       "label_en": "Last wiper time",
-      "label_ru": "Last wiper time",
+      "label_ru": "Время последних дворников",
       "type": "num",
       "unit": null,
       "core": false,
@@ -462,7 +462,7 @@
     {
       "key": "weather",
       "label_en": "Weather",
-      "label_ru": "Weather",
+      "label_ru": "Погода",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -484,7 +484,7 @@
     {
       "key": "driver_seatbelt",
       "label_en": "Driver seatbelt state",
-      "label_ru": "Driver seatbelt state",
+      "label_ru": "Ремень безопасности водителя",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -510,7 +510,7 @@
     {
       "key": "remote_lock_state",
       "label_en": "Remote lock state",
-      "label_ru": "Remote lock state",
+      "label_ru": "Дистанционная блокировка",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -532,7 +532,7 @@
     {
       "key": "cabin_temp",
       "label_en": "Cabin temperature",
-      "label_ru": "Cabin temperature",
+      "label_ru": "Температура в салоне",
       "type": "num",
       "unit": null,
       "core": false,
@@ -554,7 +554,7 @@
     {
       "key": "outside_temp",
       "label_en": "Outside temperature",
-      "label_ru": "Outside temperature",
+      "label_ru": "Наружная температура",
       "type": "num",
       "unit": null,
       "core": true,
@@ -576,7 +576,7 @@
     {
       "key": "ac_set_temp",
       "label_en": "Driver A/C set temp",
-      "label_ru": "Driver A/C set temp",
+      "label_ru": "Уставка кондиционера",
       "type": "num",
       "unit": null,
       "core": false,
@@ -598,7 +598,7 @@
     {
       "key": "temp_unit",
       "label_en": "Temperature unit",
-      "label_ru": "Temperature unit",
+      "label_ru": "Единица температуры",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -620,7 +620,7 @@
     {
       "key": "battery_capacity",
       "label_en": "Battery capacity",
-      "label_ru": "Battery capacity",
+      "label_ru": "Ёмкость батареи",
       "type": "num",
       "unit": null,
       "core": false,
@@ -642,7 +642,7 @@
     {
       "key": "steering_angle",
       "label_en": "Steering wheel angle",
-      "label_ru": "Steering wheel angle",
+      "label_ru": "Угол поворота руля",
       "type": "num",
       "unit": null,
       "core": false,
@@ -664,7 +664,7 @@
     {
       "key": "steering_rate",
       "label_en": "Steering wheel rate",
-      "label_ru": "Steering wheel rate",
+      "label_ru": "Скорость вращения руля",
       "type": "num",
       "unit": null,
       "core": false,
@@ -686,7 +686,7 @@
     {
       "key": "total_energy",
       "label_en": "Total energy consumption",
-      "label_ru": "Total energy consumption",
+      "label_ru": "Общее потребление энергии",
       "type": "num",
       "unit": null,
       "core": false,
@@ -712,7 +712,7 @@
     {
       "key": "battery_charge",
       "label_en": "Battery charge (%)",
-      "label_ru": "Battery charge (%)",
+      "label_ru": "Заряд батареи (%)",
       "type": "num",
       "unit": null,
       "core": false,
@@ -734,7 +734,7 @@
     {
       "key": "fuel_level",
       "label_en": "Fuel level (%)",
-      "label_ru": "Fuel level (%)",
+      "label_ru": "Уровень топлива (%)",
       "type": "num",
       "unit": null,
       "core": false,
@@ -758,7 +758,7 @@
     {
       "key": "total_fuel",
       "label_en": "Total fuel consumption",
-      "label_ru": "Total fuel consumption",
+      "label_ru": "Общий расход топлива",
       "type": "num",
       "unit": null,
       "core": false,
@@ -780,7 +780,7 @@
     {
       "key": "lane_curvature",
       "label_en": "Lane curvature",
-      "label_ru": "Lane curvature",
+      "label_ru": "Кривизна полосы",
       "type": "num",
       "unit": null,
       "core": false,
@@ -802,7 +802,7 @@
     {
       "key": "right_lane_distance",
       "label_en": "Right lane distance",
-      "label_ru": "Right lane distance",
+      "label_ru": "Дистанция до правой полосы",
       "type": "num",
       "unit": null,
       "core": false,
@@ -824,7 +824,7 @@
     {
       "key": "left_lane_distance",
       "label_en": "Left lane distance",
-      "label_ru": "Left lane distance",
+      "label_ru": "Дистанция до левой полосы",
       "type": "num",
       "unit": null,
       "core": false,
@@ -846,7 +846,7 @@
     {
       "key": "battery_12v_voltage",
       "label_en": "12V battery voltage",
-      "label_ru": "12V battery voltage",
+      "label_ru": "Напряжение АКБ 12В",
       "type": "num",
       "unit": null,
       "core": false,
@@ -868,7 +868,7 @@
     {
       "key": "radar_fl",
       "label_en": "Radar front-left",
-      "label_ru": "Radar front-left",
+      "label_ru": "Радар передний-левый",
       "type": "num",
       "unit": null,
       "core": false,
@@ -890,7 +890,7 @@
     {
       "key": "radar_fr",
       "label_en": "Radar front-right",
-      "label_ru": "Radar front-right",
+      "label_ru": "Радар передний-правый",
       "type": "num",
       "unit": null,
       "core": false,
@@ -912,7 +912,7 @@
     {
       "key": "radar_rl",
       "label_en": "Radar rear-left",
-      "label_ru": "Radar rear-left",
+      "label_ru": "Радар задний-левый",
       "type": "num",
       "unit": null,
       "core": false,
@@ -934,7 +934,7 @@
     {
       "key": "radar_rr",
       "label_en": "Radar rear-right",
-      "label_ru": "Radar rear-right",
+      "label_ru": "Радар задний-правый",
       "type": "num",
       "unit": null,
       "core": false,
@@ -956,7 +956,7 @@
     {
       "key": "radar_left",
       "label_en": "Radar left",
-      "label_ru": "Radar left",
+      "label_ru": "Радар левый",
       "type": "num",
       "unit": null,
       "core": false,
@@ -978,7 +978,7 @@
     {
       "key": "radar_flc",
       "label_en": "Radar front-left-center",
-      "label_ru": "Radar front-left-center",
+      "label_ru": "Радар передний центр-левый",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1000,7 +1000,7 @@
     {
       "key": "radar_frc",
       "label_en": "Radar front-right-center",
-      "label_ru": "Radar front-right-center",
+      "label_ru": "Радар передний центр-правый",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1022,7 +1022,7 @@
     {
       "key": "radar_rc",
       "label_en": "Radar rear-center",
-      "label_ru": "Radar rear-center",
+      "label_ru": "Радар задний центр",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1044,7 +1044,7 @@
     {
       "key": "front_wiper_speed",
       "label_en": "Front wiper speed",
-      "label_ru": "Front wiper speed",
+      "label_ru": "Скорость передних дворников",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1070,7 +1070,7 @@
     {
       "key": "wiper_mode",
       "label_en": "Wiper mode",
-      "label_ru": "Wiper mode",
+      "label_ru": "Режим дворников",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1092,7 +1092,7 @@
     {
       "key": "cruise_switch",
       "label_en": "Cruise switch",
-      "label_ru": "Cruise switch",
+      "label_ru": "Круиз-контроль",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1118,7 +1118,7 @@
     {
       "key": "distance_to_car_ahead",
       "label_en": "Distance to car ahead",
-      "label_ru": "Distance to car ahead",
+      "label_ru": "Дистанция до впереди идущего",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1140,7 +1140,7 @@
     {
       "key": "charging_state",
       "label_en": "Charging state",
-      "label_ru": "Charging state",
+      "label_ru": "Состояние зарядки",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -1166,7 +1166,7 @@
     {
       "key": "tyre_pressure_fl",
       "label_en": "Tyre pressure FL",
-      "label_ru": "Tyre pressure FL",
+      "label_ru": "Давление в шине ПЛ",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1188,7 +1188,7 @@
     {
       "key": "tyre_pressure_fr",
       "label_en": "Tyre pressure FR",
-      "label_ru": "Tyre pressure FR",
+      "label_ru": "Давление в шине ПП",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1210,7 +1210,7 @@
     {
       "key": "tyre_pressure_rl",
       "label_en": "Tyre pressure RL",
-      "label_ru": "Tyre pressure RL",
+      "label_ru": "Давление в шине ЗЛ",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1232,7 +1232,7 @@
     {
       "key": "tyre_pressure_rr",
       "label_en": "Tyre pressure RR",
-      "label_ru": "Tyre pressure RR",
+      "label_ru": "Давление в шине ЗП",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1254,7 +1254,7 @@
     {
       "key": "left_turn",
       "label_en": "Left turn signal",
-      "label_ru": "Left turn signal",
+      "label_ru": "Левый поворотник",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -1280,7 +1280,7 @@
     {
       "key": "right_turn",
       "label_en": "Right turn signal",
-      "label_ru": "Right turn signal",
+      "label_ru": "Правый поворотник",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -1306,7 +1306,7 @@
     {
       "key": "driver_door_lock",
       "label_en": "Driver door lock",
-      "label_ru": "Driver door lock",
+      "label_ru": "Блокировка двери водителя",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -1328,7 +1328,7 @@
     {
       "key": "window_fl",
       "label_en": "Window FL open (%)",
-      "label_ru": "Window FL open (%)",
+      "label_ru": "Стекло ПЛ (%)",
       "type": "num",
       "unit": null,
       "core": true,
@@ -1354,7 +1354,7 @@
     {
       "key": "window_fr",
       "label_en": "Window FR open (%)",
-      "label_ru": "Window FR open (%)",
+      "label_ru": "Стекло ПП (%)",
       "type": "num",
       "unit": null,
       "core": true,
@@ -1380,7 +1380,7 @@
     {
       "key": "window_rl",
       "label_en": "Window RL open (%)",
-      "label_ru": "Window RL open (%)",
+      "label_ru": "Стекло ЗЛ (%)",
       "type": "num",
       "unit": null,
       "core": true,
@@ -1406,7 +1406,7 @@
     {
       "key": "window_rr",
       "label_en": "Window RR open (%)",
-      "label_ru": "Window RR open (%)",
+      "label_ru": "Стекло ЗП (%)",
       "type": "num",
       "unit": null,
       "core": true,
@@ -1438,7 +1438,7 @@
     {
       "key": "sunroof",
       "label_en": "Sunroof open (%)",
-      "label_ru": "Sunroof open (%)",
+      "label_ru": "Люк (%)",
       "type": "num",
       "unit": null,
       "core": true,
@@ -1464,7 +1464,7 @@
     {
       "key": "sunshade",
       "label_en": "Sunshade open (%)",
-      "label_ru": "Sunshade open (%)",
+      "label_ru": "Шторка люка (%)",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1490,7 +1490,7 @@
     {
       "key": "powertrain_mode",
       "label_en": "Powertrain work mode",
-      "label_ru": "Powertrain work mode",
+      "label_ru": "Режим силовой установки",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -1516,7 +1516,7 @@
     {
       "key": "drive_mode",
       "label_en": "Drive mode",
-      "label_ru": "Drive mode",
+      "label_ru": "Режим движения",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -1542,7 +1542,7 @@
     {
       "key": "month",
       "label_en": "Month",
-      "label_ru": "Month",
+      "label_ru": "Месяц",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1564,7 +1564,7 @@
     {
       "key": "day",
       "label_en": "Day",
-      "label_ru": "Day",
+      "label_ru": "День",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1586,7 +1586,7 @@
     {
       "key": "hour",
       "label_en": "Hour",
-      "label_ru": "Hour",
+      "label_ru": "Час",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1608,7 +1608,7 @@
     {
       "key": "minute",
       "label_en": "Minute",
-      "label_ru": "Minute",
+      "label_ru": "Минута",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1630,7 +1630,7 @@
     {
       "key": "passenger_seatbelt_warning",
       "label_en": "Passenger seatbelt warning",
-      "label_ru": "Passenger seatbelt warning",
+      "label_ru": "Предупреждение о ремне пассажира",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -1652,7 +1652,7 @@
     {
       "key": "seatbelt_2nd_left",
       "label_en": "2nd row left seatbelt",
-      "label_ru": "2nd row left seatbelt",
+      "label_ru": "Ремень 2-го ряда левый",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -1674,7 +1674,7 @@
     {
       "key": "seatbelt_2nd_right",
       "label_en": "2nd row right seatbelt",
-      "label_ru": "2nd row right seatbelt",
+      "label_ru": "Ремень 2-го ряда правый",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -1696,7 +1696,7 @@
     {
       "key": "seatbelt_2nd_center",
       "label_en": "2nd row center seatbelt",
-      "label_ru": "2nd row center seatbelt",
+      "label_ru": "Ремень 2-го ряда центр",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -1718,7 +1718,7 @@
     {
       "key": "ac_state",
       "label_en": "A/C state",
-      "label_ru": "A/C state",
+      "label_ru": "Состояние кондиционера",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -1744,7 +1744,7 @@
     {
       "key": "fan_speed",
       "label_en": "Fan speed level",
-      "label_ru": "Fan speed level",
+      "label_ru": "Скорость вентилятора",
       "type": "num",
       "unit": null,
       "core": false,
@@ -1766,7 +1766,7 @@
     {
       "key": "ac_recirculation",
       "label_en": "A/C recirculation",
-      "label_ru": "A/C recirculation",
+      "label_ru": "Рециркуляция",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -1788,7 +1788,7 @@
     {
       "key": "ac_airflow_mode",
       "label_en": "A/C airflow mode",
-      "label_ru": "A/C airflow mode",
+      "label_ru": "Режим обдува",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -1810,7 +1810,7 @@
     {
       "key": "driver_door",
       "label_en": "Driver door",
-      "label_ru": "Driver door",
+      "label_ru": "Дверь водителя",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -1832,7 +1832,7 @@
     {
       "key": "passenger_door",
       "label_en": "Passenger door",
-      "label_ru": "Passenger door",
+      "label_ru": "Дверь пассажира",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -1854,7 +1854,7 @@
     {
       "key": "rear_left_door",
       "label_en": "Rear-left door",
-      "label_ru": "Rear-left door",
+      "label_ru": "Задняя левая дверь",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -1880,7 +1880,7 @@
     {
       "key": "rear_right_door",
       "label_en": "Rear-right door",
-      "label_ru": "Rear-right door",
+      "label_ru": "Задняя правая дверь",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -1906,7 +1906,7 @@
     {
       "key": "bonnet",
       "label_en": "Bonnet",
-      "label_ru": "Bonnet",
+      "label_ru": "Капот",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -1928,7 +1928,7 @@
     {
       "key": "trunk",
       "label_en": "Trunk",
-      "label_ru": "Trunk",
+      "label_ru": "Багажник",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -1950,7 +1950,7 @@
     {
       "key": "fuel_charge_flap",
       "label_en": "Fuel/charge flap",
-      "label_ru": "Fuel/charge flap",
+      "label_ru": "Лючок топлива/зарядки",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -1976,7 +1976,7 @@
     {
       "key": "auto_hold",
       "label_en": "Auto hold",
-      "label_ru": "Auto hold",
+      "label_ru": "Автоудержание",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2002,7 +2002,7 @@
     {
       "key": "acc_cruise_state",
       "label_en": "ACC cruise state",
-      "label_ru": "ACC cruise state",
+      "label_ru": "Состояние ACC",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2028,7 +2028,7 @@
     {
       "key": "rear_left_approach_warning",
       "label_en": "Rear-left approach warning",
-      "label_ru": "Rear-left approach warning",
+      "label_ru": "Предупреждение сзади слева",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2050,7 +2050,7 @@
     {
       "key": "rear_right_approach_warning",
       "label_en": "Rear-right approach warning",
-      "label_ru": "Rear-right approach warning",
+      "label_ru": "Предупреждение сзади справа",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2072,7 +2072,7 @@
     {
       "key": "lane_keep_state",
       "label_en": "Lane keep state",
-      "label_ru": "Lane keep state",
+      "label_ru": "Состояние удержания полосы",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2098,7 +2098,7 @@
     {
       "key": "rear_left_door_lock",
       "label_en": "Rear-left door lock",
-      "label_ru": "Rear-left door lock",
+      "label_ru": "Блокировка задней левой двери",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -2124,7 +2124,7 @@
     {
       "key": "passenger_door_lock",
       "label_en": "Passenger door lock",
-      "label_ru": "Passenger door lock",
+      "label_ru": "Блокировка двери пассажира",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -2146,7 +2146,7 @@
     {
       "key": "rear_right_door_lock",
       "label_en": "Rear-right door lock",
-      "label_ru": "Rear-right door lock",
+      "label_ru": "Блокировка задней правой двери",
       "type": "enum",
       "unit": null,
       "core": true,
@@ -2172,7 +2172,7 @@
     {
       "key": "trunk_lock",
       "label_en": "Trunk lock",
-      "label_ru": "Trunk lock",
+      "label_ru": "Блокировка багажника",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2194,7 +2194,7 @@
     {
       "key": "rear_left_child_lock",
       "label_en": "Rear-left child lock",
-      "label_ru": "Rear-left child lock",
+      "label_ru": "Детский замок сзади слева",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2216,7 +2216,7 @@
     {
       "key": "rear_right_child_lock",
       "label_en": "Rear-right child lock",
-      "label_ru": "Rear-right child lock",
+      "label_ru": "Детский замок сзади справа",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2238,7 +2238,7 @@
     {
       "key": "sidelights",
       "label_en": "Sidelights",
-      "label_ru": "Sidelights",
+      "label_ru": "Габаритные огни",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2264,7 +2264,7 @@
     {
       "key": "low_beam",
       "label_en": "Low beam",
-      "label_ru": "Low beam",
+      "label_ru": "Ближний свет",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2290,7 +2290,7 @@
     {
       "key": "high_beam",
       "label_en": "High beam",
-      "label_ru": "High beam",
+      "label_ru": "Дальний свет",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2316,7 +2316,7 @@
     {
       "key": "front_fog",
       "label_en": "Front fog",
-      "label_ru": "Front fog",
+      "label_ru": "Передние противотуманки",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2342,7 +2342,7 @@
     {
       "key": "rear_fog",
       "label_en": "Rear fog",
-      "label_ru": "Rear fog",
+      "label_ru": "Задние противотуманки",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2368,7 +2368,7 @@
     {
       "key": "footwell_light",
       "label_en": "Footwell light",
-      "label_ru": "Footwell light",
+      "label_ru": "Подсветка ног",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2390,7 +2390,7 @@
     {
       "key": "drl",
       "label_en": "DRL",
-      "label_ru": "DRL",
+      "label_ru": "ДХО",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2416,7 +2416,7 @@
     {
       "key": "engine_coolant_temp",
       "label_en": "Engine coolant temp",
-      "label_ru": "Engine coolant temp",
+      "label_ru": "Температура ОЖ",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2444,7 +2444,7 @@
     {
       "key": "hazard",
       "label_en": "Hazard lights",
-      "label_ru": "Hazard lights",
+      "label_ru": "Аварийная сигнализация",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2470,7 +2470,7 @@
     {
       "key": "slope",
       "label_en": "Slope / grade",
-      "label_ru": "Slope / grade",
+      "label_ru": "Уклон",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2492,7 +2492,7 @@
     {
       "key": "rain_amount",
       "label_en": "Rain amount",
-      "label_ru": "Rain amount",
+      "label_ru": "Интенсивность дождя",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2514,7 +2514,7 @@
     {
       "key": "passenger_seatbelt",
       "label_en": "Passenger seatbelt",
-      "label_ru": "Passenger seatbelt",
+      "label_ru": "Ремень пассажира",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2540,7 +2540,7 @@
     {
       "key": "second",
       "label_en": "Second",
-      "label_ru": "Second",
+      "label_ru": "Секунда",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2562,7 +2562,7 @@
     {
       "key": "soc",
       "label_en": "Battery SOC (%)",
-      "label_ru": "Battery SOC (%)",
+      "label_ru": "SOC батареи (%)",
       "type": "num",
       "unit": null,
       "core": true,
@@ -2588,7 +2588,7 @@
     {
       "key": "turn_signal",
       "label_en": "Turn signal",
-      "label_ru": "Turn signal",
+      "label_ru": "Поворотник",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2610,7 +2610,7 @@
     {
       "key": "surround_view_state",
       "label_en": "Surround-view state",
-      "label_ru": "Surround-view state",
+      "label_ru": "Круговой обзор",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2632,7 +2632,7 @@
     {
       "key": "ui_config_version",
       "label_en": "UI config version",
-      "label_ru": "UI config version",
+      "label_ru": "Версия конфигурации UI",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2654,7 +2654,7 @@
     {
       "key": "sentry_state",
       "label_en": "Sentry state",
-      "label_ru": "Sentry state",
+      "label_ru": "Sentry режим",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2676,7 +2676,7 @@
     {
       "key": "parked_recording_switch",
       "label_en": "Parked-recording switch",
-      "label_ru": "Parked-recording switch",
+      "label_ru": "Парковочная запись",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2698,7 +2698,7 @@
     {
       "key": "parked_sentry_alarm",
       "label_en": "Parked sentry alarm",
-      "label_ru": "Parked sentry alarm",
+      "label_ru": "Sentry сигнализация",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2720,7 +2720,7 @@
     {
       "key": "wifi_state",
       "label_en": "Wi-Fi state",
-      "label_ru": "Wi-Fi state",
+      "label_ru": "Состояние Wi-Fi",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2742,7 +2742,7 @@
     {
       "key": "bluetooth_state",
       "label_en": "Bluetooth state",
-      "label_ru": "Bluetooth state",
+      "label_ru": "Состояние Bluetooth",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2764,7 +2764,7 @@
     {
       "key": "bluetooth_signal",
       "label_en": "Bluetooth signal",
-      "label_ru": "Bluetooth signal",
+      "label_ru": "Сигнал Bluetooth",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2786,7 +2786,7 @@
     {
       "key": "sway_magnitude",
       "label_en": "Sway magnitude",
-      "label_ru": "Sway magnitude",
+      "label_ru": "Амплитуда раскачивания",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2808,7 +2808,7 @@
     {
       "key": "vibration_magnitude",
       "label_en": "Vibration magnitude",
-      "label_ru": "Vibration magnitude",
+      "label_ru": "Амплитуда вибрации",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2830,7 +2830,7 @@
     {
       "key": "screen_width",
       "label_en": "Screen width",
-      "label_ru": "Screen width",
+      "label_ru": "Ширина экрана",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2852,7 +2852,7 @@
     {
       "key": "screen_height",
       "label_en": "Screen height",
-      "label_ru": "Screen height",
+      "label_ru": "Высота экрана",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2874,7 +2874,7 @@
     {
       "key": "dashcam_state",
       "label_en": "Dashcam state",
-      "label_ru": "Dashcam state",
+      "label_ru": "Состояние видеорегистратора",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2896,7 +2896,7 @@
     {
       "key": "wireless_adb_switch",
       "label_en": "Wireless ADB switch",
-      "label_ru": "Wireless ADB switch",
+      "label_ru": "Беспроводной ADB",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -2918,7 +2918,7 @@
     {
       "key": "media_volume",
       "label_en": "Media volume",
-      "label_ru": "Media volume",
+      "label_ru": "Громкость медиа",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2940,7 +2940,7 @@
     {
       "key": "navigation_volume",
       "label_en": "Navigation volume",
-      "label_ru": "Navigation volume",
+      "label_ru": "Громкость навигации",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2962,7 +2962,7 @@
     {
       "key": "ai_person_confidence",
       "label_en": "AI person confidence",
-      "label_ru": "AI person confidence",
+      "label_ru": "AI обнаружение человека",
       "type": "num",
       "unit": null,
       "core": false,
@@ -2984,7 +2984,7 @@
     {
       "key": "ai_vehicle_confidence",
       "label_en": "AI vehicle confidence",
-      "label_ru": "AI vehicle confidence",
+      "label_ru": "AI обнаружение ТС",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3006,7 +3006,7 @@
     {
       "key": "last_sentry_trigger_time",
       "label_en": "Last sentry trigger time",
-      "label_ru": "Last sentry trigger time",
+      "label_ru": "Время последнего срабатывания Sentry",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3028,7 +3028,7 @@
     {
       "key": "last_clip_start_time",
       "label_en": "Last clip start time",
-      "label_ru": "Last clip start time",
+      "label_ru": "Время начала последнего клипа",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3050,7 +3050,7 @@
     {
       "key": "last_clip_end_time",
       "label_en": "Last clip end time",
-      "label_ru": "Last clip end time",
+      "label_ru": "Время конца последнего клипа",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3072,7 +3072,7 @@
     {
       "key": "lead_car_start_state",
       "label_en": "Lead-car start state",
-      "label_ru": "Lead-car start state",
+      "label_ru": "Старт впереди идущего авто",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3094,7 +3094,7 @@
     {
       "key": "engine_load",
       "label_en": "Engine load",
-      "label_ru": "Engine load",
+      "label_ru": "Нагрузка двигателя",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3118,7 +3118,7 @@
     {
       "key": "intake_air_temp",
       "label_en": "Intake air temperature",
-      "label_ru": "Intake air temperature",
+      "label_ru": "Температура впускного воздуха",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3142,7 +3142,7 @@
     {
       "key": "maf",
       "label_en": "MAF air flow",
-      "label_ru": "MAF air flow",
+      "label_ru": "Расход воздуха (MAF)",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3166,7 +3166,7 @@
     {
       "key": "ambient_temp",
       "label_en": "Ambient temperature",
-      "label_ru": "Ambient temperature",
+      "label_ru": "Температура окружающей среды",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3190,7 +3190,7 @@
     {
       "key": "engine_oil_temp",
       "label_en": "Engine oil temperature",
-      "label_ru": "Engine oil temperature",
+      "label_ru": "Температура масла двигателя",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3214,7 +3214,7 @@
     {
       "key": "fuel_rate",
       "label_en": "Fuel consumption rate",
-      "label_ru": "Fuel consumption rate",
+      "label_ru": "Расход топлива",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3238,7 +3238,7 @@
     {
       "key": "driver_seat_heat",
       "label_en": "Driver seat heating",
-      "label_ru": "Driver seat heating",
+      "label_ru": "Подогрев сиденья водителя",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3264,7 +3264,7 @@
     {
       "key": "passenger_seat_heat",
       "label_en": "Passenger seat heating",
-      "label_ru": "Passenger seat heating",
+      "label_ru": "Подогрев сиденья пассажира",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3290,7 +3290,7 @@
     {
       "key": "driver_seat_vent",
       "label_en": "Driver seat ventilation",
-      "label_ru": "Driver seat ventilation",
+      "label_ru": "Обдув сиденья водителя",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3316,7 +3316,7 @@
     {
       "key": "passenger_seat_vent",
       "label_en": "Passenger seat ventilation",
-      "label_ru": "Passenger seat ventilation",
+      "label_ru": "Обдув сиденья пассажира",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3342,7 +3342,7 @@
     {
       "key": "rear_left_seat_heat",
       "label_en": "Rear-left seat heating",
-      "label_ru": "Rear-left seat heating",
+      "label_ru": "Подогрев заднего левого сиденья",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3368,7 +3368,7 @@
     {
       "key": "rear_right_seat_heat",
       "label_en": "Rear-right seat heating",
-      "label_ru": "Rear-right seat heating",
+      "label_ru": "Подогрев заднего правого сиденья",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3394,7 +3394,7 @@
     {
       "key": "steering_wheel_heat",
       "label_en": "Steering wheel heating",
-      "label_ru": "Steering wheel heating",
+      "label_ru": "Подогрев руля",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3420,7 +3420,7 @@
     {
       "key": "rear_defrost",
       "label_en": "Rear window defrost",
-      "label_ru": "Rear window defrost",
+      "label_ru": "Обогрев заднего стекла",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3446,7 +3446,7 @@
     {
       "key": "charge_rate",
       "label_en": "Charge rate",
-      "label_ru": "Charge rate",
+      "label_ru": "Скорость зарядки",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3472,7 +3472,7 @@
     {
       "key": "mirror_fold",
       "label_en": "Rear mirror fold",
-      "label_ru": "Rear mirror fold",
+      "label_ru": "Складывание зеркал",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3497,8 +3497,8 @@
     },
     {
       "key": "location_lat",
-      "label_en": "Latitude",
-      "label_ru": "Latitude",
+      "label_en": "GPS latitude",
+      "label_ru": "Широта GPS",
       "type": "gps",
       "unit": null,
       "core": true,
@@ -3520,8 +3520,8 @@
     },
     {
       "key": "location_lon",
-      "label_en": "Longitude",
-      "label_ru": "Longitude",
+      "label_en": "GPS longitude",
+      "label_ru": "Долгота GPS",
       "type": "gps",
       "unit": null,
       "core": true,
@@ -3544,7 +3544,7 @@
     {
       "key": "location_speed",
       "label_en": "GPS speed",
-      "label_ru": "GPS speed",
+      "label_ru": "Скорость GPS",
       "type": "gps",
       "unit": "km/h",
       "core": true,
@@ -3566,8 +3566,8 @@
     },
     {
       "key": "location_bearing",
-      "label_en": "Bearing / azimuth",
-      "label_ru": "Bearing / azimuth",
+      "label_en": "GPS bearing",
+      "label_ru": "Курс GPS",
       "type": "gps",
       "unit": "deg",
       "core": true,
@@ -3589,8 +3589,8 @@
     },
     {
       "key": "location_altitude",
-      "label_en": "Altitude",
-      "label_ru": "Altitude",
+      "label_en": "GPS altitude",
+      "label_ru": "Высота GPS",
       "type": "gps",
       "unit": "m",
       "core": true,
@@ -3612,8 +3612,8 @@
     },
     {
       "key": "location_accuracy",
-      "label_en": "Location accuracy",
-      "label_ru": "Location accuracy",
+      "label_en": "GPS accuracy",
+      "label_ru": "Точность GPS",
       "type": "gps",
       "unit": "m",
       "core": true,
@@ -3636,7 +3636,7 @@
     {
       "key": "location_provider",
       "label_en": "Location provider",
-      "label_ru": "Location provider",
+      "label_ru": "Источник геолокации",
       "type": "gps",
       "unit": null,
       "core": true,
@@ -3658,8 +3658,8 @@
     },
     {
       "key": "device_battery",
-      "label_en": "Device battery level",
-      "label_ru": "Device battery level",
+      "label_en": "Head unit battery level",
+      "label_ru": "Заряд устройства (%)",
       "type": "device",
       "unit": "%",
       "core": true,
@@ -3681,8 +3681,8 @@
     },
     {
       "key": "device_pressure",
-      "label_en": "Barometric pressure",
-      "label_ru": "Barometric pressure",
+      "label_en": "Device pressure",
+      "label_ru": "Давление устройства",
       "type": "device",
       "unit": "hPa",
       "core": false,
@@ -3705,7 +3705,7 @@
     {
       "key": "system_media_volume",
       "label_en": "System media volume",
-      "label_ru": "System media volume",
+      "label_ru": "Громкость медиа",
       "type": "device",
       "unit": "%",
       "core": false,
@@ -3728,7 +3728,7 @@
     {
       "key": "windows_state",
       "label_en": "Windows open count",
-      "label_ru": "Windows open count",
+      "label_ru": "Открытых окон",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3751,7 +3751,7 @@
     {
       "key": "doors_state",
       "label_en": "Doors open count",
-      "label_ru": "Doors open count",
+      "label_ru": "Открытых дверей",
       "type": "num",
       "unit": null,
       "core": false,
@@ -3774,7 +3774,7 @@
     {
       "key": "windows_all_state",
       "label_en": "Windows all closed",
-      "label_ru": "Windows all closed",
+      "label_ru": "Все окна закрыты",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3797,7 +3797,7 @@
     {
       "key": "doors_all_state",
       "label_en": "Doors all closed",
-      "label_ru": "Doors all closed",
+      "label_ru": "Все двери закрыты",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3820,7 +3820,7 @@
     {
       "key": "doors_all_lock",
       "label_en": "Doors all locked",
-      "label_ru": "Doors all locked",
+      "label_ru": "Все двери заперты",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3843,7 +3843,7 @@
     {
       "key": "battery_remaining_charge_time",
       "label_en": "Battery remaining charge time",
-      "label_ru": "Battery remaining charge time",
+      "label_ru": "Время до конца зарядки",
       "type": "num",
       "unit": "min",
       "core": false,
@@ -3866,7 +3866,7 @@
     {
       "key": "avg_speed",
       "label_en": "Average speed",
-      "label_ru": "Average speed",
+      "label_ru": "Средняя скорость",
       "type": "num",
       "unit": "km/h",
       "core": false,
@@ -3889,7 +3889,7 @@
     {
       "key": "avg_power",
       "label_en": "Average power",
-      "label_ru": "Average power",
+      "label_ru": "Средняя мощность",
       "type": "num",
       "unit": "kW",
       "core": false,
@@ -3912,7 +3912,7 @@
     {
       "key": "energy_recovery_gear",
       "label_en": "Energy recovery gear",
-      "label_ru": "Energy recovery gear",
+      "label_ru": "Уровень рекуперации",
       "type": "enum",
       "unit": null,
       "core": false,
@@ -3935,7 +3935,7 @@
     {
       "key": "energy_flow",
       "label_en": "Energy flow",
-      "label_ru": "Energy flow",
+      "label_ru": "Поток энергии",
       "type": "enum",
       "unit": null,
       "core": false,
