@@ -38,6 +38,7 @@ import com.car2hass.BackgroundModeManager;
 import com.car2hass.BuildConfig;
 import com.car2hass.CANDataItem;
 import com.car2hass.CANDataReader;
+import com.car2hass.CloudSyncClient;
 import com.car2hass.CommandPoller;
 import com.car2hass.ProbeUploader;
 import com.car2hass.vehicle.BydCloudChannel;
@@ -92,6 +93,8 @@ public class TelemetryService extends Service {
     private static final long REFRESH_INTERVAL_MS = 7000;
     private static final long FLUSH_INTERVAL_MS = 4000; // batch window 3–5 s (spec Section 3)
     private static final long SNAPSHOT_INTERVAL_MS = 1000; // 1 Hz snapshot ticker
+    private static final long LAST_VALUES_SAVE_INTERVAL_MS = 30000;
+    private static final int MAX_LAST_VALUES = 500;
 
     private final IBinder binder = new LocalBinder();
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -122,6 +125,8 @@ public class TelemetryService extends Service {
     private float lastAccuracy = 0;
     private long lastLocTime = 0;
     private volatile long lastNetworkFlushMs = 0;
+    private volatile long lastLastValuesSaveMs = 0;
+    private volatile boolean lastValuesDirty = false;
     private static final long NETWORK_FLUSH_DEBOUNCE_MS = 30000;
     private static final long VEHICLE_ASLEEP_INTERVAL_MS = 30000;
     private static final long LOCATION_MIN_TIME_MS = 3000;
@@ -185,6 +190,10 @@ public class TelemetryService extends Service {
         }
         acquireWakeLock();
         acquireWifiLock();
+        // Restore before knownItems/rules are built so the telemetry view and the
+        // rules engine see the previous session's values from the first tick.
+        com.car2hass.vehicle.ValueStore.setMain(valueStore);
+        restoreLastValues();
         knownItems = buildKnownItems();
         preregisterGeofenceItems();
         preregisterDerivedItems();
@@ -192,11 +201,12 @@ public class TelemetryService extends Service {
         telemetryExecutor = Executors.newSingleThreadExecutor();
         flushExecutor = Executors.newSingleThreadExecutor();
         ruleEngine = new RuleEngine(getApplicationContext(), valueStore::get);
-        com.car2hass.vehicle.ValueStore.setMain(valueStore);
-        restoreLastValues();
         // Event-driven rules: re-evaluate affected rules as soon as a channel
         // writes a changed value, instead of waiting for the 1s engine tick.
         valueStore.addListener((key, value, source) -> {
+            // Restored values are not a change: never treat them as an edge.
+            if (com.car2hass.vehicle.ValueStore.SOURCE_RESTORED.equals(source)) return;
+            lastValuesDirty = true;
             if (ruleEngine != null) ruleEngine.signalChanged(key);
             // Derived door/window aggregates must react to a source change at once,
             // not only on the CAN / 1 Hz snapshot cycles.
@@ -604,6 +614,14 @@ public class TelemetryService extends Service {
                         LogBuffer.w("TelemetryService", "value history flush failed: " + e.getMessage());
                     }
                 }
+                // Persist last-known values periodically (not only on exit) so a
+                // kill/restart can still restore the previous session immediately.
+                long now = System.currentTimeMillis();
+                if (lastValuesDirty && now - lastLastValuesSaveMs >= LAST_VALUES_SAVE_INTERVAL_MS) {
+                    lastLastValuesSaveMs = now;
+                    lastValuesDirty = false;
+                    saveLastValues();
+                }
             }
         });
     }
@@ -719,7 +737,9 @@ public class TelemetryService extends Service {
             java.util.Iterator<String> keys = obj.keys();
             while (keys.hasNext()) {
                 String k = keys.next();
-                valueStore.put(k, obj.optString(k), "restored");
+                String v = obj.optString(k);
+                if (v == null || v.isEmpty() || "---".equals(v)) continue;
+                valueStore.put(k, v, com.car2hass.vehicle.ValueStore.SOURCE_RESTORED);
             }
             LogBuffer.i("TelemetryService", "Restored last values: " + obj.length());
         } catch (Exception e) {
@@ -730,9 +750,13 @@ public class TelemetryService extends Service {
     private void saveLastValues() {
         try {
             org.json.JSONObject obj = new org.json.JSONObject();
+            int saved = 0;
             for (java.util.Map.Entry<String, String> e : valueStore.snapshot().entrySet()) {
-                if (e.getKey() == null || e.getValue() == null || "---".equals(e.getValue())) continue;
+                if (saved >= MAX_LAST_VALUES) break;
+                if (e.getKey() == null || e.getValue() == null || e.getValue().isEmpty()
+                        || "---".equals(e.getValue())) continue;
                 obj.put(e.getKey(), e.getValue());
+                saved++;
             }
             AppConfig.saveLastValuesJson(this, obj.toString());
         } catch (Exception e) {
@@ -856,6 +880,7 @@ public class TelemetryService extends Service {
                 String value = e.getValue();
                 if (key == null || !key.startsWith("geo_")) continue;
                 if (value == null || value.isEmpty() || "---".equals(value)) continue;
+                if (valueStore.isRestored(key)) continue;
                 sig.put(key, value);
             }
 
@@ -981,15 +1006,22 @@ public class TelemetryService extends Service {
         } catch (Exception ignored) {}
 
         JSONObject sig = new JSONObject();
+        java.util.Map<String, Object> cloudSensors = new java.util.LinkedHashMap<>();
         try {
             // GPS minimum — always included in the integration
             for (String k : new String[]{"location_lat", "location_lon", "location_speed",
                     "location_bearing", "location_altitude", "location_accuracy", "location_provider"}) {
                 String v = snapshotStore.get(k);
-                if (v != null) sig.put(k, v);
+                if (v != null) {
+                    sig.put(k, v);
+                    cloudSensors.put(k, v);
+                }
             }
             String batt = snapshotStore.get("device_battery");
-            if (batt != null) sig.put("device_battery", batt);
+            if (batt != null) {
+                sig.put("device_battery", batt);
+                cloudSensors.put("device_battery", batt);
+            }
             // Derived aggregates must be refreshed before the cache loop picks
             // up the cached value for the current batch.
             refreshDerivedSensors();
@@ -1004,6 +1036,10 @@ public class TelemetryService extends Service {
                 // Never forward non-finite numerics ("nan"/"inf"): HA rejects
                 // them for measurement sensors (ValueError).
                 if (isNonFiniteNumeric(v)) continue;
+                cloudSensors.put(key, v);
+                // Restored values are dashboard/telemetry-only: Home Assistant
+                // must receive only values a live source has confirmed.
+                if (valueStore.isRestored(key)) continue;
                 sig.put(key, v);
             }
         } catch (org.json.JSONException e) {
@@ -1012,6 +1048,9 @@ public class TelemetryService extends Service {
         SnapshotStore.Loc l = snapshotStore.getLocation();
         HassClient.collectSnapshot(this, l.lat, l.lon, l.accuracy,
                 l.timeMs > 0 ? l.timeMs / 1000 : 0, sig.toString());
+        if (AppConfig.isCloudSyncEnabled(this) && !cloudSensors.isEmpty()) {
+            CloudSyncClient.sendBatch(this, cloudSensors, l.lat, l.lon);
+        }
     }
 
     /** True when a string is a numeric literal that is NaN/Infinity. */
@@ -1484,6 +1523,7 @@ public class TelemetryService extends Service {
         try {
             int openWindows = 0, totalWindows = 0;
             for (String k : DERIVED_WINDOW_KEYS) {
+                if (valueStore.isRestored(k)) continue;
                 String v = valueStore.get(k);
                 if (v == null || v.isEmpty() || "---".equals(v)) continue;
                 totalWindows++;
@@ -1498,6 +1538,7 @@ public class TelemetryService extends Service {
 
             int openDoors = 0, totalDoors = 0;
             for (String k : DERIVED_DOOR_KEYS) {
+                if (valueStore.isRestored(k)) continue;
                 String v = valueStore.get(k);
                 if (v == null || v.isEmpty() || "---".equals(v)) continue;
                 totalDoors++;
@@ -1555,6 +1596,7 @@ public class TelemetryService extends Service {
             java.util.Set<String> countKeys = new java.util.HashSet<>(
                     java.util.Arrays.asList(DERIVED_COUNT_KEYS));
             for (String key : DERIVED_SENSOR_KEYS) {
+                if (valueStore.isRestored(key)) continue;
                 String v = valueStore.get(key);
                 if (v == null || v.isEmpty() || "---".equals(v)) continue;
                 if (countKeys.contains(key)) {

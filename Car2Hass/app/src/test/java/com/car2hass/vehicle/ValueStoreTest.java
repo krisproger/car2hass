@@ -10,6 +10,17 @@ public class ValueStoreTest {
         if (store.ageMs("location_lat") < 0) throw new AssertionError("age negative");
         store.put("speed", "10", "adb");
         if (store.snapshot().size() != 2) throw new AssertionError("snapshot size");
+        if (store.isRestored("speed")) throw new AssertionError("live key reported as restored");
+
+        ValueStore restored = new ValueStore();
+        restored.put("doors_state", "2", ValueStore.SOURCE_RESTORED);
+        restored.put("speed", "10", "channel");
+        if (!restored.isRestored("doors_state")) throw new AssertionError("restored key not detected");
+        if (restored.isRestored("speed")) throw new AssertionError("live key after restore reported as restored");
+        if (restored.isRestored("missing")) throw new AssertionError("missing key reported as restored");
+        restored.put("doors_state", "0", "channel");
+        if (restored.isRestored("doors_state")) throw new AssertionError("key stayed restored after live update");
+
         System.out.println("All ValueStore tests passed.");
     }
 }

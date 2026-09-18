@@ -14,10 +14,10 @@ import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 
 /**
- * Stores sensitive values (HA Long-Lived Access Token) encrypted with a key
- * backed by the Android Keystore. Falls back to plain SharedPreferences only
- * when the keystore is unavailable, and migrates legacy plaintext values on
- * first access.
+ * Stores sensitive values (HA Long-Lived Access Token and cloud account tokens)
+ * encrypted with a key backed by the Android Keystore. Falls back to plain
+ * SharedPreferences only when the keystore is unavailable, and migrates legacy
+ * plaintext values on first access.
  */
 public class SecureStorage {
     private static final String PREFS_NAME = "secure_hass_config";
@@ -25,6 +25,13 @@ public class SecureStorage {
     private static final String KEY_IV = "hass_token_iv";
     private static final String LEGACY_TOKEN_KEY = "hass_token";
     private static final String PLAIN_FALLBACK_KEY = "hass_token_plain";
+
+    private static final String KEY_CLOUD_TOKEN = "cloud_token_encrypted";
+    private static final String KEY_CLOUD_IV = "cloud_token_iv";
+    private static final String CLOUD_PLAIN_FALLBACK_KEY = "cloud_token_plain";
+    private static final String KEY_CLOUD_REFRESH = "cloud_refresh_encrypted";
+    private static final String KEY_CLOUD_REFRESH_IV = "cloud_refresh_iv";
+    private static final String CLOUD_REFRESH_PLAIN_FALLBACK_KEY = "cloud_refresh_plain";
 
     private static final String ANDROID_KEYSTORE = "AndroidKeyStore";
     private static final String KEY_ALIAS = "car2hass_token_key";
@@ -69,13 +76,70 @@ public class SecureStorage {
 
     /** Encrypt and store the HA access token. */
     public void saveToken(String token) {
-        if (token == null) token = "";
+        saveSecret(KEY_TOKEN, KEY_IV, PLAIN_FALLBACK_KEY, token);
+    }
+
+    /** Retrieve and decrypt the HA access token. */
+    public String getToken() {
+        // Migrate legacy plaintext token if present
+        String legacy = legacyPrefs.getString(LEGACY_TOKEN_KEY, null);
+        if (legacy != null) {
+            saveToken(legacy);
+            legacyPrefs.edit().remove(LEGACY_TOKEN_KEY).apply();
+            return legacy;
+        }
+        return getSecret(KEY_TOKEN, KEY_IV, PLAIN_FALLBACK_KEY);
+    }
+
+    /** Clear stored HA token. */
+    public void clearToken() {
+        clearSecret(KEY_TOKEN, KEY_IV, PLAIN_FALLBACK_KEY);
+    }
+
+    /** Encrypt and store the cloud (mytechnic.ru) access token. */
+    public void saveCloudToken(String token) {
+        saveSecret(KEY_CLOUD_TOKEN, KEY_CLOUD_IV, CLOUD_PLAIN_FALLBACK_KEY, token);
+    }
+
+    /** Retrieve and decrypt the cloud access token. */
+    public String getCloudToken() {
+        return getSecret(KEY_CLOUD_TOKEN, KEY_CLOUD_IV, CLOUD_PLAIN_FALLBACK_KEY);
+    }
+
+    /** Clear the stored cloud access token. */
+    public void clearCloudToken() {
+        clearSecret(KEY_CLOUD_TOKEN, KEY_CLOUD_IV, CLOUD_PLAIN_FALLBACK_KEY);
+    }
+
+    /** Encrypt and store the cloud refresh token. */
+    public void saveCloudRefreshToken(String token) {
+        saveSecret(KEY_CLOUD_REFRESH, KEY_CLOUD_REFRESH_IV, CLOUD_REFRESH_PLAIN_FALLBACK_KEY, token);
+    }
+
+    /** Retrieve and decrypt the cloud refresh token. */
+    public String getCloudRefreshToken() {
+        return getSecret(KEY_CLOUD_REFRESH, KEY_CLOUD_REFRESH_IV, CLOUD_REFRESH_PLAIN_FALLBACK_KEY);
+    }
+
+    /** Clear the stored cloud refresh token. */
+    public void clearCloudRefreshToken() {
+        clearSecret(KEY_CLOUD_REFRESH, KEY_CLOUD_REFRESH_IV, CLOUD_REFRESH_PLAIN_FALLBACK_KEY);
+    }
+
+    /** Clear both cloud tokens (access and refresh). */
+    public void clearCloudTokens() {
+        clearCloudToken();
+        clearCloudRefreshToken();
+    }
+
+    private void saveSecret(String tokenKey, String ivKey, String fallbackKey, String value) {
+        if (value == null) value = "";
         if (!keyAvailable) {
             // Fallback if keystore is unavailable on this device
             securePrefs.edit()
-                    .putString(PLAIN_FALLBACK_KEY, token)
-                    .remove(KEY_TOKEN)
-                    .remove(KEY_IV)
+                    .putString(fallbackKey, value)
+                    .remove(tokenKey)
+                    .remove(ivKey)
                     .apply();
             return;
         }
@@ -89,40 +153,30 @@ public class SecureStorage {
             if (iv == null || iv.length != GCM_IV_LENGTH) {
                 throw new IllegalStateException("Unexpected IV length: " + (iv == null ? 0 : iv.length));
             }
-            byte[] encrypted = cipher.doFinal(token.getBytes("UTF-8"));
+            byte[] encrypted = cipher.doFinal(value.getBytes("UTF-8"));
             securePrefs.edit()
-                    .putString(KEY_IV, Base64.encodeToString(iv, Base64.NO_WRAP))
-                    .putString(KEY_TOKEN, Base64.encodeToString(encrypted, Base64.NO_WRAP))
-                    .remove(PLAIN_FALLBACK_KEY)
+                    .putString(ivKey, Base64.encodeToString(iv, Base64.NO_WRAP))
+                    .putString(tokenKey, Base64.encodeToString(encrypted, Base64.NO_WRAP))
+                    .remove(fallbackKey)
                     .apply();
         } catch (Exception e) {
-            LogBuffer.e("SecureStorage", "Token encryption failed: " + e.getMessage());
+            LogBuffer.e("SecureStorage", "Secret encryption failed: " + e.getMessage());
             securePrefs.edit()
-                    .putString(PLAIN_FALLBACK_KEY, token)
-                    .remove(KEY_TOKEN)
-                    .remove(KEY_IV)
+                    .putString(fallbackKey, value)
+                    .remove(tokenKey)
+                    .remove(ivKey)
                     .apply();
         }
     }
 
-    /** Retrieve and decrypt the HA access token. */
-    public String getToken() {
-        // Migrate legacy plaintext token if present
-        String legacy = legacyPrefs.getString(LEGACY_TOKEN_KEY, null);
-        if (legacy != null) {
-            saveToken(legacy);
-            legacyPrefs.edit().remove(LEGACY_TOKEN_KEY).apply();
-            return legacy;
-        }
-
-        // Plaintext fallback
-        String plain = securePrefs.getString(PLAIN_FALLBACK_KEY, null);
+    private String getSecret(String tokenKey, String ivKey, String fallbackKey) {
+        String plain = securePrefs.getString(fallbackKey, null);
         if (plain != null) {
             return plain;
         }
 
-        String ivB64 = securePrefs.getString(KEY_IV, null);
-        String encB64 = securePrefs.getString(KEY_TOKEN, null);
+        String ivB64 = securePrefs.getString(ivKey, null);
+        String encB64 = securePrefs.getString(tokenKey, null);
         if (ivB64 == null || encB64 == null) {
             return "";
         }
@@ -137,17 +191,16 @@ public class SecureStorage {
             byte[] decrypted = cipher.doFinal(Base64.decode(encB64, Base64.NO_WRAP));
             return new String(decrypted, "UTF-8");
         } catch (Exception e) {
-            LogBuffer.e("SecureStorage", "Token decryption failed: " + e.getMessage());
+            LogBuffer.e("SecureStorage", "Secret decryption failed: " + e.getMessage());
             return "";
         }
     }
 
-    /** Clear stored token. */
-    public void clearToken() {
+    private void clearSecret(String tokenKey, String ivKey, String fallbackKey) {
         securePrefs.edit()
-                .remove(KEY_IV)
-                .remove(KEY_TOKEN)
-                .remove(PLAIN_FALLBACK_KEY)
+                .remove(ivKey)
+                .remove(tokenKey)
+                .remove(fallbackKey)
                 .apply();
     }
 }

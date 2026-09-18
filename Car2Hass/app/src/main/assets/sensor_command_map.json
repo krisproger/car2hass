@@ -109,8 +109,8 @@
     {
       "sensor_key": "windows_all_state",
       "commands": [
-        { "command_id": "windows_close_all", "value": "0" },
-        { "command_id": "windows_vent", "value": "vent" }
+        { "command_id": "windows_close_all", "value": "0", "expected": "closed" },
+        { "command_id": "windows_vent", "value": "vent", "expected": "open" }
       ]
     },
     {

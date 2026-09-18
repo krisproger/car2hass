@@ -84,6 +84,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.io.InputStream;
 import java.net.URL;
+import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -179,6 +180,12 @@ public class MainActivity extends BaseLocalizedActivity {
     private Switch switchDebugCompare;
     private TextView tvTestResult;
     private TextView tvPresetVersion;
+
+    // Cloud sync UI
+    private Switch switchCloudSync;
+    private EditText editCloudEmail, editCloudCode, editCloudCarName, editCloudBaseUrl;
+    private TextView tvCloudStatus;
+    private boolean updatingCloudToggle = false;
 
     private final Handler saveHandler = new Handler(Looper.getMainLooper());
     private Runnable saveRunnable;
@@ -2682,6 +2689,7 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void updateSmarthomeStats() {
+        updateCloudStatus();
         if (tvQueueBytes == null || tvLastSend == null || tvLastAttempt == null) return;
         tvQueueBytes.setText(getString(R.string.settings_queue_bytes,
                 SendHistory.formatBytes(SendHistory.getPendingBytes(this))));
@@ -2689,6 +2697,118 @@ public class MainActivity extends BaseLocalizedActivity {
                 SendHistory.getLastSendLabel(this)));
         tvLastAttempt.setText(getString(R.string.settings_last_attempt,
                 SendHistory.getLastAttemptLabel(this)));
+    }
+
+    private void setupCloudSettings() {
+        switchCloudSync = settingsView.findViewById(R.id.switchCloudSync);
+        editCloudEmail = settingsView.findViewById(R.id.editCloudEmail);
+        editCloudCode = settingsView.findViewById(R.id.editCloudCode);
+        editCloudCarName = settingsView.findViewById(R.id.editCloudCarName);
+        editCloudBaseUrl = settingsView.findViewById(R.id.editCloudBaseUrl);
+        tvCloudStatus = settingsView.findViewById(R.id.tvCloudStatus);
+        if (switchCloudSync == null) return;
+
+        editCloudEmail.setText(AppConfig.getCloudEmail(this));
+        editCloudCarName.setText(AppConfig.getCloudCarName(this));
+        editCloudBaseUrl.setText(AppConfig.getCloudBaseUrl(this));
+
+        switchCloudSync.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            if (updatingCloudToggle) return;
+            AppConfig.setCloudSyncEnabled(this, isChecked);
+            if (isChecked && AppConfig.getCloudAccessToken(this).isEmpty()) {
+                Toast.makeText(this, R.string.settings_cloud_login_required, Toast.LENGTH_SHORT).show();
+            }
+            updateCloudStatus();
+        });
+        editCloudEmail.addTextChangedListener(cloudWatcher(
+                () -> AppConfig.setCloudEmail(this, editCloudEmail.getText().toString())));
+        editCloudCarName.addTextChangedListener(cloudWatcher(
+                () -> AppConfig.setCloudCarName(this, editCloudCarName.getText().toString())));
+        editCloudBaseUrl.addTextChangedListener(cloudWatcher(
+                () -> AppConfig.setCloudBaseUrl(this, editCloudBaseUrl.getText().toString())));
+
+        settingsView.findViewById(R.id.btnCloudLogin).setOnClickListener(v -> cloudLogin());
+        updateCloudStatus();
+    }
+
+    private TextWatcher cloudWatcher(Runnable action) {
+        return new TextWatcher() {
+            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override public void afterTextChanged(Editable s) { action.run(); }
+        };
+    }
+
+    private void cloudLogin() {
+        final String email = editCloudEmail.getText().toString().trim();
+        final String code = editCloudCode.getText().toString().trim();
+        if (email.isEmpty() || code.isEmpty()) {
+            Toast.makeText(this, R.string.settings_cloud_enter_email_code, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        tvCloudStatus.setText(R.string.settings_cloud_signing_in);
+        final Context app = getApplicationContext();
+        new Thread(() -> {
+            final String result = CloudSyncClient.login(app, email, code);
+            if (result.isEmpty()) {
+                CloudSyncClient.ensureCarBound(app);
+            }
+            runOnUiThread(() -> {
+                if (result.isEmpty()) {
+                    editCloudCode.setText("");
+                    AppConfig.setCloudSyncEnabled(MainActivity.this, true);
+                    Toast.makeText(MainActivity.this, R.string.settings_cloud_login_ok, Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(MainActivity.this, cloudErrorText(result), Toast.LENGTH_LONG).show();
+                }
+                updateCloudStatus();
+            });
+        }, "cloud-login").start();
+    }
+
+    private String cloudErrorText(String code) {
+        switch (code) {
+            case "bad_credentials": return getString(R.string.settings_cloud_err_bad_credentials);
+            case "rate_limited": return getString(R.string.settings_cloud_err_rate_limited);
+            case "totp_not_set": return getString(R.string.settings_cloud_err_totp_not_set);
+            case "bad_input": return getString(R.string.settings_cloud_err_bad_input);
+            default: return getString(R.string.settings_cloud_err_failed, code);
+        }
+    }
+
+    private String cloudStatusText(String status) {
+        if (status.startsWith("http_") || status.startsWith("bind_http_")) {
+            return getString(R.string.settings_cloud_status_sync_error);
+        }
+        switch (status) {
+            case "logged_out": return getString(R.string.settings_cloud_status_logged_out);
+            case "car_not_bound": return getString(R.string.settings_cloud_status_car_not_bound);
+            case "no_car_name": return getString(R.string.settings_cloud_status_no_car_name);
+            default: return status;
+        }
+    }
+
+    private void updateCloudStatus() {
+        if (tvCloudStatus == null || switchCloudSync == null) return;
+        boolean enabled = AppConfig.isCloudSyncEnabled(this);
+        boolean loggedIn = !AppConfig.getCloudAccessToken(this).isEmpty();
+        String last = AppConfig.getCloudLastSyncMs(this) > 0
+                ? DateFormat.getDateTimeInstance().format(new Date(AppConfig.getCloudLastSyncMs(this)))
+                : getString(R.string.settings_cloud_never);
+        StringBuilder sb = new StringBuilder();
+        sb.append(loggedIn ? getString(R.string.settings_cloud_logged_in) : getString(R.string.settings_cloud_logged_out));
+        sb.append(" · ").append(getString(R.string.settings_cloud_last_sync, last));
+        if (!enabled) sb.append(" · ").append(getString(R.string.settings_cloud_disabled));
+        String status = AppConfig.getCloudLastStatus(this);
+        if (!status.isEmpty() && !"ok".equals(status)) {
+            sb.append(" · ").append(cloudStatusText(status));
+        }
+        tvCloudStatus.setText(sb.toString());
+        if (switchCloudSync.isChecked() != enabled) {
+            updatingCloudToggle = true;
+            switchCloudSync.setChecked(enabled);
+            updatingCloudToggle = false;
+        }
     }
 
     /** Refreshes the OBD button text with the live adapter link state. */
@@ -3200,6 +3320,7 @@ public class MainActivity extends BaseLocalizedActivity {
         attachAutoSaveListeners(tvHttpWarning);
 
         refreshIntegrationUpdateHint();
+        setupCloudSettings();
 
         settingsView.findViewById(R.id.btnTest).setOnClickListener(v -> testConnection());
         settingsView.findViewById(R.id.btnLocationTest).setOnClickListener(v -> showLocationTest());

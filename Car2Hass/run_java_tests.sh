@@ -162,6 +162,12 @@ javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2
 echo "=== Compiling SendHistoryCoreTest ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/SendHistoryCoreTest.java"
 
+echo "=== Compiling CloudBatchBuffer (pure JSON) ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/CloudBatchBuffer.java"
+
+echo "=== Compiling CloudBatchBufferTest ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/CloudBatchBufferTest.java"
+
 echo "=== Compiling QueueIndicator (pure) ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/QueueIndicator.java"
 
@@ -247,7 +253,7 @@ echo "=== Compiling VehicleProfileTest ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/VehicleProfileTest.java"
 
 echo "=== Compiling ChannelResult ==="
-javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/ChannelResult.java" "$SRC/com/car2hass/vehicle/DataChannel.java"
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/ValueStore.java" "$SRC/com/car2hass/vehicle/ChannelResult.java" "$SRC/com/car2hass/vehicle/DataChannel.java"
 
 echo "=== Compiling ChannelResultTest ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ChannelResultTest.java"
@@ -371,6 +377,9 @@ java -cp "$OUT:$JSON_JAR" com.car2hass.PresetParamValuesTest
 
 echo "=== Running SendHistoryCoreTest ==="
 java -cp "$OUT:$JSON_JAR" com.car2hass.SendHistoryCoreTest
+
+echo "=== Running CloudBatchBufferTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.CloudBatchBufferTest
 
 echo "=== Running QueueIndicatorTest ==="
 java -cp "$OUT" com.car2hass.QueueIndicatorTest

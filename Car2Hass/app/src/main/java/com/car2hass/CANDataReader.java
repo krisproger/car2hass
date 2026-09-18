@@ -1546,7 +1546,12 @@ public class CANDataReader {
 
     /** Launch diplus if it's not running. */
     public static void launchDiplus(Context context) {
-        LogBuffer.i("CANReader", "launchDiplus: starting com.van.diplus/.activity.StartMainServiceActivity");
+        // Prefer the shell am/monkey recipe (mirrors BYDMate's launchApp) via the ADB
+        // daemon, which runs as the shell uid: app-context startActivity is restricted
+        // for background activity starts on Android 10+ (hence "still not responding").
+        if (launchDiplusViaShell(context)) return;
+
+        LogBuffer.i("CANReader", "launchDiplus: falling back to startActivity");
         try {
             Intent intent = new Intent();
             intent.setComponent(new ComponentName(
@@ -1558,6 +1563,33 @@ public class CANDataReader {
         } catch (Exception e) {
             LogBuffer.e("CANReader", "Cannot launch diplus: " + e.getMessage());
         }
+    }
+
+    /** am/monkey launch via the ADB daemon (shell uid); true when a launch command ran. */
+    private static boolean launchDiplusViaShell(Context context) {
+        try {
+            AdbShellExecutor.init(context);
+            String host = AppConfig.getAdbHost(context);
+            int port = AppConfig.getAdbPort(context);
+            if (host == null || host.trim().isEmpty()) return false;
+            String[][] commands = {
+                {"am", "start", "-n",
+                 "com.van.diplus/com.van.diplus.activity.StartMainServiceActivity"},
+                {"am", "start", "-a", "android.intent.action.MAIN", "com.van.diplus"},
+                {"monkey", "-p", "com.van.diplus", "-c", "android.intent.category.LAUNCHER", "1"},
+            };
+            for (String[] parts : commands) {
+                String cmd = String.join(" ", parts);
+                String out = AdbShellExecutor.executeSync(host, port, cmd, 5000);
+                if (out != null && !out.contains("Error") && !out.contains("Exception")) {
+                    LogBuffer.i("CANReader", "launchDiplus (shell): " + cmd);
+                    return true;
+                }
+            }
+        } catch (Exception e) {
+            LogBuffer.d("CANReader", "launchDiplus shell launch failed: " + e.getMessage());
+        }
+        return false;
     }
 
     // ─── System properties (VVIN, FW, getprop attributes) ───

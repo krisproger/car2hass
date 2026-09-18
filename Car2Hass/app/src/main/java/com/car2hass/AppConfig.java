@@ -39,6 +39,17 @@ public class AppConfig {
     private static final String KEY_OBD_BT_NAME = "obd_bt_name";
     private static final String KEY_DIPLUS_AUTH = "diplus_auth";
 
+    // Cloud sync (mytechnic.ru unified account)
+    private static final String KEY_CLOUD_ENABLED = "cloud_sync_enabled";
+    private static final String KEY_CLOUD_CAR_NAME = "cloud_car_name";
+    private static final String KEY_CLOUD_BASE_URL = "cloud_base_url";
+    private static final String KEY_CLOUD_EMAIL = "cloud_email";
+    private static final String KEY_CLOUD_TOKEN_EXPIRY = "cloud_token_expiry_ms";
+    private static final String KEY_CLOUD_LAST_SYNC = "cloud_last_sync_ms";
+    private static final String KEY_CLOUD_LAST_STATUS = "cloud_last_status";
+    private static final String KEY_CLOUD_BOUND_CARS = "cloud_bound_cars";
+    public static final String CLOUD_DEFAULT_BASE_URL = "https://mytechnic.ru";
+
     // Probe engine state (Phase 2): selected profile, active channels, report.
     private static final String KEY_PROBE_SELECTED_PROFILE = "probe_selected_profile";
     private static final String KEY_PROBE_ACTIVE_CHANNELS = "probe_active_channels";
@@ -418,6 +429,118 @@ public class AppConfig {
 
     public static void setUpdateChannel(Context ctx, String channel) {
         prefs(ctx).edit().putString(KEY_UPDATE_CHANNEL, channel).apply();
+    }
+
+    // ---- Cloud sync (mytechnic.ru unified account) ----
+
+    public static boolean isCloudSyncEnabled(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_CLOUD_ENABLED, false);
+    }
+
+    public static void setCloudSyncEnabled(Context ctx, boolean enabled) {
+        prefs(ctx).edit().putBoolean(KEY_CLOUD_ENABLED, enabled).apply();
+    }
+
+    /** Cloud car name; falls back to the HA car name when not set explicitly. */
+    public static String getCloudCarName(Context ctx) {
+        String name = prefs(ctx).getString(KEY_CLOUD_CAR_NAME, "");
+        if (name == null || name.isEmpty()) name = getCarName(ctx);
+        return name == null ? "" : name;
+    }
+
+    public static void setCloudCarName(Context ctx, String name) {
+        prefs(ctx).edit().putString(KEY_CLOUD_CAR_NAME, name == null ? "" : name.trim()).apply();
+    }
+
+    public static String getCloudBaseUrl(Context ctx) {
+        String url = prefs(ctx).getString(KEY_CLOUD_BASE_URL, CLOUD_DEFAULT_BASE_URL);
+        if (url == null || url.trim().isEmpty()) url = CLOUD_DEFAULT_BASE_URL;
+        url = url.trim();
+        while (url.endsWith("/")) url = url.substring(0, url.length() - 1);
+        return url;
+    }
+
+    public static void setCloudBaseUrl(Context ctx, String url) {
+        prefs(ctx).edit().putString(KEY_CLOUD_BASE_URL, url == null ? "" : url.trim()).apply();
+    }
+
+    public static String getCloudEmail(Context ctx) {
+        return prefs(ctx).getString(KEY_CLOUD_EMAIL, "");
+    }
+
+    public static void setCloudEmail(Context ctx, String email) {
+        prefs(ctx).edit().putString(KEY_CLOUD_EMAIL, email == null ? "" : email.trim()).apply();
+    }
+
+    public static long getCloudTokenExpiryMs(Context ctx) {
+        return prefs(ctx).getLong(KEY_CLOUD_TOKEN_EXPIRY, 0);
+    }
+
+    public static void setCloudTokenExpiryMs(Context ctx, long ms) {
+        prefs(ctx).edit().putLong(KEY_CLOUD_TOKEN_EXPIRY, ms).apply();
+    }
+
+    public static long getCloudLastSyncMs(Context ctx) {
+        return prefs(ctx).getLong(KEY_CLOUD_LAST_SYNC, 0);
+    }
+
+    public static void setCloudLastSyncMs(Context ctx, long ms) {
+        prefs(ctx).edit().putLong(KEY_CLOUD_LAST_SYNC, ms).apply();
+    }
+
+    public static String getCloudLastStatus(Context ctx) {
+        return prefs(ctx).getString(KEY_CLOUD_LAST_STATUS, "");
+    }
+
+    public static void setCloudLastStatus(Context ctx, String status) {
+        prefs(ctx).edit().putString(KEY_CLOUD_LAST_STATUS, status == null ? "" : status).apply();
+    }
+
+    public static String getCloudAccessToken(Context ctx) {
+        return getSecureStorage(ctx).getCloudToken();
+    }
+
+    public static void saveCloudAccessToken(Context ctx, String token) {
+        getSecureStorage(ctx).saveCloudToken(token);
+    }
+
+    public static String getCloudRefreshToken(Context ctx) {
+        return getSecureStorage(ctx).getCloudRefreshToken();
+    }
+
+    public static void saveCloudRefreshToken(Context ctx, String token) {
+        getSecureStorage(ctx).saveCloudRefreshToken(token);
+    }
+
+    public static void clearCloudTokens(Context ctx) {
+        getSecureStorage(ctx).clearCloudTokens();
+    }
+
+    /** True when the car name was already bound on the cloud account. */
+    public static boolean isCloudCarBound(Context ctx, String carName) {
+        if (carName == null || carName.isEmpty()) return false;
+        try {
+            JSONArray arr = new JSONArray(prefs(ctx).getString(KEY_CLOUD_BOUND_CARS, "[]"));
+            for (int i = 0; i < arr.length(); i++) {
+                if (carName.equals(arr.optString(i))) return true;
+            }
+        } catch (Exception ignored) {
+        }
+        return false;
+    }
+
+    public static void setCloudCarBound(Context ctx, String carName) {
+        if (carName == null || carName.isEmpty()) return;
+        JSONArray arr = new JSONArray();
+        try {
+            arr = new JSONArray(prefs(ctx).getString(KEY_CLOUD_BOUND_CARS, "[]"));
+        } catch (Exception ignored) {
+        }
+        for (int i = 0; i < arr.length(); i++) {
+            if (carName.equals(arr.optString(i))) return;
+        }
+        arr.put(carName);
+        prefs(ctx).edit().putString(KEY_CLOUD_BOUND_CARS, arr.toString()).apply();
     }
 
     public static String getVehicleProducer(Context ctx) {

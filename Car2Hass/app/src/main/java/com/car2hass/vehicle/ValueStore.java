@@ -16,6 +16,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
  */
 public final class ValueStore {
 
+    /** Source tag for values loaded from the previous-session cache. */
+    public static final String SOURCE_RESTORED = "restored";
+
     /** Raw (untranslated) value per key, written by the CAN readers. */
     private static final ConcurrentHashMap<String, String> RAW_VALUES = new ConcurrentHashMap<>();
 
@@ -69,6 +72,11 @@ public final class ValueStore {
 
     public String sourceOf(String key) {
         return source.get(key);
+    }
+
+    /** True when the key's current value came only from the last-session restore. */
+    public boolean isRestored(String key) {
+        return SOURCE_RESTORED.equals(source.get(key));
     }
 
     public Map<String, String> snapshot() {

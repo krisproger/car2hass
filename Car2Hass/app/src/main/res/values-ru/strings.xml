@@ -215,6 +215,34 @@
     <string name="settings_auto_start_byd">Автозапуск (BYD)</string>
     <string name="settings_background_work">Фоновая работа</string>
     <string name="settings_test_connection">Тест подключения</string>
+
+    <!-- Cloud sync (mytechnic.ru) -->
+    <string name="settings_cloud_title">Облачная синхронизация (mytechnic.ru)</string>
+    <string name="settings_cloud_hint">Опционально: дублировать телеметрию в аккаунт mytechnic.ru.</string>
+    <string name="settings_cloud_toggle">Облачная синхронизация</string>
+    <string name="settings_cloud_email_hint">Email</string>
+    <string name="settings_cloud_code_hint">Код TOTP (6 цифр)</string>
+    <string name="settings_cloud_car_name_hint">Имя авто в облаке</string>
+    <string name="settings_cloud_base_url_hint">https://mytechnic.ru</string>
+    <string name="settings_cloud_login">Войти</string>
+    <string name="settings_cloud_signing_in">Вход…</string>
+    <string name="settings_cloud_logged_in">Вход выполнен</string>
+    <string name="settings_cloud_logged_out">Вход не выполнен</string>
+    <string name="settings_cloud_disabled">выкл.</string>
+    <string name="settings_cloud_never">никогда</string>
+    <string name="settings_cloud_last_sync">последняя синхронизация: %1$s</string>
+    <string name="settings_cloud_login_required">Введите email и код для входа</string>
+    <string name="settings_cloud_enter_email_code">Введите email и код TOTP</string>
+    <string name="settings_cloud_login_ok">Вход выполнен</string>
+    <string name="settings_cloud_err_bad_credentials">Неверный email или код</string>
+    <string name="settings_cloud_err_rate_limited">Слишком много попыток, попробуйте позже</string>
+    <string name="settings_cloud_err_totp_not_set">В аккаунте не настроен TOTP</string>
+    <string name="settings_cloud_err_bad_input">Некорректные данные</string>
+    <string name="settings_cloud_err_failed">Ошибка входа: %1$s</string>
+    <string name="settings_cloud_status_logged_out">нужно войти</string>
+    <string name="settings_cloud_status_car_not_bound">авто не привязано</string>
+    <string name="settings_cloud_status_no_car_name">укажите имя авто</string>
+    <string name="settings_cloud_status_sync_error">ошибка синхронизации</string>
     <string name="settings_save">Сохранить</string>
     <string name="settings_import_config">Импорт конфига</string>
     <string name="settings_export_config">Экспорт конфига</string>

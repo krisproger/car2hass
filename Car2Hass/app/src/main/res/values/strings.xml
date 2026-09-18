@@ -222,6 +222,34 @@
     <string name="settings_auto_start_byd">Auto-start (BYD)</string>
     <string name="settings_background_work">Background work</string>
     <string name="settings_test_connection">Test connection</string>
+
+    <!-- Cloud sync (mytechnic.ru) -->
+    <string name="settings_cloud_title">Cloud sync (mytechnic.ru)</string>
+    <string name="settings_cloud_hint">Optional: also send telemetry to your mytechnic.ru account.</string>
+    <string name="settings_cloud_toggle">Cloud sync</string>
+    <string name="settings_cloud_email_hint">Email</string>
+    <string name="settings_cloud_code_hint">TOTP code (6 digits)</string>
+    <string name="settings_cloud_car_name_hint">Car name in cloud</string>
+    <string name="settings_cloud_base_url_hint">https://mytechnic.ru</string>
+    <string name="settings_cloud_login">Sign in</string>
+    <string name="settings_cloud_signing_in">Signing in…</string>
+    <string name="settings_cloud_logged_in">Signed in</string>
+    <string name="settings_cloud_logged_out">Not signed in</string>
+    <string name="settings_cloud_disabled">off</string>
+    <string name="settings_cloud_never">never</string>
+    <string name="settings_cloud_last_sync">last sync: %1$s</string>
+    <string name="settings_cloud_login_required">Enter email and code to sign in</string>
+    <string name="settings_cloud_enter_email_code">Enter email and TOTP code</string>
+    <string name="settings_cloud_login_ok">Signed in</string>
+    <string name="settings_cloud_err_bad_credentials">Wrong email or code</string>
+    <string name="settings_cloud_err_rate_limited">Too many attempts, try again later</string>
+    <string name="settings_cloud_err_totp_not_set">TOTP is not configured in the account</string>
+    <string name="settings_cloud_err_bad_input">Invalid input</string>
+    <string name="settings_cloud_err_failed">Login failed: %1$s</string>
+    <string name="settings_cloud_status_logged_out">need to sign in</string>
+    <string name="settings_cloud_status_car_not_bound">car not bound</string>
+    <string name="settings_cloud_status_no_car_name">set a car name</string>
+    <string name="settings_cloud_status_sync_error">sync error</string>
     <string name="settings_save">Save</string>
     <string name="settings_import_config">Import config</string>
     <string name="settings_request_permissions">Request permissions</string>
