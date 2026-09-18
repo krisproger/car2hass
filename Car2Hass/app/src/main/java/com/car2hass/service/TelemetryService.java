@@ -204,7 +204,7 @@ public class TelemetryService extends Service {
         shutdownExecutors();
         telemetryExecutor = Executors.newSingleThreadExecutor();
         flushExecutor = Executors.newSingleThreadExecutor();
-        ruleEngine = new RuleEngine(getApplicationContext(), valueStore::get);
+        ruleEngine = new RuleEngine(getApplicationContext(), valueStore::get, valueStore::isRestored);
         // Event-driven rules: re-evaluate affected rules as soon as a channel
         // writes a changed value, instead of waiting for the 1s engine tick.
         valueStore.addListener((key, value, source) -> {

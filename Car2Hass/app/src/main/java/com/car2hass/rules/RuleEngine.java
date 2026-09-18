@@ -18,18 +18,20 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
+import java.util.function.Predicate;
 
 public class RuleEngine {
 
     private final Context appContext;
     private final Function<String, String> signalLookup;
+    private final Predicate<String> restoredLookup;
     private final AntiLoopGuard guard = new AntiLoopGuard();
     private ScheduledExecutorService executor;
     private volatile boolean started = false;
 
-    // Per-rule previous condition state (keyed by rule id)
+    // Per-rule previous condition state and first-evaluation seeding.
     // Thread-safe: only accessed from the single executor thread.
-    private java.util.HashMap<String, Boolean> previousConditions = new java.util.HashMap<>();
+    private final RuleEdgeLogic edgeLogic = new RuleEdgeLogic();
     private final Set<String> firedOncePerSession = new HashSet<>();
     // Rising-edge debounce: rule id → timestamp when its condition first became
     // true in the current true-period. Used by the holdSeconds gate.
@@ -47,14 +49,17 @@ public class RuleEngine {
     private static final String PREFS_NAME = "rule_engine_state";
     private static final String KEY_PREV_CONDITIONS = "previous_conditions";
 
-    public RuleEngine(Context appContext, Function<String, String> signalLookup) {
+    public RuleEngine(Context appContext, Function<String, String> signalLookup,
+                      Predicate<String> restoredLookup) {
         this.appContext = appContext;
         this.signalLookup = signalLookup;
+        this.restoredLookup = restoredLookup;
     }
 
     public synchronized void start() {
         if (started) return;
         started = true;
+        edgeLogic.reset();
         loadPreviousConditions();
         executor = Executors.newSingleThreadScheduledExecutor();
         executor.scheduleAtFixedRate(this::tick, 0, 1, TimeUnit.SECONDS);
@@ -69,7 +74,7 @@ public class RuleEngine {
         }
         savePreviousConditions();
         guard.clear();
-        previousConditions.clear();
+        edgeLogic.reset();
         conditionTrueSince.clear();
         firedOncePerSession.clear();
         LogBuffer.i("RuleEngine", "Engine stopped");
@@ -85,7 +90,7 @@ public class RuleEngine {
         try {
             Set<String> ids = new HashSet<>();
             for (Rule r : RuleRegistry.load(appContext)) ids.add(r.id);
-            previousConditions.keySet().retainAll(ids);
+            edgeLogic.retainRules(ids);
             savePreviousConditions();
         } catch (Exception e) {
             LogBuffer.w("RuleEngine", "onRulesChanged prune error: " + e.getMessage());
@@ -100,11 +105,13 @@ public class RuleEngine {
             if (json == null || json.isEmpty()) return;
             JSONObject obj = new JSONObject(json);
             Iterator<String> keys = obj.keys();
+            int loaded = 0;
             while (keys.hasNext()) {
                 String k = keys.next();
-                previousConditions.put(k, obj.optBoolean(k, false));
+                edgeLogic.loadPrevious(k, obj.optBoolean(k, false));
+                loaded++;
             }
-            LogBuffer.i("RuleEngine", "Loaded " + previousConditions.size() + " previous condition states");
+            LogBuffer.i("RuleEngine", "Loaded " + loaded + " previous condition states");
         } catch (Exception e) {
             LogBuffer.w("RuleEngine", "load state error: " + e.getMessage());
         }
@@ -113,7 +120,7 @@ public class RuleEngine {
     private void savePreviousConditions() {
         try {
             JSONObject obj = new JSONObject();
-            for (Map.Entry<String, Boolean> e : previousConditions.entrySet()) {
+            for (Map.Entry<String, Boolean> e : edgeLogic.previousConditions().entrySet()) {
                 obj.put(e.getKey(), e.getValue());
             }
             appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
@@ -175,23 +182,24 @@ public class RuleEngine {
 
         long now = System.currentTimeMillis();
 
-        // Require data for ALL referenced sensors before evaluating.
-        // If any sensor is missing, skip evaluation to prevent overwriting
-        // persisted prev=true with a false from evaluateConditionGroup()
-        // (which returns false when any sensor value is null).
-        boolean allSensorsHaveData = true;
-        for (RuleCondition c : rule.conditions) {
-            if (c.sensorKey == null || c.sensorKey.isEmpty()) continue;
-            if (signalLookup.apply(c.sensorKey) == null) {
-                allSensorsHaveData = false;
-                break;
-            }
-        }
-        if (!allSensorsHaveData) {
-            // Rate-limit: log only on first miss per session (not every tick).
-            if (!firedOncePerSession.contains(rule.id + "_nostate")) {
-                LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': skip (missing sensor data)");
-                firedOncePerSession.add(rule.id + "_nostate");
+        // A rule must not react to a value that only came back from the previous
+        // session or is missing entirely: either would look like a fresh state
+        // change on startup. Missing data is also skipped so a null value never
+        // overwrites the persisted previous state.
+        RuleEdgeLogic.Suppression suppression =
+                RuleEdgeLogic.detectSuppression(rule.conditions, signalLookup, restoredLookup);
+        if (suppression.blocked()) {
+            // Rate-limit: log only on first occurrence per session (not every tick).
+            boolean restored = suppression.reason == RuleEdgeLogic.Suppress.RESTORED;
+            String tag = rule.id + (restored ? "_restored" : "_nostate");
+            if (!firedOncePerSession.contains(tag)) {
+                if (restored) {
+                    LogBuffer.i("RuleEngine", "Rule '" + rule.name
+                            + "': skip: restored value " + suppression.sensorKey);
+                } else {
+                    LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': skip (missing sensor data)");
+                }
+                firedOncePerSession.add(tag);
             }
             return;
         }
@@ -199,9 +207,6 @@ public class RuleEngine {
         firedOncePerSession.remove(rule.id + "_nostate");
 
         boolean groupResult = RuleEvaluator.evaluateConditionGroup(rule.conditions, signalLookup);
-
-        Boolean prev = previousConditions.get(rule.id);
-        boolean prevCondition = prev != null && prev;
 
         // Debounce (holdSeconds): for rising-edge rules the condition must stay
         // true for the configured time before the edge counts. While the hold
@@ -224,14 +229,18 @@ public class RuleEngine {
             }
         }
 
-        boolean stateChanged = prev == null || prev != groupResult;
-        if (!holdPending) {
-            previousConditions.put(rule.id, groupResult);
-            if (stateChanged) {
-                savePreviousConditions();
-                LogBuffer.d("RuleEngine", "Rule '" + rule.name + "': condition "
-                    + prevCondition + "→" + groupResult);
-            }
+        RuleEdgeLogic.Outcome outcome = edgeLogic.evaluate(rule.id, groupResult, holdPending);
+        if (outcome.firstEvaluation) {
+            savePreviousConditions();
+            LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': first evaluation recorded ("
+                    + groupResult + "), no edge");
+            return;
+        }
+        boolean prevCondition = outcome.previousCondition;
+        if (outcome.stateChanged && !holdPending) {
+            savePreviousConditions();
+            LogBuffer.d("RuleEngine", "Rule '" + rule.name + "': condition "
+                + prevCondition + "→" + groupResult);
         }
 
         if (!rule.enabled) return;
@@ -276,7 +285,7 @@ public class RuleEngine {
 
         LogBuffer.i("RuleEngine", "Rule '" + rule.name + "' FIRE " + (fireBranch ? "action" : "else")
             + ": prevCondition=" + prevCondition + " groupResult=" + groupResult
-            + " sensors=" + describeConditionSensors(rule));
+            + " conditions=" + describeConditions(rule));
 
         for (RuleAction action : targetActions) {
             if (!guard.allow(action.commandId, action.commandValue, now, rule.antiLoopWindowSec * 1000)) {
@@ -307,12 +316,14 @@ public class RuleEngine {
         }
     }
 
-    /** Human-readable snapshot of the rule's condition sensor values (for fire logs). */
-    private String describeConditionSensors(Rule rule) {
+    /** Human-readable snapshot of the evaluated conditions (for fire logs). */
+    private String describeConditions(Rule rule) {
         StringBuilder sb = new StringBuilder("[");
         for (RuleCondition c : rule.conditions) {
             if (sb.length() > 1) sb.append(", ");
-            sb.append(c.sensorKey).append("=").append(signalLookup.apply(c.sensorKey));
+            String op = c.operator != null ? c.operator.name().toLowerCase() : "?";
+            sb.append(c.sensorKey).append("='").append(signalLookup.apply(c.sensorKey))
+              .append("' ").append(op).append(" '").append(c.value).append("'");
         }
         return sb.append("]").toString();
     }
