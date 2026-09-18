@@ -1907,6 +1907,18 @@ signals:
   device_class: lock
   truthy:
   - locked
+- id: 9123
+  name: Давление устройства
+  description: Barometric pressure
+  type: num
+  synthetic: true
+  key: device_pressure
+  labels: {}
+  ha_type: sensor
+  unit: hPa
+  icon: mdi:gauge
+  device_class: pressure
+  state_class: measurement
 - id: 30001
   name: 发动机负荷
   description: Engine load

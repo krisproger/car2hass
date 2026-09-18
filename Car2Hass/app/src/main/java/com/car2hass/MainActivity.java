@@ -113,6 +113,20 @@ public class MainActivity extends BaseLocalizedActivity {
     private long lastUiUpdateMs = 0;
     private static final long UI_UPDATE_MIN_INTERVAL_MS = 1000;
 
+    // Event-driven UI refresh: ValueStore changes are coalesced into at most one
+    // repaint per window, with a slow safety tick as a fallback.
+    private static final long UI_REFRESH_THROTTLE_MS = 200;
+    private static final long TELEMETRY_FALLBACK_TICK_MS = 5000;
+    private final UiRefreshThrottle uiRefreshThrottle = new UiRefreshThrottle(UI_REFRESH_THROTTLE_MS);
+    private com.car2hass.vehicle.ValueStore subscribedValueStore;
+    private volatile boolean uiAlive = true;
+    private final com.car2hass.vehicle.ValueStore.Listener valueStoreListener =
+            (key, value, source) -> scheduleUiRefresh();
+    private final Runnable uiRefreshRunnable = this::runScheduledUiRefresh;
+    private final Runnable telemetryFallbackTicker = this::runTelemetryFallbackTick;
+    // Bundled assets never change at runtime; cache once for cheap repaints.
+    private RegistryStore cachedRegistry;
+
     // Signal enable filter state (in-memory; persisted every 5 s when changed)
     private final Set<String> pendingDisabledKeys = new HashSet<>();
     /** Sticky last-seen values (survive service restarts within the session). */
@@ -206,6 +220,11 @@ public class MainActivity extends BaseLocalizedActivity {
                 telemetryService = binder.getService();
                 telemetryService.setCallback(telemetryCallback);
                 serviceBound = true;
+                // Restored values are already in the store before this callback,
+                // so this first render is the restore signal (no cycle/tick wait).
+                subscribeValueStore(telemetryService.valueStore);
+                renderTelemetryTab();
+                renderDashboardFromStore();
                 updateLocationText();
                 LogBuffer.i("Main", getString(R.string.service_bound));
             } catch (Exception e) {
@@ -216,6 +235,7 @@ public class MainActivity extends BaseLocalizedActivity {
         @Override
         public void onServiceDisconnected(ComponentName name) {
             try {
+                unsubscribeValueStore();
                 telemetryService = null;
                 serviceBound = false;
                 LogBuffer.i("Main", getString(R.string.service_unbound));
@@ -1044,6 +1064,7 @@ public class MainActivity extends BaseLocalizedActivity {
             } catch (Exception e) {
                 LogBuffer.e("Main", "Unbind error: " + e.getMessage());
             }
+            unsubscribeValueStore();
             serviceBound = false;
             telemetryService = null;
         }
@@ -1052,6 +1073,10 @@ public class MainActivity extends BaseLocalizedActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        uiAlive = false;
+        unsubscribeValueStore();
+        handler.removeCallbacks(uiRefreshRunnable);
+        handler.removeCallbacks(telemetryFallbackTicker);
         LogBuffer.d("Main", "onDestroy finishing=" + isFinishing());
     }
 
@@ -1920,9 +1945,14 @@ public class MainActivity extends BaseLocalizedActivity {
         return kept;
     }
 
+    /** Repaint the dashboard straight from ValueStore (no channel cycle needed). */
+    private void renderDashboardFromStore() {
+        updateDashboard(java.util.Collections.emptyList());
+    }
+
     private void updateDashboard(List<CANDataItem> items) {
         try {
-            if (dashUpdateTime != null) {
+            if (dashUpdateTime != null && lastRefresh > 0) {
                 SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.US);
                 dashUpdateTime.setText(sdf.format(new Date(lastRefresh)));
             }
@@ -1938,9 +1968,9 @@ public class MainActivity extends BaseLocalizedActivity {
             // its values (including system sensors like system_media_volume / location_*
             // / device_battery, which never come through the CAN cycle) so the dashboard
             // reads the same values as the telemetry tab.
-            TelemetryService svc = getTelemetryService();
-            if (svc != null) {
-                for (Map.Entry<String, String> e : svc.valueStore.entries()) {
+            com.car2hass.vehicle.ValueStore store = currentValueStore();
+            if (store != null) {
+                for (Map.Entry<String, String> e : store.entries()) {
                     String k = e.getKey();
                     String v = e.getValue();
                     if (k == null || v == null || v.isEmpty() || "---".equals(v)) continue;
@@ -1952,7 +1982,7 @@ public class MainActivity extends BaseLocalizedActivity {
                         byKey.put(k, it);
                     }
                     it.value = v;
-                    long age = svc.valueStore.ageMs(k);
+                    long age = store.ageMs(k);
                     it.lastUpdate = age >= 0 ? System.currentTimeMillis() - age : it.lastUpdate;
                 }
             }
@@ -1983,10 +2013,29 @@ public class MainActivity extends BaseLocalizedActivity {
                 }
             }
 
-            dashboardAdapter.notifyDataSetChanged();
+            if (dashboardAdapter != null) {
+                String fp = dashboardFingerprint();
+                if (!fp.equals(lastDashboardFingerprint)) {
+                    lastDashboardFingerprint = fp;
+                    dashboardAdapter.notifyDataSetChanged();
+                }
+            }
         } catch (Exception e) {
             LogBuffer.e("Main", "updateDashboard failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
+    }
+
+    /** Stable fingerprint of the displayed tiles so unchanged data skips a redraw. */
+    private String lastDashboardFingerprint = "";
+
+    private String dashboardFingerprint() {
+        StringBuilder sb = new StringBuilder(256);
+        for (DashboardTile t : dashboardTiles) {
+            sb.append(t.value).append('\u0001').append(t.unit).append('\u0001')
+                    .append(t.sub).append('\u0001').append(t.alert)
+                    .append(t.tapRightZone).append('\u0002');
+        }
+        return sb.toString();
     }
 
     private void updatePresetTile(DashboardTile tile, DashboardPresetRegistry.DashboardPreset preset,
@@ -2927,11 +2976,23 @@ public class MainActivity extends BaseLocalizedActivity {
                 == PackageManager.PERMISSION_GRANTED;
     }
 
+    /** Live store from the bound service, or the process-wide instance as fallback. */
+    private com.car2hass.vehicle.ValueStore currentValueStore() {
+        TelemetryService svc = getTelemetryService();
+        if (svc != null) return svc.valueStore;
+        return com.car2hass.vehicle.ValueStore.main();
+    }
+
+    private RegistryStore displayRegistry() throws Exception {
+        if (cachedRegistry == null) cachedRegistry = RegistryStore.load(this);
+        return cachedRegistry;
+    }
+
     /** Current value for a key: ValueStore → sticky last-seen → null. */
-    private String valueFor(String key, TelemetryService svc) {
+    private String valueFor(String key, com.car2hass.vehicle.ValueStore store) {
         if (key == null) return null;
-        if (svc != null) {
-            String v = svc.valueStore.get(key);
+        if (store != null) {
+            String v = store.get(key);
             if (v != null) return v;
         }
         return lastSeenValues.get(key);
@@ -2950,7 +3011,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
     /** Tab groups from the shared ValueStore: per-group sensor lists (expandable). */
     private List<TelemetryExpandableAdapter.Group> buildDisplayGroups() {
-        TelemetryService svc = getTelemetryService();
+        com.car2hass.vehicle.ValueStore store = currentValueStore();
         List<CANDataItem> out = new ArrayList<>();
         boolean loaded = false;
         java.util.Set<String> availableChannels = loadAvailableChannels();
@@ -2960,7 +3021,7 @@ public class MainActivity extends BaseLocalizedActivity {
         if (CANDataReader.isDiplusAlive()) availableChannels.add("diplus");
         boolean systemAvailable = hasLocationPermission();
         try {
-            RegistryStore reg = RegistryStore.load(this);
+            RegistryStore reg = displayRegistry();
             List<String> keys = reg.sensorKeys();
             loaded = !keys.isEmpty();
             for (String key : keys) {
@@ -2989,17 +3050,17 @@ public class MainActivity extends BaseLocalizedActivity {
                 CANDataItem it = new CANDataItem(0, key, label, 0);
                 it.key = key;
                 it.enabled = system ? true : AppConfig.isSignalEnabled(this, key);
-                String v = valueFor(key, svc);
+                String v = valueFor(key, store);
                 it.value = v == null ? "---" : v;
                 boolean live = v != null;
                 // Keep the actual write time (not "now") so a value that stopped
                 // updating fades to grey — "possibly not actual" but still shown.
-                long ageMs = svc != null ? svc.valueStore.ageMs(key) : -1;
+                long ageMs = store != null ? store.ageMs(key) : -1;
                 it.lastUpdate = v == null ? 0 : (ageMs >= 0 ? System.currentTimeMillis() - ageMs : System.currentTimeMillis());
                 it.rawData = (system ? "system" : "") + (reachable ? "reachable" : "");
                 // Source channel that actually produced the current value (single
                 // collector): diplus / adb / system / voyah / obd / …
-                it.sourceChannel = svc != null ? svc.valueStore.sourceOf(key) : null;
+                it.sourceChannel = store != null ? store.sourceOf(key) : null;
                 // Grey only for disabled or unavailable sensors; system stays green.
                 it.grey = !(system || it.enabled) || (!system && !reachable && !live);
                 out.add(it);
@@ -3011,7 +3072,7 @@ public class MainActivity extends BaseLocalizedActivity {
             // Fallback: legacy item set (never empty) with sticky values overlaid.
             for (CANDataItem it : knownItems) {
                 if (it == null || it.key == null) continue;
-                String v = valueFor(it.key, svc);
+                String v = valueFor(it.key, store);
                 if (v != null) it.value = v;
             }
             out.addAll(knownItems);
@@ -3192,29 +3253,72 @@ public class MainActivity extends BaseLocalizedActivity {
         handler.postDelayed(saveEnabledRunnable, 5000);
     }
 
-    /** Starts the 2s telemetry-tab ticker (ValueStore → adapter). Runs at startup. */
+    /**
+     * Renders the telemetry tab immediately (0 ms) and keeps only a slow safety
+     * tick: the normal repaint path is the ValueStore listener.
+     */
     private void startTelemetryTabTicker() {
-        handler.postDelayed(new Runnable() {
-            @Override public void run() {
-                try {
-                    List<TelemetryExpandableAdapter.Group> groups = buildDisplayGroups();
-                    if (groups != null && expAdapter != null) {
-                        // Skip the full list rebuild (notifyDataSetChanged) when
-                        // nothing changed — a redundant redraw every 2s made the
-                        // rows flicker/blink on devices with slow DiPlus cycles.
-                        String fp = groupsFingerprint(groups);
-                        if (!fp.equals(lastGroupsFingerprint)) {
-                            lastGroupsFingerprint = fp;
-                            expAdapter.setGroups(groups);
-                            applyExpandedState();
-                        }
-                    }
-                } catch (Throwable e) {
-                    LogBuffer.e("Main", "valueStore tab refresh: " + e.getMessage());
-                }
-                handler.postDelayed(this, 2000);
-            }
-        }, 2000);
+        renderTelemetryTab();
+        handler.removeCallbacks(telemetryFallbackTicker);
+        handler.postDelayed(telemetryFallbackTicker, TELEMETRY_FALLBACK_TICK_MS);
+    }
+
+    /** Coalesces ValueStore changes into at most one repaint per throttle window. */
+    private void scheduleUiRefresh() {
+        if (!uiAlive) return;
+        long delay = uiRefreshThrottle.schedule(android.os.SystemClock.uptimeMillis());
+        if (delay < 0) return;
+        if (delay == 0) handler.post(uiRefreshRunnable);
+        else handler.postDelayed(uiRefreshRunnable, delay);
+    }
+
+    private void runScheduledUiRefresh() {
+        uiRefreshThrottle.flushed(android.os.SystemClock.uptimeMillis());
+        if (!uiAlive) return;
+        try {
+            renderTelemetryTab();
+            renderDashboardFromStore();
+        } catch (Throwable e) {
+            LogBuffer.e("Main", "valueStore UI refresh: " + e.getMessage());
+        }
+    }
+
+    private void runTelemetryFallbackTick() {
+        try {
+            renderTelemetryTab();
+            renderDashboardFromStore();
+        } catch (Throwable e) {
+            LogBuffer.e("Main", "fallback refresh: " + e.getMessage());
+        }
+        if (uiAlive) handler.postDelayed(telemetryFallbackTicker, TELEMETRY_FALLBACK_TICK_MS);
+    }
+
+    private void subscribeValueStore(com.car2hass.vehicle.ValueStore store) {
+        if (store == null || store == subscribedValueStore) return;
+        unsubscribeValueStore();
+        subscribedValueStore = store;
+        store.addListener(valueStoreListener);
+    }
+
+    private void unsubscribeValueStore() {
+        if (subscribedValueStore != null) {
+            subscribedValueStore.removeListener(valueStoreListener);
+            subscribedValueStore = null;
+        }
+    }
+
+    /** Rebuild the telemetry groups from ValueStore; skip unchanged (anti-flicker). */
+    private void renderTelemetryTab() {
+        List<TelemetryExpandableAdapter.Group> groups = buildDisplayGroups();
+        if (groups == null || expAdapter == null) return;
+        // Skip the full list rebuild (notifyDataSetChanged) when nothing changed —
+        // a redundant redraw made the rows flicker/blink on slow DiPlus cycles.
+        String fp = groupsFingerprint(groups);
+        if (!fp.equals(lastGroupsFingerprint)) {
+            lastGroupsFingerprint = fp;
+            expAdapter.setGroups(groups);
+            applyExpandedState();
+        }
     }
 
     /** Stable fingerprint of the displayed groups so unchanged data skips a redraw. */

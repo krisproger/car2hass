@@ -3954,6 +3954,190 @@
       "expected_on": [
         "voyah_generic"
       ]
+    },
+    {
+      "key": "app_version",
+      "label_en": "App version",
+      "label_ru": "Версия приложения",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "app_version"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "wifi_ssid",
+      "label_en": "WiFi SSID",
+      "label_ru": "WiFi SSID",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "wifi_ssid"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "wifi_bssid",
+      "label_en": "WiFi BSSID",
+      "label_ru": "WiFi BSSID",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "wifi_bssid"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "wifi_rssi",
+      "label_en": "WiFi signal",
+      "label_ru": "Сигнал WiFi",
+      "type": "num",
+      "unit": "dBm",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "wifi_rssi"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "online",
+      "label_en": "Online",
+      "label_ru": "Онлайн",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "online"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
+      "key": "vin",
+      "label_en": "VIN",
+      "label_ru": "VIN",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": {
+          "pid": "0902"
+        },
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "traction_battery_voltage",
+      "label_en": "Traction battery voltage",
+      "label_ru": "Напряжение тяговой батареи",
+      "type": "num",
+      "unit": "V",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": {
+          "field": "traction_battery_voltage"
+        },
+        "system": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
+    },
+    {
+      "key": "traction_battery_current",
+      "label_en": "Traction battery current",
+      "label_ru": "Ток тяговой батареи",
+      "type": "num",
+      "unit": "A",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": {
+          "field": "traction_battery_current"
+        },
+        "system": null
+      },
+      "expected_on": [
+        "byd_generic"
+      ]
     }
   ]
 }

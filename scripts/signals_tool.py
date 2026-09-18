@@ -312,7 +312,7 @@ def _build_const_snippets(signals):
     lines.append("")
     lines.append("# Native signals: command-linked + common across most cars. Exposed as")
     lines.append("# regular entities; every other received signal is a diagnostics attribute.")
-    lines.append("NATIVE_SENSORS = " + repr({
+    native = {
         "power_state", "app_version", "device_battery",
         "location_lat", "location_lon", "location_speed", "location_bearing",
         "location_altitude", "location_accuracy", "location_provider",
@@ -326,7 +326,8 @@ def _build_const_snippets(signals):
         "sunroof", "engine_coolant_temp", "engine_rpm", "battery_12v_voltage",
         "total_energy", "battery_temp_max", "tyre_pressure_fl", "tyre_pressure_fr",
         "tyre_pressure_rl", "tyre_pressure_rr",
-    }))
+    }
+    lines.append("NATIVE_SENSORS = {" + ", ".join(repr(k) for k in sorted(native)) + "}")
     lines.append("")
     lines.append('CONF_CAR_NAME = "car_name"')
     lines.append("")

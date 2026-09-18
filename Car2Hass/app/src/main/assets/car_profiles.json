@@ -25,7 +25,15 @@
     "second",
     "soc",
     "range",
-    "engine_coolant_temp"
+    "engine_coolant_temp",
+    "app_version",
+    "wifi_ssid",
+    "wifi_bssid",
+    "wifi_rssi",
+    "online",
+    "vin",
+    "traction_battery_voltage",
+    "traction_battery_current"
   ],
   "profiles": [
     {
@@ -200,7 +208,15 @@
         "avg_speed",
         "avg_power",
         "energy_recovery_gear",
-        "energy_flow"
+        "energy_flow",
+        "app_version",
+        "wifi_ssid",
+        "wifi_bssid",
+        "wifi_rssi",
+        "online",
+        "vin",
+        "traction_battery_voltage",
+        "traction_battery_current"
       ],
       "base_channels": [
         "diplus",
@@ -379,7 +395,15 @@
         "avg_speed",
         "avg_power",
         "energy_recovery_gear",
-        "energy_flow"
+        "energy_flow",
+        "app_version",
+        "wifi_ssid",
+        "wifi_bssid",
+        "wifi_rssi",
+        "online",
+        "vin",
+        "traction_battery_voltage",
+        "traction_battery_current"
       ],
       "base_channels": [
         "diplus",

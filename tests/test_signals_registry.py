@@ -1,5 +1,6 @@
 """Tests that signal registry sources are consistent."""
 
+import json
 import sys
 from pathlib import Path
 
@@ -10,12 +11,26 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from signals_tool import _parse_const, _parse_java_registry, _parse_signals_md, _parse_value_trans
 
+ASSETS = ROOT / "Car2Hass" / "app" / "src" / "main" / "assets"
+
 
 def test_signals_yaml_exists_and_has_expected_count():
     yaml_path = ROOT / "signals.yaml"
     assert yaml_path.exists(), "signals.yaml not found"
     data = yaml.safe_load(yaml_path.read_text(encoding="utf-8"))
-    assert len(data["signals"]) == 175
+    assert len(data["signals"]) == 176
+
+
+def test_registry_matches_yaml_keys():
+    """sensors_registry.json must cover exactly the signals.yaml catalog."""
+    signals = yaml.safe_load((ROOT / "signals.yaml").read_text(encoding="utf-8"))["signals"]
+    yaml_keys = {s["key"] for s in signals if s.get("key")}
+    registry = json.loads((ASSETS / "sensors_registry.json").read_text(encoding="utf-8"))
+    reg_keys = {s["key"] for s in registry["sensors"]}
+    assert yaml_keys == reg_keys, (
+        f"only in signals.yaml: {sorted(yaml_keys - reg_keys)}; "
+        f"only in sensors_registry.json: {sorted(reg_keys - yaml_keys)}"
+    )
 
 
 def test_java_registry_matches_yaml_keys():

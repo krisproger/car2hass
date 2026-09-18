@@ -25,7 +25,7 @@ COMMAND_DEPENDS_ON = {
 
 # Native signals: command-linked + common across most cars. Exposed as
 # regular entities; every other received signal is a diagnostics attribute.
-NATIVE_SENSORS = {'soc', 'gear', 'rear_right_door', 'battery_temp_max', 'location_accuracy', 'window_rr', 'location_speed', 'location_lat', 'power_state', 'ac_set_temp', 'tyre_pressure_rl', 'steering_wheel_heat', 'location_provider', 'windows_all_state', 'range', 'driver_door', 'location_bearing', 'ac_state', 'driver_seatbelt', 'tyre_pressure_fr', 'tyre_pressure_fl', 'cabin_temp', 'app_version', 'engine_coolant_temp', 'trunk', 'battery_12v_voltage', 'drl', 'fan_speed', 'charge_gun_state', 'dashcam_state', 'hazard', 'driver_door_lock', 'windows_state', 'doors_state', 'low_beam', 'engine_rpm', 'sunroof', 'rear_defrost', 'remote_lock_state', 'outside_temp', 'front_fog', 'rear_left_door', 'window_fl', 'tyre_pressure_rr', 'charging_state', 'location_altitude', 'location_lon', 'passenger_door', 'total_energy', 'window_fr', 'window_rl', 'device_battery', 'footwell_light', 'speed'}
+NATIVE_SENSORS = {'ac_set_temp', 'ac_state', 'app_version', 'battery_12v_voltage', 'battery_temp_max', 'cabin_temp', 'charge_gun_state', 'charging_state', 'dashcam_state', 'device_battery', 'doors_state', 'driver_door', 'driver_door_lock', 'driver_seatbelt', 'drl', 'engine_coolant_temp', 'engine_rpm', 'fan_speed', 'footwell_light', 'front_fog', 'gear', 'hazard', 'location_accuracy', 'location_altitude', 'location_bearing', 'location_lat', 'location_lon', 'location_provider', 'location_speed', 'low_beam', 'outside_temp', 'passenger_door', 'power_state', 'range', 'rear_defrost', 'rear_left_door', 'rear_right_door', 'remote_lock_state', 'soc', 'speed', 'steering_wheel_heat', 'sunroof', 'total_energy', 'trunk', 'tyre_pressure_fl', 'tyre_pressure_fr', 'tyre_pressure_rl', 'tyre_pressure_rr', 'window_fl', 'window_fr', 'window_rl', 'window_rr', 'windows_all_state', 'windows_state'}
 
 CONF_CAR_NAME = "car_name"
 
@@ -588,6 +588,13 @@ NUMERIC_SENSORS = {
         "name": "Traction battery current",
         "unit": "A",
         "icon": "mdi:current-ac",
+        "state_class": "measurement",
+    },
+    "device_pressure": {
+        "name": "Barometric pressure",
+        "unit": "hPa",
+        "icon": "mdi:gauge",
+        "device_class": "pressure",
         "state_class": "measurement",
     },
     "engine_load": {

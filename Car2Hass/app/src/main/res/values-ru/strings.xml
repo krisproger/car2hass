@@ -824,6 +824,14 @@
     <string name="sensor_avg_power">Средняя мощность</string>
     <string name="sensor_energy_recovery_gear">Уровень рекуперации</string>
     <string name="sensor_energy_flow">Поток энергии</string>
+    <string name="sensor_app_version">Версия приложения</string>
+    <string name="sensor_wifi_ssid">WiFi SSID</string>
+    <string name="sensor_wifi_bssid">WiFi BSSID</string>
+    <string name="sensor_wifi_rssi">Сигнал WiFi</string>
+    <string name="sensor_online">Онлайн</string>
+    <string name="sensor_vin">VIN</string>
+    <string name="sensor_traction_battery_voltage">Напряжение тяговой батареи</string>
+    <string name="sensor_traction_battery_current">Ток тяговой батареи</string>
     <string name="settings_section_cloud">Облачная синхронизация</string>
     <string name="settings_cloud_disconnect">Отключить</string>
     <string name="settings_cloud_disconnected">Отключено от облака</string>

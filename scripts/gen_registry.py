@@ -60,6 +60,24 @@ VOYAH_ONLY_SENSORS = [
     ("energy_flow", "Energy flow", "enum", None),
 ]
 
+# Sensors supplied outside the CAN SIGNAL_REGISTRY: app metadata injected by
+# TelemetryService (app_version, Wi-Fi via WifiManager), the HA-side connectivity
+# flag (online), the real OBD VIN (ObdWorker mode 09 PID 02 / UDS F190) and the
+# traction (HV) pack measurements of the BYD Cloud source.
+EXTRA_SENSORS = [
+    # (key, english, type, unit, channel, descriptor)
+    ("app_version", "App version", "enum", None, "system", {"field": "app_version"}),
+    ("wifi_ssid", "WiFi SSID", "enum", None, "system", {"field": "wifi_ssid"}),
+    ("wifi_bssid", "WiFi BSSID", "enum", None, "system", {"field": "wifi_bssid"}),
+    ("wifi_rssi", "WiFi RSSI", "num", "dBm", "system", {"field": "wifi_rssi"}),
+    ("online", "Online", "enum", None, "system", {"field": "online"}),
+    ("vin", "VIN", "enum", None, "obd", {"pid": "0902"}),
+    ("traction_battery_voltage", "Traction battery voltage", "num", "V",
+     "byd_cloud", {"field": "traction_battery_voltage"}),
+    ("traction_battery_current", "Traction battery current", "num", "A",
+     "byd_cloud", {"field": "traction_battery_current"}),
+]
+
 # Standard OBD-II mode-01 PIDs for keys already present in SIGNAL_REGISTRY.
 # Sync with ObdPidCodec.PID_TO_KEY (vehicle/ObdPidCodec.java).
 OBD_PIDS = {
@@ -86,6 +104,8 @@ GENERIC_SENSORS = [
     "wifi_state", "bluetooth_state", "bluetooth_signal",
     "month", "day", "hour", "minute", "second",
     "soc", "range", "engine_coolant_temp",
+    "app_version", "wifi_ssid", "wifi_bssid", "wifi_rssi", "online",
+    "vin", "traction_battery_voltage", "traction_battery_current",
 ]
 
 # Voyah VehicleState parameter names for existing integration keys only
@@ -234,6 +254,18 @@ def build_sensors():
                 ["diplus", "adb", "dumpsys", "obd", "diplus_push", "byd_cloud", "system"]}
                 | {"voyah": ({"vs": vs} if vs else None)},
             "expected_on": ["voyah_generic"],
+        })
+    for key, english, stype, unit, channel, descriptor in EXTRA_SENSORS:
+        channels = {k: None for k in
+            ["diplus", "adb", "dumpsys", "obd", "voyah", "diplus_push", "byd_cloud", "system"]}
+        channels[channel] = descriptor
+        sensors.append({
+            "key": key, "label_en": SENSOR_LABELS["en"].get(key, english),
+            "label_ru": SENSOR_LABELS["ru"].get(key, english),
+            "type": stype, "unit": unit,
+            "core": key in CORE_SENSORS,
+            "channels": channels,
+            "expected_on": ["system" if channel == "system" else "byd_generic"],
         })
     return sensors
 

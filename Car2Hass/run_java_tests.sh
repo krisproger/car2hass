@@ -174,6 +174,12 @@ javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/Queue
 echo "=== Compiling QueueIndicatorTest ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/QueueIndicatorTest.java"
 
+echo "=== Compiling UiRefreshThrottle (pure) ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/UiRefreshThrottle.java"
+
+echo "=== Compiling UiRefreshThrottleTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/UiRefreshThrottleTest.java"
+
 echo "=== Compiling SentinelDecoder ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/SentinelDecoder.java"
 
@@ -389,6 +395,9 @@ java -cp "$OUT:$JSON_JAR" com.car2hass.CloudBatchBufferTest
 
 echo "=== Running QueueIndicatorTest ==="
 java -cp "$OUT" com.car2hass.QueueIndicatorTest
+
+echo "=== Running UiRefreshThrottleTest ==="
+java -cp "$OUT" com.car2hass.UiRefreshThrottleTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.SentinelDecoderTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.ParamDecoderTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.NativeSignalMapTest
