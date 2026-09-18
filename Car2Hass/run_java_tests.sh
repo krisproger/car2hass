@@ -258,6 +258,12 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/c
 echo "=== Compiling ChannelResultTest ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ChannelResultTest.java"
 
+echo "=== Compiling DerivedAggregates (pure, no Android dep) ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/DerivedAggregates.java"
+
+echo "=== Compiling DerivedAggregatesTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/DerivedAggregatesTest.java"
+
 echo "=== Compiling test-only BuildConfig stub ==="
 javac -d "$OUT" -classpath "$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/BuildConfig.java"
 
@@ -407,6 +413,9 @@ java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.VehicleResearchTest
 
 echo "=== Running ValueStoreTest ==="
 java -cp "$OUT" com.car2hass.vehicle.ValueStoreTest
+
+echo "=== Running DerivedAggregatesTest ==="
+java -cp "$OUT" com.car2hass.DerivedAggregatesTest
 
 echo "=== Running Phase-2 probe engine tests ==="
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.RegistryStoreTest

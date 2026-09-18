@@ -885,6 +885,7 @@ public class CANDataReader {
             addDerivedSignal(list, "doors_state", "Doors open count", "num");
             addDerivedSignal(list, "windows_all_state", "Windows all closed", "enum");
             addDerivedSignal(list, "doors_all_state", "Doors all closed", "enum");
+            addDerivedSignal(list, "doors_all_lock", "Doors all locked", "enum");
             return list;
         } catch (Exception e) {
             LogBuffer.e("CANReader", "createSignalItems failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());

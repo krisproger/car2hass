@@ -3818,6 +3818,29 @@
       ]
     },
     {
+      "key": "doors_all_lock",
+      "label_en": "Doors all locked",
+      "label_ru": "Doors all locked",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": {
+          "field": "doors_all_lock"
+        }
+      },
+      "expected_on": [
+        "system"
+      ]
+    },
+    {
       "key": "battery_remaining_charge_time",
       "label_en": "Battery remaining charge time",
       "label_ru": "Battery remaining charge time",

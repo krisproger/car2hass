@@ -40,6 +40,7 @@ import com.car2hass.CANDataItem;
 import com.car2hass.CANDataReader;
 import com.car2hass.CloudSyncClient;
 import com.car2hass.CommandPoller;
+import com.car2hass.DerivedAggregates;
 import com.car2hass.ProbeUploader;
 import com.car2hass.vehicle.BydCloudChannel;
 import com.car2hass.vehicle.DataChannel;
@@ -1486,7 +1487,7 @@ public class TelemetryService extends Service {
     private static final String[] DERIVED_COUNT_KEYS =
             {"windows_state", "doors_state"};
     private static final String[] DERIVED_SENSOR_KEYS =
-            {"windows_state", "windows_all_state", "doors_state", "doors_all_state"};
+            {"windows_state", "windows_all_state", "doors_state", "doors_all_state", "doors_all_lock"};
 
     // Pre-register one telemetry item per derived aggregate sensor so the
     // knownItems list stays stable while CANDataReader workers iterate it.
@@ -1515,8 +1516,9 @@ public class TelemetryService extends Service {
 
     /**
      * Computes aggregate door/window sensors from the raw values cached above
-     * (windows_state/doors_state open counts and their *_all_state enums) and
-     * stores them in the cache so both snapshot paths and rules see them.
+     * (windows_state/doors_state open counts, their *_all_state enums and the
+     * doors_all_lock lock aggregate) and stores them in the cache so both
+     * snapshot paths and rules see them.
      * Derived sensors are computed locally — never read from a vehicle channel.
      */
     private void refreshDerivedSensors() {
@@ -1550,6 +1552,11 @@ public class TelemetryService extends Service {
                 SensorValueHistory.recordValue("doors_state", String.valueOf(openDoors));
                 SensorValueHistory.recordValue("doors_all_state", openDoors == 0 ? "closed" : "open");
             }
+
+            String lockValue = DerivedAggregates.doorsAllLocked(valueStore) ? "locked" : "unlocked";
+            valueStore.put("doors_all_lock", lockValue, "channel");
+            SensorValueHistory.recordValue("doors_all_lock", lockValue);
+
             updateDerivedItems();
         } catch (Exception ignored) {}
     }
@@ -1559,6 +1566,7 @@ public class TelemetryService extends Service {
         if (key == null) return false;
         for (String k : DERIVED_WINDOW_KEYS) if (k.equals(key)) return true;
         for (String k : DERIVED_DOOR_KEYS) if (k.equals(key)) return true;
+        for (String k : DerivedAggregates.DOOR_LOCK_KEYS) if (k.equals(key)) return true;
         return false;
     }
 

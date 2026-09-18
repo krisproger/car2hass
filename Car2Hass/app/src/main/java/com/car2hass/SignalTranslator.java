@@ -185,6 +185,7 @@ public class SignalTranslator {
         ENUM_LABELS.put("online", "0:off,1:on");
         ENUM_LABELS.put("windows_all_state", "closed:closed,open:open");
         ENUM_LABELS.put("doors_all_state", "closed:closed,open:open");
+        ENUM_LABELS.put("doors_all_lock", "locked:locked,unlocked:unlocked");
         // AUTO-GENERATED ENUM LABELS END
     }
 

@@ -31,6 +31,7 @@ DERIVED_SENSORS = [
     ("doors_state", "Doors open count", "num", None),
     ("windows_all_state", "Windows all closed", "enum", None),
     ("doors_all_state", "Doors all closed", "enum", None),
+    ("doors_all_lock", "Doors all locked", "enum", None),
 ]
 
 # Universal sensors read from Voyah (not in the shared CAN SIGNAL_REGISTRY).

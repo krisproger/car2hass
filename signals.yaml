@@ -1894,6 +1894,19 @@ signals:
   labels: {}
   ha_type: sensor
   icon: mdi:car-info
+- id: 9122
+  name: Doors all locked
+  description: Doors all locked
+  type: enum
+  synthetic: true
+  key: doors_all_lock
+  labels:
+    'locked': locked
+    'unlocked': unlocked
+  ha_type: binary_sensor
+  device_class: lock
+  truthy:
+  - locked
 - id: 30001
   name: 发动机负荷
   description: Engine load
