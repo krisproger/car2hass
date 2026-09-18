@@ -824,4 +824,5 @@
     <string name="sensor_avg_power">Средняя мощность</string>
     <string name="sensor_energy_recovery_gear">Уровень рекуперации</string>
     <string name="sensor_energy_flow">Поток энергии</string>
+    <string name="settings_section_cloud">Облачная синхронизация</string>
 </resources>

@@ -839,4 +839,5 @@
     <string name="sensor_avg_power">Average power</string>
     <string name="sensor_energy_recovery_gear">Energy recovery gear</string>
     <string name="sensor_energy_flow">Energy flow</string>
+    <string name="settings_section_cloud">Cloud</string>
 </resources>

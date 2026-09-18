@@ -130,7 +130,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
     // Settings sections (two-column layout)
     private int selectedSettingsSection = 0;
-    private final View[] settingsSections = new View[7];
+    private final View[] settingsSections = new View[8];
     private Button btnRestartResearch;
     private ProgressDialog researchProgressDialog;
     private String pendingResearchPath = null;
@@ -3361,10 +3361,12 @@ public class MainActivity extends BaseLocalizedActivity {
         // The research card is rendered together with the data-sources section.
         settingsSections[5] = settingsView.findViewById(R.id.settings_section_research);
         settingsSections[6] = settingsView.findViewById(R.id.settings_section_commands);
+        settingsSections[7] = settingsView.findViewById(R.id.settings_section_cloud);
 
         configureNavItem(R.id.navSettingsCar, "◈", R.string.settings_section_car);
         configureNavItem(R.id.navSettingsProtocols, "⇄", R.string.settings_section_protocols);
         configureNavItem(R.id.navSettingsSmarthome, "⌂", R.string.settings_section_smarthome);
+        configureNavItem(R.id.navSettingsCloud, "☁", R.string.settings_section_cloud);
         configureNavItem(R.id.navSettingsGeofences, "◎", R.string.nav_geofences);
         configureNavItem(R.id.navSettingsCommands, "⌘", R.string.settings_section_commands);
         configureNavItem(R.id.navSettingsTech, "⚙", R.string.settings_section_tech);
@@ -3373,6 +3375,7 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsView.findViewById(R.id.navSettingsCar).setOnClickListener(v -> selectSettingsSection(0));
         settingsView.findViewById(R.id.navSettingsProtocols).setOnClickListener(v -> selectSettingsSection(1));
         settingsView.findViewById(R.id.navSettingsSmarthome).setOnClickListener(v -> selectSettingsSection(2));
+        settingsView.findViewById(R.id.navSettingsCloud).setOnClickListener(v -> selectSettingsSection(7));
         settingsView.findViewById(R.id.navSettingsGeofences).setOnClickListener(v -> selectSettingsSection(3));
         settingsView.findViewById(R.id.btnAddGeofence).setOnClickListener(v ->
                 startActivity(new Intent(this, GeofenceEditActivity.class)));
