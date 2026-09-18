@@ -135,6 +135,7 @@ public class TelemetryService extends Service {
     private static final long AUTO_LOG_DUMP_DELAY_MS = 5 * 60 * 1000; // 5 minutes after start
 
     private volatile boolean vehicleAsleep = false;
+    private volatile boolean foregroundTimedOut = false;
     private static volatile boolean explicitStopRequested = false;
     private final Runnable autoLogDumpRunnable = this::dumpLogAfterBoot;
     private PendingIntent cachedNotificationIntent;
@@ -219,6 +220,7 @@ public class TelemetryService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         explicitStopRequested = false;
+        foregroundTimedOut = false;
         LogBuffer.i("TelemetryService", "onStartCommand startId=" + startId
                 + " flags=" + flags
                 + " intent=" + (intent != null ? intent.toString() : "null"));
@@ -260,6 +262,28 @@ public class TelemetryService extends Service {
             LogBuffer.d("TelemetryService", "Service already running, skipped loop restart");
         }
         return START_STICKY;
+    }
+
+    /**
+     * Android 15+ (API 35) calls this when an FGS type exceeds its time budget
+     * (dataSync/mediaProcessing). The service must drop the foreground state
+     * within a few seconds or the system crashes the process with
+     * ForegroundServiceDidNotStopInTimeException. Stop gracefully here; the
+     * restart is delayed in onDestroy so a recurring timeout cannot spin.
+     */
+    @Override
+    public void onTimeout(int startId, int fgsType) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return;
+        foregroundTimedOut = true;
+        LogBuffer.w("TelemetryService", "onTimeout startId=" + startId + " fgsType=" + fgsType
+                + " — stopping foreground gracefully");
+        try {
+            stopForeground(STOP_FOREGROUND_REMOVE);
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "onTimeout stopForeground failed: "
+                    + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+        stopSelf(startId);
     }
 
     /**
@@ -458,7 +482,7 @@ public class TelemetryService extends Service {
         releaseWifiLock();
         if (!explicitStopRequested) {
             try {
-                BootReceiver.scheduleRestart(this, 500);
+                BootReceiver.scheduleRestart(this, foregroundTimedOut ? 60_000 : 500);
             } catch (Exception e) {
                 LogBuffer.e("TelemetryService", "scheduleRestart in onDestroy failed: " + e.getMessage());
             }

@@ -20,7 +20,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
 
@@ -146,8 +146,12 @@
             android:name=".service.TelemetryService"
             android:enabled="true"
             android:exported="false"
-            android:foregroundServiceType="dataSync|location"
-            android:stopWithTask="false" />
+            android:foregroundServiceType="specialUse|location"
+            android:stopWithTask="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
+                android:value="continuous vehicle telemetry collection and upload" />
+        </service>
 
         <service
             android:name=".service.KeepAliveJobService"

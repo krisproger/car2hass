@@ -35,14 +35,16 @@ public final class UpdateChecker {
         public final String version;
         public final String apkUrl;
         public final String sha256;
+        public final long size;
         public final String notesRu;
         public final String notesEn;
 
-        UpdateInfo(String version, String apkUrl, String sha256,
+        UpdateInfo(String version, String apkUrl, String sha256, long size,
                    String notesRu, String notesEn) {
             this.version = version;
             this.apkUrl = apkUrl;
             this.sha256 = sha256;
+            this.size = size;
             this.notesRu = notesRu;
             this.notesEn = notesEn;
         }
@@ -68,6 +70,7 @@ public final class UpdateChecker {
             return new UpdateInfo(version,
                     o.optString("apk_url", ""),
                     o.optString("sha256", ""),
+                    o.optLong("size", -1L),
                     wn == null ? "" : wn.optString("ru", ""),
                     wn == null ? "" : wn.optString("en", ""));
         } catch (Exception e) {

@@ -31,35 +31,60 @@ public final class UpdateDownloader {
      */
     public static UpdateChecker.UpdateInfo check(Context ctx, String channel) throws Exception {
         AppConfig.setUpdateLastCheckMs(ctx, System.currentTimeMillis());
-        String body = httpGet(ctx, UpdateChecker.versionUrl(channel));
+        String url = UpdateChecker.versionUrl(channel);
+        LogBuffer.i("UpdateDownloader", "check: GET " + url);
+        String body = httpGet(ctx, url);
         UpdateChecker.UpdateInfo info = UpdateChecker.parseResponse(body);
-        if (info == null) return null;
-        if (!UpdateChecker.isNewer(info.version, AppInfo.getVersionName(ctx))) return null;
+        if (info == null) {
+            LogBuffer.i("UpdateDownloader", "check: no release published (channel=" + channel + ")");
+            return null;
+        }
+        String installed = AppInfo.getVersionName(ctx);
+        if (!UpdateChecker.isNewer(info.version, installed)) {
+            LogBuffer.i("UpdateDownloader", "check: up to date installed=" + installed
+                    + " remote=" + info.version);
+            return null;
+        }
+        LogBuffer.i("UpdateDownloader", "check: update available installed=" + installed
+                + " remote=" + info.version + " apk=" + info.apkUrl
+                + " size=" + info.size + " sha256=" + info.sha256);
         return info;
     }
 
     /** Fetches the latest published release info, regardless of installed version. */
     public static UpdateChecker.UpdateInfo fetchLatest(Context ctx, String channel) throws Exception {
-        String body = httpGet(ctx, UpdateChecker.versionUrl(channel));
-        return UpdateChecker.parseResponse(body);
+        String url = UpdateChecker.versionUrl(channel);
+        LogBuffer.i("UpdateDownloader", "fetchLatest: GET " + url);
+        String body = httpGet(ctx, url);
+        UpdateChecker.UpdateInfo info = UpdateChecker.parseResponse(body);
+        LogBuffer.i("UpdateDownloader", "fetchLatest: version="
+                + (info == null ? "none" : info.version)
+                + " size=" + (info == null ? -1 : info.size));
+        return info;
     }
 
     private static String httpGet(Context ctx, String url) throws Exception {
-        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
-        conn.setConnectTimeout(10_000);
-        conn.setReadTimeout(10_000);
-        conn.setRequestProperty("User-Agent", "Car2Hass-UpdateCheck");
-        conn.setRequestProperty("X-Car2Hass-Id", AppConfig.getAppInstanceId(ctx));
-        int code = conn.getResponseCode();
-        if (code != 200) throw new Exception("HTTP " + code);
-        try (InputStream is = conn.getInputStream()) {
-            java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
-            byte[] buf = new byte[4096];
-            int n;
-            while ((n = is.read(buf)) > 0) bos.write(buf, 0, n);
-            return bos.toString("UTF-8");
-        } finally {
-            conn.disconnect();
+        try {
+            HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
+            conn.setConnectTimeout(10_000);
+            conn.setReadTimeout(10_000);
+            conn.setRequestProperty("User-Agent", "Car2Hass-UpdateCheck");
+            conn.setRequestProperty("X-Car2Hass-Id", AppConfig.getAppInstanceId(ctx));
+            int code = conn.getResponseCode();
+            if (code != 200) throw new Exception("HTTP " + code);
+            try (InputStream is = conn.getInputStream()) {
+                java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+                byte[] buf = new byte[4096];
+                int n;
+                while ((n = is.read(buf)) > 0) bos.write(buf, 0, n);
+                return bos.toString("UTF-8");
+            } finally {
+                conn.disconnect();
+            }
+        } catch (Exception e) {
+            LogBuffer.e("UpdateDownloader", "httpGet failed url=" + url + ": "
+                    + e.getClass().getSimpleName() + ": " + e.getMessage());
+            throw e;
         }
     }
 
@@ -168,6 +193,24 @@ public final class UpdateDownloader {
         }
     }
 
+    /** First bytes of a file as hex, for diagnostics when a file is rejected. */
+    private static String headHex(File f) {
+        if (f == null || !f.exists()) return "n/a";
+        try (java.io.FileInputStream fis = new java.io.FileInputStream(f)) {
+            byte[] head = new byte[8];
+            int n = fis.read(head);
+            if (n <= 0) return "empty";
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < n; i++) {
+                if (i > 0) sb.append(' ');
+                sb.append(String.format(Locale.ROOT, "%02X", head[i] & 0xff));
+            }
+            return sb.toString();
+        } catch (Exception e) {
+            return "read-error:" + e.getMessage();
+        }
+    }
+
     private static File better(File a, File b) {
         if (a == null) return b;
         if (b == null) return a;
@@ -177,7 +220,9 @@ public final class UpdateDownloader {
     /** Fires the package installer for an existing file; false on failure. */
     public static boolean installFile(Context ctx, File file) {
         if (file == null || !isValidApk(file)) {
-            LogBuffer.e("UpdateDownloader", "installFile: not a valid APK, refusing to install");
+            LogBuffer.e("UpdateDownloader", "installFile: not a valid APK, refusing to install file="
+                    + file + " length=" + (file == null ? -1 : file.length())
+                    + " head=" + headHex(file));
             return false;
         }
         try {
@@ -188,9 +233,12 @@ public final class UpdateDownloader {
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
             ctx.startActivity(intent);
+            LogBuffer.i("UpdateDownloader", "installFile: installer launched for " + file
+                    + " length=" + file.length());
             return true;
         } catch (Exception e) {
-            LogBuffer.e("UpdateDownloader", "installFile: " + e.getMessage());
+            LogBuffer.e("UpdateDownloader", "installFile failed: " + e.getClass().getSimpleName()
+                    + ": " + e.getMessage() + " file=" + file + " length=" + file.length());
             return false;
         }
     }
@@ -213,10 +261,19 @@ public final class UpdateDownloader {
         if (dir == null) dir = ctx.getCacheDir();
         if (!dir.exists() && !dir.mkdirs()) throw new IOException("cannot create " + dir);
         File target = new File(dir, "Car2Hass-" + info.version + ".apk");
+        LogBuffer.i("UpdateDownloader", "download start: version=" + info.version
+                + " url=" + info.apkUrl + " expectedSize=" + info.size
+                + " expectedSha256=" + info.sha256 + " dest=" + target);
         if (target.exists()) {
             // Reuse a complete download; drop a corrupt/stale leftover so it
             // cannot be installed ("broken APK") and re-download it below.
-            if (isValidApk(target) && target.length() > 0) return target;
+            if (isValidApk(target) && target.length() > 0) {
+                LogBuffer.i("UpdateDownloader", "download: reusing existing valid APK "
+                        + target + " length=" + target.length());
+                return target;
+            }
+            LogBuffer.w("UpdateDownloader", "download: deleting leftover " + target
+                    + " length=" + target.length() + " head=" + headHex(target));
             target.delete();
         }
         File tmp = new File(dir, target.getName() + ".part");
@@ -228,17 +285,20 @@ public final class UpdateDownloader {
             conn.setRequestProperty("User-Agent", "Car2Hass-Updater");
             conn.setRequestProperty("X-Car2Hass-Id", AppConfig.getAppInstanceId(ctx));
             int code = conn.getResponseCode();
-            if (code != 200) throw new IOException("HTTP " + code);
+            if (code != 200) {
+                LogBuffer.e("UpdateDownloader", "download: HTTP " + code + " for " + info.apkUrl);
+                throw new IOException("HTTP " + code);
+            }
             long total = conn.getContentLengthLong();
             java.security.MessageDigest digest = null;
             try {
                 digest = java.security.MessageDigest.getInstance("SHA-256");
             } catch (java.security.NoSuchAlgorithmException ignored) {
             }
+            long done = 0;
             try (InputStream in = conn.getInputStream();
                  java.io.FileOutputStream out = new java.io.FileOutputStream(tmp)) {
                 byte[] buf = new byte[8192];
-                long done = 0;
                 int n;
                 while ((n = in.read(buf)) > 0) {
                     out.write(buf, 0, n);
@@ -248,7 +308,11 @@ public final class UpdateDownloader {
                 }
                 out.getFD().sync();
             }
+            LogBuffer.i("UpdateDownloader", "download done: received=" + done
+                    + " contentLength=" + total + " tmp=" + tmp);
             if (!isValidApk(tmp)) {
+                LogBuffer.e("UpdateDownloader", "download: invalid APK after transfer length="
+                        + tmp.length() + " head=" + headHex(tmp) + " received=" + done);
                 tmp.delete();
                 throw new IOException("downloaded file is not a valid APK");
             }
@@ -257,14 +321,31 @@ public final class UpdateDownloader {
             // broken APK.
             if (digest != null && info.sha256 != null && !info.sha256.isEmpty()) {
                 String got = toHex(digest.digest());
-                if (!got.equalsIgnoreCase(info.sha256)) {
+                boolean match = got.equalsIgnoreCase(info.sha256);
+                LogBuffer.i("UpdateDownloader", "download: sha256 got=" + got
+                        + " expected=" + info.sha256 + " match=" + match);
+                if (!match) {
+                    LogBuffer.e("UpdateDownloader", "download: SHA-256 mismatch got=" + got
+                            + " expected=" + info.sha256 + " size=" + tmp.length());
                     tmp.delete();
                     throw new IOException("SHA-256 mismatch (got " + got
                             + ", expected " + info.sha256 + ")");
                 }
+            } else {
+                LogBuffer.w("UpdateDownloader", "download: no expected sha256, skipping verification"
+                        + " received=" + done);
             }
-            if (!tmp.renameTo(target)) throw new IOException("rename to " + target + " failed");
+            if (!tmp.renameTo(target)) {
+                LogBuffer.e("UpdateDownloader", "download: rename failed " + tmp + " -> " + target);
+                throw new IOException("rename to " + target + " failed");
+            }
+            LogBuffer.i("UpdateDownloader", "download: ready " + target
+                    + " length=" + target.length());
             return target;
+        } catch (IOException e) {
+            LogBuffer.e("UpdateDownloader", "download failed: " + e.getClass().getSimpleName()
+                    + ": " + e.getMessage());
+            throw e;
         } finally {
             conn.disconnect();
         }

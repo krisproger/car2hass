@@ -4430,7 +4430,18 @@ public class MainActivity extends BaseLocalizedActivity {
         // Reuse an already-landed copy (e.g. install failed earlier) before
         // downloading again.
         File existing = UpdateDownloader.findDownloadedFile(this, -1, info.version);
-        if (existing != null && UpdateDownloader.installFile(this, existing)) return;
+        LogBuffer.i("Main", "update: version=" + info.version + " size=" + info.size
+                + " sha256=" + info.sha256 + " existing=" + existing
+                + (existing != null ? " length=" + existing.length() : ""));
+        if (existing != null) {
+            if (UpdateDownloader.installFile(this, existing)) {
+                LogBuffer.i("Main", "update: installing already-downloaded " + existing);
+                return;
+            }
+            LogBuffer.w("Main", "update: existing file not installable, re-downloading");
+        } else {
+            LogBuffer.i("Main", "update: no already-downloaded file, starting download");
+        }
 
         android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
         progress.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
@@ -4447,13 +4458,18 @@ public class MainActivity extends BaseLocalizedActivity {
                             progress.setTitle(getString(R.string.update_downloading,
                                     total > 0 ? pct + "%" : "..."));
                         }));
+                LogBuffer.i("Main", "update: download returned " + apk + " length="
+                        + (apk == null ? -1 : apk.length()));
                 runOnUiThread(progress::dismiss);
                 if (!UpdateDownloader.installFile(this, apk)) {
+                    LogBuffer.e("Main", "update: install refused/failed for " + apk
+                            + " — showing update_install_failed toast");
                     runOnUiThread(() -> Toast.makeText(this,
                             R.string.update_install_failed, Toast.LENGTH_LONG).show());
                 }
             } catch (Exception e) {
-                LogBuffer.e("Main", "update download: " + e.getMessage());
+                LogBuffer.e("Main", "update download failed: " + e.getClass().getSimpleName()
+                        + ": " + e.getMessage() + " — showing update_download_failed toast");
                 runOnUiThread(() -> {
                     progress.dismiss();
                     Toast.makeText(this,
