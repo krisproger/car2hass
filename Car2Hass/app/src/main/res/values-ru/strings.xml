@@ -226,8 +226,8 @@
     <string name="settings_cloud_base_url_hint">https://mytechnic.ru</string>
     <string name="settings_cloud_login">Войти</string>
     <string name="settings_cloud_signing_in">Вход…</string>
-    <string name="settings_cloud_logged_in">Вход выполнен</string>
-    <string name="settings_cloud_logged_out">Вход не выполнен</string>
+    <string name="settings_cloud_logged_in">Подключено к облаку</string>
+    <string name="settings_cloud_logged_out">Не подключено</string>
     <string name="settings_cloud_disabled">выкл.</string>
     <string name="settings_cloud_never">никогда</string>
     <string name="settings_cloud_last_sync">последняя синхронизация: %1$s</string>
@@ -825,4 +825,6 @@
     <string name="sensor_energy_recovery_gear">Уровень рекуперации</string>
     <string name="sensor_energy_flow">Поток энергии</string>
     <string name="settings_section_cloud">Облачная синхронизация</string>
+    <string name="settings_cloud_disconnect">Отключить</string>
+    <string name="settings_cloud_disconnected">Отключено от облака</string>
 </resources>

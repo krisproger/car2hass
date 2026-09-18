@@ -233,8 +233,8 @@
     <string name="settings_cloud_base_url_hint">https://mytechnic.ru</string>
     <string name="settings_cloud_login">Sign in</string>
     <string name="settings_cloud_signing_in">Signing in…</string>
-    <string name="settings_cloud_logged_in">Signed in</string>
-    <string name="settings_cloud_logged_out">Not signed in</string>
+    <string name="settings_cloud_logged_in">Connected to cloud</string>
+    <string name="settings_cloud_logged_out">Not connected</string>
     <string name="settings_cloud_disabled">off</string>
     <string name="settings_cloud_never">never</string>
     <string name="settings_cloud_last_sync">last sync: %1$s</string>
@@ -840,4 +840,6 @@
     <string name="sensor_energy_recovery_gear">Energy recovery gear</string>
     <string name="sensor_energy_flow">Energy flow</string>
     <string name="settings_section_cloud">Cloud</string>
+    <string name="settings_cloud_disconnect">Disconnect</string>
+    <string name="settings_cloud_disconnected">Disconnected from cloud</string>
 </resources>

@@ -185,6 +185,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private Switch switchCloudSync;
     private EditText editCloudEmail, editCloudCode, editCloudCarName, editCloudBaseUrl;
     private TextView tvCloudStatus;
+    private android.widget.Button btnCloudLogin;
     private boolean updatingCloudToggle = false;
 
     private final Handler saveHandler = new Handler(Looper.getMainLooper());
@@ -2727,7 +2728,11 @@ public class MainActivity extends BaseLocalizedActivity {
         editCloudBaseUrl.addTextChangedListener(cloudWatcher(
                 () -> AppConfig.setCloudBaseUrl(this, editCloudBaseUrl.getText().toString())));
 
-        settingsView.findViewById(R.id.btnCloudLogin).setOnClickListener(v -> cloudLogin());
+        btnCloudLogin = settingsView.findViewById(R.id.btnCloudLogin);
+        btnCloudLogin.setOnClickListener(v -> {
+            if (!AppConfig.getCloudAccessToken(this).isEmpty()) cloudDisconnect();
+            else cloudLogin();
+        });
         updateCloudStatus();
     }
 
@@ -2776,6 +2781,13 @@ public class MainActivity extends BaseLocalizedActivity {
         }
     }
 
+    private void cloudDisconnect() {
+        AppConfig.clearCloudTokens(this);
+        AppConfig.setCloudSyncEnabled(this, false);
+        Toast.makeText(this, R.string.settings_cloud_disconnected, Toast.LENGTH_SHORT).show();
+        updateCloudStatus();
+    }
+
     private String cloudStatusText(String status) {
         if (status.startsWith("http_") || status.startsWith("bind_http_")) {
             return getString(R.string.settings_cloud_status_sync_error);
@@ -2804,6 +2816,17 @@ public class MainActivity extends BaseLocalizedActivity {
             sb.append(" · ").append(cloudStatusText(status));
         }
         tvCloudStatus.setText(sb.toString());
+        tvCloudStatus.setBackgroundResource(0);
+        tvCloudStatus.setTextColor(loggedIn
+                ? getResources().getColor(R.color.accentGreen)
+                : getResources().getColor(R.color.textTertiary));
+        int authVis = loggedIn ? View.GONE : View.VISIBLE;
+        editCloudEmail.setVisibility(authVis);
+        editCloudCode.setVisibility(authVis);
+        if (btnCloudLogin != null) {
+            btnCloudLogin.setText(loggedIn
+                    ? R.string.settings_cloud_disconnect : R.string.settings_cloud_login);
+        }
         if (switchCloudSync.isChecked() != enabled) {
             updatingCloudToggle = true;
             switchCloudSync.setChecked(enabled);
