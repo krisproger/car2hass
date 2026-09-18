@@ -47,6 +47,7 @@ import com.car2hass.vehicle.DataChannel;
 import com.car2hass.vehicle.DiPlusChannel;
 import com.car2hass.vehicle.DiPlusPushChannel;
 import com.car2hass.vehicle.ExperimentalChannel;
+import com.car2hass.vehicle.LocationPolicy;
 import com.car2hass.vehicle.LocationSource;
 import com.car2hass.vehicle.NativeChannel;
 import com.car2hass.vehicle.ObdChannel;
@@ -125,6 +126,7 @@ public class TelemetryService extends Service {
     private double lastLon = Double.NaN;
     private float lastAccuracy = 0;
     private long lastLocTime = 0;
+    private String lastProvider = "";
     private volatile long lastNetworkFlushMs = 0;
     private volatile long lastLastValuesSaveMs = 0;
     private volatile boolean lastValuesDirty = false;
@@ -1085,10 +1087,17 @@ public class TelemetryService extends Service {
                     "location_bearing", "location_altitude", "location_accuracy",
                     "location_provider", "device_battery", "device_pressure", "system_media_volume"}) {
                 String v = valueStore.get(k);
-                if (v != null) locationSource.storePut(k, v);
+                if (v == null) continue;
+                // Restored values are dashboard-only; a persisted position must
+                // never be re-emitted as the current one.
+                if (valueStore.isRestored(k)) continue;
+                locationSource.storePut(k, v);
             }
             com.car2hass.vehicle.SnapshotStore.Loc l = valueStoreLoc();
-            if (l != null) locationSource.storeSetLocation(l);
+            if (l != null && !valueStore.isRestored("location_lat")
+                    && LocationPolicy.isFresh(l.timeMs, System.currentTimeMillis())) {
+                locationSource.storeSetLocation(l);
+            }
         } catch (Exception ignored) {}
     }
 
@@ -1194,7 +1203,9 @@ public class TelemetryService extends Service {
                 public void onLocationChanged(Location loc) {
                     if (loc == null) return;
 
+                    long now = System.currentTimeMillis();
                     long time = loc.getTime();
+                    long ageMs = now - time;
                     double lat = loc.getLatitude();
                     double lon = loc.getLongitude();
                     float accuracy = loc.getAccuracy();
@@ -1202,8 +1213,15 @@ public class TelemetryService extends Service {
 
                     // Ignore absurd fixes; anything else becomes the baseline
                     // (accuracy is recorded and forwarded, HA decides).
-                    if (accuracy > 1000) {
+                    if (LocationPolicy.isAbsurd(accuracy)) {
                         LogBuffer.d("TelemetryService", "Ignoring absurd location (±" + accuracy + "m) from " + provider);
+                        return;
+                    }
+
+                    // A cached/last-known fix must never overwrite a live one.
+                    if (!LocationPolicy.isFresh(time, now)) {
+                        LogBuffer.d("TelemetryService", "Ignoring stale location (age " + ageMs
+                                + "ms) from " + provider);
                         return;
                     }
 
@@ -1215,11 +1233,12 @@ public class TelemetryService extends Service {
                         return;
                     }
 
-                    // If we have a recent accurate GPS fix, ignore coarse network updates.
-                    if (LocationManager.NETWORK_PROVIDER.equals(provider)
-                            && lastAccuracy > 0 && lastAccuracy <= 15
-                            && (time - lastLocTime) < 30000) {
-                        LogBuffer.d("TelemetryService", "Ignoring network location, recent GPS is more accurate");
+                    // If we have a recent accurate GPS fix, ignore coarse
+                    // network/passive updates (PASSIVE needs the same guard).
+                    if (LocationPolicy.suppressCoarse(provider, lastProvider,
+                            lastAccuracy, lastLocTime, now)) {
+                        LogBuffer.d("TelemetryService", "Ignoring " + provider
+                                + " location, recent accurate GPS fix");
                         return;
                     }
 
@@ -1227,13 +1246,14 @@ public class TelemetryService extends Service {
                     lastLon = lon;
                     lastAccuracy = accuracy;
                     lastLocTime = time;
+                    lastProvider = provider == null ? "" : provider;
                     locationSource.onLocation(lat, lon,
                             loc.hasSpeed() ? loc.getSpeed() : 0f,
                             loc.hasBearing() ? loc.getBearing() : 0f,
                             loc.hasAltitude() ? loc.getAltitude() : 0.0,
                             accuracy, provider, time);
                     LogBuffer.i("TelemetryService", "GPS update: " + lastLat + ", " + lastLon
-                            + " (±" + lastAccuracy + "m) from " + provider);
+                            + " (±" + lastAccuracy + "m, age " + ageMs + "ms) from " + provider);
                     evaluateGeofences(lat, lon);
                 }
 
@@ -1268,46 +1288,61 @@ public class TelemetryService extends Service {
 
     private void updateLastKnownLocation(LocationManager lm) {
         try {
+            // Pick the newest last-known fix across providers; a GPS-first pick
+            // would otherwise throw away a fresher NETWORK/PASSIVE fix.
             Location loc = null;
-            try {
-                loc = lm.getLastKnownLocation(LocationManager.GPS_PROVIDER);
-            } catch (Exception ignored) {}
-            if (loc == null) {
+            for (String provider : new String[]{
+                    LocationManager.GPS_PROVIDER,
+                    LocationManager.NETWORK_PROVIDER,
+                    LocationManager.PASSIVE_PROVIDER}) {
                 try {
-                    loc = lm.getLastKnownLocation(LocationManager.NETWORK_PROVIDER);
+                    Location l = lm.getLastKnownLocation(provider);
+                    if (l != null && (loc == null || l.getTime() > loc.getTime())) {
+                        loc = l;
+                    }
                 } catch (Exception ignored) {}
             }
             if (loc == null) {
-                try {
-                    loc = lm.getLastKnownLocation(LocationManager.PASSIVE_PROVIDER);
-                } catch (Exception ignored) {}
-            }
-            if (loc != null) {
-                // Only adopt the last-known fix if it is newer than what we already
-                // have. A stale PASSIVE/NETWORK last-known location would otherwise
-                // overwrite a fresher GPS fix and make the HA track jump back to an
-                // old position with an old fix time.
-                if (lastLocTime != 0 && loc.getTime() <= lastLocTime) {
-                    LogBuffer.d("TelemetryService", "Skipping stale last-known location ("
-                            + loc.getTime() + " <= " + lastLocTime + ")");
-                    return;
-                }
-                lastLat = loc.getLatitude();
-                lastLon = loc.getLongitude();
-                lastAccuracy = loc.getAccuracy();
-                lastLocTime = loc.getTime();
-                // Keep the location_* signals in sync so telemetry always carries
-                // a baseline even when live GPS fixes are absent.
-                locationSource.onLocation(loc.getLatitude(), loc.getLongitude(),
-                        loc.hasSpeed() ? loc.getSpeed() : 0f,
-                        loc.hasBearing() ? loc.getBearing() : 0f,
-                        loc.hasAltitude() ? loc.getAltitude() : 0.0,
-                        loc.getAccuracy(), loc.getProvider(), loc.getTime());
-                LogBuffer.i("TelemetryService", "Last known GPS: " + lastLat + ", " + lastLon
-                        + " (±" + lastAccuracy + "m) from " + loc.getProvider());
-            } else {
                 LogBuffer.w("TelemetryService", "No last known GPS location available");
+                return;
             }
+            long now = System.currentTimeMillis();
+            long ageMs = now - loc.getTime();
+            // A cached fix is history once it is older than the guard: seeding it
+            // would stamp an old position with the current snapshot time.
+            if (!LocationPolicy.isFresh(loc.getTime(), now)) {
+                LogBuffer.d("TelemetryService", "Skipping stale last-known location (age "
+                        + ageMs + "ms) from " + loc.getProvider());
+                return;
+            }
+            if (LocationPolicy.isAbsurd(loc.getAccuracy())) {
+                LogBuffer.d("TelemetryService", "Skipping inaccurate last-known location (±"
+                        + loc.getAccuracy() + "m) from " + loc.getProvider());
+                return;
+            }
+            // Only adopt the last-known fix if it is newer than what we already
+            // have. A stale PASSIVE/NETWORK last-known location would otherwise
+            // overwrite a fresher GPS fix and make the HA track jump back to an
+            // old position with an old fix time.
+            if (lastLocTime != 0 && loc.getTime() <= lastLocTime) {
+                LogBuffer.d("TelemetryService", "Skipping last-known location older than current ("
+                        + loc.getTime() + " <= " + lastLocTime + ")");
+                return;
+            }
+            lastLat = loc.getLatitude();
+            lastLon = loc.getLongitude();
+            lastAccuracy = loc.getAccuracy();
+            lastLocTime = loc.getTime();
+            lastProvider = loc.getProvider() == null ? "" : loc.getProvider();
+            // Keep the location_* signals in sync so telemetry always carries
+            // a baseline even when live GPS fixes are absent.
+            locationSource.onLocation(loc.getLatitude(), loc.getLongitude(),
+                    loc.hasSpeed() ? loc.getSpeed() : 0f,
+                    loc.hasBearing() ? loc.getBearing() : 0f,
+                    loc.hasAltitude() ? loc.getAltitude() : 0.0,
+                    loc.getAccuracy(), loc.getProvider(), loc.getTime());
+            LogBuffer.i("TelemetryService", "Last known GPS: " + lastLat + ", " + lastLon
+                    + " (±" + lastAccuracy + "m, age " + ageMs + "ms) from " + loc.getProvider());
         } catch (Exception ignored) {}
     }
 

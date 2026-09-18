@@ -53,7 +53,17 @@ public final class SystemWorker {
     private void accept(Location loc) {
         if (loc == null) return;
         float acc = loc.getAccuracy();
-        if (acc > 1000) return; // absurd fix
+        if (LocationPolicy.isAbsurd(acc)) return;
+        long now = System.currentTimeMillis();
+        // A cached fix must never overwrite a live one.
+        if (!LocationPolicy.isFresh(loc.getTime(), now)) return;
+        // A coarse network/passive fix must not replace a recent accurate GPS
+        // fix already in the store (PASSIVE carries the fixed bogus coordinate).
+        if (LocationPolicy.suppressCoarse(loc.getProvider(), store.get("location_provider"),
+                parseFloat(store.get("location_accuracy")),
+                parseLong(store.get("location_t")) * 1000L, now)) {
+            return;
+        }
         putLocation(loc.getLatitude(), loc.getLongitude(),
                 loc.hasSpeed() ? loc.getSpeed() : 0f,
                 loc.hasBearing() ? loc.getBearing() : 0f,
@@ -64,6 +74,11 @@ public final class SystemWorker {
     private void baseline() {
         lastBaselineMs = System.currentTimeMillis();
         if (lm == null) return;
+        // With a fresh fix already in the store, reading PASSIVE here would only
+        // risk overwriting a live GPS position with a cached one.
+        if (LocationPolicy.isFresh(parseLong(store.get("location_t")) * 1000L, lastBaselineMs)) {
+            return;
+        }
         Location best = null;
         for (String p : new String[]{"gps", "network", "passive"}) {
             try {
@@ -72,6 +87,14 @@ public final class SystemWorker {
             } catch (Exception ignored) {}
         }
         if (best != null) accept(best);
+    }
+
+    private static long parseLong(String v) {
+        try { return Long.parseLong(v); } catch (Exception e) { return 0L; }
+    }
+
+    private static float parseFloat(String v) {
+        try { return Float.parseFloat(v); } catch (Exception e) { return 0f; }
     }
 
     private void putLocation(double lat, double lon, float speed, float bearing,

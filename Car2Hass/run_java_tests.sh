@@ -252,6 +252,12 @@ echo "=== Compiling CommandWriter tests ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/CommandWriterTest.java"
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/CommandWriterFallbackTest.java"
 
+echo "=== Compiling LocationPolicy (pure, no Android dep) ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/vehicle/LocationPolicy.java"
+
+echo "=== Compiling LocationPolicyTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/LocationPolicyTest.java"
+
 echo "=== Compiling VehicleProfile ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/VehicleProducer.java" "$SRC/com/car2hass/vehicle/VehicleProfile.java"
 
@@ -410,6 +416,9 @@ java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.SensorCommandMapTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.NativeCommandMapTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.CommandWriterTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.CommandWriterFallbackTest
+
+echo "=== Running LocationPolicyTest ==="
+java -cp "$OUT" com.car2hass.vehicle.LocationPolicyTest
 
 echo "=== Running VehicleProfileTest ==="
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.vehicle.VehicleProfileTest

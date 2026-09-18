@@ -147,6 +147,12 @@ public final class CloudSyncClient {
             }
             if (s.length() == 0) return;
 
+            if (lat != null && lon != null && !lat.isNaN() && !lon.isNaN()) {
+                LogBuffer.d(TAG, "snapshot location " + lat + "," + lon
+                        + " provider=" + s.optString("location_provider", "")
+                        + " acc=" + s.optString("location_accuracy", ""));
+            }
+
             buffer.add(CloudBatchBuffer.buildSnapshot(System.currentTimeMillis() / 1000, s, lat, lon));
             long now = System.currentTimeMillis();
             if (buffer.size() >= FLUSH_THRESHOLD || now - lastFlushAttemptMs >= FLUSH_INTERVAL_MS) {
