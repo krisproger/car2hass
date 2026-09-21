@@ -50,6 +50,18 @@
                     android:textColor="@color/textPrimary"
                     android:textSize="16sp"
                     android:textStyle="bold" />
+                <Button
+                    android:id="@+id/btnTestRule"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:minWidth="0dp"
+                    android:paddingStart="12dp"
+                    android:paddingEnd="12dp"
+                    android:layout_marginEnd="4dp"
+                    android:background="@color/primaryContainer"
+                    android:textColor="@color/onPrimary"
+                    android:textSize="13sp"
+                    android:text="@string/rules_test_button" />
                 <ImageButton
                     android:id="@+id/btnAddCondition"
                     android:layout_width="36dp"

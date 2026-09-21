@@ -638,6 +638,20 @@
     <string name="rules_last_fired">fired: %s</string>
     <string name="rules_last_fired_else">else fired: %s</string>
 
+    <!-- Rules editor: test dialog -->
+    <string name="rules_test_button">Test</string>
+    <string name="rules_test_title">Test rule</string>
+    <string name="rules_test_hint">Values can be edited — results update live. The value shown is what the engine uses.</string>
+    <string name="rules_test_restore">Reset</string>
+    <string name="rules_test_close">Close</string>
+    <string name="rules_test_status_overridden">edited</string>
+    <string name="rules_test_status_missing">no data</string>
+    <string name="rules_test_status_restored">cached value</string>
+    <string name="rules_test_group_false">Conditions not met — the rule will not fire.</string>
+    <string name="rules_test_group_true_rising">Conditions met — the rule fires on a false-to-true transition.</string>
+    <string name="rules_test_group_true_immediate">Conditions met — the rule fires (subject to the interval).</string>
+    <string name="rules_test_group_true_skip">Conditions met, but the engine skips the rule right now: missing data or cached value.</string>
+
     <!-- Geofences -->
     <string name="nav_geofences">Geofences</string>
     <string name="geofence_list_title">Geofences</string>

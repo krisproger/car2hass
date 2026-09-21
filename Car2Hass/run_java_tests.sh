@@ -113,6 +113,9 @@ javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2
 echo "=== Compiling RuleEdgeLogicTest ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/rules/RuleEdgeLogicTest.java"
 
+echo "=== Compiling RuleTestEvaluationTest ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/rules/RuleTestEvaluationTest.java"
+
 echo "=== Compiling AntiLoopGuard ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/rules/AntiLoopGuard.java"
 
@@ -393,6 +396,9 @@ java -cp "$OUT:$ANDROID_JAR" com.car2hass.AntiLoopGuardTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.rules.NewModelTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.rules.RuleMigrationTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.rules.RuleEdgeLogicTest
+
+echo "=== Running RuleTestEvaluationTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.rules.RuleTestEvaluationTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.SensorValueHistoryTest
 java -cp "$OUT:$JSON_JAR" com.car2hass.GeofenceZoneTest
 java -cp "$OUT" com.car2hass.GeofenceRowTextTest

@@ -145,8 +145,52 @@ public class RuleEditActivity extends BaseLocalizedActivity {
         findViewById(R.id.btnAddCondition).setOnClickListener(v -> addConditionRow());
         findViewById(R.id.btnAddAction).setOnClickListener(v -> addActionRow());
         findViewById(R.id.btnAddElseAction).setOnClickListener(v -> addElseActionRow());
+        findViewById(R.id.btnTestRule).setOnClickListener(v -> openTestDialog());
         findViewById(R.id.btnRuleSave).setOnClickListener(v -> saveRule());
         findViewById(R.id.btnRuleCancel).setOnClickListener(v -> finish());
+    }
+
+    private void openTestDialog() {
+        List<RuleCondition> conditions = collectConditionsFromEditor();
+        if (conditions.isEmpty()) {
+            Toast.makeText(this, getString(R.string.rules_need_condition), Toast.LENGTH_SHORT).show();
+            return;
+        }
+        Map<String, String> displayNames = new HashMap<>();
+        for (CANDataItem item : signalItems) {
+            if (item.key != null && !item.key.isEmpty()) {
+                displayNames.put(item.key, item.getDisplayName(this));
+            }
+        }
+        RuleTestDialog.show(this, conditions, displayNames, switchRisingEdge.isChecked());
+    }
+
+    private List<RuleCondition> collectConditionsFromEditor() {
+        List<RuleCondition> conditions = new ArrayList<>();
+        for (int i = 0; i < conditionRows.size(); i++) {
+            View row = conditionRows.get(i);
+            RuleCondition c = new RuleCondition();
+
+            if (i > 0) {
+                Spinner connSpinner = row.findViewById(R.id.condConnector);
+                c.connector = connSpinner.getSelectedItemPosition() == 0
+                    ? LogicalOperator.AND : LogicalOperator.OR;
+                CheckBox notCheck = row.findViewById(R.id.condNot);
+                c.negated = notCheck.isChecked();
+            }
+
+            Spinner sensorSpinner = row.findViewById(R.id.condSensor);
+            c.sensorKey = getSensorKeyAt(sensorSpinner.getSelectedItemPosition());
+
+            Spinner opSpinner = row.findViewById(R.id.condOperator);
+            c.operator = RuleOperator.values()[opSpinner.getSelectedItemPosition()];
+
+            AutoCompleteTextView valueInput = row.findViewById(R.id.condValue);
+            c.value = valueInput.getText().toString().trim();
+
+            conditions.add(c);
+        }
+        return conditions;
     }
 
     private View addConditionRow() {
@@ -374,29 +418,7 @@ public class RuleEditActivity extends BaseLocalizedActivity {
         rule.fireOncePerSession = checkFireOnce.isChecked();
 
         rule.conditions.clear();
-        for (int i = 0; i < conditionRows.size(); i++) {
-            View row = conditionRows.get(i);
-            RuleCondition c = new RuleCondition();
-
-            if (i > 0) {
-                Spinner connSpinner = row.findViewById(R.id.condConnector);
-                c.connector = connSpinner.getSelectedItemPosition() == 0
-                    ? LogicalOperator.AND : LogicalOperator.OR;
-                CheckBox notCheck = row.findViewById(R.id.condNot);
-                c.negated = notCheck.isChecked();
-            }
-
-            Spinner sensorSpinner = row.findViewById(R.id.condSensor);
-            c.sensorKey = getSensorKeyAt(sensorSpinner.getSelectedItemPosition());
-
-            Spinner opSpinner = row.findViewById(R.id.condOperator);
-            c.operator = RuleOperator.values()[opSpinner.getSelectedItemPosition()];
-
-            AutoCompleteTextView valueInput = row.findViewById(R.id.condValue);
-            c.value = valueInput.getText().toString().trim();
-
-            rule.conditions.add(c);
-        }
+        rule.conditions.addAll(collectConditionsFromEditor());
 
         if (rule.conditions.isEmpty()) {
             Toast.makeText(this, getString(R.string.rules_need_condition), Toast.LENGTH_SHORT).show();

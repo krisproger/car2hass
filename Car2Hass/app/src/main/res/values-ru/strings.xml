@@ -631,6 +631,20 @@
     <string name="rules_last_fired">сработало: %s</string>
     <string name="rules_last_fired_else">иначе сработало: %s</string>
 
+    <!-- Rules editor: test dialog -->
+    <string name="rules_test_button">Тест</string>
+    <string name="rules_test_title">Проверка правила</string>
+    <string name="rules_test_hint">Значения можно менять — результаты пересчитываются сразу. Показано значение, которое использует движок.</string>
+    <string name="rules_test_restore">Сброс</string>
+    <string name="rules_test_close">Закрыть</string>
+    <string name="rules_test_status_overridden">изменено</string>
+    <string name="rules_test_status_missing">нет данных</string>
+    <string name="rules_test_status_restored">значение из кэша</string>
+    <string name="rules_test_group_false">Условия не выполнены — правило не сработает.</string>
+    <string name="rules_test_group_true_rising">Условия выполнены — правило сработает при переходе с ложного на истинное.</string>
+    <string name="rules_test_group_true_immediate">Условия выполнены — правило сработает (с учётом интервала).</string>
+    <string name="rules_test_group_true_skip">Условия выполнены, но движок сейчас пропустит правило: нет данных или значение из кэша.</string>
+
     <!-- Geofences -->
     <string name="nav_geofences">Геозоны</string>
     <string name="geofence_list_title">Геозоны</string>
