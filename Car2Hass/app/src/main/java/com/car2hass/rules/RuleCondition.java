@@ -17,6 +17,16 @@ public class RuleCondition {
         this.value = value;
     }
 
+    /**
+     * Maps the connector spinner selection to a logical operator. Only the
+     * explicit OR item (position 1) is OR; everything else — including
+     * {@code AdapterView.INVALID_POSITION} from a row whose adapter was never
+     * attached — defaults to AND.
+     */
+    public static LogicalOperator connectorForSpinnerPosition(int position) {
+        return position == 1 ? LogicalOperator.OR : LogicalOperator.AND;
+    }
+
     public static RuleCondition fromJson(JSONObject o) {
         RuleCondition c = new RuleCondition();
         c.sensorKey = o.optString("sensorKey", "");

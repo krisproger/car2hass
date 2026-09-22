@@ -116,6 +116,9 @@ javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car
 echo "=== Compiling RuleTestEvaluationTest ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/rules/RuleTestEvaluationTest.java"
 
+echo "=== Compiling RuleConnectorEditorTest ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/rules/RuleConnectorEditorTest.java"
+
 echo "=== Compiling AntiLoopGuard ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/rules/AntiLoopGuard.java"
 
@@ -399,6 +402,8 @@ java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.rules.RuleEdgeLogicTest
 
 echo "=== Running RuleTestEvaluationTest ==="
 java -cp "$OUT:$JSON_JAR" com.car2hass.rules.RuleTestEvaluationTest
+echo "=== Running RuleConnectorEditorTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.rules.RuleConnectorEditorTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.SensorValueHistoryTest
 java -cp "$OUT:$JSON_JAR" com.car2hass.GeofenceZoneTest
 java -cp "$OUT" com.car2hass.GeofenceRowTextTest

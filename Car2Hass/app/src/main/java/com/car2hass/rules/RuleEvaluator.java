@@ -55,20 +55,44 @@ public class RuleEvaluator {
     /** Per-condition outcome of a group evaluation, for diagnostics/tests. */
     public static final class ConditionEvaluation {
         public final String sensorKey;
-        public final String expected;
+        /** Value exactly as read from the signal store (untranslated). */
+        public final String rawValue;
+        /** Value after {@link com.car2hass.SignalTranslator} translation. */
         public final String actual;
+        public final String expected;
+        public final String operatorName;
+        public final LogicalOperator connector;
         public final boolean missing;
         public final boolean negated;
         public final boolean met;
 
-        ConditionEvaluation(String sensorKey, String expected, String actual,
+        ConditionEvaluation(String sensorKey, String rawValue, String expected, String actual,
+                String operatorName, LogicalOperator connector,
                 boolean missing, boolean negated, boolean met) {
             this.sensorKey = sensorKey;
+            this.rawValue = rawValue;
             this.expected = expected;
             this.actual = actual;
+            this.operatorName = operatorName;
+            this.connector = connector;
             this.missing = missing;
             this.negated = negated;
             this.met = met;
+        }
+
+        public String connectorName() {
+            return connector != null ? connector.name() : "AND";
+        }
+
+        /** One compact "key raw='x'->'y' OP expected='z' conn=AND neg=false met=true" chunk. */
+        public String describe() {
+            return sensorKey + " raw='" + (rawValue == null ? "---" : rawValue)
+                    + "'->'" + (actual == null ? "---" : actual) + "' "
+                    + (operatorName != null ? operatorName : "?")
+                    + " expected='" + (expected == null ? "" : expected) + "'"
+                    + " conn=" + connectorName()
+                    + " neg=" + negated
+                    + " met=" + met;
         }
     }
 
@@ -140,7 +164,9 @@ public class RuleEvaluator {
                 }
             }
 
-            details.add(new ConditionEvaluation(c.sensorKey, expected, translated,
+            details.add(new ConditionEvaluation(c.sensorKey, raw, expected, translated,
+                    c.operator != null ? c.operator.name() : null,
+                    i == 0 ? null : c.connector,
                     missing, c.negated, missing ? false : condResult));
         }
         return new GroupEvaluation(result, missingKey, details);

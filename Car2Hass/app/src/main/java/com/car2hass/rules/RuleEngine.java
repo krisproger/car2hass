@@ -206,7 +206,12 @@ public class RuleEngine {
         // Reset the "nostate" flag so we re-log if sensors go missing again.
         firedOncePerSession.remove(rule.id + "_nostate");
 
-        boolean groupResult = RuleEvaluator.evaluateConditionGroup(rule.conditions, signalLookup);
+        // Evaluate once and keep the captured per-condition snapshot: reading the
+        // signals a second time for the log could show a newer value and make the
+        // logged conditions contradict the decision (issue #68).
+        RuleEvaluator.GroupEvaluation group =
+                RuleEvaluator.evaluateConditionGroupDetails(rule.conditions, signalLookup);
+        boolean groupResult = group.result;
 
         // Debounce (holdSeconds): for rising-edge rules the condition must stay
         // true for the configured time before the edge counts. While the hold
@@ -285,7 +290,7 @@ public class RuleEngine {
 
         LogBuffer.i("RuleEngine", "Rule '" + rule.name + "' FIRE " + (fireBranch ? "action" : "else")
             + ": prevCondition=" + prevCondition + " groupResult=" + groupResult
-            + " conditions=" + describeConditions(rule));
+            + " conditions=" + describeEvaluation(group));
 
         for (RuleAction action : targetActions) {
             if (!guard.allow(action.commandId, action.commandValue, now, rule.antiLoopWindowSec * 1000)) {
@@ -316,14 +321,22 @@ public class RuleEngine {
         }
     }
 
-    /** Human-readable snapshot of the evaluated conditions (for fire logs). */
-    private String describeConditions(Rule rule) {
+    /**
+     * Human-readable per-condition snapshot of the evaluated group (for fire
+     * logs). Each condition shows the raw store value, the translated value,
+     * the operator, the expected value, the connector, the negated flag and the
+     * per-condition result, so a device log is conclusive without re-reading
+     * the (possibly newer) live signals.
+     */
+    private String describeEvaluation(RuleEvaluator.GroupEvaluation group) {
         StringBuilder sb = new StringBuilder("[");
-        for (RuleCondition c : rule.conditions) {
+        for (RuleEvaluator.ConditionEvaluation c : group.conditions) {
             if (sb.length() > 1) sb.append(", ");
-            String op = c.operator != null ? c.operator.name().toLowerCase() : "?";
-            sb.append(c.sensorKey).append("='").append(signalLookup.apply(c.sensorKey))
-              .append("' ").append(op).append(" '").append(c.value).append("'");
+            sb.append(c.describe());
+        }
+        if (group.hasMissing()) {
+            if (sb.length() > 1) sb.append(", ");
+            sb.append("missing=").append(group.missingSensorKey);
         }
         return sb.append("]").toString();
     }

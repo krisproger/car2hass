@@ -173,8 +173,8 @@ public class RuleEditActivity extends BaseLocalizedActivity {
 
             if (i > 0) {
                 Spinner connSpinner = row.findViewById(R.id.condConnector);
-                c.connector = connSpinner.getSelectedItemPosition() == 0
-                    ? LogicalOperator.AND : LogicalOperator.OR;
+                c.connector = RuleCondition.connectorForSpinnerPosition(
+                        connSpinner.getSelectedItemPosition());
                 CheckBox notCheck = row.findViewById(R.id.condNot);
                 c.negated = notCheck.isChecked();
             }
@@ -219,17 +219,22 @@ public class RuleEditActivity extends BaseLocalizedActivity {
         });
         valueInput.setOnClickListener(v -> valueInput.showDropDown());
 
+        // The connector adapter is attached to every row (including the first):
+        // an unattached Spinner reports INVALID_POSITION, and a row that starts
+        // first can later be reordered below another condition, which would then
+        // be saved as OR instead of the intended AND.
+        ArrayAdapter<CharSequence> connAdapter = ArrayAdapter.createFromResource(this,
+                R.array.rules_connector_options, android.R.layout.simple_spinner_item);
+        connAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        connSpinner.setAdapter(connAdapter);
+        if (preset != null && preset.connector != null) {
+            connSpinner.setSelection(preset.connector == LogicalOperator.AND ? 0 : 1);
+        }
+
         if (index == 0) {
             connSpinner.setVisibility(View.GONE);
             notCheck.setVisibility(View.GONE);
         } else {
-            ArrayAdapter<CharSequence> connAdapter = ArrayAdapter.createFromResource(this,
-                    R.array.rules_connector_options, android.R.layout.simple_spinner_item);
-            connAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-            connSpinner.setAdapter(connAdapter);
-            if (preset != null && preset.connector != null) {
-                connSpinner.setSelection(preset.connector == LogicalOperator.AND ? 0 : 1);
-            }
             if (preset != null && preset.negated) {
                 notCheck.setChecked(true);
             }

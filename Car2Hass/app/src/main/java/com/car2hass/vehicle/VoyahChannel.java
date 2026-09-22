@@ -152,39 +152,72 @@ public class VoyahChannel implements DataChannel {
     }
 
     private ChannelResult probeInner(Context ctx) {
-        boolean bound = bindRaw(ctx);
-        IBinder binder = bound ? rawBinder : findBinder();
-        // Primary: reflect the vendor SDK classes.
-        int ok = tryReflection(IFACE_CLASS, binder);
-        // The firmware SDK jars may be empty stubs; retry the real AIDL Stub and
-        // VehicleState from the service package's own APK classloader.
-        if (ok <= 1 && deviceCl == null && ctx != null) {
-            ClassLoader pcl = serviceClassLoader(ctx);
-            if (pcl != null) {
-                deviceCl = pcl;
-                ok = Math.max(ok, tryReflection(IFACE_CLASS, binder));
+        ensureDeviceClass(ctx);
+
+        // Primary path: exactly what the research engine uses — the binder is
+        // taken straight from ServiceManager (ICanBusService descriptor), and the
+        // vendor SDK class is loaded from the service APK's classloader. It does
+        // not rely on bindService(qg.canbus), which some head units reject.
+        IBinder smBinder = findBinder();
+        if (smBinder == null) {
+            LogBuffer.d("VoyahChannel", "ServiceManager path: ICanBusService not registered");
+        } else {
+            rawBinder = smBinder;
+            int ok = tryReflection(IFACE_CLASS, smBinder);
+            if (ok > 1) {
+                probeFailed = false;
+                probed = true;
+                LogBuffer.i("VoyahChannel", "values via ServiceManager+reflection (" + ok + " params)");
+                return ChannelResult.rawData("ICanBusService отвечает, параметров прочитано: " + ok);
             }
+            LogBuffer.d("VoyahChannel", "ServiceManager path: readable params=" + ok);
+            // A single readable param is not enough to trust reflection; drop the
+            // partial interface so the fallbacks below can take over.
+            cachedIface = null;
+            cachedIfaceClass = null;
         }
-        if (ok > 1) {
-            probeFailed = false;
-            probed = true;
-            return ChannelResult.rawData("ICanBusService отвечает, параметров прочитано: " + ok);
-        }
-        cachedIface = null;
-        cachedIfaceClass = null;
-        LogBuffer.d("VoyahChannel", "reflection found " + ok + " readable params, using raw transact");
-        // Fallback: explicit bind + direct IBinder.transact with known getter codes.
+
+        // Fallback: the legacy bindService(qg.canbus) route, then reflection and
+        // finally the known raw getter transaction codes.
+        boolean bound = bindRaw(ctx);
         if (bound) {
+            int ok = tryReflection(IFACE_CLASS, rawBinder);
+            if (ok > 1) {
+                probeFailed = false;
+                probed = true;
+                LogBuffer.i("VoyahChannel", "values via bindService+reflection (" + ok + " params)");
+                return ChannelResult.rawData("ICanBusService отвечает, параметров прочитано: " + ok);
+            }
+            LogBuffer.d("VoyahChannel", "bindService path: readable params=" + ok);
+            cachedIface = null;
+            cachedIfaceClass = null;
             Float soc = transactFloat(71);
             if (soc != null) {
                 probeFailed = false;
                 probed = true;
+                LogBuffer.i("VoyahChannel", "values via bindService+transact (SOC=" + soc + "%)");
                 return ChannelResult.rawData("raw transact ok, SOC=" + soc + "%");
             }
+            LogBuffer.d("VoyahChannel", "bindService path: raw transact returned no value");
+        } else {
+            LogBuffer.d("VoyahChannel", "bindService path unavailable");
         }
+
+        cachedIface = null;
+        cachedIfaceClass = null;
         probeFailed = true;
         probed = true;
         return ChannelResult.dead("сервис qinggan CANBus не найден (не Voyah?)");
+    }
+
+    /** Loads the vendor SDK classes from the service APK once, if possible. */
+    private static void ensureDeviceClass(Context ctx) {
+        if (deviceCl != null || ctx == null) return;
+        ClassLoader pcl = serviceClassLoader(ctx);
+        if (pcl != null) {
+            deviceCl = pcl;
+            LogBuffer.d("VoyahChannel", "loaded vendor classes from service package");
+        }
     }
 
     @Override
@@ -199,8 +232,22 @@ public class VoyahChannel implements DataChannel {
         }
         if (probeFailed) return out;
         if (cachedIface == null) {
-            if (rawBinder == null || !rawBinder.pingBinder()) {
-                if (!bindRaw(ctx)) return out;
+            // Probe succeeded without caching the interface (raw transact path) or
+            // the service appeared late: prefer the binder the research uses.
+            ensureDeviceClass(ctx);
+            IBinder binder = (rawBinder != null && rawBinder.pingBinder()) ? rawBinder : findBinder();
+            if (binder == null || !binder.pingBinder()) {
+                if (bindRaw(ctx)) binder = rawBinder;
+            }
+            if (binder == null || !binder.pingBinder()) {
+                LogBuffer.d("VoyahChannel", "read: no binder via ServiceManager or bindService");
+                return out;
+            }
+            rawBinder = binder;
+            if (tryReflection(IFACE_CLASS, binder) > 0) {
+                LogBuffer.i("VoyahChannel", "values via ServiceManager+reflection (lazy)");
+            } else {
+                LogBuffer.d("VoyahChannel", "read: reflection failed, using raw transact");
             }
         }
         for (CANDataItem item : knownItems) {
