@@ -613,6 +613,8 @@
     <string name="rules_connector_and">AND</string>
     <string name="rules_connector_or">OR</string>
     <string name="rules_condition_not">NOT</string>
+    <string name="rules_condition_trigger">On change</string>
+    <string name="rules_condition_trigger_hint">Fire when this sensor changes into the matching value</string>
     <string-array name="rules_connector_options">
         <item>@string/rules_connector_and</item>
         <item>@string/rules_connector_or</item>
@@ -649,6 +651,7 @@
     <string name="rules_test_status_restored">cached value</string>
     <string name="rules_test_group_false">Conditions not met — the rule will not fire.</string>
     <string name="rules_test_group_true_rising">Conditions met — the rule fires on a false-to-true transition.</string>
+    <string name="rules_test_group_true_trigger">Conditions met — the rule fires when a condition marked \"On change\" changes into its value while the others hold.</string>
     <string name="rules_test_group_true_immediate">Conditions met — the rule fires (subject to the interval).</string>
     <string name="rules_test_group_true_skip">Conditions met, but the engine skips the rule right now: missing data or cached value.</string>
 

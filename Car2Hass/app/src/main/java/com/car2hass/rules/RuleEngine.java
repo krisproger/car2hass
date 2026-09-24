@@ -32,6 +32,9 @@ public class RuleEngine {
     // Per-rule previous condition state and first-evaluation seeding.
     // Thread-safe: only accessed from the single executor thread.
     private final RuleEdgeLogic edgeLogic = new RuleEdgeLogic();
+    // Per-condition transition state for rules that edge on a specific sensor
+    // change instead of on the whole condition group.
+    private final RuleTriggerLogic triggerLogic = new RuleTriggerLogic();
     private final Set<String> firedOncePerSession = new HashSet<>();
     // Rising-edge debounce: rule id → timestamp when its condition first became
     // true in the current true-period. Used by the holdSeconds gate.
@@ -60,6 +63,7 @@ public class RuleEngine {
         if (started) return;
         started = true;
         edgeLogic.reset();
+        triggerLogic.reset();
         loadPreviousConditions();
         executor = Executors.newSingleThreadScheduledExecutor();
         executor.scheduleAtFixedRate(this::tick, 0, 1, TimeUnit.SECONDS);
@@ -75,6 +79,7 @@ public class RuleEngine {
         savePreviousConditions();
         guard.clear();
         edgeLogic.reset();
+        triggerLogic.reset();
         conditionTrueSince.clear();
         firedOncePerSession.clear();
         LogBuffer.i("RuleEngine", "Engine stopped");
@@ -91,6 +96,7 @@ public class RuleEngine {
             Set<String> ids = new HashSet<>();
             for (Rule r : RuleRegistry.load(appContext)) ids.add(r.id);
             edgeLogic.retainRules(ids);
+            triggerLogic.retainRules(ids);
             savePreviousConditions();
         } catch (Exception e) {
             LogBuffer.w("RuleEngine", "onRulesChanged prune error: " + e.getMessage());
@@ -234,8 +240,17 @@ public class RuleEngine {
             }
         }
 
+        // A rule may edge on a specific sensor's transition (issue #70): the
+        // flagged conditions drive the edge, the remaining conditions are guards
+        // checked at that moment. For such rules a guard flapping (doors
+        // relocking after the action) cannot re-fire the rule.
+        boolean hasTriggers = RuleTriggerLogic.hasTriggerConditions(rule.conditions);
+        RuleTriggerLogic.Outcome trigger = hasTriggers
+                ? triggerLogic.evaluate(rule.id, rule.conditions, group, holdPending)
+                : null;
+
         RuleEdgeLogic.Outcome outcome = edgeLogic.evaluate(rule.id, groupResult, holdPending);
-        if (outcome.firstEvaluation) {
+        if (outcome.firstEvaluation || (trigger != null && trigger.firstEvaluation)) {
             savePreviousConditions();
             LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': first evaluation recorded ("
                     + groupResult + "), no edge");
@@ -248,35 +263,6 @@ public class RuleEngine {
                 + prevCondition + "→" + groupResult);
         }
 
-        if (!rule.enabled) return;
-
-        if (rule.fireOncePerSession && firedOncePerSession.contains(rule.id)) {
-            return;
-        }
-
-        if (holdPending) {
-            return;
-        }
-
-        boolean fireBranch;
-        List<RuleAction> targetActions;
-
-        if (groupResult) {
-            fireBranch = true;
-            targetActions = rule.actions;
-            if (rule.fireOnRisingEdge && prevCondition) {
-                return;
-            }
-        } else if (!rule.actionsOnFalse.isEmpty()) {
-            fireBranch = false;
-            targetActions = rule.actionsOnFalse;
-            if (rule.fireOnRisingEdge && !prevCondition) {
-                return;
-            }
-        } else {
-            return;
-        }
-
         // Cooldown is shared by both branches: the clock is the most recent
         // execution of either branch, exactly as when there was a single
         // lastExecutedAtMs field. Rising-edge rules throttle on the transition
@@ -284,12 +270,21 @@ public class RuleEngine {
         // configurable minIntervalSec applies to level-triggered rules.
         long lastFiredAtMs = Math.max(rule.lastExecutedAtMs, rule.lastExecutedFalseAtMs);
         long cooldownMs = rule.fireOnRisingEdge ? EDGE_ANTI_BOUNCE_MS : rule.minIntervalSec * 1000;
-        if (now - lastFiredAtMs < cooldownMs) {
-            return;
-        }
+
+        RuleEvaluator.FireDecision decision = RuleEvaluator.decideFire(
+                rule.enabled, groupResult, !rule.actionsOnFalse.isEmpty(),
+                rule.fireOnRisingEdge, prevCondition,
+                hasTriggers, trigger != null && trigger.triggerEdge,
+                rule.fireOncePerSession && firedOncePerSession.contains(rule.id),
+                holdPending, now, lastFiredAtMs, cooldownMs);
+        if (!decision.fire) return;
+
+        boolean fireBranch = decision.fireBranch;
+        List<RuleAction> targetActions = fireBranch ? rule.actions : rule.actionsOnFalse;
 
         LogBuffer.i("RuleEngine", "Rule '" + rule.name + "' FIRE " + (fireBranch ? "action" : "else")
             + ": prevCondition=" + prevCondition + " groupResult=" + groupResult
+            + " triggerEdge=" + (trigger != null && trigger.triggerEdge)
             + " conditions=" + describeEvaluation(group));
 
         for (RuleAction action : targetActions) {

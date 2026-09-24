@@ -124,6 +124,9 @@ public final class RuleTestDialog {
         }
         if (c.negated) sb.append(context.getString(R.string.rules_condition_not)).append(' ');
         sb.append(name);
+        if (c.triggerOnChange) {
+            sb.append(" [").append(context.getString(R.string.rules_condition_trigger)).append(']');
+        }
         return sb.toString();
     }
 
@@ -169,12 +172,16 @@ public final class RuleTestDialog {
         }
 
         int summaryRes;
+        boolean hasTriggers = RuleTriggerLogic.hasTriggerConditions(conditions);
         if (!group.result) {
             summaryRes = R.string.rules_test_group_false;
             summary.setTextColor(context.getColor(R.color.accentRed));
         } else if (group.hasMissing() || restoredLive) {
             summaryRes = R.string.rules_test_group_true_skip;
             summary.setTextColor(context.getColor(R.color.accentYellow));
+        } else if (fireOnRisingEdge && hasTriggers) {
+            summaryRes = R.string.rules_test_group_true_trigger;
+            summary.setTextColor(context.getColor(R.color.accentGreen));
         } else if (fireOnRisingEdge) {
             summaryRes = R.string.rules_test_group_true_rising;
             summary.setTextColor(context.getColor(R.color.accentGreen));

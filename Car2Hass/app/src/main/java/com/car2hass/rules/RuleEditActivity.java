@@ -188,6 +188,9 @@ public class RuleEditActivity extends BaseLocalizedActivity {
             AutoCompleteTextView valueInput = row.findViewById(R.id.condValue);
             c.value = valueInput.getText().toString().trim();
 
+            CheckBox triggerCheck = row.findViewById(R.id.condTrigger);
+            c.triggerOnChange = triggerCheck.isChecked();
+
             conditions.add(c);
         }
         return conditions;
@@ -203,6 +206,7 @@ public class RuleEditActivity extends BaseLocalizedActivity {
 
         Spinner connSpinner = row.findViewById(R.id.condConnector);
         CheckBox notCheck = row.findViewById(R.id.condNot);
+        CheckBox triggerCheck = row.findViewById(R.id.condTrigger);
         Spinner sensorSpinner = row.findViewById(R.id.condSensor);
         Spinner opSpinner = row.findViewById(R.id.condOperator);
         AutoCompleteTextView valueInput = row.findViewById(R.id.condValue);
@@ -244,6 +248,7 @@ public class RuleEditActivity extends BaseLocalizedActivity {
             selectSensor(sensorSpinner, preset.sensorKey);
             opSpinner.setSelection(preset.operator.ordinal());
             valueInput.setText(preset.value);
+            triggerCheck.setChecked(preset.triggerOnChange);
             updateValueSuggestions(preset.sensorKey, valueInput);
         }
 

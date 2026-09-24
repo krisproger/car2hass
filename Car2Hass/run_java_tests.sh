@@ -113,6 +113,12 @@ javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2
 echo "=== Compiling RuleEdgeLogicTest ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/rules/RuleEdgeLogicTest.java"
 
+echo "=== Compiling RuleTriggerLogic (per-condition trigger state) ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/rules/RuleTriggerLogic.java"
+
+echo "=== Compiling RuleTriggerLogicTest ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/rules/RuleTriggerLogicTest.java"
+
 echo "=== Compiling RuleTestEvaluationTest ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/rules/RuleTestEvaluationTest.java"
 
@@ -404,6 +410,7 @@ java -cp "$OUT:$ANDROID_JAR" com.car2hass.AntiLoopGuardTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.rules.NewModelTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.rules.RuleMigrationTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.rules.RuleEdgeLogicTest
+java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.rules.RuleTriggerLogicTest
 
 echo "=== Running RuleTestEvaluationTest ==="
 java -cp "$OUT:$JSON_JAR" com.car2hass.rules.RuleTestEvaluationTest

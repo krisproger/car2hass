@@ -14,6 +14,30 @@ public class RuleEvaluator {
         COOLDOWN
     }
 
+    /** Why the full rule fire decision was skipped. */
+    public enum FireReason {
+        NONE,
+        DISABLED,
+        FIRE_ONCE_DONE,
+        HOLD_PENDING,
+        CONDITION_FALSE,
+        NOT_EDGE,
+        COOLDOWN
+    }
+
+    public static final class FireDecision {
+        public final boolean fire;
+        /** true → actions, false → actionsOnFalse (only meaningful when firing). */
+        public final boolean fireBranch;
+        public final FireReason reason;
+
+        FireDecision(boolean fire, boolean fireBranch, FireReason reason) {
+            this.fire = fire;
+            this.fireBranch = fireBranch;
+            this.reason = reason;
+        }
+    }
+
     public static final class Decision {
         public final boolean fire;
         public final boolean conditionMet;
@@ -50,6 +74,58 @@ public class RuleEvaluator {
         }
 
         return new Decision(true, true, SkipReason.NONE);
+    }
+
+    /**
+     * Pure full-rule fire decision shared by the engine and tests. For rules
+     * with {@code triggerOnChange} conditions the true branch edges on the
+     * per-condition {@code triggerEdge}; otherwise it keeps the classic group
+     * rising edge ({@code previousCondition}).
+     */
+    public static FireDecision decideFire(
+            boolean enabled,
+            boolean groupResult,
+            boolean hasActionsOnFalse,
+            boolean fireOnRisingEdge,
+            boolean previousCondition,
+            boolean hasTriggers,
+            boolean triggerEdge,
+            boolean fireOnceDone,
+            boolean holdPending,
+            long nowMs,
+            long lastExecutedMs,
+            long cooldownMs) {
+
+        if (!enabled) {
+            return new FireDecision(false, false, FireReason.DISABLED);
+        }
+        if (fireOnceDone) {
+            return new FireDecision(false, false, FireReason.FIRE_ONCE_DONE);
+        }
+        if (holdPending) {
+            return new FireDecision(false, false, FireReason.HOLD_PENDING);
+        }
+
+        boolean fireBranch;
+        boolean edgeOk;
+        if (groupResult) {
+            fireBranch = true;
+            boolean rising = hasTriggers ? triggerEdge : !previousCondition;
+            edgeOk = !fireOnRisingEdge || rising;
+        } else if (hasActionsOnFalse) {
+            fireBranch = false;
+            edgeOk = !fireOnRisingEdge || !previousCondition;
+        } else {
+            return new FireDecision(false, false, FireReason.CONDITION_FALSE);
+        }
+
+        if (!edgeOk) {
+            return new FireDecision(false, fireBranch, FireReason.NOT_EDGE);
+        }
+        if (nowMs - lastExecutedMs < cooldownMs) {
+            return new FireDecision(false, fireBranch, FireReason.COOLDOWN);
+        }
+        return new FireDecision(true, fireBranch, FireReason.NONE);
     }
 
     /** Per-condition outcome of a group evaluation, for diagnostics/tests. */

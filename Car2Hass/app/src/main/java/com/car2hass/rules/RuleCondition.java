@@ -8,6 +8,8 @@ public class RuleCondition {
     public String value;
     public boolean negated;
     public LogicalOperator connector;
+    /** Rule edges on this condition's transition into a satisfying value. */
+    public boolean triggerOnChange;
 
     public RuleCondition() {}
 
@@ -33,6 +35,7 @@ public class RuleCondition {
         c.operator = Rule.parseOperator(o.optString("operator", "EQ"));
         c.value = o.optString("value", "");
         c.negated = o.optBoolean("negated", false);
+        c.triggerOnChange = o.optBoolean("triggerOnChange", false);
         String conn = o.optString("connector", null);
         c.connector = (conn != null && !conn.isEmpty()) ? LogicalOperator.valueOf(conn) : null;
         return c;
@@ -45,6 +48,7 @@ public class RuleCondition {
             o.put("operator", operator != null ? operator.name() : "EQ");
             o.put("value", value != null ? value : "");
             o.put("negated", negated);
+            o.put("triggerOnChange", triggerOnChange);
             if (connector != null) o.put("connector", connector.name());
         } catch (Exception e) { /* ignored */ }
         return o;

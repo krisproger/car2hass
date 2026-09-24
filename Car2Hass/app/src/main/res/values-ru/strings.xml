@@ -606,6 +606,8 @@
     <string name="rules_connector_and">И</string>
     <string name="rules_connector_or">ИЛИ</string>
     <string name="rules_condition_not">НЕ</string>
+    <string name="rules_condition_trigger">Изменение</string>
+    <string name="rules_condition_trigger_hint">Срабатывать при изменении этого датчика на подходящее значение</string>
     <string-array name="rules_connector_options">
         <item>@string/rules_connector_and</item>
         <item>@string/rules_connector_or</item>
@@ -642,6 +644,7 @@
     <string name="rules_test_status_restored">значение из кэша</string>
     <string name="rules_test_group_false">Условия не выполнены — правило не сработает.</string>
     <string name="rules_test_group_true_rising">Условия выполнены — правило сработает при переходе с ложного на истинное.</string>
+    <string name="rules_test_group_true_trigger">Условия выполнены — правило сработает, когда условие с отметкой «Изменение» изменится на своё значение, а остальные условия выполняются.</string>
     <string name="rules_test_group_true_immediate">Условия выполнены — правило сработает (с учётом интервала).</string>
     <string name="rules_test_group_true_skip">Условия выполнены, но движок сейчас пропустит правило: нет данных или значение из кэша.</string>
 
