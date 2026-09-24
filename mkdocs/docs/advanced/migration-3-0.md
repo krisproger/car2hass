@@ -19,7 +19,7 @@
    diplus2hass → Удалить. Запишите имя автомобиля (car_name) до удаления.
 2. Перезапустите Home Assistant.
 3. Установите интеграцию **cartelemetry-v3.0.5.zip** через HACS
-   (Custom repository → `https://github.com/krisproger/diplustohass`) или распакуйте
+   (Custom repository → `https://github.com/krisproger/car2hass`) или распакуйте
    вручную в `custom_components/cartelemetry`.
 4. Добавьте интеграцию заново с тем же именем автомобиля.
 5. Обновите приложение: установите **Car2Hass** (поставится рядом со старым;

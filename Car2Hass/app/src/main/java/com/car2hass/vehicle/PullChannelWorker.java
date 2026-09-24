@@ -26,6 +26,9 @@ public final class PullChannelWorker implements ChannelWorker {
     private final List<CANDataItem> itemsTemplate;
     private final WorkerRetryPolicy retry;
     private volatile boolean running;
+    private volatile ChannelWorkerStatus.Result lastResult = ChannelWorkerStatus.Result.OK;
+    private volatile String lastError = "";
+    private volatile long lastDelayMs;
     private Thread thread;
 
     public PullChannelWorker(Context ctx, ValueStore store, DataChannel channel,
@@ -35,6 +38,7 @@ public final class PullChannelWorker implements ChannelWorker {
         this.channel = channel;
         this.itemsTemplate = items != null ? new ArrayList<>(items) : new ArrayList<>();
         this.retry = new WorkerRetryPolicy(cadenceMs, MAX_BACKOFF_MS);
+        this.lastDelayMs = cadenceMs;
     }
 
     @Override
@@ -60,15 +64,24 @@ public final class PullChannelWorker implements ChannelWorker {
     @Override
     public boolean isRunning() { return running; }
 
+    @Override
+    public ChannelWorkerStatus status() {
+        return new ChannelWorkerStatus(channel.id(), running,
+                lastResult, lastError, retry.baseMs(), lastDelayMs);
+    }
+
     private void loop() {
         while (running) {
             long delay;
             try {
                 delay = cycle();
             } catch (Throwable t) {
-                LogBuffer.d("ChannelWorker", channel.id() + " cycle error: " + t.getMessage());
+                lastResult = ChannelWorkerStatus.Result.ERROR;
+                lastError = t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName();
+                LogBuffer.d("ChannelWorker", channel.id() + " cycle error: " + lastError);
                 delay = retry.onFailure();
             }
+            lastDelayMs = delay;
             if (!running) break;
             try {
                 Thread.sleep(delay);
@@ -97,7 +110,14 @@ public final class PullChannelWorker implements ChannelWorker {
                 written++;
             }
         }
-        return written > 0 ? retry.onSuccess() : retry.onFailure();
+        if (written > 0) {
+            lastResult = ChannelWorkerStatus.Result.OK;
+            lastError = "";
+            return retry.onSuccess();
+        }
+        lastResult = ChannelWorkerStatus.Result.EMPTY;
+        lastError = "";
+        return retry.onFailure();
     }
 
     private static CANDataItem copy(CANDataItem src) {

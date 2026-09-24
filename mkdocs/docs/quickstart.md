@@ -25,7 +25,7 @@ DiPlus нужен только если вы хотите канал BYD/DiLink 
 
 1. Убедитесь, что в HA установлен [HACS](https://hacs.xyz/).
 2. **HACS → Integrations → меню ⋮ (вверху справа) → Custom repositories**.
-3. В поле Repository вставьте `https://github.com/krisproger/diplustohass`, категория — **Integration** → **Add**.
+3. В поле Repository вставьте `https://github.com/krisproger/car2hass`, категория — **Integration** → **Add**.
 4. Найдите в HACS **Car2Hass — BYD Vehicle Telemetry** и нажмите **Download**.
 5. Перезапустите Home Assistant.
 

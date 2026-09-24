@@ -4,6 +4,16 @@ Custom integration for Home Assistant that receives telemetry from the **DiPlus-
 
 The Android app reads vehicle data via the **DiPlus** app on the head unit (mandatory — it will not work without it) and forwards it to this integration via a single REST endpoint.
 
+## Version lines
+
+The integration has its own version line, independent of the Android app:
+
+- **Stable** — the default HACS install (currently `3.3.11`).
+- **Beta** — published with `prerelease: true`; opt in via the repository
+  **"Pre-release"** switch in HACS (currently `3.3.12-beta.1`).
+
+`manifest.json` is the single source of truth for the current version (see the `version` field).
+
 ## Features
 
 - **132 BYD vehicle signals** exposed as Home Assistant entities:

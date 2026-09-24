@@ -201,6 +201,7 @@ javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/UiRe
 echo "=== Compiling channel worker registry (pure, no Android dep) ==="
 javac -d "$OUT" -source 17 -target 17 \
   "$SRC/com/car2hass/vehicle/WorkerRetryPolicy.java" \
+  "$SRC/com/car2hass/vehicle/ChannelWorkerStatus.java" \
   "$SRC/com/car2hass/vehicle/ChannelWorker.java" \
   "$SRC/com/car2hass/vehicle/WorkerFactory.java" \
   "$SRC/com/car2hass/vehicle/ChannelWorkerRegistry.java"
@@ -208,7 +209,8 @@ javac -d "$OUT" -source 17 -target 17 \
 echo "=== Compiling channel worker registry tests ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 \
   "$TEST/com/car2hass/vehicle/WorkerRetryPolicyTest.java" \
-  "$TEST/com/car2hass/vehicle/ChannelWorkerRegistryTest.java"
+  "$TEST/com/car2hass/vehicle/ChannelWorkerRegistryTest.java" \
+  "$TEST/com/car2hass/vehicle/ChannelWorkerStatusTest.java"
 
 echo "=== Compiling SentinelDecoder ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/SentinelDecoder.java"
@@ -458,6 +460,9 @@ java -cp "$OUT" com.car2hass.vehicle.WorkerRetryPolicyTest
 
 echo "=== Running ChannelWorkerRegistryTest ==="
 java -cp "$OUT" com.car2hass.vehicle.ChannelWorkerRegistryTest
+
+echo "=== Running ChannelWorkerStatusTest ==="
+java -cp "$OUT" com.car2hass.vehicle.ChannelWorkerStatusTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.SentinelDecoderTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.ParamDecoderTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.NativeSignalMapTest

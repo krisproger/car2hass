@@ -1,5 +1,6 @@
 package com.car2hass.vehicle;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -68,6 +69,30 @@ public final class ChannelWorkerRegistry {
 
     public synchronized Set<String> runningChannels() {
         return new LinkedHashSet<>(workers.keySet());
+    }
+
+    /** Status snapshot of a single running worker, or null when the channel has none. */
+    public synchronized ChannelWorkerStatus status(String channelId) {
+        ChannelWorker worker = workers.get(channelId);
+        return worker == null ? null : safeStatus(worker);
+    }
+
+    /** Status snapshots of every running worker, in insertion order. */
+    public synchronized List<ChannelWorkerStatus> statuses() {
+        List<ChannelWorkerStatus> out = new ArrayList<>(workers.size());
+        for (ChannelWorker worker : workers.values()) {
+            ChannelWorkerStatus s = safeStatus(worker);
+            if (s != null) out.add(s);
+        }
+        return out;
+    }
+
+    private static ChannelWorkerStatus safeStatus(ChannelWorker worker) {
+        try {
+            return worker.status();
+        } catch (Exception ignored) {
+            return null;
+        }
     }
 
     private static void safeStop(ChannelWorker worker) {

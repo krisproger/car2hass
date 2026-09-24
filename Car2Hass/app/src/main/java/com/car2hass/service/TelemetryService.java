@@ -122,6 +122,12 @@ public class TelemetryService extends Service {
         return ruleEngine;
     }
 
+    /** Status snapshot of a running channel worker, or null when the channel has none. */
+    public com.car2hass.vehicle.ChannelWorkerStatus channelStatus(String channelId) {
+        com.car2hass.vehicle.ChannelWorkerRegistry reg = workerRegistry;
+        return reg == null ? null : reg.status(channelId);
+    }
+
     private double lastLat = Double.NaN;
     private double lastLon = Double.NaN;
     private float lastAccuracy = 0;

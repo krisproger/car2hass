@@ -14,4 +14,5 @@ public interface ChannelWorker {
     void start();
     void stop();
     boolean isRunning();
+    ChannelWorkerStatus status();
 }

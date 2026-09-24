@@ -68,6 +68,7 @@ nav:
     - Сторонние приложения: integration/third-party.md
     - Карточка автомобиля: integration/dashboard-card.md
     - Управление: integration/controls.md
+  - Личный кабинет и облако: integration/cloud-account.md
   - Продвинутое:
     - OTA-обновления: advanced/ota.md
     - Переход на 3.0: advanced/migration-3-0.md

@@ -29,6 +29,8 @@ public final class SystemWorker implements ChannelWorker {
     private final LocationManager lm;
     private LocationListener locationListener;
     private volatile boolean running;
+    private volatile ChannelWorkerStatus.Result lastResult = ChannelWorkerStatus.Result.OK;
+    private volatile String lastError = "";
     private Thread thread;
     private long lastBaselineMs;
 
@@ -43,6 +45,12 @@ public final class SystemWorker implements ChannelWorker {
 
     @Override
     public boolean isRunning() { return running; }
+
+    @Override
+    public ChannelWorkerStatus status() {
+        return new ChannelWorkerStatus("system", running, lastResult, lastError,
+                TICK_INTERVAL_MS, TICK_INTERVAL_MS);
+    }
 
     @Override
     public synchronized void start() {
@@ -70,8 +78,12 @@ public final class SystemWorker implements ChannelWorker {
         while (running) {
             try {
                 tick();
+                lastResult = ChannelWorkerStatus.Result.OK;
+                lastError = "";
             } catch (Throwable t) {
-                LogBuffer.d("SystemWorker", "tick error: " + t.getMessage());
+                lastResult = ChannelWorkerStatus.Result.ERROR;
+                lastError = t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName();
+                LogBuffer.d("SystemWorker", "tick error: " + lastError);
             }
             try {
                 Thread.sleep(TICK_INTERVAL_MS);

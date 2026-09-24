@@ -19,6 +19,9 @@ public final class ObdWorker implements ChannelWorker {
     private final Context ctx;
     private final ValueStore store;
     private volatile boolean running;
+    private volatile ChannelWorkerStatus.Result lastResult = ChannelWorkerStatus.Result.OK;
+    private volatile String lastError = "";
+    private volatile long retryBackoffMs = POLL_INTERVAL_MS;
     private Thread thread;
     private static final long POLL_INTERVAL_MS = 2000;
     private static final long MAX_RETRY_BACKOFF_MS = 30_000;
@@ -33,6 +36,12 @@ public final class ObdWorker implements ChannelWorker {
 
     @Override
     public boolean isRunning() { return running; }
+
+    @Override
+    public ChannelWorkerStatus status() {
+        return new ChannelWorkerStatus("obd", running, lastResult, lastError,
+                POLL_INTERVAL_MS, retryBackoffMs);
+    }
 
     @Override
     public synchronized void start() {
@@ -54,7 +63,6 @@ public final class ObdWorker implements ChannelWorker {
 
     private void loop() {
         ObdSession session = null;
-        long retryBackoffMs = POLL_INTERVAL_MS;
         boolean vinRead = false;
         while (running) {
             if (!AppConfig.isObdEnabled(ctx)) {
@@ -131,6 +139,8 @@ public final class ObdWorker implements ChannelWorker {
                 AppConfig.setObdStatus(ctx, ok > 0 ? "connected" : "connected");
                 AppConfig.setObdLastError(ctx, "");
                 retryBackoffMs = POLL_INTERVAL_MS; // healthy cycle — reset backoff
+                lastResult = ok > 0 ? ChannelWorkerStatus.Result.OK : ChannelWorkerStatus.Result.EMPTY;
+                lastError = "";
                 if (ok == 0) {
                     LogBuffer.d("ObdWorker", "cycle ok=0 pids (read phase took "
                             + (System.currentTimeMillis() - cycleT0) + "ms)");
@@ -138,6 +148,8 @@ public final class ObdWorker implements ChannelWorker {
             } catch (Exception ex) {
                 AppConfig.setObdStatus(ctx, "disconnected");
                 AppConfig.setObdLastError(ctx, ex.getMessage());
+                lastResult = ChannelWorkerStatus.Result.ERROR;
+                lastError = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
                 retryBackoffMs = Math.min(retryBackoffMs * 2, MAX_RETRY_BACKOFF_MS);
                 LogBuffer.w("ObdWorker", "cycle failed in " + phase + " after "
                         + (System.currentTimeMillis() - cycleT0) + "ms: " + ex.getMessage()

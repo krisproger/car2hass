@@ -13,11 +13,16 @@ public class ChannelWorkerRegistryTest {
         boolean running;
         int starts;
         int stops;
+        ChannelWorkerStatus status;
         FakeWorker(String id) { this.id = id; }
         @Override public String channelId() { return id; }
         @Override public void start() { running = true; starts++; }
         @Override public void stop() { running = false; stops++; }
         @Override public boolean isRunning() { return running; }
+        @Override public ChannelWorkerStatus status() {
+            return status != null ? status
+                    : new ChannelWorkerStatus(id, running, ChannelWorkerStatus.Result.OK, "", 2000, 2000);
+        }
     }
 
     static final class FakeFactory implements WorkerFactory {
@@ -67,6 +72,13 @@ public class ChannelWorkerRegistryTest {
         reg.stopAll();
         if (!reg.runningChannels().isEmpty()) throw new AssertionError("stopAll left workers");
         if (reg.isRunning("system")) throw new AssertionError("stopAll left system running");
+
+        // status() reflects a running worker; statuses() returns one entry per worker.
+        reg.sync(Arrays.asList("system", "diplus"));
+        if (reg.status("system") == null) throw new AssertionError("status missing for system");
+        if (!reg.status("system").running()) throw new AssertionError("status says system not running");
+        if (reg.status("obd") != null) throw new AssertionError("status leaked for disabled channel");
+        if (reg.statuses().size() != 2) throw new AssertionError("statuses size " + reg.statuses().size());
 
         System.out.println("All ChannelWorkerRegistry tests passed.");
     }

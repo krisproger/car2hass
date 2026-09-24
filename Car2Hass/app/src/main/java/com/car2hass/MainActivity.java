@@ -149,6 +149,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private Button btnRestartResearch;
     private ProgressDialog researchProgressDialog;
     private String pendingResearchPath = null;
+    private final Map<String, TextView> channelStatusViews = new HashMap<>();
 
     private static MainActivity instance;
     private RulesListAdapter rulesAdapter;
@@ -3300,6 +3301,11 @@ public class MainActivity extends BaseLocalizedActivity {
         } catch (Throwable e) {
             LogBuffer.e("Main", "fallback refresh: " + e.getMessage());
         }
+        try {
+            refreshChannelStatusLines();
+        } catch (Throwable e) {
+            LogBuffer.d("Main", "channel status refresh: " + e.getMessage());
+        }
         if (uiAlive) handler.postDelayed(telemetryFallbackTicker, TELEMETRY_FALLBACK_TICK_MS);
     }
 
@@ -3903,6 +3909,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
         // Sources: system (always on) + explicitly added sources with toggle/remove.
         channelContainer.removeAllViews();
+        channelStatusViews.clear();
 
         LinearLayout sysRow = new LinearLayout(this);
         sysRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -3919,6 +3926,7 @@ public class MainActivity extends BaseLocalizedActivity {
         locBtn.setOnClickListener(v -> showLocationTest());
         sysRow.addView(locBtn);
         channelContainer.addView(sysRow);
+        channelContainer.addView(createChannelStatusView("system"));
 
         List<String> addedSources = AppConfig.getAddedSources(this);
         for (String name : addedSources) {
@@ -3961,6 +3969,7 @@ public class MainActivity extends BaseLocalizedActivity {
             row.addView(rm);
 
             channelContainer.addView(row);
+            channelContainer.addView(createChannelStatusView(name));
 
             // OBD: when the source is added, show a connect/device button.
             if ("obd".equals(name) && on) {
@@ -4018,6 +4027,54 @@ public class MainActivity extends BaseLocalizedActivity {
         channelContainer.addView(addBtn);
 
         status.setText(buildResearchStatus());
+    }
+
+    /** Builds the compact per-channel status line (one short line under each source row). */
+    private TextView createChannelStatusView(String channelId) {
+        TextView st = new TextView(this);
+        st.setTextSize(12);
+        st.setTextColor(getResources().getColor(R.color.textTertiary));
+        st.setText(statusLineFor(channelId));
+        channelStatusViews.put(channelId, st);
+        return st;
+    }
+
+    /** Refreshes the status lines without rebuilding the whole sources section. */
+    private void refreshChannelStatusLines() {
+        if (channelStatusViews.isEmpty()) return;
+        for (Map.Entry<String, TextView> e : channelStatusViews.entrySet()) {
+            e.getValue().setText(statusLineFor(e.getKey()));
+        }
+    }
+
+    private boolean channelEnabledForStatus(String channelId) {
+        if ("system".equals(channelId)) return true;
+        List<String> active = AppConfig.getActiveChannels(this);
+        if (!active.contains(channelId)) return false;
+        if ("obd".equals(channelId) && !AppConfig.isObdEnabled(this)) return false;
+        return true;
+    }
+
+    private String statusLineFor(String channelId) {
+        if (!channelEnabledForStatus(channelId)) {
+            return getString(R.string.settings_channel_status_off);
+        }
+        TelemetryService svc = getTelemetryService();
+        if (svc == null) return "";
+        com.car2hass.vehicle.ChannelWorkerStatus s =
+                svc.channelStatus(com.car2hass.vehicle.ChannelWorkerFactory.normalize(channelId));
+        if (s == null) return "";
+        switch (s.lastResult()) {
+            case ERROR: {
+                String reason = s.lastError();
+                return getString(R.string.settings_channel_status_error,
+                        reason == null || reason.isEmpty() ? "?" : reason);
+            }
+            case EMPTY:
+                return getString(R.string.settings_channel_status_retry, s.retryDelaySeconds());
+            default:
+                return getString(R.string.settings_channel_status_ok, s.cadenceSeconds());
+        }
     }
 
     /** Supported source ids the user can add (system is always present). */

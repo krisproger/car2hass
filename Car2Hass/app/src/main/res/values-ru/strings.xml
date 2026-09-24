@@ -198,6 +198,10 @@
     <string name="channel_diplus_push">DiPlus Push</string>
     <string name="channel_byd_cloud">BYD Cloud</string>
     <string name="channel_voyah">Voyah CANBus</string>
+    <string name="settings_channel_status_off">выключен</string>
+    <string name="settings_channel_status_ok">работает · %1$d с</string>
+    <string name="settings_channel_status_retry">не отвечает · повтор через %1$d с</string>
+    <string name="settings_channel_status_error">ошибка: %1$s</string>
     <string-array name="vehicle_producers">
         <item>@string/settings_vehicle_producer_byd</item>
         <item>@string/settings_vehicle_producer_universal</item>
