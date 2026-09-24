@@ -13,6 +13,8 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 
+import com.car2hass.vehicle.ReportPrivacyFilter;
+
 /**
  * Sends an anonymous probe report to the project site after a full research
  * run. Strictly opt-in (AppConfig.isProbeUploadEnabled), off by default.
@@ -26,7 +28,7 @@ public final class ProbeUploader {
     public static JSONObject buildPayload(String anonId, JSONObject report) throws Exception {
         JSONObject body = new JSONObject();
         body.put("device_anon_id", nz(anonId));
-        if (report != null) body.put("report", report);
+        if (report != null) body.put("report", ReportPrivacyFilter.sanitize(report));
         return body;
     }
 
@@ -63,17 +65,44 @@ public final class ProbeUploader {
                 os.write(jsonBody.getBytes(StandardCharsets.UTF_8));
             }
             int code = conn.getResponseCode();
-            if (code != 200) {
-                LogBuffer.w("ProbeUploader", "HTTP " + code);
+            if (code < 200 || code >= 300) {
+                LogBuffer.w("ProbeUploader", "HTTP " + code + " body=" + readBody(conn));
                 return false;
             }
             return true;
         } catch (Exception e) {
-            LogBuffer.e("ProbeUploader", "post: " + e.getMessage());
+            LogBuffer.e("ProbeUploader", "post: " + e.getMessage()
+                    + " body=" + (conn == null ? "" : readBody(conn)));
             return false;
         } finally {
             if (conn != null) conn.disconnect();
         }
+    }
+
+    /** Reads the response body (error stream first), collapsed and truncated. */
+    private static String readBody(HttpURLConnection conn) {
+        if (conn == null) return "";
+        try {
+            java.io.InputStream is = conn.getErrorStream();
+            if (is == null) is = conn.getInputStream();
+            if (is == null) return "";
+            StringBuilder sb = new StringBuilder();
+            byte[] buf = new byte[512];
+            int n;
+            while ((n = is.read(buf)) > 0 && sb.length() < 600) {
+                sb.append(new String(buf, 0, n, StandardCharsets.UTF_8));
+            }
+            return truncate(sb.toString());
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    /** Collapses whitespace and caps the string at ~300 chars. */
+    static String truncate(String s) {
+        if (s == null) return "";
+        String t = s.replaceAll("\\s+", " ").trim();
+        return t.length() > 300 ? t.substring(0, 300) + "..." : t;
     }
 
     private static String readFile(File f) throws Exception {

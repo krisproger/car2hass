@@ -306,6 +306,7 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 \
   "$SRC/com/car2hass/vehicle/BrandSelector.java" \
   "$SRC/com/car2hass/vehicle/CommandProber.java" \
   "$SRC/com/car2hass/vehicle/ProbeReport.java" \
+  "$SRC/com/car2hass/vehicle/ReportPrivacyFilter.java" \
   "$SRC/com/car2hass/vehicle/DeviceAnon.java" \
   "$SRC/com/car2hass/vehicle/VehicleResearch.java"
 
@@ -341,6 +342,10 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
   "$TEST/com/car2hass/vehicle/CommandProberTest.java" \
   "$TEST/com/car2hass/vehicle/ProbeReportTest.java" \
   "$TEST/com/car2hass/vehicle/VehicleResearchTest.java"
+
+echo "=== Compiling ReportPrivacyFilterTest ==="
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
+  "$TEST/com/car2hass/vehicle/ReportPrivacyFilterTest.java"
 
 echo "=== Compiling Phase-3 source manager tests ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
@@ -460,6 +465,9 @@ java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.ProbeResultTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.ProfileScorerTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.CommandProberTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.ProbeReportTest
+
+echo "=== Running ReportPrivacyFilterTest ==="
+java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.ReportPrivacyFilterTest
 
 echo "=== Running Phase-3 source manager tests ==="
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.SourceManagerTest

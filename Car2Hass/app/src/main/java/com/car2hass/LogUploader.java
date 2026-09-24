@@ -90,15 +90,36 @@ public final class LogUploader {
             int code = conn.getResponseCode();
             LogBuffer.i("LogUploader", "POST " + AppApi.LOG_INTAKE + " -> HTTP " + code
                     + " bytes=" + jsonBody.length());
-            if (code != 200) {
+            if (code < 200 || code >= 300) {
+                LogBuffer.w("LogUploader", "HTTP " + code + " body=" + readBody(conn));
                 return false;
             }
             return true;
         } catch (Exception e) {
-            LogBuffer.e("LogUploader", "post: " + e.getMessage());
+            LogBuffer.e("LogUploader", "post: " + e.getMessage()
+                    + " body=" + (conn == null ? "" : readBody(conn)));
             return false;
         } finally {
             if (conn != null) conn.disconnect();
+        }
+    }
+
+    /** Reads the response body (error stream first), collapsed and truncated. */
+    private static String readBody(HttpURLConnection conn) {
+        if (conn == null) return "";
+        try {
+            java.io.InputStream is = conn.getErrorStream();
+            if (is == null) is = conn.getInputStream();
+            if (is == null) return "";
+            StringBuilder sb = new StringBuilder();
+            byte[] buf = new byte[512];
+            int n;
+            while ((n = is.read(buf)) > 0 && sb.length() < 600) {
+                sb.append(new String(buf, 0, n, StandardCharsets.UTF_8));
+            }
+            return ProbeUploader.truncate(sb.toString());
+        } catch (Exception e) {
+            return "";
         }
     }
 }

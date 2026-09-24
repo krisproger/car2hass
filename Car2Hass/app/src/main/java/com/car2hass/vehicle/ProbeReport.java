@@ -73,7 +73,7 @@ public final class ProbeReport {
         }
         root.put("commands", cmds);
 
-        return root;
+        return ReportPrivacyFilter.sanitize(root);
     }
 
     public static String writeFile(android.content.Context ctx, JSONObject report) {
@@ -83,7 +83,7 @@ public final class ProbeReport {
             dir.mkdirs();
             File f = new File(dir, "probe_report.json");
             try (FileWriter w = new FileWriter(f)) {
-                w.write(report.toString(2));
+                w.write(ReportPrivacyFilter.sanitize(report).toString(2));
             }
             return f.getAbsolutePath();
         } catch (Exception e) {

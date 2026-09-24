@@ -196,6 +196,12 @@ public final class VehicleResearch {
         } catch (org.json.JSONException e) {
             LogBuffer.e("VehicleResearch", "registry sensorKeys: " + e.getMessage());
         }
+        // Privacy deny-list: VIN/serial/firmware sensors are never probed or reported.
+        List<String> reportableKeys = new ArrayList<>();
+        for (String k : sensorKeys) {
+            if (!ReportPrivacyFilter.isDenied(k)) reportableKeys.add(k);
+        }
+        sensorKeys = reportableKeys;
         // Progress spans channels first, then sensors (Car Scanner-style two phases).
         int channelCount = channels.size();
         int total = channelCount + sensorKeys.size();
@@ -392,6 +398,7 @@ public final class VehicleResearch {
                     diag.put("loc_provider", prov);
                 } catch (Exception ignored) {}
                 report.put("diagnostics", diag);
+                report = ReportPrivacyFilter.sanitize(report);
             }
             if (ctx != null) reportPath = ProbeReport.writeFile(ctx, report);
         } catch (Exception e) {
