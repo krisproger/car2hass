@@ -114,8 +114,9 @@ public class MainActivity extends BaseLocalizedActivity {
     private static final long UI_UPDATE_MIN_INTERVAL_MS = 1000;
 
     // Event-driven UI refresh: ValueStore changes are coalesced into at most one
-    // repaint per window, with a slow safety tick as a fallback.
-    private static final long UI_REFRESH_THROTTLE_MS = 200;
+    // repaint per window. The slow tick is only a safety net — the listener is
+    // attached as early as possible so tiles never wait for a channel cycle.
+    private static final long UI_REFRESH_THROTTLE_MS = 150;
     private static final long TELEMETRY_FALLBACK_TICK_MS = 5000;
     private final UiRefreshThrottle uiRefreshThrottle = new UiRefreshThrottle(UI_REFRESH_THROTTLE_MS);
     private com.car2hass.vehicle.ValueStore subscribedValueStore;
@@ -350,6 +351,7 @@ public class MainActivity extends BaseLocalizedActivity {
             // Start telemetry service only after all UI is wired up.
             TelemetryService.start(this);
             bindTelemetryService();
+            ensureStoreSubscription();
 
             // Default screen is dashboard.
             selectTab(0);
@@ -1013,6 +1015,8 @@ public class MainActivity extends BaseLocalizedActivity {
         if (!serviceBound) {
             bindTelemetryService();
         }
+        // Attach to the live store even before the binding callback arrives.
+        ensureStoreSubscription();
         // Car Scanner-style: with OBD enabled and an adapter configured, try to
         // (re)connect right away so the user sees the live status on launch.
         if (AppConfig.isObdEnabled(this)
@@ -1027,6 +1031,7 @@ public class MainActivity extends BaseLocalizedActivity {
         super.onResume();
         instance = this;
         LogBuffer.d("Main", "onResume");
+        ensureStoreSubscription();
         SensorCommandRegistry.getInstance(this).checkForUpdates();
         DashboardPresetRegistry.getInstance(this).checkForUpdates();
         if (checkSelectAll != null) {
@@ -1064,7 +1069,9 @@ public class MainActivity extends BaseLocalizedActivity {
             } catch (Exception e) {
                 LogBuffer.e("Main", "Unbind error: " + e.getMessage());
             }
-            unsubscribeValueStore();
+            // Keep the ValueStore listener attached: the store instance outlives
+            // the binding, and dropping it here was why the dashboard fell back to
+            // the slow safety tick after the activity was stopped.
             serviceBound = false;
             telemetryService = null;
         }
@@ -3284,6 +3291,9 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void runTelemetryFallbackTick() {
+        // Safety net only: reattach in case the service bound after the last
+        // attempt, then repaint from the store.
+        ensureStoreSubscription();
         try {
             renderTelemetryTab();
             renderDashboardFromStore();
@@ -3291,6 +3301,12 @@ public class MainActivity extends BaseLocalizedActivity {
             LogBuffer.e("Main", "fallback refresh: " + e.getMessage());
         }
         if (uiAlive) handler.postDelayed(telemetryFallbackTicker, TELEMETRY_FALLBACK_TICK_MS);
+    }
+
+    /** Subscribes to whichever live ValueStore is available right now. */
+    private void ensureStoreSubscription() {
+        com.car2hass.vehicle.ValueStore store = currentValueStore();
+        if (store != null) subscribeValueStore(store);
     }
 
     private void subscribeValueStore(com.car2hass.vehicle.ValueStore store) {

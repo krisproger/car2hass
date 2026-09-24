@@ -97,4 +97,9 @@ public final class ValueStore {
     public static String getRaw(String key) {
         return RAW_VALUES.get(key);
     }
+
+    /** Snapshot of the raw values written by the channel workers. */
+    public static Map<String, String> rawSnapshot() {
+        return new HashMap<>(RAW_VALUES);
+    }
 }

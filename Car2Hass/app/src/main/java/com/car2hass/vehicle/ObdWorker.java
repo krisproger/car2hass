@@ -15,7 +15,7 @@ import java.util.Set;
  * OBD worker: holds a persistent Bluetooth session, polls the supported PIDs
  * on a fixed cadence and reconnects (with forced re-init) on any failure.
  */
-public final class ObdWorker {
+public final class ObdWorker implements ChannelWorker {
     private final Context ctx;
     private final ValueStore store;
     private volatile boolean running;
@@ -28,7 +28,14 @@ public final class ObdWorker {
         this.store = store;
     }
 
-    public void start() {
+    @Override
+    public String channelId() { return "obd"; }
+
+    @Override
+    public boolean isRunning() { return running; }
+
+    @Override
+    public synchronized void start() {
         if (running) return;
         running = true;
         thread = new Thread(this::loop, "obd-worker");
@@ -36,7 +43,8 @@ public final class ObdWorker {
         thread.start();
     }
 
-    public void stop() {
+    @Override
+    public synchronized void stop() {
         running = false;
         if (thread != null) {
             thread.interrupt();

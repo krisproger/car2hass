@@ -34,6 +34,6 @@ public class NativeChannel implements DataChannel {
 
     @Override
     public List<CANDataItem> read(Context ctx, List<CANDataItem> knownItems) {
-        return CANDataReader.readNativeSnapshot(ctx);
+        return CANDataReader.readNativeSnapshot(ctx, knownItems);
     }
 }

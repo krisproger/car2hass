@@ -548,9 +548,17 @@ public class CANDataReader {
 
     /** Снимок данных DiPlus (HTTP) для зондирования каналов. */
     public static List<CANDataItem> readHttpSnapshot(Context context) {
-        List<CANDataItem> items = new ArrayList<>();
+        return readHttpSnapshot(context, new ArrayList<>());
+    }
+
+    /**
+     * DiPlus snapshot over a known item set (worker path): the registry items
+     * carry the diplus names the batch read needs, so an empty list would only
+     * fall back to per-signal reads.
+     */
+    public static List<CANDataItem> readHttpSnapshot(Context context, List<CANDataItem> items) {
         try {
-            return tryHttpApi(context, items);
+            return tryHttpApi(context, items != null ? items : new ArrayList<>());
         } catch (Exception e) {
             LogBuffer.w("CANReader", "readHttpSnapshot: " + e.getMessage());
             return null;
@@ -559,8 +567,13 @@ public class CANDataReader {
 
     /** Снимок данных native (ADB) для зондирования каналов. */
     public static List<CANDataItem> readNativeSnapshot(Context context) {
+        return readNativeSnapshot(context, new ArrayList<>());
+    }
+
+    /** Native (ADB) snapshot over a known item set (worker path). */
+    public static List<CANDataItem> readNativeSnapshot(Context context, List<CANDataItem> items) {
         try {
-            return tryNative(context, new ArrayList<CANDataItem>());
+            return tryNative(context, items != null ? items : new ArrayList<>());
         } catch (Exception e) {
             LogBuffer.w("CANReader", "readNativeSnapshot: " + e.getMessage());
             return null;

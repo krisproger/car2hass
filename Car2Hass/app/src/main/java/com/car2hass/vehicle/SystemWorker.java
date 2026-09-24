@@ -14,11 +14,22 @@ import android.media.AudioManager;
 import android.os.BatteryManager;
 import android.os.Bundle;
 
-/** System channel worker: GPS/device signals always written to the ValueStore. */
-public final class SystemWorker {
+import com.car2hass.LogBuffer;
+
+/**
+ * System channel worker: GPS/device signals are written to the ValueStore from
+ * its own thread (1 Hz device refresh + location callbacks).
+ */
+public final class SystemWorker implements ChannelWorker {
+
+    private static final long TICK_INTERVAL_MS = 1000;
+
     private final Context ctx;
     private final ValueStore store;
-    private LocationManager lm;
+    private final LocationManager lm;
+    private LocationListener locationListener;
+    private volatile boolean running;
+    private Thread thread;
     private long lastBaselineMs;
 
     public SystemWorker(Context ctx, ValueStore store) {
@@ -27,22 +38,65 @@ public final class SystemWorker {
         this.lm = (LocationManager) ctx.getSystemService(Context.LOCATION_SERVICE);
     }
 
-    public void start() {
+    @Override
+    public String channelId() { return "system"; }
+
+    @Override
+    public boolean isRunning() { return running; }
+
+    @Override
+    public synchronized void start() {
+        if (running) return;
+        running = true;
+        registerLocation();
+        thread = new Thread(this::loop, "worker-system");
+        thread.setDaemon(true);
+        thread.start();
+    }
+
+    @Override
+    public synchronized void stop() {
+        running = false;
+        Thread t = thread;
+        thread = null;
+        if (t != null) t.interrupt();
+        if (locationListener != null && lm != null) {
+            try { lm.removeUpdates(locationListener); } catch (Exception ignored) {}
+            locationListener = null;
+        }
+    }
+
+    private void loop() {
+        while (running) {
+            try {
+                tick();
+            } catch (Throwable t) {
+                LogBuffer.d("SystemWorker", "tick error: " + t.getMessage());
+            }
+            try {
+                Thread.sleep(TICK_INTERVAL_MS);
+            } catch (InterruptedException e) {
+                break;
+            }
+        }
+    }
+
+    private void registerLocation() {
         if (lm == null) return;
         baseline();
         try {
-            LocationListener l = new LocationListener() {
+            locationListener = new LocationListener() {
                 @Override public void onLocationChanged(Location loc) { accept(loc); }
                 @Override public void onStatusChanged(String p, int s, Bundle e) {}
                 @Override public void onProviderEnabled(String p) {}
                 @Override public void onProviderDisabled(String p) {}
             };
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, l);
-            try { lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000, 0, l); } catch (Exception ignored) {}
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1000, 0, locationListener);
+            try { lm.requestLocationUpdates(LocationManager.NETWORK_PROVIDER, 2000, 0, locationListener); } catch (Exception ignored) {}
         } catch (Exception ignored) {}
     }
 
-    /** Called by the 1 Hz aggregator; refreshes baseline and device signals. */
+    /** Refreshes baseline and device signals; called by the worker loop. */
     public void tick() {
         if (System.currentTimeMillis() - lastBaselineMs > 30_000L) baseline();
         readBattery();

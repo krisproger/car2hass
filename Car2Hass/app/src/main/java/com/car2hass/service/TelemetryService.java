@@ -113,8 +113,8 @@ public class TelemetryService extends Service {
     /** Shared signal store (new architecture): workers write here, tab/snapshot read. */
     public final com.car2hass.vehicle.ValueStore valueStore =
             new com.car2hass.vehicle.ValueStore();
-    private com.car2hass.vehicle.SystemWorker systemWorker;
-    private com.car2hass.vehicle.ObdWorker obdWorker;
+    /** One worker instance per enabled channel; reconciled with settings on every cycle. */
+    private com.car2hass.vehicle.ChannelWorkerRegistry workerRegistry;
     private final SnapshotStore snapshotStore = new SnapshotStore();
     private final LocationSource locationSource = new LocationSource(snapshotStore);
 
@@ -240,13 +240,14 @@ public class TelemetryService extends Service {
             startTelemetryLoop();
             startFlushLoop();
             startLocationUpdates();
-            // System-first: the system worker always feeds location/device into the
-            // ValueStore so any Android device (plain phone) has telemetry.
-            systemWorker = new com.car2hass.vehicle.SystemWorker(this, valueStore);
-            systemWorker.start();
-            // OBD worker: persistent session + periodic PID polling when enabled.
-            obdWorker = new com.car2hass.vehicle.ObdWorker(this, valueStore);
-            obdWorker.start();
+            // Worker-per-channel: one thread per enabled channel, each writing to
+            // the shared ValueStore tagged with its channel source. System is
+            // always on (plain Android device has telemetry); the rest follow the
+            // settings channel checkboxes.
+            workerRegistry = new com.car2hass.vehicle.ChannelWorkerRegistry(
+                    new com.car2hass.vehicle.ChannelWorkerFactory(this, valueStore,
+                            new ArrayList<>(knownItems)));
+            workerRegistry.sync(enabledChannelIds());
             // Baseline GPS: ensure telemetry carries a location even before the
             // first live fix (Car Scanner-style "always have a position").
             try {
@@ -299,7 +300,9 @@ public class TelemetryService extends Service {
                 int runs = AppConfig.incRunsCount(this);
                 boolean hasReport = AppConfig.getProbeReportPath(this) != null;
                 boolean full = !hasReport || (runs % 3 == 0);
-                List<DataChannel> channels = buildResearchChannels();
+                // Automatic research is scoped to the channels the user enabled;
+                // other channels are only probed from the manual research button.
+                List<DataChannel> channels = buildEnabledResearchChannels();
                 VehicleProfile profile = AppConfig.getVehicleProfile(this);
                 if (full) {
                     LogBuffer.i("TelemetryService", "Probe: full research (runs=" + runs + ")");
@@ -308,6 +311,7 @@ public class TelemetryService extends Service {
                             (ctx, p, a, rp) -> AppConfig.saveProbeResult(ctx, p,
                                     com.car2hass.vehicle.ResearchUiModel.unionActive(
                                             AppConfig.getActiveChannels(ctx), a), rp));
+                    registerDiscoveredChannels(outcome.report);
                     maybeUploadReport(outcome.reportPath);
                 } else {
                     LogBuffer.i("TelemetryService", "Probe: light channel check (runs=" + runs + ")");
@@ -349,20 +353,66 @@ public class TelemetryService extends Service {
         AppConfig.updateActiveChannels(this,
                 com.car2hass.vehicle.ResearchUiModel.unionActive(
                         AppConfig.getActiveChannels(this), alive));
+        // A live channel becomes visible in the settings source list so the user
+        // can enable it; it is never auto-enabled.
+        registerDiscoveredChannels(java.util.Collections.emptyList(), alive);
     }
 
-    private List<DataChannel> buildResearchChannels() {
-        List<DataChannel> channels;
-        try {
-            channels = com.car2hass.vehicle.ChannelCatalog.createAll(
-                    com.car2hass.vehicle.RegistryStore.load(this));
-        } catch (Exception e) {
-            LogBuffer.e("TelemetryService", "ChannelCatalog: " + e.getMessage());
-            channels = new ArrayList<>();
-            channels.add(new com.car2hass.vehicle.DiPlusChannel());
-            channels.add(new com.car2hass.vehicle.NativeChannel());
-        }
+    /** Channels probed automatically: the user-enabled set (system always on). */
+    private List<DataChannel> buildEnabledResearchChannels() {
+        List<DataChannel> channels = com.car2hass.vehicle.ChannelCatalog.createFor(enabledChannelIds());
+        if (channels.isEmpty()) channels.add(new com.car2hass.vehicle.DiPlusChannel());
         return channels;
+    }
+
+    /**
+     * Makes channels that yielded sensor data visible in the settings source
+     * list (union with what the user already added). Never enables them.
+     */
+    private void registerDiscoveredChannels(org.json.JSONObject report) {
+        java.util.LinkedHashSet<String> discovered = new java.util.LinkedHashSet<>();
+        if (report != null) {
+            try {
+                org.json.JSONObject sensors = report.optJSONObject("sensors");
+                if (sensors != null) {
+                    java.util.Iterator<String> keys = sensors.keys();
+                    while (keys.hasNext()) {
+                        org.json.JSONObject per = sensors.optJSONObject(keys.next());
+                        if (per == null) continue;
+                        java.util.Iterator<String> chans = per.keys();
+                        while (chans.hasNext()) {
+                            String ch = chans.next();
+                            if ("ok".equals(per.optString(ch))) discovered.add(ch);
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                LogBuffer.d("TelemetryService", "registerDiscoveredChannels: " + e.getMessage());
+                return;
+            }
+        }
+        registerDiscoveredChannels(discovered, null);
+    }
+
+    private void registerDiscoveredChannels(java.util.Collection<String> fromReport,
+                                            java.util.Collection<String> extra) {
+        java.util.LinkedHashSet<String> discovered = new java.util.LinkedHashSet<>();
+        if (fromReport != null) discovered.addAll(fromReport);
+        if (extra != null) discovered.addAll(extra);
+        discovered.remove("system");
+        if (discovered.isEmpty()) return;
+        try {
+            java.util.LinkedHashSet<String> added =
+                    new java.util.LinkedHashSet<>(AppConfig.getAddedSources(this));
+            int before = added.size();
+            added.addAll(discovered);
+            if (added.size() != before) {
+                AppConfig.setAddedSources(this, new ArrayList<>(added));
+                LogBuffer.i("TelemetryService", "Channels with data added to settings: " + discovered);
+            }
+        } catch (Exception e) {
+            LogBuffer.d("TelemetryService", "registerDiscoveredChannels: " + e.getMessage());
+        }
     }
 
     private void acquireWakeLock() {
@@ -479,6 +529,10 @@ public class TelemetryService extends Service {
             }
         }
         saveLastValues();
+        if (workerRegistry != null) {
+            workerRegistry.stopAll();
+            workerRegistry = null;
+        }
         shutdownExecutors();
         releaseWakeLock();
         releaseWifiLock();
@@ -597,6 +651,9 @@ public class TelemetryService extends Service {
     private void startTelemetryLoop() {
         telemetryExecutor.execute(() -> {
             while (running.get()) {
+                // Reconcile the worker set with the settings checkboxes: a newly
+                // enabled channel starts polling, a disabled one stops at once.
+                syncWorkers();
                 if (!vehicleAsleep || BackgroundModeManager.isEnabled(this)) {
                     refreshData();
                 } else {
@@ -655,66 +712,103 @@ public class TelemetryService extends Service {
 
     private void refreshData() {
         try {
-            // Worker architecture: feed the shared ValueStore with channel values
-            // so the telemetry tab and snapshot no longer depend on this callback.
-            com.car2hass.vehicle.ChannelWorker.runOnce(this, valueStore);
-            // Defensive copy: CANDataReader creates subList() views that executor
-            // workers iterate, while the main thread may add geofence items via
-            // ensureGeofenceItem — sharing the live list caused CME (build 156+).
-            CANDataReader.refreshData(this, new ArrayList<>(knownItems), CANDataReader.SOURCE_ALL,
-                new CANDataReader.Callback() {
-                    @Override
-                    public void onData(List<CANDataItem> items, long timestamp, int source) {
-                        try {
-                            applySystemValues(items);
-                            collectSnapshot(items);
-                            mainHandler.post(() -> {
-                                try {
-                                    updateNotification(getString(R.string.notification_active, items.size()));
-                                    if (callback != null) {
-                                        callback.onDataUpdated(items, timestamp);
-                                    }
-                                } catch (Exception e) {
-                                    LogBuffer.e("TelemetryService", "onData UI post failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-                                }
-                            });
-                        } catch (Exception e) {
-                            LogBuffer.e("TelemetryService", "onData failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-                        }
+            // The per-channel workers own polling and have already written their
+            // latest values into the ValueStore. This pass only assembles the
+            // snapshot/rules view from the store — it never waits for a channel.
+            List<CANDataItem> items = assembleItemsFromStore();
+            applySystemValues(items);
+            collectSnapshot(items);
+            long timestamp = System.currentTimeMillis();
+            boolean any = false;
+            for (CANDataItem it : items) {
+                if (it != null && it.value != null && !"---".equals(it.value)) { any = true; break; }
+            }
+            final boolean hasData = any;
+            mainHandler.post(() -> {
+                try {
+                    if (hasData) {
+                        updateNotification(getString(R.string.notification_active, items.size()));
+                    } else {
+                        updateNotification(hasSystemValues()
+                                ? getString(R.string.notification_system_only)
+                                : getString(R.string.notification_error, "no channel data"));
                     }
-
-                    @Override
-                    public void onError(String message, int source) {
-                        try {
-                            mainHandler.post(() -> {
-                                try {
-                                    boolean systemActive = hasSystemValues();
-                                    updateNotification(systemActive
-                                            ? getString(R.string.notification_system_only)
-                                            : getString(R.string.notification_error, message));
-                                    if (callback != null) {
-                                        callback.onError(message);
-                                    }
-                                } catch (Exception e) {
-                                    LogBuffer.e("TelemetryService", "onError UI post failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-                                }
-                            });
-                        } catch (Exception e) {
-                            LogBuffer.e("TelemetryService", "onError dispatch failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-                        }
+                    if (callback != null) {
+                        if (hasData) callback.onDataUpdated(items, timestamp);
+                        else callback.onError("No data from enabled channels");
                     }
-                });
-            // Periodically re-probe disabled channels so a source that comes
-            // online later (ADB turned on, DiPlus installed) is picked up.
-            maybeProbeDisabledChannels();
+                } catch (Exception e) {
+                    LogBuffer.e("TelemetryService", "refreshData UI post failed: "
+                            + e.getClass().getSimpleName() + ": " + e.getMessage());
+                }
+            });
         } catch (Exception e) {
             LogBuffer.e("TelemetryService", "refreshData failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
     }
 
-    private int cycleCounter = 0;
-    private static final int DISABLED_PROBE_EVERY = 5;
-    private volatile boolean disabledProbeInFlight = false;
+    /**
+     * Rebuilds the item set from the raw values the channel workers wrote, so the
+     * existing translation/snapshot pipeline keeps working without polling any
+     * channel on this thread.
+     */
+    private List<CANDataItem> assembleItemsFromStore() {
+        java.util.Map<String, CANDataItem> byKey = new java.util.LinkedHashMap<>();
+        synchronized (knownItems) {
+            for (CANDataItem known : knownItems) {
+                if (known == null || known.key == null) continue;
+                CANDataItem copy = new CANDataItem(known.canId, known.name, known.unit,
+                        known.route, known.diplusName);
+                copy.key = known.key;
+                copy.rawData = known.rawData;
+                copy.sourceChannel = valueStore.sourceOf(known.key);
+                byKey.put(known.key, copy);
+            }
+        }
+        for (java.util.Map.Entry<String, String> e
+                : com.car2hass.vehicle.ValueStore.rawSnapshot().entrySet()) {
+            String key = e.getKey();
+            String raw = e.getValue();
+            if (key == null || raw == null || raw.isEmpty() || "---".equals(raw)) continue;
+            CANDataItem item = byKey.get(key);
+            if (item == null) {
+                item = new CANDataItem(0, key, "", 0);
+                item.key = key;
+                item.diplusName = null;
+                byKey.put(key, item);
+            }
+            item.value = raw;
+            if (item.sourceChannel == null) item.sourceChannel = valueStore.sourceOf(key);
+        }
+        return new ArrayList<>(byKey.values());
+    }
+
+    /** Reconciles the running workers with the settings channel checkboxes. */
+    private void syncWorkers() {
+        com.car2hass.vehicle.ChannelWorkerRegistry reg = workerRegistry;
+        if (reg == null) return;
+        try {
+            reg.sync(enabledChannelIds());
+        } catch (Exception e) {
+            LogBuffer.d("TelemetryService", "syncWorkers: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Channel ids whose worker must run. System is always on; every other channel
+     * follows the settings checkboxes (an unchecked channel is never polled).
+     */
+    private List<String> enabledChannelIds() {
+        List<String> out = new ArrayList<>();
+        out.add("system");
+        for (String id : AppConfig.getActiveChannels(this)) {
+            if (id == null || id.isEmpty() || "system".equals(id)) continue;
+            if ("obd".equals(id) && !AppConfig.isObdEnabled(this)) continue;
+            String normalized = com.car2hass.vehicle.ChannelWorkerFactory.normalize(id);
+            if (!out.contains(normalized)) out.add(normalized);
+        }
+        return out;
+    }
 
     /** True when at least one sensor value came from the system channel (GPS/device). */
     private boolean hasSystemValues() {
@@ -722,37 +816,6 @@ public class TelemetryService extends Service {
             if ("system".equals(valueStore.sourceOf(e.getKey()))) return true;
         }
         return false;
-    }
-
-    /** Light availability probe of channels not currently active, every few cycles. */
-    private void maybeProbeDisabledChannels() {
-        if (++cycleCounter < DISABLED_PROBE_EVERY) return;
-        cycleCounter = 0;
-        if (disabledProbeInFlight) return;
-        disabledProbeInFlight = true;
-        new Thread(() -> {
-            try {
-                java.util.Set<String> active = new java.util.HashSet<>(AppConfig.getActiveChannels(this));
-                java.util.List<String> newlyAlive = new java.util.ArrayList<>();
-                for (DataChannel ch : buildResearchChannels()) {
-                    if (active.contains(ch.id())) continue;
-                    try {
-                        if (ch.probe(this).isAlive()) newlyAlive.add(ch.id());
-                    } catch (Exception ignored) {
-                    }
-                }
-                if (!newlyAlive.isEmpty()) {
-                    AppConfig.updateActiveChannels(this,
-                            com.car2hass.vehicle.ResearchUiModel.unionActive(
-                                    AppConfig.getActiveChannels(this), newlyAlive));
-                    LogBuffer.i("TelemetryService", "Disabled channels became available: " + newlyAlive);
-                }
-            } catch (Exception e) {
-                LogBuffer.d("TelemetryService", "disabled-probe: " + e.getMessage());
-            } finally {
-                disabledProbeInFlight = false;
-            }
-        }, "probe-disabled").start();
     }
 
     /** Restore the last-known values so the UI shows them before the first CAN cycle. */
@@ -871,7 +934,8 @@ public class TelemetryService extends Service {
                             sig.put(key, num);
                         }
                     }
-                    valueStore.put(key, translated, "channel");
+                    String src = item.sourceChannel != null ? item.sourceChannel : valueStore.sourceOf(key);
+                    valueStore.put(key, translated, src != null ? src : "channel");
                     SensorValueHistory.recordValue(key, translated);
                 } catch (Exception e) {
                     LogBuffer.d("TelemetryService", "Skipping signal " + key + " with value '" + rawValue + "': " + e.getMessage());
@@ -1005,9 +1069,8 @@ public class TelemetryService extends Service {
             boolean fixStale = !hasValidLocation()
                     || System.currentTimeMillis() - lastLocTime > 30_000L;
             if (fixStale) ensureLocationBaseline();
-            // System-first: refresh system signals into the ValueStore and mirror
-            // them into the snapshot pipeline.
-            if (systemWorker != null) systemWorker.tick();
+            // System-first: the system worker refreshes device signals on its own
+            // thread; mirror its latest store values into the snapshot pipeline.
             mirrorSystemToSnapshot();
             int battery = -1;
             try {

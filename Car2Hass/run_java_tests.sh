@@ -198,6 +198,18 @@ javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/UiRef
 echo "=== Compiling UiRefreshThrottleTest ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/UiRefreshThrottleTest.java"
 
+echo "=== Compiling channel worker registry (pure, no Android dep) ==="
+javac -d "$OUT" -source 17 -target 17 \
+  "$SRC/com/car2hass/vehicle/WorkerRetryPolicy.java" \
+  "$SRC/com/car2hass/vehicle/ChannelWorker.java" \
+  "$SRC/com/car2hass/vehicle/WorkerFactory.java" \
+  "$SRC/com/car2hass/vehicle/ChannelWorkerRegistry.java"
+
+echo "=== Compiling channel worker registry tests ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 \
+  "$TEST/com/car2hass/vehicle/WorkerRetryPolicyTest.java" \
+  "$TEST/com/car2hass/vehicle/ChannelWorkerRegistryTest.java"
+
 echo "=== Compiling SentinelDecoder ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/SentinelDecoder.java"
 
@@ -440,6 +452,12 @@ java -cp "$OUT" com.car2hass.QueueIndicatorTest
 
 echo "=== Running UiRefreshThrottleTest ==="
 java -cp "$OUT" com.car2hass.UiRefreshThrottleTest
+
+echo "=== Running WorkerRetryPolicyTest ==="
+java -cp "$OUT" com.car2hass.vehicle.WorkerRetryPolicyTest
+
+echo "=== Running ChannelWorkerRegistryTest ==="
+java -cp "$OUT" com.car2hass.vehicle.ChannelWorkerRegistryTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.SentinelDecoderTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.ParamDecoderTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.NativeSignalMapTest
