@@ -1919,6 +1919,245 @@ signals:
   icon: mdi:gauge
   device_class: pressure
   state_class: measurement
+- id: 9124
+  name: Charge voltage
+  description: Onboard charger output voltage
+  type: num
+  synthetic: true
+  key: charge_voltage
+  labels: {}
+  ha_type: sensor
+  unit: V
+  icon: mdi:lightning-bolt
+  device_class: voltage
+  state_class: measurement
+- id: 9125
+  name: Charge current
+  description: Onboard charger charge current
+  type: num
+  synthetic: true
+  key: charge_current
+  labels: {}
+  ha_type: sensor
+  unit: A
+  icon: mdi:current-dc
+  state_class: measurement
+- id: 9126
+  name: AC charge state
+  description: AC charging state
+  type: enum
+  synthetic: true
+  key: ac_charge_state
+  labels: {}
+  ha_type: sensor
+  icon: mdi:ev-station
+- id: 9127
+  name: DC charge state
+  description: DC charging state
+  type: enum
+  synthetic: true
+  key: dc_charge_state
+  labels: {}
+  ha_type: sensor
+  icon: mdi:ev-station
+- id: 9128
+  name: AC charge connector
+  description: AC charging connector status
+  type: enum
+  synthetic: true
+  key: ac_charge_connected
+  labels: {}
+  ha_type: sensor
+  icon: mdi:power-plug
+- id: 9129
+  name: DC charge connector
+  description: DC charging connector status
+  type: enum
+  synthetic: true
+  key: dc_charge_connected
+  labels: {}
+  ha_type: sensor
+  icon: mdi:power-plug
+- id: 9130
+  name: Charge port cap
+  description: Charging port cap status
+  type: enum
+  synthetic: true
+  key: charge_port_flap
+  labels: {}
+  ha_type: sensor
+  icon: mdi:ev-plug-type2
+- id: 9131
+  name: Wireless charge state
+  description: Wireless phone charger status
+  type: enum
+  synthetic: true
+  key: wireless_charge_state
+  labels: {}
+  ha_type: sensor
+  icon: mdi:cellphone-charging
+- id: 9132
+  name: Trip distance
+  description: Trip distance
+  type: num
+  synthetic: true
+  key: trip_distance
+  labels: {}
+  ha_type: sensor
+  unit: km
+  icon: mdi:map-marker-distance
+  device_class: distance
+  state_class: measurement
+- id: 9133
+  name: PM2.5
+  description: Cabin PM2.5 particulate level
+  type: num
+  synthetic: true
+  key: pm25
+  labels: {}
+  ha_type: sensor
+  unit: µg/m³
+  icon: mdi:blur
+  state_class: measurement
+- id: 9134
+  name: Air purification level
+  description: Air purification level
+  type: enum
+  synthetic: true
+  key: clean_air_level
+  labels: {}
+  ha_type: sensor
+  icon: mdi:air-purifier
+- id: 9135
+  name: Transmission oil temperature
+  description: Transmission oil temperature
+  type: num
+  synthetic: true
+  key: trans_oil_temp
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:oil-temperature
+  device_class: temperature
+  state_class: measurement
+- id: 9136
+  name: Ambient light colour
+  description: Ambient light colour
+  type: enum
+  synthetic: true
+  key: ambient_light_color
+  labels: {}
+  ha_type: sensor
+  icon: mdi:palette
+- id: 9137
+  name: Ambient light brightness
+  description: Ambient light brightness
+  type: num
+  synthetic: true
+  key: ambient_light_brightness
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:brightness-6
+  state_class: measurement
+- id: 9138
+  name: EV ready indicator
+  description: EV ready indicator
+  type: enum
+  synthetic: true
+  key: ready_lamp
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-electric
+- id: 9139
+  name: Front-left window position
+  description: Front-left window position
+  type: num
+  synthetic: true
+  key: window_fl_position
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car-door
+  state_class: measurement
+- id: 9140
+  name: Front-right window position
+  description: Front-right window position
+  type: num
+  synthetic: true
+  key: window_fr_position
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car-door
+  state_class: measurement
+- id: 9141
+  name: Rear-left window position
+  description: Rear-left window position
+  type: num
+  synthetic: true
+  key: window_rl_position
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car-door
+  state_class: measurement
+- id: 9142
+  name: Rear-right window position
+  description: Rear-right window position
+  type: num
+  synthetic: true
+  key: window_rr_position
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:car-door
+  state_class: measurement
+- id: 9143
+  name: Vehicle locked
+  description: Vehicle locked feedback
+  type: enum
+  synthetic: true
+  key: vehicle_locked
+  labels: {}
+  ha_type: sensor
+  icon: mdi:lock
+- id: 9144
+  name: Driver seat massage
+  description: Driver seat massage
+  type: enum
+  synthetic: true
+  key: driver_seat_massage
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat
+- id: 9145
+  name: Passenger seat massage
+  description: Passenger seat massage
+  type: enum
+  synthetic: true
+  key: passenger_seat_massage
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat
+- id: 9146
+  name: Rear-left seat massage
+  description: Rear-left seat massage
+  type: enum
+  synthetic: true
+  key: rear_left_seat_massage
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat
+- id: 9147
+  name: Rear-right seat massage
+  description: Rear-right seat massage
+  type: enum
+  synthetic: true
+  key: rear_right_seat_massage
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat
 - id: 30001
   name: 发动机负荷
   description: Engine load

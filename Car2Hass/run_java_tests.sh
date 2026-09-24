@@ -276,6 +276,12 @@ javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/vehicle/LocationPolicy.
 echo "=== Compiling LocationPolicyTest ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/LocationPolicyTest.java"
 
+echo "=== Compiling VoyahReadPolicy (pure, no Android dep) ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/vehicle/VoyahReadPolicy.java"
+
+echo "=== Compiling VoyahReadPolicyTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/VoyahReadPolicyTest.java"
+
 echo "=== Compiling VehicleProfile ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/VehicleProducer.java" "$SRC/com/car2hass/vehicle/VehicleProfile.java"
 
@@ -449,6 +455,9 @@ java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.CommandWriterFallbackTest
 
 echo "=== Running LocationPolicyTest ==="
 java -cp "$OUT" com.car2hass.vehicle.LocationPolicyTest
+
+echo "=== Running VoyahReadPolicyTest ==="
+java -cp "$OUT" com.car2hass.vehicle.VoyahReadPolicyTest
 
 echo "=== Running VehicleProfileTest ==="
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.vehicle.VehicleProfileTest

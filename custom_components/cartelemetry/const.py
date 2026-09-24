@@ -597,6 +597,69 @@ NUMERIC_SENSORS = {
         "device_class": "pressure",
         "state_class": "measurement",
     },
+    "charge_voltage": {
+        "name": "Onboard charger output voltage",
+        "unit": "V",
+        "icon": "mdi:lightning-bolt",
+        "device_class": "voltage",
+        "state_class": "measurement",
+    },
+    "charge_current": {
+        "name": "Onboard charger charge current",
+        "unit": "A",
+        "icon": "mdi:current-dc",
+        "state_class": "measurement",
+    },
+    "trip_distance": {
+        "name": "Trip distance",
+        "unit": "km",
+        "icon": "mdi:map-marker-distance",
+        "device_class": "distance",
+        "state_class": "measurement",
+    },
+    "pm25": {
+        "name": "Cabin PM2.5 particulate level",
+        "unit": "µg/m³",
+        "icon": "mdi:blur",
+        "state_class": "measurement",
+    },
+    "trans_oil_temp": {
+        "name": "Transmission oil temperature",
+        "unit": "°C",
+        "icon": "mdi:oil-temperature",
+        "device_class": "temperature",
+        "state_class": "measurement",
+    },
+    "ambient_light_brightness": {
+        "name": "Ambient light brightness",
+        "unit": "%",
+        "icon": "mdi:brightness-6",
+        "state_class": "measurement",
+    },
+    "window_fl_position": {
+        "name": "Front-left window position",
+        "unit": "%",
+        "icon": "mdi:car-door",
+        "state_class": "measurement",
+    },
+    "window_fr_position": {
+        "name": "Front-right window position",
+        "unit": "%",
+        "icon": "mdi:car-door",
+        "state_class": "measurement",
+    },
+    "window_rl_position": {
+        "name": "Rear-left window position",
+        "unit": "%",
+        "icon": "mdi:car-door",
+        "state_class": "measurement",
+    },
+    "window_rr_position": {
+        "name": "Rear-right window position",
+        "unit": "%",
+        "icon": "mdi:car-door",
+        "state_class": "measurement",
+    },
     "engine_load": {
         "name": "Engine load",
         "unit": "%",
@@ -722,6 +785,62 @@ ENUM_SENSORS = {
     "vin": {
         "name": "Vehicle Identification Number read over OBD-II (Mode 09 PID 02 / UDS F190)",
         "icon": "mdi:car-info",
+    },
+    "ac_charge_state": {
+        "name": "AC charging state",
+        "icon": "mdi:ev-station",
+    },
+    "dc_charge_state": {
+        "name": "DC charging state",
+        "icon": "mdi:ev-station",
+    },
+    "ac_charge_connected": {
+        "name": "AC charging connector status",
+        "icon": "mdi:power-plug",
+    },
+    "dc_charge_connected": {
+        "name": "DC charging connector status",
+        "icon": "mdi:power-plug",
+    },
+    "charge_port_flap": {
+        "name": "Charging port cap status",
+        "icon": "mdi:ev-plug-type2",
+    },
+    "wireless_charge_state": {
+        "name": "Wireless phone charger status",
+        "icon": "mdi:cellphone-charging",
+    },
+    "clean_air_level": {
+        "name": "Air purification level",
+        "icon": "mdi:air-purifier",
+    },
+    "ambient_light_color": {
+        "name": "Ambient light colour",
+        "icon": "mdi:palette",
+    },
+    "ready_lamp": {
+        "name": "EV ready indicator",
+        "icon": "mdi:car-electric",
+    },
+    "vehicle_locked": {
+        "name": "Vehicle locked feedback",
+        "icon": "mdi:lock",
+    },
+    "driver_seat_massage": {
+        "name": "Driver seat massage",
+        "icon": "mdi:car-seat",
+    },
+    "passenger_seat_massage": {
+        "name": "Passenger seat massage",
+        "icon": "mdi:car-seat",
+    },
+    "rear_left_seat_massage": {
+        "name": "Rear-left seat massage",
+        "icon": "mdi:car-seat",
+    },
+    "rear_right_seat_massage": {
+        "name": "Rear-right seat massage",
+        "icon": "mdi:car-seat",
     },
     "driver_seat_heat": {
         "name": "Driver seat heating",

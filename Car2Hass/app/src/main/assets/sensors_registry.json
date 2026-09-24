@@ -3956,6 +3956,558 @@
       ]
     },
     {
+      "key": "charge_voltage",
+      "label_en": "Onboard charger output voltage",
+      "label_ru": "Onboard charger output voltage",
+      "type": "num",
+      "unit": "V",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "OBC_CHARGE_VOLTAGE"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "charge_current",
+      "label_en": "Onboard charger charge current",
+      "label_ru": "Onboard charger charge current",
+      "type": "num",
+      "unit": "A",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "OBC_CHARGE_CURRENT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "ac_charge_state",
+      "label_en": "AC charging state",
+      "label_ru": "AC charging state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "BMS_AC_CHARGE_STAT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "dc_charge_state",
+      "label_en": "DC charging state",
+      "label_ru": "DC charging state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "BMS_DC_CHARGE_STAT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "ac_charge_connected",
+      "label_en": "AC charging connector status",
+      "label_ru": "AC charging connector status",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "AC_CHARG_CONNECT_STS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "dc_charge_connected",
+      "label_en": "DC charging connector status",
+      "label_ru": "DC charging connector status",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "DC_CHARG_CONNECT_STS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "charge_port_flap",
+      "label_en": "Charging port cap status",
+      "label_ru": "Charging port cap status",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "CHRG_PORT_CAP_STS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "wireless_charge_state",
+      "label_en": "Wireless phone charger status",
+      "label_ru": "Wireless phone charger status",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "WCM_CHARGE_STATUS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "trip_distance",
+      "label_en": "Trip distance",
+      "label_ru": "Trip distance",
+      "type": "num",
+      "unit": "km",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "ODO_THISTIME"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "pm25",
+      "label_en": "Cabin PM2.5 particulate level",
+      "label_ru": "Cabin PM2.5 particulate level",
+      "type": "num",
+      "unit": "µg/m³",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "PM25_STS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "clean_air_level",
+      "label_en": "Air purification level",
+      "label_ru": "Air purification level",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "CLEAN_AIR_LEVEL"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "trans_oil_temp",
+      "label_en": "Transmission oil temperature",
+      "label_ru": "Transmission oil temperature",
+      "type": "num",
+      "unit": "°C",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "TRANS_OIL_TEMP"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "ambient_light_color",
+      "label_en": "Ambient light colour",
+      "label_ru": "Ambient light colour",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "VEHICLE_AMBIENT_LIGHT_COLOR"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "ambient_light_brightness",
+      "label_en": "Ambient light brightness",
+      "label_ru": "Ambient light brightness",
+      "type": "num",
+      "unit": "%",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "VEHICLE_AMBIENT_LIGHT_BRIGHTNESS_LEVEL"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "ready_lamp",
+      "label_en": "EV ready indicator",
+      "label_ru": "EV ready indicator",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "READY_LAMP"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "window_fl_position",
+      "label_en": "Front-left window position",
+      "label_ru": "Front-left window position",
+      "type": "num",
+      "unit": "%",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "BCM_FLWindowHorizontalSts"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "window_fr_position",
+      "label_en": "Front-right window position",
+      "label_ru": "Front-right window position",
+      "type": "num",
+      "unit": "%",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "BCM_FRWindowHorizontalSts"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "window_rl_position",
+      "label_en": "Rear-left window position",
+      "label_ru": "Rear-left window position",
+      "type": "num",
+      "unit": "%",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "BCM_RLWindowHorizontalSts"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "window_rr_position",
+      "label_en": "Rear-right window position",
+      "label_ru": "Rear-right window position",
+      "type": "num",
+      "unit": "%",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "BCM_RRWindowHorizontalSts"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "vehicle_locked",
+      "label_en": "Vehicle locked feedback",
+      "label_ru": "Vehicle locked feedback",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "VEHICLE_LOCKED_FED"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "driver_seat_massage",
+      "label_en": "Driver seat massage",
+      "label_ru": "Driver seat massage",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "FRONT_SEAT_MASS_SWITCH_LEFT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "passenger_seat_massage",
+      "label_en": "Passenger seat massage",
+      "label_ru": "Passenger seat massage",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "FRONT_SEAT_MASS_SWITCH_RIGHT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "rear_left_seat_massage",
+      "label_en": "Rear-left seat massage",
+      "label_ru": "Rear-left seat massage",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "REAR_SEAT_MASS_SWITCH_LEFT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "rear_right_seat_massage",
+      "label_en": "Rear-right seat massage",
+      "label_ru": "Rear-right seat massage",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "voyah": {
+          "vs": "REAR_SEAT_MASS_SWITCH_RIGHT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
       "key": "app_version",
       "label_en": "App version",
       "label_ru": "Версия приложения",
