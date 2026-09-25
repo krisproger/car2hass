@@ -29,6 +29,10 @@ public final class PullChannelWorker implements ChannelWorker {
     private volatile ChannelWorkerStatus.Result lastResult = ChannelWorkerStatus.Result.OK;
     private volatile String lastError = "";
     private volatile long lastDelayMs;
+    private volatile long cycleCount;
+    private volatile long lastCycleAtMs;
+    private volatile long threadStartAtMs;
+    private volatile long errorCount;
     private Thread thread;
 
     public PullChannelWorker(Context ctx, ValueStore store, DataChannel channel,
@@ -48,6 +52,7 @@ public final class PullChannelWorker implements ChannelWorker {
     public synchronized void start() {
         if (running) return;
         running = true;
+        threadStartAtMs = System.currentTimeMillis();
         thread = new Thread(this::loop, "worker-" + channel.id());
         thread.setDaemon(true);
         thread.start();
@@ -67,7 +72,8 @@ public final class PullChannelWorker implements ChannelWorker {
     @Override
     public ChannelWorkerStatus status() {
         return new ChannelWorkerStatus(channel.id(), running,
-                lastResult, lastError, retry.baseMs(), lastDelayMs);
+                lastResult, lastError, retry.baseMs(), lastDelayMs,
+                cycleCount, lastCycleAtMs, threadStartAtMs, errorCount);
     }
 
     private void loop() {
@@ -78,9 +84,12 @@ public final class PullChannelWorker implements ChannelWorker {
             } catch (Throwable t) {
                 lastResult = ChannelWorkerStatus.Result.ERROR;
                 lastError = t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName();
+                errorCount++;
                 LogBuffer.d("ChannelWorker", channel.id() + " cycle error: " + lastError);
                 delay = retry.onFailure();
             }
+            cycleCount++;
+            lastCycleAtMs = System.currentTimeMillis();
             lastDelayMs = delay;
             if (!running) break;
             try {

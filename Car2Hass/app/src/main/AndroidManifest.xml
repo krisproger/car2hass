@@ -133,6 +133,11 @@
             android:configChanges="orientation|screenSize" />
 
         <activity
+            android:name=".WorkerStatusActivity"
+            android:exported="false"
+            android:configChanges="orientation|screenSize" />
+
+        <activity
             android:name=".rules.RuleEditActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize" />

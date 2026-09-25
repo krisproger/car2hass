@@ -22,6 +22,10 @@ public final class ObdWorker implements ChannelWorker {
     private volatile ChannelWorkerStatus.Result lastResult = ChannelWorkerStatus.Result.OK;
     private volatile String lastError = "";
     private volatile long retryBackoffMs = POLL_INTERVAL_MS;
+    private volatile long cycleCount;
+    private volatile long lastCycleAtMs;
+    private volatile long threadStartAtMs;
+    private volatile long errorCount;
     private Thread thread;
     private static final long POLL_INTERVAL_MS = 2000;
     private static final long MAX_RETRY_BACKOFF_MS = 30_000;
@@ -40,13 +44,15 @@ public final class ObdWorker implements ChannelWorker {
     @Override
     public ChannelWorkerStatus status() {
         return new ChannelWorkerStatus("obd", running, lastResult, lastError,
-                POLL_INTERVAL_MS, retryBackoffMs);
+                POLL_INTERVAL_MS, retryBackoffMs, cycleCount, lastCycleAtMs,
+                threadStartAtMs, errorCount);
     }
 
     @Override
     public synchronized void start() {
         if (running) return;
         running = true;
+        threadStartAtMs = System.currentTimeMillis();
         thread = new Thread(this::loop, "obd-worker");
         thread.setDaemon(true);
         thread.start();
@@ -150,6 +156,7 @@ public final class ObdWorker implements ChannelWorker {
                 AppConfig.setObdLastError(ctx, ex.getMessage());
                 lastResult = ChannelWorkerStatus.Result.ERROR;
                 lastError = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
+                errorCount++;
                 retryBackoffMs = Math.min(retryBackoffMs * 2, MAX_RETRY_BACKOFF_MS);
                 LogBuffer.w("ObdWorker", "cycle failed in " + phase + " after "
                         + (System.currentTimeMillis() - cycleT0) + "ms: " + ex.getMessage()
@@ -158,6 +165,8 @@ public final class ObdWorker implements ChannelWorker {
                 session = null;
                 vinRead = false;
             }
+            cycleCount++;
+            lastCycleAtMs = System.currentTimeMillis();
             sleep(retryBackoffMs);
         }
         close(session);

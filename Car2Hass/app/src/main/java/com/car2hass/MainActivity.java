@@ -4026,6 +4026,17 @@ public class MainActivity extends BaseLocalizedActivity {
         addBtn.setLayoutParams(ap);
         channelContainer.addView(addBtn);
 
+        Button statusBtn = new Button(this);
+        statusBtn.setText(R.string.settings_sources_status);
+        statusBtn.setAllCaps(false);
+        statusBtn.setOnClickListener(v -> startActivity(new Intent(this, WorkerStatusActivity.class)));
+        LinearLayout.LayoutParams sp = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT);
+        sp.topMargin = dp(6);
+        statusBtn.setLayoutParams(sp);
+        channelContainer.addView(statusBtn);
+
         status.setText(buildResearchStatus());
     }
 

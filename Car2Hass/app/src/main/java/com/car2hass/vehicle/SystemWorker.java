@@ -33,6 +33,10 @@ public final class SystemWorker implements ChannelWorker {
     private volatile String lastError = "";
     private Thread thread;
     private long lastBaselineMs;
+    private volatile long cycleCount;
+    private volatile long lastCycleAtMs;
+    private volatile long threadStartAtMs;
+    private volatile long errorCount;
 
     public SystemWorker(Context ctx, ValueStore store) {
         this.ctx = ctx;
@@ -49,13 +53,15 @@ public final class SystemWorker implements ChannelWorker {
     @Override
     public ChannelWorkerStatus status() {
         return new ChannelWorkerStatus("system", running, lastResult, lastError,
-                TICK_INTERVAL_MS, TICK_INTERVAL_MS);
+                TICK_INTERVAL_MS, TICK_INTERVAL_MS, cycleCount, lastCycleAtMs,
+                threadStartAtMs, errorCount);
     }
 
     @Override
     public synchronized void start() {
         if (running) return;
         running = true;
+        threadStartAtMs = System.currentTimeMillis();
         registerLocation();
         thread = new Thread(this::loop, "worker-system");
         thread.setDaemon(true);
@@ -83,8 +89,11 @@ public final class SystemWorker implements ChannelWorker {
             } catch (Throwable t) {
                 lastResult = ChannelWorkerStatus.Result.ERROR;
                 lastError = t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName();
+                errorCount++;
                 LogBuffer.d("SystemWorker", "tick error: " + lastError);
             }
+            cycleCount++;
+            lastCycleAtMs = System.currentTimeMillis();
             try {
                 Thread.sleep(TICK_INTERVAL_MS);
             } catch (InterruptedException e) {

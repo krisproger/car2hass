@@ -59,6 +59,13 @@ public class CrashLogger implements Thread.UncaughtExceptionHandler {
             savePrivateFallback(crashText);
         }
 
+        // Synchronous crash capture to the SQLite store: survives process death
+        // and is uploaded together with the next log batch on the next startup.
+        try {
+            LogManager lm = LogManager.get();
+            if (lm != null) lm.recordCrash(crashText, LogBuffer.getText());
+        } catch (Exception ignored) {}
+
         if (defaultHandler != null) {
             defaultHandler.uncaughtException(thread, throwable);
         }

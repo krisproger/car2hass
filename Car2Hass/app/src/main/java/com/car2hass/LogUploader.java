@@ -1,6 +1,7 @@
 package com.car2hass;
 
 import android.content.Context;
+import android.util.Base64;
 
 import org.json.JSONObject;
 
@@ -10,6 +11,7 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 
 /**
  * Uploads the full app log (with the user's optional vehicle/conditions note)
@@ -45,6 +47,43 @@ public final class LogUploader {
             return true;
         } catch (Exception e) {
             LogBuffer.e("LogUploader", "upload: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Uploads one compressed batch (see {@link LogPayloadCodec}): the gzip bytes
+     * are split into 500 KiB chunks, base64-encoded and posted one envelope per
+     * chunk. The server concatenates decoded chunks, gunzips and parses the
+     * {@code records}/{@code crashes} JSON object. Returns true when every chunk
+     * got HTTP 200.
+     */
+    public static boolean uploadPayload(Context ctx, LogUploadPayload payload) {
+        try {
+            String anonId = com.car2hass.vehicle.DeviceAnon.fromContext(ctx);
+            byte[] gz = payload.gzipBytes == null ? new byte[0] : payload.gzipBytes;
+            final int MAX_CHUNK = 500 * 1024; // 500 KiB per chunk (server cap 4 MiB)
+            int total = Math.max(1, (gz.length + MAX_CHUNK - 1) / MAX_CHUNK);
+            for (int i = 0; i < total; i++) {
+                int from = i * MAX_CHUNK;
+                int len = Math.min(MAX_CHUNK, gz.length - from);
+                byte[] chunk = Arrays.copyOfRange(gz, from, from + len);
+                String b64 = Base64.encodeToString(chunk, Base64.NO_WRAP);
+                JSONObject body = new JSONObject();
+                body.put("device_anon_id", anonId == null ? "" : anonId);
+                body.put("app_version", AppInfo.getVersionString(ctx));
+                body.put("message", "");
+                body.put("upload_id", payload.uploadId);
+                body.put("chunk_index", i);
+                body.put("chunk_total", total);
+                body.put("compression", "gzip");
+                body.put("payload", b64);
+                body.put("record_count", payload.recordCount);
+                if (!post(body.toString())) return false;
+            }
+            return true;
+        } catch (Exception e) {
+            LogBuffer.e("LogUploader", "uploadPayload: " + e.getMessage());
             return false;
         }
     }

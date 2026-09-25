@@ -40,6 +40,17 @@ public class LogBuffer {
     /** What reaches the on-disk log: 0=off (export only), 1=basic (I/W/E), 2=detailed (all). */
     private static volatile int fileLogMode = 1;
 
+    /** Receives every log record (level, tag, msg) for the SQLite log store. */
+    public interface Sink {
+        void onLog(long ts, String level, String tag, String msg, String source);
+    }
+
+    private static volatile Sink sink;
+
+    public static void setSink(Sink s) {
+        sink = s;
+    }
+
     public static void setFileLogMode(int mode) {
         fileLogMode = mode;
     }
@@ -79,6 +90,8 @@ public class LogBuffer {
     private static synchronized void add(String level, String tag, String msg) {
         String line = sdf.format(new Date()) + " " + level + "/" + tag + ": " + msg;
         byte[] lineBytes = line.getBytes();
+        Sink s = sink;
+        if (s != null) s.onLog(System.currentTimeMillis(), level, tag, msg, "app");
         buffer.add(line);
         currentBytes += lineBytes.length;
 

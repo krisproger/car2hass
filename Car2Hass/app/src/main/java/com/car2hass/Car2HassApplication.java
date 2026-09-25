@@ -10,6 +10,9 @@ public class Car2HassApplication extends Application {
         LogBuffer.init(this);
         LogBuffer.setFileLogMode(AppConfig.getFileLogMode(this));
         AppConfig.migrateEnabledToDisabledIfNeeded(this);
+        LogManager manager = LogManager.init(this);
+        LogBuffer.setSink(manager::log);
+        manager.start();
         new CrashLogger(this).register();
     }
 }

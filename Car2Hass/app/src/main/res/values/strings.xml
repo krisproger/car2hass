@@ -209,6 +209,16 @@
     <string name="settings_channel_status_ok">working · %1$d s</string>
     <string name="settings_channel_status_retry">not responding · retry in %1$d s</string>
     <string name="settings_channel_status_error">error: %1$s</string>
+    <string name="settings_sources_status">Source state</string>
+    <string name="worker_status_title">Source state</string>
+    <string name="worker_status_no_service">Telemetry service is not running</string>
+    <string name="worker_status_threads">Live threads: %1$d</string>
+    <string name="worker_status_values">Signals in cache: %1$d</string>
+    <string name="worker_status_queue">Upload queue: %1$d</string>
+    <string name="worker_status_cycles">cycles: %1$d · errors: %2$d</string>
+    <string name="worker_status_uptime">uptime: %1$s</string>
+    <string name="worker_status_last_cycle">last cycle: %1$s</string>
+    <string name="worker_status_never">—</string>
     <string-array name="vehicle_producers">
         <item>@string/settings_vehicle_producer_byd</item>
         <item>@string/settings_vehicle_producer_universal</item>

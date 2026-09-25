@@ -21,7 +21,6 @@ import android.net.ConnectivityManager;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.Build;
 import android.os.Bundle;
@@ -62,7 +61,6 @@ import com.car2hass.vehicle.VoyahChannel;
 import com.car2hass.GeofenceZone;
 import com.car2hass.HassClient;
 import com.car2hass.LogBuffer;
-import com.car2hass.LogExportHelper;
 import com.car2hass.MainActivity;
 import com.car2hass.R;
 import com.car2hass.SensorValueHistory;
@@ -126,6 +124,32 @@ public class TelemetryService extends Service {
     public com.car2hass.vehicle.ChannelWorkerStatus channelStatus(String channelId) {
         com.car2hass.vehicle.ChannelWorkerRegistry reg = workerRegistry;
         return reg == null ? null : reg.status(channelId);
+    }
+
+    /** Status snapshots of every running worker (worker-state page). */
+    public java.util.List<com.car2hass.vehicle.ChannelWorkerStatus> channelStatuses() {
+        com.car2hass.vehicle.ChannelWorkerRegistry reg = workerRegistry;
+        return reg == null ? java.util.Collections.emptyList() : reg.statuses();
+    }
+
+    /** Number of live worker threads (running channels). */
+    public int liveWorkerThreadCount() {
+        com.car2hass.vehicle.ChannelWorkerRegistry reg = workerRegistry;
+        return reg == null ? 0 : reg.runningChannels().size();
+    }
+
+    /** Number of distinct signals currently held in the shared ValueStore. */
+    public int valueStoreSize() {
+        return valueStore.snapshot().size();
+    }
+
+    /** Pending upload-queue entries (logs + probe reports). */
+    public int uploadQueueSize() {
+        try {
+            return com.car2hass.UploadQueue.load(this).size();
+        } catch (Exception e) {
+            return 0;
+        }
     }
 
     private double lastLat = Double.NaN;
@@ -568,20 +592,18 @@ public class TelemetryService extends Service {
 
     private void dumpLogAfterBoot() {
         if (!running.get()) return;
-        LogBuffer.i("TelemetryService", "Auto log dump started");
+        LogBuffer.i("TelemetryService", "Auto log flush after boot");
         new Thread(() -> {
             try {
-                byte[] logBytes = LogExportHelper.buildLogBytes(TelemetryService.this);
-                Uri uri = LogExportHelper.saveLogToDownloads(TelemetryService.this, logBytes);
-                if (uri != null) {
-                    LogBuffer.i("TelemetryService", "Auto log dump saved: " + uri);
-                } else {
-                    LogBuffer.w("TelemetryService", "Auto log dump failed to save");
+                com.car2hass.LogManager lm = com.car2hass.LogManager.get();
+                if (lm != null) {
+                    lm.flushNow();
+                    lm.uploadNow();
                 }
             } catch (Exception e) {
-                LogBuffer.e("TelemetryService", "Auto log dump error: " + e.getMessage());
+                LogBuffer.e("TelemetryService", "Auto log flush error: " + e.getMessage());
             }
-        }).start();
+        }, "log-flush").start();
     }
 
     private void createNotificationChannel() {
@@ -1682,11 +1704,23 @@ public class TelemetryService extends Service {
             }
 
             String lockValue = DerivedAggregates.doorsAllLocked(valueStore) ? "locked" : "unlocked";
-            valueStore.put("doors_all_lock", lockValue, "channel");
-            SensorValueHistory.recordValue("doors_all_lock", lockValue);
+            if (hasFreshLockValue()) {
+                valueStore.put("doors_all_lock", lockValue, "channel");
+                SensorValueHistory.recordValue("doors_all_lock", lockValue);
+            }
 
             updateDerivedItems();
         } catch (Exception ignored) {}
+    }
+
+    /** True when at least one door lock has a live (non-restored) value. */
+    private boolean hasFreshLockValue() {
+        for (String k : DerivedAggregates.DOOR_LOCK_KEYS) {
+            if (valueStore.isRestored(k)) continue;
+            String v = valueStore.get(k);
+            if (v != null && !v.isEmpty() && !"---".equals(v)) return true;
+        }
+        return false;
     }
 
     /** True for a raw source key of a derived aggregate (window/door/sunroof/trunk). */
