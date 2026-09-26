@@ -179,7 +179,9 @@ javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 \
   "$SRC/com/car2hass/GzipCodec.java" \
   "$SRC/com/car2hass/LogUploadPayload.java" \
   "$SRC/com/car2hass/LogRetention.java" \
-  "$SRC/com/car2hass/DownloadsCleanup.java"
+  "$SRC/com/car2hass/DownloadsCleanup.java" \
+  "$SRC/com/car2hass/LogUploadPolicy.java" \
+  "$SRC/com/car2hass/LogUploadGate.java"
 
 echo "=== Compiling log payload codec + coordinator (org.json) ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 \
@@ -191,13 +193,15 @@ javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 \
   "$TEST/com/car2hass/LogBatchBufferTest.java" \
   "$TEST/com/car2hass/LogStoreTest.java" \
   "$TEST/com/car2hass/GzipCodecTest.java" \
-  "$TEST/com/car2hass/DownloadsCleanupTest.java"
+  "$TEST/com/car2hass/DownloadsCleanupTest.java" \
+  "$TEST/com/car2hass/LogUploadPolicyTest.java"
 
 echo "=== Running log store core tests ==="
 java -cp "$OUT" com.car2hass.LogBatchBufferTest
 java -cp "$OUT" com.car2hass.LogStoreTest
 java -cp "$OUT:$JSON_JAR" com.car2hass.GzipCodecTest
 java -cp "$OUT" com.car2hass.DownloadsCleanupTest
+java -cp "$OUT" com.car2hass.LogUploadPolicyTest
 
 echo "=== Compiling PresetParamValues (JSON model, no Android dep) ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/PresetParamValues.java"

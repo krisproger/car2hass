@@ -9,19 +9,21 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Wires the batching buffer, the SQLite store and the periodic upload together.
+ * Wires the batching buffer, the SQLite store and the upload triggers together.
  * Log lines from {@link LogBuffer} are only buffered in memory here; the
- * flusher thread drains them to the DB and the uploader sends unsent records
- * (logs and crashes) in one compressed batch per cycle.
+ * flusher thread drains them to the DB. The DB log is uploaded on the user's
+ * request, once after a crash, or by a once-per-day safety net — never on a
+ * short timer.
  */
 public final class LogManager {
 
     private static final String PREFS = "car2hass_logs";
     private static final String KEY_VERSION = "last_version";
     private static final String KEY_FIRST_RUN = "first_run_done";
+    private static final String KEY_LAST_AUTO_UPLOAD = "last_auto_upload_ms";
+    private static final String KEY_LAST_CRASH_UPLOAD = "last_crash_upload_ms";
 
     private static final long FLUSH_INTERVAL_MS = 5000L;
-    private static final long UPLOAD_INTERVAL_MS = 120_000L;
     private static final int BLOCK_SIZE = 20;
     private static final int BATCH_LIMIT = 500;
 
@@ -31,6 +33,7 @@ public final class LogManager {
     private final LogDb db;
     private final LogBatchBuffer buffer;
     private final ScheduledExecutorService executor;
+    private final LogUploadGate crashGate = new LogUploadGate();
 
     private LogManager(Context ctx) {
         this.ctx = ctx.getApplicationContext();
@@ -64,31 +67,23 @@ public final class LogManager {
         } catch (Exception e) {
             LogBuffer.e("LogManager", "recordCrash: " + e.getMessage());
         }
+        scheduleCrashUpload();
     }
 
-    /** Starts the background flusher/uploader and runs one-time maintenance. */
+    /** Starts the background flusher and runs one-time maintenance. */
     public void start() {
         executor.execute(this::runMaintenance);
         executor.scheduleWithFixedDelay(this::flushNow,
                 FLUSH_INTERVAL_MS, FLUSH_INTERVAL_MS, TimeUnit.MILLISECONDS);
-        executor.scheduleWithFixedDelay(this::uploadNow,
-                UPLOAD_INTERVAL_MS, UPLOAD_INTERVAL_MS, TimeUnit.MILLISECONDS);
+        executor.execute(this::uploadPendingCrashOnce);
     }
 
     public void flushNow() {
         try {
             buffer.flush();
+            maybeAutoUpload();
         } catch (Exception e) {
             LogBuffer.e("LogManager", "flush: " + e.getMessage());
-        }
-    }
-
-    public void uploadNow() {
-        try {
-            new LogUploadCoordinator(db, p -> LogUploader.uploadPayload(ctx, p), BATCH_LIMIT)
-                    .uploadOnce();
-        } catch (Exception e) {
-            LogBuffer.e("LogManager", "upload: " + e.getMessage());
         }
     }
 
@@ -98,6 +93,64 @@ public final class LogManager {
 
     public long unsentCrashCount() {
         try { return db.countCrashes(); } catch (Exception e) { return 0; }
+    }
+
+    private void maybeAutoUpload() {
+        long now = System.currentTimeMillis();
+        long last = prefs().getLong(KEY_LAST_AUTO_UPLOAD, 0L);
+        boolean hasUnsent = unsentLogCount() + unsentCrashCount() > 0;
+        if (!LogUploadPolicy.shouldUpload(LogUploadPolicy.Trigger.AUTO, hasUnsent, now, last)) return;
+        prefs().edit().putLong(KEY_LAST_AUTO_UPLOAD, now).apply();
+        runUpload();
+    }
+
+    private void scheduleCrashUpload() {
+        if (!crashGate.trySchedule()) return;
+        try {
+            executor.execute(() -> {
+                try {
+                    uploadCrashIfDue();
+                } finally {
+                    crashGate.release();
+                }
+            });
+        } catch (Exception e) {
+            crashGate.release();
+            LogBuffer.e("LogManager", "scheduleCrashUpload: " + e.getMessage());
+        }
+    }
+
+    private void uploadPendingCrashOnce() {
+        if (unsentCrashCount() <= 0) return;
+        if (!crashGate.trySchedule()) return;
+        try {
+            uploadCrashIfDue();
+        } finally {
+            crashGate.release();
+        }
+    }
+
+    private void uploadCrashIfDue() {
+        long now = System.currentTimeMillis();
+        long last = prefs().getLong(KEY_LAST_CRASH_UPLOAD, 0L);
+        boolean hasUnsent = unsentCrashCount() > 0;
+        if (!LogUploadPolicy.shouldUpload(LogUploadPolicy.Trigger.CRASH, hasUnsent, now, last)) return;
+        prefs().edit().putLong(KEY_LAST_CRASH_UPLOAD, now).apply();
+        runUpload();
+    }
+
+    private int runUpload() {
+        try {
+            return new LogUploadCoordinator(db, p -> LogUploader.uploadPayload(ctx, p), BATCH_LIMIT)
+                    .uploadOnce();
+        } catch (Exception e) {
+            LogBuffer.e("LogManager", "upload: " + e.getMessage());
+            return 0;
+        }
+    }
+
+    private SharedPreferences prefs() {
+        return ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
     private void writeBatch(List<LogRecord> records) {

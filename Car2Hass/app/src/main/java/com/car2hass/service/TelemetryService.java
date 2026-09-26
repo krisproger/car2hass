@@ -596,10 +596,7 @@ public class TelemetryService extends Service {
         new Thread(() -> {
             try {
                 com.car2hass.LogManager lm = com.car2hass.LogManager.get();
-                if (lm != null) {
-                    lm.flushNow();
-                    lm.uploadNow();
-                }
+                if (lm != null) lm.flushNow();
             } catch (Exception e) {
                 LogBuffer.e("TelemetryService", "Auto log flush error: " + e.getMessage());
             }
