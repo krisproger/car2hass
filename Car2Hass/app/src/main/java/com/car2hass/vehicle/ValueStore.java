@@ -1,5 +1,7 @@
 package com.car2hass.vehicle;
 
+import com.car2hass.LogBuffer;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -40,8 +42,17 @@ public final class ValueStore {
     }
 
     public void put(String key, String value, String channel) {
+        long now = System.currentTimeMillis();
+        Long currentAt = updatedAt.get(key);
+        if (currentAt != null && !ChannelPriority.shouldAccept(
+                ChannelPriority.rank(source.get(key)), currentAt,
+                ChannelPriority.rank(channel), now)) {
+            LogBuffer.d("ValueStore", "ignored " + key + " from " + channel
+                    + " (held by " + source.get(key) + ")");
+            return;
+        }
         values.put(key, value);
-        updatedAt.put(key, System.currentTimeMillis());
+        updatedAt.put(key, now);
         source.put(key, channel);
         if (!listeners.isEmpty()) {
             for (Listener l : listeners) l.onValueChanged(key, value, channel);
@@ -68,6 +79,12 @@ public final class ValueStore {
     public long ageMs(String key) {
         Long t = updatedAt.get(key);
         return t == null ? -1 : System.currentTimeMillis() - t;
+    }
+
+    /** Absolute timestamp of the last accepted write for {@code key}, 0 if none. */
+    public long updatedAt(String key) {
+        Long t = updatedAt.get(key);
+        return t == null ? 0L : t;
     }
 
     public String sourceOf(String key) {

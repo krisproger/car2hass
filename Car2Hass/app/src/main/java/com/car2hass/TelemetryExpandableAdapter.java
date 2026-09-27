@@ -81,6 +81,7 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
             vh.nameText = v.findViewById(com.car2hass.R.id.rowName);
             vh.valueText = v.findViewById(com.car2hass.R.id.rowValue);
             vh.unitText = v.findViewById(com.car2hass.R.id.rowUnit);
+            vh.updatedText = v.findViewById(com.car2hass.R.id.rowUpdated);
             vh.routeText = v.findViewById(com.car2hass.R.id.rowRoute);
             v.setTag(vh);
         } else {
@@ -95,6 +96,7 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
         vh.nameText.setText(rowItem.name);
         vh.valueText.setText(SignalTranslator.translateValue(rowItem.value));
         vh.unitText.setText(rowItem.unit);
+        vh.updatedText.setText(TelemetryAge.format(System.currentTimeMillis() - rowItem.valueUpdatedAt));
         vh.routeText.setText(rowItem.sourceChannel != null && !rowItem.sourceChannel.isEmpty()
                 ? rowItem.sourceChannel
                 : (rowItem.rawData != null && !rowItem.rawData.isEmpty() ? rowItem.rawData : ""));
@@ -142,6 +144,7 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
         TextView nameText;
         TextView valueText;
         TextView unitText;
+        TextView updatedText;
         TextView routeText;
     }
 }

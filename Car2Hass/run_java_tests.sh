@@ -104,6 +104,12 @@ javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 \
   "$SRC/com/car2hass/rules/RuleAction.java" \
   "$SRC/com/car2hass/rules/Rule.java"
 
+echo "=== Compiling RuleDescribe (pure) ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/rules/RuleDescribe.java"
+
+echo "=== Compiling RuleDescribeTest ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/rules/RuleDescribeTest.java"
+
 echo "=== Compiling RuleEvaluator ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/rules/RuleEvaluator.java"
 
@@ -234,6 +240,12 @@ javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/Queue
 echo "=== Compiling QueueIndicatorTest ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/QueueIndicatorTest.java"
 
+echo "=== Compiling TelemetryAge (pure) ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/TelemetryAge.java"
+
+echo "=== Compiling TelemetryAgeTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/TelemetryAgeTest.java"
+
 echo "=== Compiling UiRefreshThrottle (pure) ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/UiRefreshThrottle.java"
 
@@ -351,10 +363,13 @@ echo "=== Compiling VehicleProfileTest ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/VehicleProfileTest.java"
 
 echo "=== Compiling ChannelResult ==="
-javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/ValueStore.java" "$SRC/com/car2hass/vehicle/ChannelResult.java" "$SRC/com/car2hass/vehicle/DataChannel.java"
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/ChannelPriority.java" "$SRC/com/car2hass/vehicle/ValueStore.java" "$SRC/com/car2hass/vehicle/ChannelResult.java" "$SRC/com/car2hass/vehicle/DataChannel.java"
 
 echo "=== Compiling ChannelResultTest ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ChannelResultTest.java"
+
+echo "=== Compiling ChannelPriorityTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ChannelPriorityTest.java"
 
 echo "=== Compiling DerivedAggregates (pure, no Android dep) ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/DerivedAggregates.java"
@@ -480,6 +495,9 @@ java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.rules.RuleMigrationTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.rules.RuleEdgeLogicTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.rules.RuleTriggerLogicTest
 
+echo "=== Running RuleDescribeTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.rules.RuleDescribeTest
+
 echo "=== Running RuleTestEvaluationTest ==="
 java -cp "$OUT:$JSON_JAR" com.car2hass.rules.RuleTestEvaluationTest
 echo "=== Running RuleConnectorEditorTest ==="
@@ -499,6 +517,9 @@ java -cp "$OUT:$JSON_JAR" com.car2hass.CloudBatchBufferTest
 
 echo "=== Running QueueIndicatorTest ==="
 java -cp "$OUT" com.car2hass.QueueIndicatorTest
+
+echo "=== Running TelemetryAgeTest ==="
+java -cp "$OUT" com.car2hass.TelemetryAgeTest
 
 echo "=== Running UiRefreshThrottleTest ==="
 java -cp "$OUT" com.car2hass.UiRefreshThrottleTest
@@ -544,6 +565,9 @@ java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.VehicleResearchTest
 
 echo "=== Running ValueStoreTest ==="
 java -cp "$OUT" com.car2hass.vehicle.ValueStoreTest
+
+echo "=== Running ChannelPriorityTest ==="
+java -cp "$OUT" com.car2hass.vehicle.ChannelPriorityTest
 
 echo "=== Running DerivedAggregatesTest ==="
 java -cp "$OUT" com.car2hass.DerivedAggregatesTest

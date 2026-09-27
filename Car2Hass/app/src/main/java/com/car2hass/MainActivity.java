@@ -3065,6 +3065,7 @@ public class MainActivity extends BaseLocalizedActivity {
                 // updating fades to grey — "possibly not actual" but still shown.
                 long ageMs = store != null ? store.ageMs(key) : -1;
                 it.lastUpdate = v == null ? 0 : (ageMs >= 0 ? System.currentTimeMillis() - ageMs : System.currentTimeMillis());
+                it.valueUpdatedAt = store != null ? store.updatedAt(key) : 0;
                 it.rawData = (system ? "system" : "") + (reachable ? "reachable" : "");
                 // Source channel that actually produced the current value (single
                 // collector): diplus / adb / system / voyah / obd / …
@@ -3082,6 +3083,7 @@ public class MainActivity extends BaseLocalizedActivity {
                 if (it == null || it.key == null) continue;
                 String v = valueFor(it.key, store);
                 if (v != null) it.value = v;
+                it.valueUpdatedAt = store != null ? store.updatedAt(it.key) : 0;
             }
             out.addAll(knownItems);
         }
@@ -3352,7 +3354,9 @@ public class MainActivity extends BaseLocalizedActivity {
             sb.append(g.key).append('|');
             for (CANDataItem it : g.items) {
                 sb.append(it.key).append('=').append(it.value).append(',')
-                        .append(it.enabled).append(',').append(it.grey).append(';');
+                        .append(it.enabled).append(',').append(it.grey).append(',')
+                        .append(TelemetryAge.format(System.currentTimeMillis() - it.valueUpdatedAt))
+                        .append(';');
             }
             sb.append('#');
         }

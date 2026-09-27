@@ -68,6 +68,20 @@ public class RuleEngine {
         executor = Executors.newSingleThreadScheduledExecutor();
         executor.scheduleAtFixedRate(this::tick, 0, 1, TimeUnit.SECONDS);
         LogBuffer.i("RuleEngine", "Engine started, 1s evaluation loop");
+        logLoadedRules();
+    }
+
+    /** Logs each loaded rule's configuration once at engine start (diagnostics). */
+    private void logLoadedRules() {
+        try {
+            List<Rule> rules = RuleRegistry.load(appContext);
+            LogBuffer.i("RuleEngine", "Loaded " + rules.size() + " rule(s)");
+            for (Rule r : rules) {
+                LogBuffer.i("RuleEngine", "Rule config: " + RuleDescribe.config(r));
+            }
+        } catch (Exception e) {
+            LogBuffer.w("RuleEngine", "rule config load error: " + e.getMessage());
+        }
     }
 
     public synchronized void stop() {
@@ -201,9 +215,11 @@ public class RuleEngine {
             if (!firedOncePerSession.contains(tag)) {
                 if (restored) {
                     LogBuffer.i("RuleEngine", "Rule '" + rule.name
-                            + "': skip: restored value " + suppression.sensorKey);
+                            + "': skip: restored value " + suppression.sensorKey
+                            + " | " + RuleDescribe.config(rule));
                 } else {
-                    LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': skip (missing sensor data)");
+                    LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': skip (missing sensor data)"
+                            + " | " + RuleDescribe.config(rule));
                 }
                 firedOncePerSession.add(tag);
             }
@@ -253,14 +269,14 @@ public class RuleEngine {
         if (outcome.firstEvaluation || (trigger != null && trigger.firstEvaluation)) {
             savePreviousConditions();
             LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': first evaluation recorded ("
-                    + groupResult + "), no edge");
+                    + groupResult + "), no edge | " + RuleDescribe.config(rule));
             return;
         }
         boolean prevCondition = outcome.previousCondition;
         if (outcome.stateChanged && !holdPending) {
             savePreviousConditions();
             LogBuffer.d("RuleEngine", "Rule '" + rule.name + "': condition "
-                + prevCondition + "→" + groupResult);
+                + prevCondition + "→" + groupResult + " | " + RuleDescribe.config(rule));
         }
 
         // Cooldown is shared by both branches: the clock is the most recent
@@ -285,16 +301,19 @@ public class RuleEngine {
         LogBuffer.i("RuleEngine", "Rule '" + rule.name + "' FIRE " + (fireBranch ? "action" : "else")
             + ": prevCondition=" + prevCondition + " groupResult=" + groupResult
             + " triggerEdge=" + (trigger != null && trigger.triggerEdge)
-            + " conditions=" + describeEvaluation(group));
+            + " conditions=" + describeEvaluation(group)
+            + " | " + RuleDescribe.config(rule));
 
         for (RuleAction action : targetActions) {
             if (!guard.allow(action.commandId, action.commandValue, now, rule.antiLoopWindowSec * 1000)) {
-                LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': action '" + action.commandId + "' blocked by anti-loop");
+                LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': action '" + action.commandId
+                        + "' blocked by anti-loop | " + RuleDescribe.config(rule));
                 continue;
             }
             String chineseCmd = CommandRegistry.buildCommand(action.commandId, action.commandValue);
             if (chineseCmd == null || chineseCmd.isEmpty()) {
-                LogBuffer.w("RuleEngine", "Rule '" + rule.name + "': unknown command '" + action.commandId + "'");
+                LogBuffer.w("RuleEngine", "Rule '" + rule.name + "': unknown command '" + action.commandId
+                        + "' | " + RuleDescribe.config(rule));
                 continue;
             }
             LogBuffer.i("RuleEngine", "Rule '" + rule.name + "' " + (fireBranch ? "action" : "else") + ": " + chineseCmd);

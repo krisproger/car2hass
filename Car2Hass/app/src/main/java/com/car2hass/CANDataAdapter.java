@@ -178,6 +178,7 @@ public class CANDataAdapter extends BaseAdapter {
             vh.nameText = convertView.findViewById(com.car2hass.R.id.rowName);
             vh.valueText = convertView.findViewById(com.car2hass.R.id.rowValue);
             vh.unitText = convertView.findViewById(com.car2hass.R.id.rowUnit);
+            vh.updatedText = convertView.findViewById(com.car2hass.R.id.rowUpdated);
             vh.routeText = convertView.findViewById(com.car2hass.R.id.rowRoute);
             convertView.setTag(vh);
         } else {
@@ -190,6 +191,8 @@ public class CANDataAdapter extends BaseAdapter {
         vh.nameText.setText(rowItem.name);
         vh.valueText.setText(SignalTranslator.translateValue(rowItem.value));
         vh.unitText.setText(rowItem.unit);
+        long updatedAt = rowItem.valueUpdatedAt > 0 ? rowItem.valueUpdatedAt : rowItem.lastUpdate;
+        vh.updatedText.setText(TelemetryAge.format(System.currentTimeMillis() - updatedAt));
         vh.routeText.setText(rowItem.rawData != null && !rowItem.rawData.isEmpty() ? rowItem.rawData : "");
 
         // System sensors are always green; active rows green when fresh; disabled
@@ -251,6 +254,6 @@ public class CANDataAdapter extends BaseAdapter {
 
     static class ViewHolder {
         CheckBox checkBox;
-        TextView idText, nameText, valueText, unitText, routeText;
+        TextView idText, nameText, valueText, unitText, updatedText, routeText;
     }
 }

@@ -17,7 +17,7 @@
         android:id="@+id/rowId"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="0.13"
+        android:layout_weight="0.11"
         android:gravity="center_vertical"
         android:textColor="#FFFFFFFF"
         android:textSize="13sp"
@@ -27,7 +27,7 @@
         android:id="@+id/rowName"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="0.30"
+        android:layout_weight="0.26"
         android:gravity="center_vertical"
         android:textColor="#FFFFFFFF"
         android:textSize="13sp"
@@ -38,7 +38,7 @@
         android:id="@+id/rowValue"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="0.30"
+        android:layout_weight="0.22"
         android:gravity="center_vertical|end"
         android:textColor="#FFB0B0B0"
         android:textSize="13sp"
@@ -48,10 +48,21 @@
         android:id="@+id/rowUnit"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_weight="0.15"
+        android:layout_weight="0.10"
         android:gravity="center_vertical|end"
         android:textColor="#FFB0B0B0"
         android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/rowUpdated"
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="0.14"
+        android:gravity="center_vertical|end"
+        android:paddingRight="6dp"
+        android:textColor="#FFB0B0B0"
+        android:textSize="12sp"
+        android:typeface="monospace" />
 
     <TextView
         android:id="@+id/rowRoute"

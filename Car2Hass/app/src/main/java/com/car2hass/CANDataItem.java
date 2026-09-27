@@ -17,6 +17,8 @@ public class CANDataItem {
     public String value;
     public String rawData;
     public long lastUpdate;
+    /** Timestamp of the last accepted ValueStore write for this key (0 if none). */
+    public long valueUpdatedAt;
     public boolean enabled = true;
     /** True when DiPlus reports this signal is not supported on the current firmware. */
     public boolean unsupported = false;
