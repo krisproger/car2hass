@@ -34,13 +34,8 @@ public class LogExportHelper {
 
     public static byte[] buildLogBytes(Context context) {
         StringBuilder fullLog = new StringBuilder();
-        String appVer = AppInfo.getVersionString(context);
 
-        fullLog.append("=== Car2Hass v").append(appVer).append(" Log ===\n");
-        fullLog.append("Device: ").append(getDeviceInfo()).append("\n");
-        fullLog.append("Time: ").append(new Date().toString()).append("\n");
-        fullLog.append("Source: All signals (merged)\n");
-        fullLog.append(buildDiagnostics(context));
+        fullLog.append(buildPreamble(context));
         fullLog.append("\n");
 
         // In-memory buffer and persistent file log overlap (same events
@@ -61,7 +56,8 @@ public class LogExportHelper {
             Process p = Runtime.getRuntime().exec(
                     new String[]{"logcat", "-d", "-t", "300", "-s",
                             "Car2Hass", "CANReader", "Main", "TelemetryService",
-                            "BootReceiver", "BootActivity", "HassSettings", "HassClient"});
+                            "BootReceiver", "BootActivity", "HassSettings", "HassClient",
+                            "CloudSyncClient", "RuleEngine"});
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
             // Bound the read: logcat can block without EOF on some ROMs, which
             // would hang the log send forever (the toast never appears).
@@ -110,24 +106,39 @@ public class LogExportHelper {
         }
     }
 
+    /** Header + one-glance diagnostics prepended to every uploaded/exported log. */
+    public static String buildPreamble(Context context) {
+        return LogPreamble.header(AppInfo.getVersionString(context), getDeviceInfo(),
+                new Date().toString()) + buildDiagnostics(context);
+    }
+
     /** One-glance channel/link state at send time (OBD, protocol, DiPlus…). */
     private static String buildDiagnostics(Context context) {
-        StringBuilder d = new StringBuilder("--- Diagnostics ---\n");
-        d.append("Profile: ").append(AppConfig.getSelectedProfile(context)).append('\n');
-        d.append("Active channels: ").append(AppConfig.getActiveChannels(context)).append('\n');
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        lines.add("Profile: " + AppConfig.getSelectedProfile(context));
+        lines.add("Active channels: " + AppConfig.getActiveChannels(context));
         String vin = com.car2hass.CANDataReader.sVin;
-        d.append("VVIN: ").append(vin != null ? vin : "").append('\n');
+        lines.add("VVIN: " + (vin != null ? vin : ""));
         String fw = com.car2hass.CANDataReader.sFirmware;
-        d.append("Firmware: ").append(fw != null ? fw : "").append('\n');
-        d.append("OBD: enabled=").append(AppConfig.isObdEnabled(context))
-          .append(" mode=").append(AppConfig.getObdMode(context))
-          .append(" status=").append(AppConfig.getObdStatus(context))
-          .append(" protocol=").append(AppConfig.getObdProtocol(context))
-          .append(" supported_pids=").append(countPids(AppConfig.getObdSupportedPids(context)))
-          .append(" last_error=").append(AppConfig.getObdLastError(context)).append('\n');
-        d.append("OBD device: ").append(AppConfig.getObdBtName(context))
-          .append(" (").append(AppConfig.getObdBtAddress(context)).append(")\n");
-        return d.toString();
+        lines.add("Firmware: " + (fw != null ? fw : ""));
+        lines.add("OBD: enabled=" + AppConfig.isObdEnabled(context)
+                + " mode=" + AppConfig.getObdMode(context)
+                + " status=" + AppConfig.getObdStatus(context)
+                + " protocol=" + AppConfig.getObdProtocol(context)
+                + " supported_pids=" + countPids(AppConfig.getObdSupportedPids(context))
+                + " last_error=" + AppConfig.getObdLastError(context));
+        lines.add("OBD device: " + AppConfig.getObdBtName(context)
+                + " (" + AppConfig.getObdBtAddress(context) + ")");
+        lines.add("RuleEngine: " + ruleCount(context) + " rule(s) loaded");
+        return LogPreamble.diagnosticsBlock(lines.toArray(new String[0]));
+    }
+
+    private static int ruleCount(Context context) {
+        try {
+            return com.car2hass.rules.RuleRegistry.load(context).size();
+        } catch (Exception e) {
+            return -1;
+        }
     }
 
     private static int countPids(String json) {

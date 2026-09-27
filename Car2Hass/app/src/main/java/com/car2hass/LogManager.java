@@ -141,7 +141,8 @@ public final class LogManager {
 
     private int runUpload() {
         try {
-            return new LogUploadCoordinator(db, p -> LogUploader.uploadPayload(ctx, p), BATCH_LIMIT)
+            String preamble = LogExportHelper.buildPreamble(ctx);
+            return new LogUploadCoordinator(db, p -> LogUploader.uploadPayload(ctx, p), BATCH_LIMIT, preamble)
                     .uploadOnce();
         } catch (Exception e) {
             LogBuffer.e("LogManager", "upload: " + e.getMessage());
