@@ -40,6 +40,53 @@ def test_voyah_profile_exists():
         assert k in keys
 
 
+def _gen_registry_params():
+    text = open(os.path.join(REPO, "scripts", "gen_registry.py"), encoding="utf-8").read()
+    block = re.search(r"VOYAH_PARAMS = \{(.*?)\n\}", text, re.S).group(1)
+    return dict(re.findall(r'"([^"]+)":\s*"([^"]+)"', block))
+
+
+def _java_channel_params():
+    text = open(os.path.join(REPO, "Car2Hass", "app", "src", "main", "java",
+                             "com", "car2hass", "vehicle", "VoyahChannel.java"),
+                encoding="utf-8").read()
+    block = re.search(r"Map<String, String> m = new HashMap<>\(\);(.*?)VOYAH_PARAMS =",
+                      text, re.S).group(1)
+    return dict(re.findall(r'm\.put\("([^"]+)",\s*"([^"]+)"\)', block))
+
+
+def test_voyah_maps_are_in_sync():
+    """gen_registry.py and VoyahChannel.java must expose the same key -> param map."""
+    gen = _gen_registry_params()
+    java = _java_channel_params()
+    assert gen == java, (
+        f"only in gen_registry: {sorted(set(gen) - set(java))}; "
+        f"only in VoyahChannel: {sorted(set(java) - set(gen))}; "
+        f"differing: {sorted(k for k in set(gen) & set(java) if gen[k] != java[k])}"
+    )
+
+
+def test_voyah_corrected_mappings():
+    """The issue #84 corrections must stay in place (status params, not control)."""
+    gen = _gen_registry_params()
+    assert gen["drive_mode"] == "BCM_DRIVEMODE_CHANGE"
+    assert gen["window_fl"] == "BCM_FLWindowHorizontalSts"
+    assert gen["window_fr"] == "BCM_FRWindowHorizontalSts"
+    assert gen["window_rl"] == "BCM_RLWindowHorizontalSts"
+    assert gen["window_rr"] == "BCM_RRWindowHorizontalSts"
+    assert gen["fuel_charge_flap"] == "FUEL_PORT_CAP_STS"
+    assert gen["charge_port_flap"] == "CHRG_PORT_CAP_STS"
+    assert gen["rear_left_door"] == "DOOR_POSITION_STATUS_RL"
+    assert gen["rear_right_door"] == "DOOR_POSITION_STATUS_RR"
+
+
+def test_charge_port_flap_has_labels():
+    """charge_port_flap must decode to open/closed (was labels: {} -> raw number)."""
+    reg = json.load(open(os.path.join(ASSETS, "sensors_registry.json"), encoding="utf-8"))
+    flap = next(s for s in reg["sensors"] if s["key"] == "charge_port_flap")
+    assert flap["channels"]["voyah"] == {"vs": "CHRG_PORT_CAP_STS"}
+
+
 def test_obd_pids_match_codec_catalog():
     reg = json.load(open(os.path.join(ASSETS, "sensors_registry.json"), encoding="utf-8"))
     java = open(os.path.join(REPO, "Car2Hass", "app", "src", "main", "java",

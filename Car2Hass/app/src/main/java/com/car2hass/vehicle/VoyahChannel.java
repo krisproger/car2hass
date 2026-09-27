@@ -75,10 +75,10 @@ public class VoyahChannel implements DataChannel {
         m.put("passenger_seatbelt", "acu_passengerSeatBeltSts");
         m.put("sunroof", "SUNROOF_OPEN_PERCENT");
         m.put("sunshade", "ROLL_OPEN_PERCENT");
-        m.put("window_fl", "DRIVER_WINDOW_CONTROL");
-        m.put("window_fr", "PAS_WIDOW_CONTROL");
-        m.put("window_rl", "LEFT_BACK_WINDOW_CONTROL");
-        m.put("window_rr", "RIGHT_BACK_WINDOW_CONTROL");
+        m.put("window_fl", "BCM_FLWindowHorizontalSts");
+        m.put("window_fr", "BCM_FRWindowHorizontalSts");
+        m.put("window_rl", "BCM_RLWindowHorizontalSts");
+        m.put("window_rr", "BCM_RRWindowHorizontalSts");
         m.put("fuel_charge_flap", "FUEL_PORT_CAP_STS");
         m.put("sidelights", "POSITION_LAMP_SWITCH");
         m.put("left_turn", "LEFT_DIRECTION_LIGHT");
@@ -89,7 +89,12 @@ public class VoyahChannel implements DataChannel {
         m.put("lane_keep_state", "LKSStatus");
         m.put("auto_hold", "EPB_PARK_STATUS");
         m.put("total_energy", "ENERGY_CON_SUM_AV");
-        m.put("drive_mode", "DRIVING_MODE_SET");
+        m.put("drive_mode", "BCM_DRIVEMODE_CHANGE");
+        m.put("battery_remaining_charge_time", "BMS_REMAIN_CHARGE_TIME");
+        m.put("avg_speed", "AVG_SPEED");
+        m.put("avg_power", "AVG_POWER");
+        m.put("energy_recovery_gear", "ENERGY_RECOVERY_GEAR");
+        m.put("energy_flow", "ENERGY_FLOW");
         m.put("charge_voltage", "OBC_CHARGE_VOLTAGE");
         m.put("charge_current", "OBC_CHARGE_CURRENT");
         m.put("ac_charge_state", "BMS_AC_CHARGE_STAT");
@@ -139,6 +144,7 @@ public class VoyahChannel implements DataChannel {
         m.put("soc", new int[]{71, RAW_FLOAT});          // getBatteryRemainingCapacity, %
         m.put("speed", new int[]{26, RAW_INT});          // getVehicleSpeed, km/h
         m.put("ambient_temp", new int[]{7, RAW_INT});    // getAmbientTemperature, °C
+        m.put("outside_temp", new int[]{7, RAW_INT});    // getAmbientTemperature, °C
         m.put("fuel_rate", new int[]{15, RAW_INT});      // getInstantFuelConsumption
         m.put("powertrain_mode", new int[]{43, RAW_INT}); // getHevSysMode
         VOYAH_RAW_TX = java.util.Collections.unmodifiableMap(m);
@@ -345,22 +351,28 @@ public class VoyahChannel implements DataChannel {
 
     /** Registry key -> value via reflection (preferred) then raw transact. */
     private String readKey(String key) {
+        String value = null;
         Object iface = cachedIface;
         if (iface != null) {
             String param = VOYAH_PARAMS.get(key);
             if (param != null) {
-                Object value = queryState(iface, cachedIfaceClass, param);
-                if (value != null) return stringify(value);
+                Object raw = queryState(iface, cachedIfaceClass, param);
+                if (raw != null) value = stringify(raw);
             }
         }
-        int[] tx = VOYAH_RAW_TX.get(key);
-        if (tx == null) return null;
-        if (tx[1] == RAW_FLOAT) {
-            Float f = transactFloat(tx[0]);
-            return f == null ? null : String.valueOf(Math.round(f));
+        if (value == null) {
+            int[] tx = VOYAH_RAW_TX.get(key);
+            if (tx == null) return null;
+            if (tx[1] == RAW_FLOAT) {
+                Float f = transactFloat(tx[0]);
+                value = f == null ? null : String.valueOf(Math.round(f));
+            } else {
+                Integer i = transactInt(tx[0]);
+                value = i == null ? null : String.valueOf(i);
+            }
         }
-        Integer i = transactInt(tx[0]);
-        return i == null ? null : String.valueOf(i);
+        // Brand-specific value semantics (e.g. inverted flap, Voyah drive modes).
+        return value == null ? null : VoyahValueDecoder.decode(key, value);
     }
 
     /** Binds to the exported CanBusService; true when a live binder was obtained. */

@@ -1984,7 +1984,9 @@ signals:
   type: enum
   synthetic: true
   key: charge_port_flap
-  labels: {}
+  labels:
+    0: closed
+    1: open
   ha_type: sensor
   icon: mdi:ev-plug-type2
 - id: 9131

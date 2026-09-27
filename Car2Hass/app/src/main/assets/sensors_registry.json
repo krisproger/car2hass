@@ -1343,7 +1343,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "voyah": {
-          "vs": "DRIVER_WINDOW_CONTROL"
+          "vs": "BCM_FLWindowHorizontalSts"
         }
       },
       "expected_on": [
@@ -1369,7 +1369,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "voyah": {
-          "vs": "PAS_WIDOW_CONTROL"
+          "vs": "BCM_FRWindowHorizontalSts"
         }
       },
       "expected_on": [
@@ -1395,7 +1395,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "voyah": {
-          "vs": "LEFT_BACK_WINDOW_CONTROL"
+          "vs": "BCM_RLWindowHorizontalSts"
         }
       },
       "expected_on": [
@@ -1427,7 +1427,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "voyah": {
-          "vs": "RIGHT_BACK_WINDOW_CONTROL"
+          "vs": "BCM_RRWindowHorizontalSts"
         }
       },
       "expected_on": [
@@ -1531,7 +1531,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "voyah": {
-          "vs": "DRIVING_MODE_SET"
+          "vs": "BCM_DRIVEMODE_CHANGE"
         }
       },
       "expected_on": [
