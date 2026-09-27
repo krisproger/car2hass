@@ -5,13 +5,13 @@ import java.util.Arrays;
 public class ChannelPriorityTest {
     public static void main(String[] args) {
         if (!ChannelPriority.ORDER.equals(Arrays.asList(
-                "adb", "system", "dumpsys", "diplus", "voyah", "obd", "byd_cloud")))
+                "adb", "system", "dumpsys", "diplus", "obd", "byd_cloud")))
             throw new AssertionError("priority order mismatch: " + ChannelPriority.ORDER);
         if (ChannelPriority.rank("adb") != 0) throw new AssertionError("adb rank");
         if (!(ChannelPriority.rank("system") < ChannelPriority.rank("dumpsys")))
             throw new AssertionError("system must rank above dumpsys");
-        if (!(ChannelPriority.rank("diplus") < ChannelPriority.rank("voyah")))
-            throw new AssertionError("diplus must rank above voyah");
+        if (ChannelPriority.rank("voyah") != ChannelPriority.rank("diplus"))
+            throw new AssertionError("voyah and diplus are mutually exclusive and must share one slot");
         if (!(ChannelPriority.rank("obd") < ChannelPriority.rank("byd_cloud")))
             throw new AssertionError("obd must rank above byd_cloud");
         if (ChannelPriority.rank("diplus_push") != ChannelPriority.UNKNOWN_RANK)

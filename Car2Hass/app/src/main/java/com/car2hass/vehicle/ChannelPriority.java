@@ -15,14 +15,17 @@ import java.util.List;
  */
 public final class ChannelPriority {
 
-    /** Highest first. */
+    /** Highest first. DiPlus and Voyah are mutually exclusive native channels
+     *  (a car has one or the other), so they share a single priority slot. */
     public static final List<String> ORDER = Arrays.asList(
-            "adb", "system", "dumpsys", "diplus", "voyah", "obd", "byd_cloud");
+            "adb", "system", "dumpsys", "diplus", "obd", "byd_cloud");
 
     /** Rank returned for channels absent from {@link #ORDER}. */
     public static final int UNKNOWN_RANK = ORDER.size();
 
     public static int rank(String channel) {
+        // Voyah occupies the same slot as DiPlus (mutually exclusive per car).
+        if ("voyah".equals(channel)) channel = "diplus";
         int i = ORDER.indexOf(channel);
         return i >= 0 ? i : UNKNOWN_RANK;
     }
