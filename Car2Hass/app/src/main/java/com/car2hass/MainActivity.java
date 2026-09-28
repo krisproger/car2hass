@@ -854,6 +854,14 @@ public class MainActivity extends BaseLocalizedActivity {
         final String msg = message != null && !message.isEmpty()
                 ? message : buildLogIdentifier();
         LogBuffer.i("Main", "uploadLogToServer: path=" + logPath + " msg=" + msg);
+        // Also push the DB log (the real, complete log) right away — the file queue
+        // above is the legacy path and may be empty/stale.
+        try {
+            com.car2hass.LogManager lm = com.car2hass.LogManager.get();
+            if (lm != null) lm.uploadNow();
+        } catch (Exception e) {
+            LogBuffer.e("Main", "uploadLogToServer: db upload trigger: " + e.getMessage());
+        }
         new Thread(() -> {
             try {
                 String anonId = com.car2hass.vehicle.DeviceAnon.fromContext(this);

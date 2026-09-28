@@ -87,6 +87,19 @@ public final class LogManager {
         }
     }
 
+    /** Explicit user action ("Отправить лог"): flush the buffer and upload the DB log now,
+     *  bypassing the auto/crash gates. Returns the number of records attempted. */
+    public void uploadNow() {
+        executor.execute(() -> {
+            try {
+                buffer.flush();
+                runUpload();
+            } catch (Exception e) {
+                LogBuffer.e("LogManager", "uploadNow: " + e.getMessage());
+            }
+        });
+    }
+
     public long unsentLogCount() {
         try { return db.countLogs(); } catch (Exception e) { return 0; }
     }
