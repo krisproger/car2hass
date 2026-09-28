@@ -43,8 +43,12 @@ public final class SignalProber implements VehicleResearch.SensorProbe {
                 return ObdChannel.readSinglePid(ctx, pid);
             } else if ("voyah".equals(channel)) {
                 String vs = ch.optString("vs");
-                if (vs.isEmpty()) return ProbeResult.unsupported();
-                return VoyahChannel.readSingleParam(vs);
+                if (!vs.isEmpty()) return VoyahChannel.readSingleParam(vs);
+                String method = ch.optString("method");
+                if (!method.isEmpty()) return VoyahChannel.readMethodParam(method);
+                String ac = ch.optString("ac");
+                if (!ac.isEmpty()) return VoyahChannel.readAirConditionParam(ac);
+                return ProbeResult.unsupported();
             }
             // dumpsys / diplus_push / byd_cloud have no per-sensor descriptors
             // yet; channel-level probe covers their availability.

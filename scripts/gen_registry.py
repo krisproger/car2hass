@@ -217,6 +217,22 @@ VOYAH_PARAMS = {
     "rear_right_seat_massage": "REAR_SEAT_MASS_SWITCH_RIGHT",
 }
 
+# Voyah read-only sensors exposed by no-argument ICanBusService getters rather
+# than VehicleState constants (source: VOYAH_FIRMWARE_ANALYSIS.md section 8.2,
+# tsrman/voyah-telemetry-demo). Sync with VoyahChannel.VOYAH_METHODS.
+VOYAH_METHOD_PARAMS = {
+    "outside_temp": "getAmbientTemperature",   # int, °C
+    "ambient_temp": "getAmbientTemperature",   # int, °C
+}
+
+# Voyah climate values reachable only through the separate AirCondition model
+# (info/brands/voyah/aircondition_methods.txt). Best-effort: read from the
+# object returned by ICanBusService.getAirConditionState() when it yields one.
+# Sync with VoyahChannel.VOYAH_AC_METHODS.
+VOYAH_AC_PARAMS = {
+    "cabin_temp": "getAirTempInCar",
+}
+
 def parse_signal_registry():
     text = open(os.path.join(JAVA, "CANDataReader.java"), encoding="utf-8").read()
     block = re.search(r"SIGNAL_REGISTRY\s*=\s*\{(.*?)\};", text, re.S).group(1)
@@ -252,6 +268,20 @@ CORE_SENSORS = {
 CHANNELS_PRIORITY = ["system", "dumpsys", "adb", "diplus", "voyah",
                      "obd", "diplus_push", "byd_cloud"]
 
+def voyah_descriptor(key):
+    """Voyah read descriptor for a registry key, or None when unreadable."""
+    vs = VOYAH_PARAMS.get(key)
+    if vs:
+        return {"vs": vs}
+    method = VOYAH_METHOD_PARAMS.get(key)
+    if method:
+        return {"method": method}
+    ac = VOYAH_AC_PARAMS.get(key)
+    if ac:
+        return {"ac": ac}
+    return None
+
+
 def build_sensors():
     rows = parse_signal_registry()
     native = parse_native_signals()
@@ -268,10 +298,10 @@ def build_sensors():
         }
         if key in OBD_PIDS:
             channels["obd"] = {"pid": OBD_PIDS[key]}
-        voyah = VOYAH_PARAMS.get(key)
+        voyah = voyah_descriptor(key)
         expected = ["byd_generic"]
         if voyah:
-            channels["voyah"] = {"vs": voyah}
+            channels["voyah"] = voyah
             expected.append("voyah_generic")
         sensors.append({
             "key": key, "label_en": SENSOR_LABELS["en"].get(key, english),
@@ -292,7 +322,6 @@ def build_sensors():
             "expected_on": ["system"],
         })
     for key, english, stype, unit in VOYAH_ONLY_SENSORS:
-        vs = VOYAH_PARAMS.get(key)
         sensors.append({
             "key": key, "label_en": SENSOR_LABELS["en"].get(key, english),
             "label_ru": SENSOR_LABELS["ru"].get(key, english),
@@ -300,7 +329,7 @@ def build_sensors():
             "core": False,
             "channels": {k: None for k in
                 ["diplus", "adb", "dumpsys", "obd", "diplus_push", "byd_cloud", "system"]}
-                | {"voyah": ({"vs": vs} if vs else None)},
+                | {"voyah": voyah_descriptor(key)},
             "expected_on": ["voyah_generic"],
         })
     for key, english, stype, unit, channel, descriptor in EXTRA_SENSORS:
@@ -318,7 +347,7 @@ def build_sensors():
     return sensors
 
 def build_profiles(sensor_keys):
-    voyah_keys = sorted(VOYAH_PARAMS.keys())
+    voyah_keys = sorted(set(VOYAH_PARAMS) | set(VOYAH_METHOD_PARAMS) | set(VOYAH_AC_PARAMS))
     return [
         {"id": "byd_generic", "label": "BYD (generic)", "key_channel": "diplus",
          "expected_sensors": list(sensor_keys), "base_channels": ["diplus", "adb"]},

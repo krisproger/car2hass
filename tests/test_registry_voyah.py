@@ -22,9 +22,14 @@ def test_voyah_descriptors_reference_known_params():
     mapped = []
     for s in reg["sensors"]:
         v = s["channels"].get("voyah")
-        if v:
+        if not v:
+            continue
+        if "vs" in v:
             mapped.append((s["key"], v["vs"]))
             assert v["vs"] in known, f"{s['key']}: {v['vs']} not in VehicleState table"
+        else:
+            mapped.append((s["key"], v.get("method") or v.get("ac")))
+            assert v.get("method") or v.get("ac"), f"{s['key']}: empty voyah descriptor"
     assert mapped, "no voyah mappings generated"
 
 
@@ -64,6 +69,38 @@ def test_voyah_maps_are_in_sync():
         f"only in VoyahChannel: {sorted(set(java) - set(gen))}; "
         f"differing: {sorted(k for k in set(gen) & set(java) if gen[k] != java[k])}"
     )
+
+
+def _gen_registry_map(var_name):
+    text = open(os.path.join(REPO, "scripts", "gen_registry.py"), encoding="utf-8").read()
+    block = re.search(var_name + r" = \{(.*?)\n\}", text, re.S).group(1)
+    return dict(re.findall(r'"([^"]+)":\s*"([^"]+)"', block))
+
+
+def _java_channel_map(var_name):
+    text = open(os.path.join(REPO, "Car2Hass", "app", "src", "main", "java",
+                             "com", "car2hass", "vehicle", "VoyahChannel.java"),
+                encoding="utf-8").read()
+    before = text[:text.index(var_name + " =")]
+    start = before.rindex("Map<String, String> m = new HashMap<>();")
+    block = before[start:]
+    return dict(re.findall(r'm\.put\("([^"]+)",\s*"([^"]+)"\)', block))
+
+
+def test_voyah_method_maps_are_in_sync():
+    """gen_registry.py and VoyahChannel.java must agree on method/AC getters."""
+    assert _gen_registry_map("VOYAH_METHOD_PARAMS") == _java_channel_map("VOYAH_METHODS")
+    assert _gen_registry_map("VOYAH_AC_PARAMS") == _java_channel_map("VOYAH_AC_METHODS")
+
+
+def test_voyah_temperature_descriptors():
+    """outside_temp via the no-arg ICanBusService getter, cabin_temp via AirCondition."""
+    reg = json.load(open(os.path.join(ASSETS, "sensors_registry.json"), encoding="utf-8"))
+    by_key = {s["key"]: s for s in reg["sensors"]}
+    assert by_key["outside_temp"]["channels"]["voyah"] == {"method": "getAmbientTemperature"}
+    assert by_key["cabin_temp"]["channels"]["voyah"] == {"ac": "getAirTempInCar"}
+    assert "voyah_generic" in by_key["outside_temp"]["expected_on"]
+    assert "voyah_generic" in by_key["cabin_temp"]["expected_on"]
 
 
 def test_voyah_corrected_mappings():

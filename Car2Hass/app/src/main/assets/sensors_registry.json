@@ -545,10 +545,14 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "voyah": {
+          "ac": "getAirTempInCar"
+        }
       },
       "expected_on": [
-        "byd_generic"
+        "byd_generic",
+        "voyah_generic"
       ]
     },
     {
@@ -567,10 +571,14 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "voyah": {
+          "method": "getAmbientTemperature"
+        }
       },
       "expected_on": [
-        "byd_generic"
+        "byd_generic",
+        "voyah_generic"
       ]
     },
     {
@@ -3181,10 +3189,14 @@
           "pid": "0146"
         },
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "voyah": {
+          "method": "getAmbientTemperature"
+        }
       },
       "expected_on": [
-        "byd_generic"
+        "byd_generic",
+        "voyah_generic"
       ]
     },
     {

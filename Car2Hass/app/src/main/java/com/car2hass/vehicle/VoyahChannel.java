@@ -122,6 +122,35 @@ public class VoyahChannel implements DataChannel {
         VOYAH_PARAMS = java.util.Collections.unmodifiableMap(m);
     }
 
+    /**
+     * registry key -> no-argument ICanBusService getter. These are ordinary
+     * interface methods, not VehicleState constants, so they are invoked by
+     * name via reflection (source: VOYAH_FIRMWARE_ANALYSIS.md section 8.2 and
+     * the tsrman/voyah-telemetry-demo). Sync with gen_registry.py.
+     */
+    public static final Map<String, String> VOYAH_METHODS;
+    static {
+        Map<String, String> m = new HashMap<>();
+        m.put("outside_temp", "getAmbientTemperature");  // int, °C
+        m.put("ambient_temp", "getAmbientTemperature");  // int, °C
+        VOYAH_METHODS = java.util.Collections.unmodifiableMap(m);
+    }
+
+    /**
+     * registry key -> AirCondition getter. The A/C model lives in a separate
+     * class ({@code com.qinggan.canbus.AirCondition}, 182 methods) and no
+     * ICanBusService getter returns it directly, so the value is obtained from
+     * the object returned by {@code getAirConditionState()} when that call
+     * yields one. Kept best-effort: a null result only skips the key.
+     * Sync with gen_registry.py.
+     */
+    public static final Map<String, String> VOYAH_AC_METHODS;
+    static {
+        Map<String, String> m = new HashMap<>();
+        m.put("cabin_temp", "getAirTempInCar");
+        VOYAH_AC_METHODS = java.util.Collections.unmodifiableMap(m);
+    }
+
     // ---- raw-transact fallback (per tsrman/voyah-telemetry-demo: the firmware
     // SDK jars are empty stubs, so reflection may fail even on Voyah heads). ----
 
@@ -333,24 +362,53 @@ public class VoyahChannel implements DataChannel {
         return out;
     }
 
+    /**
+     * Keys whose raw (pre-decode) value is logged each read cycle. The door
+     * position encoding could not be pinned from the firmware sources (the
+     * owner saw closed doors as open), so the next device log carries the raw
+     * RL/RR values and settles the mapping. Cheap: one line per 2 s cycle.
+     */
+    private static final String[] DIAG_KEYS = {
+            "rear_left_door", "rear_right_door",
+            "fuel_charge_flap", "charge_port_flap",
+            "outside_temp", "cabin_temp"};
+
+    private static volatile boolean acProbed;
+
     /** Reads every known key once; returns how many produced a value. */
     private int collect(List<CANDataItem> knownItems, List<CANDataItem> out) {
         int count = 0;
         long now = System.currentTimeMillis();
+        StringBuilder diag = new StringBuilder();
         for (CANDataItem item : knownItems) {
             if (item == null || item.key == null) continue;
-            String value = readKey(item.key);
-            if (value == null) continue;
+            String raw = readRaw(item.key);
+            if (raw == null) continue;
+            String value = VoyahValueDecoder.decode(item.key, raw);
             item.value = value;
             item.lastUpdate = now;
             out.add(item);
             count++;
+            if (isDiagKey(item.key)) {
+                diag.append(item.key).append('=').append(raw).append(' ');
+            }
         }
+        if (diag.length() > 0) LogBuffer.d("VoyahChannel", "raw " + diag.toString().trim());
+        if (cachedIface != null) logAirConditionProbe();
         return count;
     }
 
-    /** Registry key -> value via reflection (preferred) then raw transact. */
-    private String readKey(String key) {
+    private static boolean isDiagKey(String key) {
+        for (String k : DIAG_KEYS) if (k.equals(key)) return true;
+        return false;
+    }
+
+    /**
+     * Registry key -> raw value, in order of reliability: VehicleState constant,
+     * no-argument ICanBusService getter, AirCondition getter, raw transaction.
+     * Decoding happens in {@link VoyahValueDecoder}, not here.
+     */
+    private String readRaw(String key) {
         String value = null;
         Object iface = cachedIface;
         if (iface != null) {
@@ -359,20 +417,79 @@ public class VoyahChannel implements DataChannel {
                 Object raw = queryState(iface, cachedIfaceClass, param);
                 if (raw != null) value = stringify(raw);
             }
+            if (value == null) {
+                String method = VOYAH_METHODS.get(key);
+                if (method != null) value = invokeGetter(cachedIfaceClass, iface, method);
+            }
+            if (value == null) {
+                String ac = VOYAH_AC_METHODS.get(key);
+                if (ac != null) value = readAirConditionValue(cachedIfaceClass, iface, ac);
+            }
         }
         if (value == null) {
             int[] tx = VOYAH_RAW_TX.get(key);
-            if (tx == null) return null;
-            if (tx[1] == RAW_FLOAT) {
-                Float f = transactFloat(tx[0]);
-                value = f == null ? null : String.valueOf(Math.round(f));
-            } else {
-                Integer i = transactInt(tx[0]);
-                value = i == null ? null : String.valueOf(i);
+            if (tx != null) {
+                if (tx[1] == RAW_FLOAT) {
+                    Float f = transactFloat(tx[0]);
+                    value = f == null ? null : String.valueOf(Math.round(f));
+                } else {
+                    Integer i = transactInt(tx[0]);
+                    value = i == null ? null : String.valueOf(i);
+                }
             }
         }
-        // Brand-specific value semantics (e.g. inverted flap, Voyah drive modes).
-        return value == null ? null : VoyahValueDecoder.decode(key, value);
+        return value;
+    }
+
+    /**
+     * Reads an A/C getter from the object returned by {@code getAirConditionState()}.
+     * Returns null when that call yields no object (the extracted interface
+     * declares an int), so the key is simply skipped instead of faked.
+     */
+    private static String readAirConditionValue(Class<?> ifaceClass, Object iface, String getter) {
+        Object ac = invokeGetterObject(ifaceClass, iface, "getAirConditionState");
+        if (ac == null || ac instanceof Number || ac instanceof CharSequence || ac instanceof Boolean) {
+            return null;
+        }
+        return invokeGetter(ac.getClass(), ac, getter);
+    }
+
+    /** One-shot field diagnostic: is the separate AirCondition model reachable? */
+    private static void logAirConditionProbe() {
+        if (acProbed) return;
+        acProbed = true;
+        Class<?> ac = loadDeviceClass("com.qinggan.canbus.AirCondition");
+        if (ac == null) {
+            LogBuffer.i("VoyahChannel", "AirCondition class absent -> cabin_temp/A-C unreachable");
+            return;
+        }
+        LogBuffer.i("VoyahChannel", "AirCondition present (getAirTempInCar="
+                + hasMethod(ac, "getAirTempInCar") + ", getAirTempOutCar="
+                + hasMethod(ac, "getAirTempOutCar") + "), needs getAirConditionState() object");
+    }
+
+    private static boolean hasMethod(Class<?> type, String name) {
+        try {
+            type.getMethod(name);
+            return true;
+        } catch (NoSuchMethodException e) {
+            return false;
+        }
+    }
+
+    /** Invokes a public no-argument method; returns its stringified result or null. */
+    private static String invokeGetter(Class<?> type, Object target, String name) {
+        Object v = invokeGetterObject(type, target, name);
+        return v == null ? null : stringify(v);
+    }
+
+    private static Object invokeGetterObject(Class<?> type, Object target, String name) {
+        try {
+            Method m = type.getMethod(name);
+            return m.invoke(target);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /** Binds to the exported CanBusService; true when a live binder was obtained. */
@@ -474,6 +591,43 @@ public class VoyahChannel implements DataChannel {
             Object v = queryStateStatic(asInterface, iface, vsParam);
             if (v == null) return ProbeResult.error("параметр не читается: " + vsParam);
             return ProbeResult.fromRaw(stringify(v), false);
+        } catch (Exception e) {
+            return ProbeResult.error(e.getMessage());
+        }
+    }
+
+    /**
+     * Probes a no-argument ICanBusService getter (e.g. getAmbientTemperature)
+     * for the research engine. Read-only.
+     */
+    public static ProbeResult readMethodParam(String method) {
+        try {
+            Class<?> iface = loadDeviceClass(IFACE_CLASS);
+            if (iface == null) return ProbeResult.unsupported();
+            Object asInterface = stubAsInterface(iface, findBinder());
+            if (asInterface == null) return ProbeResult.unsupported();
+            String v = invokeGetter(iface, asInterface, method);
+            if (v == null) return ProbeResult.unsupported();
+            return ProbeResult.fromRaw(v, false);
+        } catch (Exception e) {
+            return ProbeResult.error(e.getMessage());
+        }
+    }
+
+    /**
+     * Probes an AirCondition getter (e.g. getAirTempInCar) through the object
+     * returned by getAirConditionState(). Unsupported when the interface only
+     * exposes the int state (as in the firmware AIDL dump).
+     */
+    public static ProbeResult readAirConditionParam(String getter) {
+        try {
+            Class<?> iface = loadDeviceClass(IFACE_CLASS);
+            if (iface == null) return ProbeResult.unsupported();
+            Object asInterface = stubAsInterface(iface, findBinder());
+            if (asInterface == null) return ProbeResult.unsupported();
+            String v = readAirConditionValue(iface, asInterface, getter);
+            if (v == null) return ProbeResult.unsupported();
+            return ProbeResult.fromRaw(v, false);
         } catch (Exception e) {
             return ProbeResult.error(e.getMessage());
         }
