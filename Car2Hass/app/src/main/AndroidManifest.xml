@@ -36,6 +36,8 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
+    <!-- Phone sensor source: steps/activity (runtime, requested on opt-in). -->
+    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
 
     <!-- BYD platform permissions (signature-level). Kept for rooted/system installs. -->
     <uses-permission android:name="android.permission.BYD" />

@@ -23,6 +23,7 @@ public class VehicleResearchTest {
         testProgressListener();
         testRunWithRegistry();
         testBrandScoped();
+        testPhantomChannelNotProbed();
         System.out.println("All VehicleResearch tests passed.");
     }
 
@@ -87,6 +88,25 @@ public class VehicleResearchTest {
                 null, rs, channels, null, null, probe,
                 (c, p, a, rp) -> { });
         check("byd_generic".equals(out.selectedProfile), "byd selected via live brand channel");
+    }
+
+    /** Registry-only channels (no DataChannel) must not be probed. */
+    private static void testPhantomChannelNotProbed() throws Exception {
+        RegistryStore rs = RegistryStore.of(
+                new JSONObject("{\"channels_priority\":[\"diplus\",\"phone\"],\"sensors\":["
+                        + "{\"key\":\"speed\",\"channels\":{\"diplus\":{\"name\":\"车速\"},\"phone\":{\"field\":\"speed\"}}}]}"),
+                new JSONObject("{\"commands\":[]}"),
+                new JSONObject("{\"profiles\":[{\"id\":\"byd_generic\",\"expected_sensors\":[\"speed\"]}]}"));
+
+        List<String> probedChannels = new ArrayList<>();
+        VehicleResearch.SensorProbe probe = (ctx, reg, key, ch) -> {
+            probedChannels.add(ch);
+            return ProbeResult.fromRaw("42", false);
+        };
+        VehicleResearch.runWithRegistry(null, rs, new ArrayList<>(), null, null, probe,
+                (c, p, a, rp) -> { });
+        check(probedChannels.contains("diplus"), "diplus probed");
+        check(!probedChannels.contains("phone"), "phone must not be probed");
     }
 
     private static void testProgressListener() {

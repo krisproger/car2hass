@@ -8,7 +8,8 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from .const import DOMAIN
 
 from .const import NUMERIC_SENSORS, ENUM_SENSORS, NATIVE_SENSORS, CONF_CAR_NAME, INTEGRATION_VERSION
-from .device_info import build_device_info
+from .device_info import build_device_info, build_phone_device_info
+from . import core
 from . import SIGNAL_VEHICLE_DATA_UPDATED, async_replay_state
 
 # Core signals are always present on any device and enabled from the start;
@@ -21,36 +22,74 @@ _CORE_SIGNALS = {
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up sensors from config entry."""
+    """Set up sensors from config entry.
+
+    Car sensors are created immediately (unchanged). ``phone_*`` sensors live
+    on a separate phone device and are created lazily on the first payload
+    whose top-level ``dev`` block declares ``class: phone``; until then the
+    phone device does not exist in Home Assistant.
+    """
     car_name = config_entry.data.get(CONF_CAR_NAME, "byd_car")
     sensors = [DiagnosticsSensor(config_entry, car_name)]
-    for signal_key, cfg in NUMERIC_SENSORS.items():
-        sensors.append(CarTelemetrySensor(signal_key, cfg, config_entry, car_name))
-    for signal_key, cfg in ENUM_SENSORS.items():
-        sensors.append(CarTelemetrySensor(signal_key, cfg, config_entry, car_name))
+    phone_configs = []
+    for signal_key, cfg in {**NUMERIC_SENSORS, **ENUM_SENSORS}.items():
+        if core.is_phone_signal(signal_key):
+            phone_configs.append((signal_key, cfg))
+        else:
+            sensors.append(CarTelemetrySensor(signal_key, cfg, config_entry, car_name))
 
     async_add_entities(sensors)
+
+    phone_added = {"done": False}
+
+    def discover_phone():
+        """Create the phone-device sensors once phone-mode data arrives."""
+        if phone_added["done"]:
+            return
+        store = hass.data.get(DOMAIN, {}).get(config_entry.entry_id, {})
+        if store.get("device_class") != core.DEVICE_CLASS_PHONE:
+            return
+        phone_added["done"] = True
+        phone_entities = [
+            CarTelemetrySensor(signal_key, cfg, config_entry, car_name, phone=True,
+                               device_name=store.get("device_name"))
+            for signal_key, cfg in phone_configs
+        ]
+        if phone_entities:
+            async_add_entities(phone_entities)
+
+    discover_phone()
+    config_entry.async_on_unload(
+        async_dispatcher_connect(hass, SIGNAL_VEHICLE_DATA_UPDATED, discover_phone)
+    )
 
 
 class CarTelemetrySensor(SensorEntity, RestoreEntity):
     """Represents a numeric vehicle signal."""
 
-    def __init__(self, signal_key, config, config_entry, car_name):
+    def __init__(self, signal_key, config, config_entry, car_name, phone=False,
+                 device_name=None):
         self._signal_key = signal_key
         self._config = config
         self._entry_id = config_entry.entry_id
         self._car_name = car_name
+        self._is_phone = phone
         self._is_numeric = signal_key in NUMERIC_SENSORS
-        self._attr_name = f"{car_name} {config['name']}"
+        label = (device_name or "Phone") if phone else car_name
+        self._attr_name = f"{label} {config['name']}"
         self._attr_unique_id = f"{config_entry.entry_id}_{signal_key}"
         self._attr_native_unit_of_measurement = config.get("unit") or None
         self._attr_device_class = config.get("device_class")
         self._attr_state_class = config.get("state_class")
         self._attr_icon = config.get("icon")
         self._attr_should_poll = False
-        # Variant 1 availability: non-core sensors start under the "disabled"
-        # spoiler and are enabled by the integration on their first value.
-        self._attr_entity_registry_enabled_default = signal_key in _CORE_SIGNALS
+        # Variant 1 availability: non-core car sensors start under the
+        # "disabled" spoiler and are enabled on their first value. Phone
+        # sensors only exist once the user enabled phone mode, so they are
+        # enabled from the start on their dedicated device.
+        self._attr_entity_registry_enabled_default = (
+            True if phone else signal_key in _CORE_SIGNALS
+        )
         self._attr_native_value = None
         self._attr_extra_state_attributes = {}
         self._attr_available = False
@@ -102,6 +141,16 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
 
     @property
     def device_info(self):
+        if self._is_phone:
+            store = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {})
+            return build_phone_device_info(
+                self._entry_id,
+                store.get("device_id"),
+                store.get("device_name"),
+                self._sw_version,
+                store.get("device_manufacturer"),
+                store.get("device_model"),
+            )
         return build_device_info(self._entry_id, self._car_name, self._sw_version)
 
     async def async_added_to_hass(self):
@@ -124,7 +173,12 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
             # into the final value.
             # Prefer the pre-grouped per-signal index (O(1) lookup); fall back
             # to scanning the batch for payloads stored before the index existed.
-            signal_index = data.get("signal_index")
+            signal_index = data.get(
+                "phone_signal_index" if self._is_phone else "signal_index"
+            )
+            fallback_signals = data.get(
+                "phone_signals" if self._is_phone else "signals", {}
+            )
             if signal_index is not None:
                 values = signal_index.get(self._signal_key, ())
             else:
@@ -143,7 +197,7 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
 
             # Fallback for non-batch updates (compatibility / empty batch).
             if not batch:
-                raw = data.get("signals", {}).get(self._signal_key)
+                raw = fallback_signals.get(self._signal_key)
                 if raw is not None:
                     self._attr_available = True
                     self._attr_native_value = self._coerce_value(raw)
@@ -197,15 +251,19 @@ class DiagnosticsSensor(SensorEntity, RestoreEntity):
             store = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {})
             data = store.get("data", {})
             signals = data.get("signals", {})
-            if signals:
+            car_signals = {
+                key: value for key, value in signals.items()
+                if not core.is_phone_signal(key)
+            }
+            if car_signals:
                 self._attr_available = True
                 attrs = {}
-                for key, value in signals.items():
+                for key, value in car_signals.items():
                     if key in NATIVE_SENSORS:
                         continue
                     attrs[key] = value
                 self._attr_extra_state_attributes = attrs
-                self._attr_native_value = len(signals)
+                self._attr_native_value = len(car_signals)
             self.async_write_ha_state()
 
         self.async_on_remove(

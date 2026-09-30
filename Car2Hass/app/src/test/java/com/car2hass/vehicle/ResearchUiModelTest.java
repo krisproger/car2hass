@@ -49,6 +49,7 @@ public class ResearchUiModelTest {
         if (!by2.get("system").available) throw new AssertionError("system always available");
 
         testUnionActive();
+        testPhantomChannelHidden();
         System.out.println("All ResearchUiModel tests passed.");
     }
 
@@ -68,5 +69,18 @@ public class ResearchUiModelTest {
                 Arrays.asList("native", "sysprops"), new ArrayList<>());
         if (legacy.contains("native") || legacy.contains("sysprops"))
             throw new AssertionError("legacy ids=" + legacy);
+    }
+
+    /** A registry-only channel (no DataChannel) must not surface as selectable. */
+    private static void testPhantomChannelHidden() throws Exception {
+        RegistryStore rs = RegistryStore.of(
+            new JSONObject("{\"channels_priority\":[\"diplus\",\"phone\",\"system\"],\"sensors\":[]}"),
+            new JSONObject("{\"commands\":[]}"),
+            new JSONObject("{\"profiles\":[]}"));
+        List<ResearchUiModel.ChannelView> ch = ResearchUiModel.channels(rs, null,
+                Arrays.asList("diplus", "phone"));
+        for (ResearchUiModel.ChannelView c : ch) {
+            if ("phone".equals(c.name)) throw new AssertionError("phone must be hidden");
+        }
     }
 }

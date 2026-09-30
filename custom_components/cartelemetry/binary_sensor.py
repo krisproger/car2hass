@@ -21,18 +21,49 @@ from .const import (
     GEOFENCE_ON_VALUES,
     ONLINE_OFFLINE_SECONDS,
 )
-from .device_info import build_device_info
+from .device_info import build_device_info, build_phone_device_info
 from . import core
 from . import SIGNAL_VEHICLE_DATA_UPDATED, async_replay_state
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Set up binary sensors from config entry."""
+    """Set up binary sensors from config entry.
+
+    Car binary sensors are created immediately. ``phone_*`` binary sensors
+    live on the separate phone device and are created lazily on the first
+    phone-mode payload (see the sensor platform).
+    """
     car_name = config_entry.data.get(CONF_CAR_NAME, "BYD Vehicle")
     sensors = []
+    phone_configs = []
     for signal_key, cfg in BINARY_SENSORS.items():
-        sensors.append(CarTelemetryBinarySensor(signal_key, cfg, config_entry, car_name))
+        if core.is_phone_signal(signal_key):
+            phone_configs.append((signal_key, cfg))
+        else:
+            sensors.append(CarTelemetryBinarySensor(signal_key, cfg, config_entry, car_name))
     async_add_entities(sensors)
+
+    phone_added = {"done": False}
+
+    def discover_phone():
+        if phone_added["done"]:
+            return
+        store = hass.data.get(DOMAIN, {}).get(config_entry.entry_id, {})
+        if store.get("device_class") != core.DEVICE_CLASS_PHONE:
+            return
+        phone_added["done"] = True
+        phone_entities = [
+            CarTelemetryBinarySensor(signal_key, cfg, config_entry, car_name, phone=True,
+                                     device_name=store.get("device_name"))
+            for signal_key, cfg in phone_configs
+        ]
+        if phone_entities:
+            async_add_entities(phone_entities)
+
+    discover_phone()
+    config_entry.async_on_unload(
+        async_dispatcher_connect(hass, SIGNAL_VEHICLE_DATA_UPDATED, discover_phone)
+    )
 
     # Dynamic geofence sensors. The Android app reports virtual zone states as
     # geo_<zoneId> keys ("inside"/"outside") which only appear in telemetry
@@ -64,19 +95,25 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
     """Represents a binary vehicle signal (door, seatbelt, light, etc)."""
 
-    def __init__(self, signal_key, config, config_entry, car_name):
+    def __init__(self, signal_key, config, config_entry, car_name, phone=False,
+                 device_name=None):
         self._signal_key = signal_key
         self._config = config
         self._entry_id = config_entry.entry_id
         self._car_name = car_name
-        self._attr_name = f"{car_name} {config['name']}"
+        self._is_phone = phone
+        label = (device_name or "Phone") if phone else car_name
+        self._attr_name = f"{label} {config['name']}"
         self._attr_unique_id = f"{config_entry.entry_id}_{signal_key}"
         self._attr_device_class = config.get("device_class")
         self._attr_should_poll = False
         # Variant 1 availability: dynamic geofences are enabled by default (they
-        # only exist once the app reports them); other signals start
-        # disabled-by-default and are enabled on their first data.
-        self._attr_entity_registry_enabled_default = signal_key.startswith(GEOFENCE_KEY_PREFIX)
+        # only exist once the app reports them); other car signals start
+        # disabled-by-default and are enabled on their first data. Phone
+        # sensors only exist once phone mode is enabled, so they start enabled.
+        self._attr_entity_registry_enabled_default = (
+            True if phone else signal_key.startswith(GEOFENCE_KEY_PREFIX)
+        )
         self._attr_is_on = None
         self._attr_available = False
         self._attr_extra_state_attributes = {}
@@ -92,6 +129,16 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
 
     @property
     def device_info(self):
+        if self._is_phone:
+            store = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {})
+            return build_phone_device_info(
+                self._entry_id,
+                store.get("device_id"),
+                store.get("device_name"),
+                self._sw_version,
+                store.get("device_manufacturer"),
+                store.get("device_model"),
+            )
         return build_device_info(self._entry_id, self._car_name, self._sw_version)
 
     async def async_added_to_hass(self):
@@ -140,7 +187,12 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
             else:
                 # Prefer the pre-grouped per-signal index (O(1) lookup); fall
                 # back to scanning the batch, then to the aggregated signals.
-                signal_index = data.get("signal_index")
+                signal_index = data.get(
+                    "phone_signal_index" if self._is_phone else "signal_index"
+                )
+                fallback_signals = data.get(
+                    "phone_signals" if self._is_phone else "signals", {}
+                )
                 if signal_index is not None:
                     values = signal_index.get(self._signal_key, ())
                 elif batch:
@@ -149,7 +201,7 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
                         for snapshot in batch
                     )
                 else:
-                    values = ((0, data.get("signals", {}).get(self._signal_key)),)
+                    values = ((0, fallback_signals.get(self._signal_key)),)
                 for t, raw in values:
                     if raw is not None:
                         raw_lower = str(raw).lower()

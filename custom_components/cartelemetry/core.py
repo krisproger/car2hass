@@ -15,6 +15,12 @@ except ImportError:  # Direct module import (unit tests without Home Assistant)
 COMMAND_TIMEOUT = timedelta(minutes=1)
 DEFAULT_MAX_QUEUE = 50
 
+DEVICE_CLASS_CAR = "car"
+DEVICE_CLASS_PHONE = "phone"
+PHONE_SIGNAL_PREFIX = "phone_"
+
+_DEVICE_CLASSES = (DEVICE_CLASS_CAR, DEVICE_CLASS_PHONE)
+
 
 class BatchValidationError(ValueError):
     """Raised when a telemetry batch contains malformed snapshots."""
@@ -48,6 +54,81 @@ def validate_batch(batch: list) -> list:
             raise BatchValidationError("snapshot t must be numeric")
         valid.append(snapshot)
     return sorted(valid, key=lambda s: s.get("t", 0))
+
+
+def _str_or_none(value):
+    """Return a stripped string for a payload field, or None when absent."""
+    if value is None:
+        return None
+    text = str(value).strip()
+    return text or None
+
+
+def parse_device(dev) -> dict:
+    """Normalize the top-level ``dev`` descriptor carried by a telemetry POST.
+
+    The Android app sends ``dev: {class, id, name}`` for a phone and omits it
+    for a car. Anything absent or malformed is treated as the car device so
+    pre-phone payloads keep their exact meaning.
+    """
+    device = {
+        "class": DEVICE_CLASS_CAR,
+        "id": None,
+        "name": None,
+        "manufacturer": None,
+        "model": None,
+    }
+    if not isinstance(dev, dict):
+        return device
+    cls = dev.get("class")
+    if isinstance(cls, str) and cls.strip().lower() in _DEVICE_CLASSES:
+        device["class"] = cls.strip().lower()
+    for field in ("id", "name", "manufacturer", "model"):
+        device[field] = _str_or_none(dev.get(field))
+    return device
+
+
+def is_phone_signal(key) -> bool:
+    """Return True for a phone-device signal key (``phone_`` prefix)."""
+    return isinstance(key, str) and key.startswith(PHONE_SIGNAL_PREFIX)
+
+
+def route_device_signals(sorted_batch: list, latest_signals: dict, device_class: str) -> dict:
+    """Select the per-device signal maps for one payload.
+
+    This is the real selection path used by the ingest endpoint: the returned
+    ``signals`` / ``signal_index`` maps are what the car entities read, and
+    ``phone_signals`` / ``phone_signal_index`` are what the phone entities read.
+
+    ``phone_*`` keys belong to the phone device only when the payload is in
+    phone mode; in car mode they are ignored entirely (neither car nor phone).
+    Non-``phone_*`` keys always belong to the car.
+    """
+    phone_mode = device_class == DEVICE_CLASS_PHONE
+    car_signals: dict = {}
+    phone_signals: dict = {}
+    for key, value in (latest_signals or {}).items():
+        if is_phone_signal(key):
+            if phone_mode:
+                phone_signals[key] = value
+        else:
+            car_signals[key] = value
+
+    car_index: dict = {}
+    phone_index: dict = {}
+    for key, samples in build_signal_index(sorted_batch).items():
+        if is_phone_signal(key):
+            if phone_mode:
+                phone_index[key] = samples
+        else:
+            car_index[key] = samples
+
+    return {
+        "signals": car_signals,
+        "signal_index": car_index,
+        "phone_signals": phone_signals,
+        "phone_signal_index": phone_index,
+    }
 
 
 def aggregate_batch(sorted_batch: list) -> dict:

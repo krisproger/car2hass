@@ -63,6 +63,7 @@ import com.car2hass.GeofenceZone;
 import com.car2hass.HassClient;
 import com.car2hass.LogBuffer;
 import com.car2hass.MainActivity;
+import com.car2hass.PhoneSensorSource;
 import com.car2hass.R;
 import com.car2hass.SensorValueHistory;
 import com.car2hass.SignalTranslator;
@@ -114,6 +115,8 @@ public class TelemetryService extends Service {
             new com.car2hass.vehicle.ValueStore();
     /** One worker instance per enabled channel; reconciled with settings on every cycle. */
     private com.car2hass.vehicle.ChannelWorkerRegistry workerRegistry;
+    /** Phone-only sensor source (phone device in HA); null when not running. */
+    private volatile PhoneSensorSource phoneSensorSource;
     private final SnapshotStore snapshotStore = new SnapshotStore();
     private final LocationSource locationSource = new LocationSource(snapshotStore);
 
@@ -279,6 +282,7 @@ public class TelemetryService extends Service {
                     new com.car2hass.vehicle.ChannelWorkerFactory(this, valueStore,
                             new ArrayList<>(knownItems)));
             workerRegistry.sync(enabledChannelIds());
+            syncPhoneSource();
             // Baseline GPS: ensure telemetry carries a location even before the
             // first live fix (Car Scanner-style "always have a position").
             try {
@@ -570,6 +574,10 @@ public class TelemetryService extends Service {
             }
         }
         saveLastValues();
+        if (phoneSensorSource != null) {
+            phoneSensorSource.stop();
+            phoneSensorSource = null;
+        }
         if (workerRegistry != null) {
             workerRegistry.stopAll();
             workerRegistry = null;
@@ -822,11 +830,44 @@ public class TelemetryService extends Service {
     /** Reconciles the running workers with the settings channel checkboxes. */
     private void syncWorkers() {
         com.car2hass.vehicle.ChannelWorkerRegistry reg = workerRegistry;
-        if (reg == null) return;
+        if (reg != null) {
+            try {
+                reg.sync(enabledChannelIds());
+            } catch (Exception e) {
+                LogBuffer.d("TelemetryService", "syncWorkers: " + e.getMessage());
+            }
+        }
+        syncPhoneSource();
+    }
+
+    /**
+     * Public entry point for the settings UI: start or stop the phone sensor
+     * source at once after the user toggles a phone sensor, instead of waiting
+     * for the next telemetry-loop cycle.
+     */
+    public void refreshPhoneSource() {
+        syncPhoneSource();
+    }
+
+    /**
+     * Starts the phone sensor source only on a phone device with the master
+     * toggle on; stops it otherwise. Called by {@link #syncWorkers()} so a
+     * settings change is picked up on the next cycle (start is idempotent and
+     * re-reads the enabled keys), and once at service start.
+     */
+    private synchronized void syncPhoneSource() {
         try {
-            reg.sync(enabledChannelIds());
+            boolean wanted = "phone".equals(AppConfig.getDeviceClass(this))
+                    && AppConfig.isPhoneSensorsEnabled(this);
+            if (wanted) {
+                if (phoneSensorSource == null) phoneSensorSource = new PhoneSensorSource();
+                phoneSensorSource.start(this, valueStore);
+            } else if (phoneSensorSource != null) {
+                phoneSensorSource.stop();
+                phoneSensorSource = null;
+            }
         } catch (Exception e) {
-            LogBuffer.d("TelemetryService", "syncWorkers: " + e.getMessage());
+            LogBuffer.d("TelemetryService", "syncPhoneSource: " + e.getMessage());
         }
     }
 

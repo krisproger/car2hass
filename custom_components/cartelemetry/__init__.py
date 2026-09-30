@@ -183,6 +183,14 @@ async def async_setup_entry(hass: HomeAssistant, entry):
         "firmware": "",
         "last_seen": None,
         "commands": [],
+        # Device descriptor from the payload's top-level `dev` block. Absent
+        # (car) payloads leave the last known phone descriptor intact so the
+        # phone device's identity stays stable across car payloads.
+        "device_class": core.DEVICE_CLASS_CAR,
+        "device_id": None,
+        "device_name": None,
+        "device_manufacturer": None,
+        "device_model": None,
     }
 
     # Register REST API endpoints once globally
@@ -337,7 +345,7 @@ class VehicleDataView(HomeAssistantView):
         try:
             return await self._process_batch(hass, entry_id, car_name, vvn,
                                              firmware, app_version, batch,
-                                             data.get("ts"))
+                                             data.get("ts"), data.get("dev"))
         except Exception as err:  # noqa: BLE001
             _LOGGER.exception("api:cartelemetry failed (car_name=%s)", car_name)
             return self.json(
@@ -346,7 +354,7 @@ class VehicleDataView(HomeAssistantView):
             )
 
     async def _process_batch(self, hass, entry_id, car_name, vvn,
-                             firmware, app_version, batch, ts):
+                             firmware, app_version, batch, ts, dev=None):
         buckets = hass.data[DOMAIN].setdefault("_rate_limits", {})
         if not core.check_rate_limit(
             buckets, entry_id, dt_util.utcnow().timestamp(),
@@ -362,6 +370,17 @@ class VehicleDataView(HomeAssistantView):
         store["vvn"] = vvn
         store["firmware"] = firmware
         store["app_version"] = app_version
+
+        # Device descriptor (`dev`) selects the target device for this batch.
+        # A missing block means the car device (backward compatible); a phone
+        # descriptor is remembered so the phone device keeps its identity even
+        # when car payloads arrive afterwards.
+        device = core.parse_device(dev)
+        store["device_class"] = device["class"]
+        if device["class"] == core.DEVICE_CLASS_PHONE:
+            for field in ("id", "name", "manufacturer", "model"):
+                if device[field]:
+                    store[f"device_{field}"] = device[field]
 
         # Validate snapshot shapes, then aggregate all snapshots in the batch,
         # keeping the latest value per signal and the most recent valid GPS
@@ -382,11 +401,17 @@ class VehicleDataView(HomeAssistantView):
         if app_version:
             latest_signals["app_version"] = app_version
 
+        # Select per-device signal maps for this payload. Car maps never carry
+        # phone_* keys; phone maps carry them only in phone mode. A phone_* key
+        # sent by a car payload is dropped (not applied to the car).
+        routed = core.route_device_signals(sorted_batch, latest_signals, device["class"])
+
         # Variant 1 sensor availability: remember every signal ever received so
         # its sensor can be enabled once and never lost; unseen ones stay under
         # the HA "disabled" spoiler (entity_registry_enabled_default=False).
         old_seen = set(store["data"].get("seen_signals", set())) if store.get("data") else set()
-        seen = old_seen | set(latest_signals.keys())
+        applied = {**routed["signals"], **routed["phone_signals"]}
+        seen = old_seen | set(applied.keys())
         disabled = set(agg.get("disabled_signals") or set())
 
         store["data"] = {
@@ -396,7 +421,13 @@ class VehicleDataView(HomeAssistantView):
             "longitude": agg["longitude"],
             "accuracy": agg["accuracy"],
             "fix_timestamp": agg["fix_timestamp"],
-            "signals": latest_signals,
+            # Car-scoped maps read by car entities: no phone_* keys ever.
+            "signals": routed["signals"],
+            "signal_index": routed["signal_index"],
+            # Phone-scoped maps read by phone entities; populated only in phone
+            # mode (a phone_* key in a car payload is ignored entirely).
+            "phone_signals": routed["phone_signals"],
+            "phone_signal_index": routed["phone_signal_index"],
             "seen_signals": seen,
             "disabled_signals": disabled,
             # Full chronological batch so platforms can replay intermediate
@@ -404,7 +435,6 @@ class VehicleDataView(HomeAssistantView):
             "batch": sorted_batch,
             # Pre-grouped per-signal values / GPS points: entities do O(1)
             # lookups instead of scanning the whole batch.
-            "signal_index": core.build_signal_index(sorted_batch),
             "gps_track": core.build_gps_track(sorted_batch),
         }
         store["last_seen"] = dt_util.utcnow().isoformat()

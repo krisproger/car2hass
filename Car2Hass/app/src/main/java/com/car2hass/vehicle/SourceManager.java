@@ -37,7 +37,20 @@ public final class SourceManager {
             if (!ids.isEmpty()) prio = ids;
         } catch (JSONException ignored) {
         }
-        this.cyclePriority = prio;
+        this.cyclePriority = implementedOnly(prio);
+    }
+
+    /**
+     * Drops registry ids without a {@link DataChannel} implementation (e.g. the
+     * phone router): they can never be read, so they must not appear in the read
+     * cycle or in the per-sensor channel order.
+     */
+    private static List<String> implementedOnly(List<String> ids) {
+        List<String> out = new ArrayList<>();
+        for (String id : ids) {
+            if (ChannelIds.hasImplementation(id)) out.add(id);
+        }
+        return out;
     }
 
     public String getSelectedProfile() { return selectedProfile; }

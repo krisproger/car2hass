@@ -171,13 +171,20 @@ public final class VehicleResearch {
     }
 
     private static List<String> channelPriority(RegistryStore reg) {
+        List<String> ids = null;
         try {
-            List<String> ids = reg.channelIds();
-            if (!ids.isEmpty()) return ids;
+            ids = reg.channelIds();
         } catch (org.json.JSONException e) {
             LogBuffer.d("VehicleResearch", "channelIds: " + e.getMessage());
         }
-        return CHANNEL_PRIORITY_FALLBACK;
+        if (ids == null || ids.isEmpty()) ids = CHANNEL_PRIORITY_FALLBACK;
+        // Registry-only ids without a DataChannel implementation (e.g. the phone
+        // router) cannot be probed and must not add a no-op probe per sensor.
+        List<String> out = new ArrayList<>();
+        for (String id : ids) {
+            if (ChannelIds.hasImplementation(id)) out.add(id);
+        }
+        return out;
     }
 
     /**

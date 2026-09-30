@@ -326,6 +326,25 @@ def _build_const_snippets(signals):
         "sunroof", "engine_coolant_temp", "engine_rpm", "battery_12v_voltage",
         "total_energy", "battery_temp_max", "tyre_pressure_fl", "tyre_pressure_fr",
         "tyre_pressure_rl", "tyre_pressure_rr",
+        # Phone sensor source (PhoneSensorSource) — entities on the phone device.
+        "phone_battery_level", "phone_battery_state", "phone_charger_type",
+        "phone_is_charging", "phone_battery_health", "phone_battery_temperature",
+        "phone_battery_power", "phone_remaining_charge_time",
+        "phone_connection_type", "phone_wifi_ssid", "phone_wifi_bssid",
+        "phone_wifi_frequency", "phone_wifi_ip", "phone_wifi_link_speed",
+        "phone_wifi_signal", "phone_wifi_state", "phone_hotspot_state",
+        "phone_transport_type", "phone_screen_brightness", "phone_screen_off_timeout",
+        "phone_screen_orientation", "phone_screen_rotation", "phone_doze",
+        "phone_interactive", "phone_power_save", "phone_ringer_mode",
+        "phone_audio_mode", "phone_is_headphones", "phone_is_mic_muted",
+        "phone_is_speakerphone_on", "phone_is_music_active", "phone_volume_music",
+        "phone_memory_used", "phone_memory_free", "phone_storage_internal_free",
+        "phone_storage_internal_total", "phone_storage_external_free",
+        "phone_storage_external_total", "phone_data_tx", "phone_data_rx",
+        "phone_sim_carrier", "phone_sim_country", "phone_android_os_version",
+        "phone_android_os_security_patch", "phone_time_zone", "phone_last_reboot",
+        "phone_steps", "phone_activity", "phone_location_lat", "phone_location_lon",
+        "phone_light", "phone_proximity", "phone_pressure",
     }
     lines.append("NATIVE_SENSORS = {" + ", ".join(repr(k) for k in sorted(native)) + "}")
     lines.append("")

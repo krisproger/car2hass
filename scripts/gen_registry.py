@@ -41,6 +41,66 @@ DEVICE_SENSORS = [
     ("system_media_volume", "System media volume", "device", "%"),
 ]
 
+# Phone sensor source (PhoneSensorSource): a curated Android phone sensor set
+# exported as `phone_*` keys and routed to the phone device by the HA
+# integration. App-supplied like the system channel; never probed over a car
+# channel. Mirrors the `phone_*` entries in signals.yaml.
+PHONE_SENSORS = [
+    ("phone_battery_level", "Battery level", "num", "%"),
+    ("phone_battery_state", "Battery state", "enum", None),
+    ("phone_charger_type", "Charger type", "enum", None),
+    ("phone_is_charging", "Is charging", "enum", None),
+    ("phone_battery_health", "Battery health", "enum", None),
+    ("phone_battery_temperature", "Battery temperature", "num", "°C"),
+    ("phone_battery_power", "Battery power", "num", "W"),
+    ("phone_remaining_charge_time", "Remaining charge time", "num", "s"),
+    ("phone_connection_type", "Connection type", "enum", None),
+    ("phone_wifi_ssid", "Wi-Fi SSID", "enum", None),
+    ("phone_wifi_bssid", "Wi-Fi BSSID", "enum", None),
+    ("phone_wifi_frequency", "Wi-Fi frequency", "num", "MHz"),
+    ("phone_wifi_ip", "Wi-Fi IP", "enum", None),
+    ("phone_wifi_link_speed", "Wi-Fi link speed", "num", "Mbit/s"),
+    ("phone_wifi_signal", "Wi-Fi signal", "num", "dBm"),
+    ("phone_wifi_state", "Wi-Fi state", "enum", None),
+    ("phone_hotspot_state", "Hotspot state", "enum", None),
+    ("phone_transport_type", "Transport type", "enum", None),
+    ("phone_screen_brightness", "Screen brightness", "num", None),
+    ("phone_screen_off_timeout", "Screen off timeout", "num", "ms"),
+    ("phone_screen_orientation", "Screen orientation", "enum", None),
+    ("phone_screen_rotation", "Screen rotation", "num", "deg"),
+    ("phone_doze", "Doze mode", "enum", None),
+    ("phone_interactive", "Interactive", "enum", None),
+    ("phone_power_save", "Power save", "enum", None),
+    ("phone_ringer_mode", "Ringer mode", "enum", None),
+    ("phone_audio_mode", "Audio mode", "enum", None),
+    ("phone_is_headphones", "Headphones connected", "enum", None),
+    ("phone_is_mic_muted", "Microphone muted", "enum", None),
+    ("phone_is_speakerphone_on", "Speakerphone", "enum", None),
+    ("phone_is_music_active", "Music active", "enum", None),
+    ("phone_volume_music", "Music volume", "num", "%"),
+    ("phone_memory_used", "Memory used", "num", "B"),
+    ("phone_memory_free", "Memory free", "num", "B"),
+    ("phone_storage_internal_free", "Internal storage free", "num", "B"),
+    ("phone_storage_internal_total", "Internal storage total", "num", "B"),
+    ("phone_storage_external_free", "External storage free", "num", "B"),
+    ("phone_storage_external_total", "External storage total", "num", "B"),
+    ("phone_data_tx", "Data sent", "num", "B"),
+    ("phone_data_rx", "Data received", "num", "B"),
+    ("phone_sim_carrier", "SIM carrier", "enum", None),
+    ("phone_sim_country", "SIM country", "enum", None),
+    ("phone_android_os_version", "Android version", "enum", None),
+    ("phone_android_os_security_patch", "Security patch", "enum", None),
+    ("phone_time_zone", "Time zone", "enum", None),
+    ("phone_last_reboot", "Last reboot", "num", None),
+    ("phone_steps", "Steps", "num", "steps"),
+    ("phone_activity", "Activity", "enum", None),
+    ("phone_location_lat", "Location latitude", "num", "deg"),
+    ("phone_location_lon", "Location longitude", "num", "deg"),
+    ("phone_light", "Light", "num", "lx"),
+    ("phone_proximity", "Proximity", "num", "cm"),
+    ("phone_pressure", "Pressure", "num", "hPa"),
+]
+
 # Locally computed aggregate sensors (refreshDerivedSensors in TelemetryService):
 # never read from a channel, always available while the app runs.
 DERIVED_SENSORS = [
@@ -130,7 +190,7 @@ GENERIC_SENSORS = [
     "soc", "range", "engine_coolant_temp",
     "app_version", "wifi_ssid", "wifi_bssid", "wifi_rssi", "online",
     "vin", "traction_battery_voltage", "traction_battery_current",
-]
+] + [k for k, _, _, _ in PHONE_SENSORS]
 
 # Voyah VehicleState parameter names for existing integration keys only
 # (source: info/brands/voyah/VOYAH_FIRMWARE_ANALYSIS.md, section 4).
@@ -291,7 +351,7 @@ CORE_SENSORS = {
 
 # Canonical channel priority order (sync with SourceManager/ResearchUiModel).
 CHANNELS_PRIORITY = ["system", "dumpsys", "adb", "diplus", "voyah",
-                     "obd", "diplus_push", "byd_cloud"]
+                     "obd", "diplus_push", "byd_cloud", "phone"]
 
 def voyah_descriptor(key):
     """Voyah read descriptor for a registry key, or None when unreadable."""
@@ -320,6 +380,7 @@ def build_sensors():
             "obd": None,
             "diplus_push": None,
             "byd_cloud": None,
+            "phone": None,
         }
         if key in OBD_PIDS:
             channels["obd"] = {"pid": OBD_PIDS[key]}
@@ -342,7 +403,7 @@ def build_sensors():
             "type": stype, "unit": unit,
             "core": key in CORE_SENSORS,
             "channels": {k: None for k in
-                ["diplus", "adb", "dumpsys", "obd", "voyah", "diplus_push", "byd_cloud"]}
+                ["diplus", "adb", "dumpsys", "obd", "voyah", "diplus_push", "byd_cloud", "phone"]}
                 | {"system": {"field": key}},
             "expected_on": ["system"],
         })
@@ -353,13 +414,13 @@ def build_sensors():
             "type": stype, "unit": unit,
             "core": False,
             "channels": {k: None for k in
-                ["diplus", "adb", "dumpsys", "obd", "diplus_push", "byd_cloud", "system"]}
+                ["diplus", "adb", "dumpsys", "obd", "diplus_push", "byd_cloud", "system", "phone"]}
                 | {"voyah": voyah_descriptor(key)},
             "expected_on": ["voyah_generic"],
         })
     for key, english, stype, unit, channel, descriptor in EXTRA_SENSORS:
         channels = {k: None for k in
-            ["diplus", "adb", "dumpsys", "obd", "voyah", "diplus_push", "byd_cloud", "system"]}
+            ["diplus", "adb", "dumpsys", "obd", "voyah", "diplus_push", "byd_cloud", "system", "phone"]}
         channels[channel] = descriptor
         sensors.append({
             "key": key, "label_en": SENSOR_LABELS["en"].get(key, english),
@@ -368,6 +429,17 @@ def build_sensors():
             "core": key in CORE_SENSORS,
             "channels": channels,
             "expected_on": ["system" if channel == "system" else "byd_generic"],
+        })
+    for key, english, stype, unit in PHONE_SENSORS:
+        sensors.append({
+            "key": key, "label_en": SENSOR_LABELS["en"].get(key, english),
+            "label_ru": SENSOR_LABELS["ru"].get(key, english),
+            "type": stype, "unit": unit,
+            "core": False,
+            "channels": {k: None for k in
+                ["diplus", "adb", "dumpsys", "obd", "voyah", "diplus_push", "byd_cloud", "system"]}
+                | {"phone": {"field": key}},
+            "expected_on": ["phone"],
         })
     return sensors
 

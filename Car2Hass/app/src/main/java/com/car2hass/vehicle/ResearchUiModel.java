@@ -80,6 +80,9 @@ public final class ResearchUiModel {
         } catch (JSONException ignored) {
         }
         for (String name : priority) {
+            // Registry-only ids without a DataChannel implementation (e.g. the
+            // phone router) can never be probed, so they are not selectable.
+            if (!ChannelIds.hasImplementation(normalizeChannelId(name))) continue;
             boolean isAvailable = avail.isEmpty() || avail.get(name) == Boolean.TRUE;
             boolean isChecked = "system".equals(name) || activeList.contains(normalizeChannelId(name));
             out.add(new ChannelView(name, isAvailable, isChecked));

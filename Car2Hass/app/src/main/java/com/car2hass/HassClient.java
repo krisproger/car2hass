@@ -329,6 +329,18 @@ public class HassClient {
                 payload.put("firmware", CANDataReader.sFirmware);
                 payload.put("app_version", AppInfo.getVersionString(ctx));
 
+                // Device descriptor: constant per install. Omitted for the car
+                // device (absent block = car) so existing telemetry is unchanged.
+                // Built at the top level (not per snapshot) so queued snapshots,
+                // which are persisted without it, still carry the descriptor.
+                String devJson = PhoneSensors.deviceBlockJson(
+                        AppConfig.getDeviceClass(ctx),
+                        com.car2hass.vehicle.DeviceAnon.fromContext(ctx),
+                        AppConfig.getPhoneName(ctx));
+                if (devJson != null) {
+                    payload.put("dev", new JSONObject(devJson));
+                }
+
                 JSONArray batchJson = new JSONArray();
                 for (Snapshot snap : batch) {
                     batchJson.put(snap.toJson());

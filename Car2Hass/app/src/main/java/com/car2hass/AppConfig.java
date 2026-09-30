@@ -2,6 +2,7 @@ package com.car2hass;
 
 import android.content.Context;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.os.Build;
 
 import com.car2hass.vehicle.VehicleProducer;
@@ -72,6 +73,12 @@ public class AppConfig {
     private static final String KEY_DISABLED_SIGNALS = "disabled_signals";
     private static final String KEY_CAR_CONTROL_ENABLED = "car_control_enabled";
     private static final String KEY_DETAILED_LOG_ENABLED = "detailed_log_enabled";
+
+    // Phone sensor source (second device inside the same integration entry)
+    private static final String KEY_PHONE_SENSORS_ENABLED = "phone_sensors_enabled";
+    private static final String KEY_PHONE_ENABLED_KEYS = "phone_enabled_keys";
+    private static final String KEY_PHONE_NAME = "phone_name";
+    private static final String KEY_DEVICE_CLASS = "device_class";
     private static final String KEY_QUEUE_ENABLED = "queue_enabled";
     private static final String KEY_QUEUE_MAX_MB = "queue_max_mb";
     private static final String KEY_QUEUE_MAX_DAYS = "queue_max_days";
@@ -240,6 +247,87 @@ public class AppConfig {
 
     public static void saveQueueMaxDays(Context ctx, int days) {
         prefs(ctx).edit().putString(KEY_QUEUE_MAX_DAYS, String.valueOf(days)).apply();
+    }
+
+    // ---- Phone sensor source ----
+
+    /** Master toggle for phone sensor collection; off by default. */
+    public static boolean isPhoneSensorsEnabled(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_PHONE_SENSORS_ENABLED, false);
+    }
+
+    public static void setPhoneSensorsEnabled(Context ctx, boolean enabled) {
+        prefs(ctx).edit().putBoolean(KEY_PHONE_SENSORS_ENABLED, enabled).apply();
+    }
+
+    /** Per-sensor opt-ins (default empty; sensitive keys never enabled implicitly). */
+    public static Set<String> getPhoneEnabledKeys(Context ctx) {
+        String json = prefs(ctx).getString(KEY_PHONE_ENABLED_KEYS, "[]");
+        Set<String> set = new HashSet<>();
+        try {
+            JSONArray arr = new JSONArray(json);
+            for (int i = 0; i < arr.length(); i++) set.add(arr.optString(i));
+        } catch (Exception e) {
+            // ignore malformed
+        }
+        return set;
+    }
+
+    public static void setPhoneEnabledKey(Context ctx, String key, boolean enabled) {
+        if (key == null || key.isEmpty()) return;
+        Set<String> set = new HashSet<>(getPhoneEnabledKeys(ctx));
+        boolean changed = enabled ? set.add(key) : set.remove(key);
+        if (!changed) return;
+        JSONArray arr = new JSONArray();
+        for (String k : set) arr.put(k);
+        prefs(ctx).edit().putString(KEY_PHONE_ENABLED_KEYS, arr.toString()).apply();
+    }
+
+    /** User-visible phone name; falls back to the device manufacturer + model. */
+    public static String getPhoneName(Context ctx) {
+        String name = prefs(ctx).getString(KEY_PHONE_NAME, "");
+        if (name == null || name.trim().isEmpty()) return defaultPhoneName();
+        return name.trim();
+    }
+
+    public static void setPhoneName(Context ctx, String name) {
+        prefs(ctx).edit().putString(KEY_PHONE_NAME, name == null ? "" : name.trim()).apply();
+    }
+
+    private static String defaultPhoneName() {
+        String manufacturer = Build.MANUFACTURER == null ? "" : Build.MANUFACTURER.trim();
+        String model = Build.MODEL == null ? "" : Build.MODEL.trim();
+        String name = (manufacturer + " " + model).trim();
+        return name.isEmpty() ? "Phone" : name;
+    }
+
+    /**
+     * Device class: {@code "car"} or {@code "phone"}. Auto-detected on first
+     * use and overridable by the user. A device that is not Android Automotive
+     * and reports telephony hardware is treated as a phone; otherwise (head
+     * units, TVs, ...) it is a car.
+     */
+    public static String getDeviceClass(Context ctx) {
+        String stored = prefs(ctx).getString(KEY_DEVICE_CLASS, "");
+        if ("phone".equals(stored) || "car".equals(stored)) return stored;
+        return detectDeviceClass(ctx);
+    }
+
+    public static void setDeviceClass(Context ctx, String deviceClass) {
+        String value = "phone".equals(deviceClass) ? "phone" : "car";
+        prefs(ctx).edit().putString(KEY_DEVICE_CLASS, value).apply();
+    }
+
+    private static String detectDeviceClass(Context ctx) {
+        try {
+            PackageManager pm = ctx.getPackageManager();
+            boolean telephony = pm.hasSystemFeature(PackageManager.FEATURE_TELEPHONY);
+            boolean automotive = pm.hasSystemFeature(PackageManager.FEATURE_AUTOMOTIVE);
+            if (telephony && !automotive) return "phone";
+        } catch (Exception e) {
+            LogBuffer.d("AppConfig", "device class detect failed: " + e.getMessage());
+        }
+        return "car";
     }
 
     /**

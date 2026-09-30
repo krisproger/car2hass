@@ -8,7 +8,8 @@
     "voyah",
     "obd",
     "diplus_push",
-    "byd_cloud"
+    "byd_cloud",
+    "phone"
   ],
   "sensors": [
     {
@@ -33,7 +34,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -64,6 +66,7 @@
         },
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "GW_ESC_VEHSPD"
         }
@@ -96,6 +99,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "PDCM_REMAINING_MILEAGE_STANDARD"
         }
@@ -128,6 +132,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "TGS_LEVER"
         }
@@ -155,7 +160,8 @@
           "pid": "010C"
         },
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -178,6 +184,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "BRAKE_PEDAL_STATUS"
         }
@@ -206,6 +213,7 @@
         },
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "ACCEL_PEDAL_POSITION"
         }
@@ -231,7 +239,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -253,7 +262,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -281,7 +291,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -303,7 +314,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -332,6 +344,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "CHARGE_GUN_UNLOCK_SET"
         }
@@ -357,7 +370,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -385,7 +399,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -407,7 +422,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -435,7 +451,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -457,7 +474,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -479,7 +497,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -501,7 +520,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -523,7 +543,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -552,6 +573,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "acu_driverSeatBeltSts"
         }
@@ -577,7 +599,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -606,6 +629,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "ac": "getAirTempInCar"
         }
@@ -638,6 +662,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "method": "getAmbientTemperature"
         }
@@ -669,7 +694,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -691,7 +717,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -713,7 +740,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -735,7 +763,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -757,7 +786,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -786,6 +816,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "ENERGY_CON_SUM_AV"
         }
@@ -811,7 +842,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -835,7 +867,8 @@
           "pid": "012F"
         },
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -857,7 +890,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -879,7 +913,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -901,7 +936,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -923,7 +959,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -951,7 +988,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -973,7 +1011,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -995,7 +1034,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1017,7 +1057,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1039,7 +1080,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1061,7 +1103,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1083,7 +1126,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1105,7 +1149,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1127,7 +1172,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1150,6 +1196,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "FRONT_WIPER"
         }
@@ -1175,7 +1222,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1198,6 +1246,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "CRUISE_CONTROL"
         }
@@ -1223,7 +1272,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1246,6 +1296,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "CHARGE_STATE"
         }
@@ -1277,7 +1328,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1305,7 +1357,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1333,7 +1386,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1361,7 +1415,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1384,6 +1439,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "LEFT_DIRECTION_LIGHT"
         }
@@ -1410,6 +1466,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "RIGHT_DIRECTION_LIGHT"
         }
@@ -1441,7 +1498,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1470,6 +1528,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "BCM_FLWindowHorizontalSts"
         }
@@ -1502,6 +1561,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "BCM_FRWindowHorizontalSts"
         }
@@ -1534,6 +1594,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "BCM_RLWindowHorizontalSts"
         }
@@ -1566,6 +1627,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "BCM_RRWindowHorizontalSts"
         }
@@ -1598,6 +1660,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "SUNROOF_OPEN_PERCENT"
         }
@@ -1624,6 +1687,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "ROLL_OPEN_PERCENT"
         }
@@ -1656,6 +1720,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "TravelProgramme"
         }
@@ -1688,6 +1753,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "BCM_DRIVEMODE_CHANGE"
         }
@@ -1713,7 +1779,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1735,7 +1802,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1757,7 +1825,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1779,7 +1848,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1801,7 +1871,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1823,7 +1894,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1845,7 +1917,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1867,7 +1940,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1896,6 +1970,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "AC_CLIMATE_SW_REQ"
         }
@@ -1927,7 +2002,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1955,7 +2031,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -1977,7 +2054,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2005,7 +2083,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2033,7 +2112,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2062,6 +2142,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "DOOR_POSITION_STATUS_RL"
         }
@@ -2094,6 +2175,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "DOOR_POSITION_STATUS_RR"
         }
@@ -2125,7 +2207,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2147,7 +2230,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2170,6 +2254,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "FUEL_PORT_CAP_STS"
         }
@@ -2196,6 +2281,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "EPB_PARK_STATUS"
         }
@@ -2222,6 +2308,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "IACC_OR_ACC_STATUS"
         }
@@ -2247,7 +2334,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2269,7 +2357,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2292,6 +2381,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "LKSStatus"
         }
@@ -2318,6 +2408,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "DOOR_WORK_STATUS_RL"
         }
@@ -2343,7 +2434,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2366,6 +2458,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "DOOR_WORK_STATUS_RR"
         }
@@ -2391,7 +2484,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2413,7 +2507,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2435,7 +2530,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2464,6 +2560,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "POSITION_LAMP_SWITCH"
         }
@@ -2496,6 +2593,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "HEAD_LIGHT_STATUS"
         }
@@ -2528,6 +2626,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "HIGH_BEAM"
         }
@@ -2554,6 +2653,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "FRONT_FOG_LIGHT"
         }
@@ -2580,6 +2680,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "REAR_FOG_LIGHT"
         }
@@ -2605,7 +2706,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2634,6 +2736,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "DaytimeRunninglights"
         }
@@ -2662,6 +2765,7 @@
         },
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "ENG_COOLANT_TEMP"
         }
@@ -2688,6 +2792,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "WARNING_LIGHT"
         }
@@ -2713,7 +2818,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2735,7 +2841,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2758,6 +2865,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "acu_passengerSeatBeltSts"
         }
@@ -2783,7 +2891,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2806,6 +2915,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "BMS_SOC_DISPLAY"
         }
@@ -2837,7 +2947,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2859,7 +2970,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2881,7 +2993,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2903,7 +3016,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2925,7 +3039,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2947,7 +3062,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2969,7 +3085,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -2991,7 +3108,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3013,7 +3131,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3035,7 +3154,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3057,7 +3177,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3079,7 +3200,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3101,7 +3223,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3123,7 +3246,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3145,7 +3269,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3167,7 +3292,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3189,7 +3315,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3211,7 +3338,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3233,7 +3361,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3255,7 +3384,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3277,7 +3407,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3299,7 +3430,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3321,7 +3453,8 @@
         "system": null,
         "obd": null,
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3345,7 +3478,8 @@
           "pid": "0104"
         },
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3369,7 +3503,8 @@
           "pid": "010F"
         },
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3393,7 +3528,8 @@
           "pid": "0110"
         },
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3418,6 +3554,7 @@
         },
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "method": "getAmbientTemperature"
         }
@@ -3445,7 +3582,8 @@
           "pid": "015C"
         },
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3469,7 +3607,8 @@
           "pid": "015E"
         },
         "diplus_push": null,
-        "byd_cloud": null
+        "byd_cloud": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -3492,6 +3631,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "FRONT_SEAT_HEATING_SWITCH_LEFT"
         }
@@ -3518,6 +3658,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "FRONT_SEAT_HEATING_SWITCH_RIGHT"
         }
@@ -3544,6 +3685,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "FRONT_SEAT_VENTILATION_SWITCH_LEFT"
         }
@@ -3570,6 +3712,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "FRONT_SEAT_VENTILATION_SWITCH_RIGHT"
         }
@@ -3596,6 +3739,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "REAR_SEAT_HEATING_SWITCH_LEFT"
         }
@@ -3622,6 +3766,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "REAR_SEAT_HEATING_SWITCH_RIGHT"
         }
@@ -3648,6 +3793,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "STEERING_WHEEL_HEATING_SWITCH"
         }
@@ -3674,6 +3820,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "REAR_WINDOWN_HEAT_STATUS"
         }
@@ -3700,6 +3847,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "CHARGE_RATE"
         }
@@ -3726,6 +3874,7 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "voyah": {
           "vs": "REAR_MIRROR_FOLD_SET"
         }
@@ -3750,6 +3899,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "location_lat"
         }
@@ -3773,6 +3923,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "location_lon"
         }
@@ -3796,6 +3947,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "location_speed"
         }
@@ -3819,6 +3971,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "location_bearing"
         }
@@ -3842,6 +3995,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "location_altitude"
         }
@@ -3865,6 +4019,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "location_accuracy"
         }
@@ -3888,6 +4043,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "location_provider"
         }
@@ -3911,6 +4067,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "device_battery"
         }
@@ -3934,6 +4091,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "device_pressure"
         }
@@ -3957,6 +4115,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "system_media_volume"
         }
@@ -3980,6 +4139,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "windows_state"
         }
@@ -4003,6 +4163,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "doors_state"
         }
@@ -4026,6 +4187,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "windows_all_state"
         }
@@ -4049,6 +4211,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "doors_all_state"
         }
@@ -4072,6 +4235,7 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
+        "phone": null,
         "system": {
           "field": "doors_all_lock"
         }
@@ -4095,6 +4259,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "BMS_REMAIN_CHARGE_TIME"
         }
@@ -4118,6 +4283,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "AVG_SPEED"
         }
@@ -4141,6 +4307,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "AVG_POWER"
         }
@@ -4164,6 +4331,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "ENERGY_RECOVERY_GEAR"
         }
@@ -4187,6 +4355,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "ENERGY_FLOW"
         }
@@ -4210,6 +4379,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "OBC_CHARGE_VOLTAGE"
         }
@@ -4233,6 +4403,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "OBC_CHARGE_CURRENT"
         }
@@ -4256,6 +4427,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "BMS_AC_CHARGE_STAT"
         }
@@ -4279,6 +4451,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "BMS_DC_CHARGE_STAT"
         }
@@ -4302,6 +4475,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "AC_CHARG_CONNECT_STS"
         }
@@ -4325,6 +4499,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "DC_CHARG_CONNECT_STS"
         }
@@ -4348,6 +4523,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "CHRG_PORT_CAP_STS"
         }
@@ -4371,6 +4547,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "WCM_CHARGE_STATUS"
         }
@@ -4394,6 +4571,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "ODO_THISTIME"
         }
@@ -4417,6 +4595,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "PM25_STS"
         }
@@ -4440,6 +4619,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "CLEAN_AIR_LEVEL"
         }
@@ -4463,6 +4643,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "TRANS_OIL_TEMP"
         }
@@ -4486,6 +4667,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "VEHICLE_AMBIENT_LIGHT_COLOR"
         }
@@ -4509,6 +4691,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "VEHICLE_AMBIENT_LIGHT_BRIGHTNESS_LEVEL"
         }
@@ -4532,6 +4715,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "READY_LAMP"
         }
@@ -4555,6 +4739,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "BCM_FLWindowHorizontalSts"
         }
@@ -4578,6 +4763,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "BCM_FRWindowHorizontalSts"
         }
@@ -4601,6 +4787,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "BCM_RLWindowHorizontalSts"
         }
@@ -4624,6 +4811,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "BCM_RRWindowHorizontalSts"
         }
@@ -4647,6 +4835,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "VEHICLE_LOCKED_FED"
         }
@@ -4670,6 +4859,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "FRONT_SEAT_MASS_SWITCH_LEFT"
         }
@@ -4693,6 +4883,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "FRONT_SEAT_MASS_SWITCH_RIGHT"
         }
@@ -4716,6 +4907,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "REAR_SEAT_MASS_SWITCH_LEFT"
         }
@@ -4739,6 +4931,7 @@
         "diplus_push": null,
         "byd_cloud": null,
         "system": null,
+        "phone": null,
         "voyah": {
           "vs": "REAR_SEAT_MASS_SWITCH_RIGHT"
         }
@@ -4764,7 +4957,8 @@
         "byd_cloud": null,
         "system": {
           "field": "app_version"
-        }
+        },
+        "phone": null
       },
       "expected_on": [
         "system"
@@ -4787,7 +4981,8 @@
         "byd_cloud": null,
         "system": {
           "field": "wifi_ssid"
-        }
+        },
+        "phone": null
       },
       "expected_on": [
         "system"
@@ -4810,7 +5005,8 @@
         "byd_cloud": null,
         "system": {
           "field": "wifi_bssid"
-        }
+        },
+        "phone": null
       },
       "expected_on": [
         "system"
@@ -4833,7 +5029,8 @@
         "byd_cloud": null,
         "system": {
           "field": "wifi_rssi"
-        }
+        },
+        "phone": null
       },
       "expected_on": [
         "system"
@@ -4856,7 +5053,8 @@
         "byd_cloud": null,
         "system": {
           "field": "online"
-        }
+        },
+        "phone": null
       },
       "expected_on": [
         "system"
@@ -4879,7 +5077,8 @@
         "voyah": null,
         "diplus_push": null,
         "byd_cloud": null,
-        "system": null
+        "system": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -4902,7 +5101,8 @@
         "byd_cloud": {
           "field": "traction_battery_voltage"
         },
-        "system": null
+        "system": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
@@ -4925,10 +5125,1283 @@
         "byd_cloud": {
           "field": "traction_battery_current"
         },
-        "system": null
+        "system": null,
+        "phone": null
       },
       "expected_on": [
         "byd_generic"
+      ]
+    },
+    {
+      "key": "phone_battery_level",
+      "label_en": "Battery level",
+      "label_ru": "Заряд батареи",
+      "type": "num",
+      "unit": "%",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_battery_level"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_battery_state",
+      "label_en": "Battery state",
+      "label_ru": "Состояние батареи",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_battery_state"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_charger_type",
+      "label_en": "Charger type",
+      "label_ru": "Тип зарядного устройства",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_charger_type"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_is_charging",
+      "label_en": "Is charging",
+      "label_ru": "Идёт зарядка",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_is_charging"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_battery_health",
+      "label_en": "Battery health",
+      "label_ru": "Здоровье батареи",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_battery_health"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_battery_temperature",
+      "label_en": "Battery temperature",
+      "label_ru": "Температура батареи",
+      "type": "num",
+      "unit": "°C",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_battery_temperature"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_battery_power",
+      "label_en": "Battery power",
+      "label_ru": "Мощность батареи",
+      "type": "num",
+      "unit": "W",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_battery_power"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_remaining_charge_time",
+      "label_en": "Remaining charge time",
+      "label_ru": "Время до полной зарядки",
+      "type": "num",
+      "unit": "s",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_remaining_charge_time"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_connection_type",
+      "label_en": "Connection type",
+      "label_ru": "Тип подключения",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_connection_type"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_wifi_ssid",
+      "label_en": "Wi-Fi SSID",
+      "label_ru": "Wi-Fi сеть",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_wifi_ssid"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_wifi_bssid",
+      "label_en": "Wi-Fi BSSID",
+      "label_ru": "Wi-Fi BSSID",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_wifi_bssid"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_wifi_frequency",
+      "label_en": "Wi-Fi frequency",
+      "label_ru": "Частота Wi-Fi",
+      "type": "num",
+      "unit": "MHz",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_wifi_frequency"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_wifi_ip",
+      "label_en": "Wi-Fi IP",
+      "label_ru": "IP-адрес Wi-Fi",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_wifi_ip"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_wifi_link_speed",
+      "label_en": "Wi-Fi link speed",
+      "label_ru": "Скорость Wi-Fi",
+      "type": "num",
+      "unit": "Mbit/s",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_wifi_link_speed"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_wifi_signal",
+      "label_en": "Wi-Fi signal",
+      "label_ru": "Уровень сигнала Wi-Fi",
+      "type": "num",
+      "unit": "dBm",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_wifi_signal"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_wifi_state",
+      "label_en": "Wi-Fi state",
+      "label_ru": "Состояние Wi-Fi",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_wifi_state"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_hotspot_state",
+      "label_en": "Hotspot state",
+      "label_ru": "Состояние точки доступа",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_hotspot_state"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_transport_type",
+      "label_en": "Transport type",
+      "label_ru": "Тип транспорта",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_transport_type"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_screen_brightness",
+      "label_en": "Screen brightness",
+      "label_ru": "Яркость экрана",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_screen_brightness"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_screen_off_timeout",
+      "label_en": "Screen off timeout",
+      "label_ru": "Тайм-аут экрана",
+      "type": "num",
+      "unit": "ms",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_screen_off_timeout"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_screen_orientation",
+      "label_en": "Screen orientation",
+      "label_ru": "Ориентация экрана",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_screen_orientation"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_screen_rotation",
+      "label_en": "Screen rotation",
+      "label_ru": "Поворот экрана",
+      "type": "num",
+      "unit": "deg",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_screen_rotation"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_doze",
+      "label_en": "Doze mode",
+      "label_ru": "Режим Doze",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_doze"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_interactive",
+      "label_en": "Interactive",
+      "label_ru": "Активен",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_interactive"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_power_save",
+      "label_en": "Power save",
+      "label_ru": "Экономия энергии",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_power_save"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_ringer_mode",
+      "label_en": "Ringer mode",
+      "label_ru": "Режим звонка",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_ringer_mode"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_audio_mode",
+      "label_en": "Audio mode",
+      "label_ru": "Аудиорежим",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_audio_mode"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_is_headphones",
+      "label_en": "Headphones connected",
+      "label_ru": "Наушники подключены",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_is_headphones"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_is_mic_muted",
+      "label_en": "Microphone muted",
+      "label_ru": "Микрофон отключён",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_is_mic_muted"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_is_speakerphone_on",
+      "label_en": "Speakerphone",
+      "label_ru": "Громкая связь",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_is_speakerphone_on"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_is_music_active",
+      "label_en": "Music active",
+      "label_ru": "Музыка играет",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_is_music_active"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_volume_music",
+      "label_en": "Music volume",
+      "label_ru": "Громкость музыки",
+      "type": "num",
+      "unit": "%",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_volume_music"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_memory_used",
+      "label_en": "Memory used",
+      "label_ru": "Использовано памяти",
+      "type": "num",
+      "unit": "B",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_memory_used"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_memory_free",
+      "label_en": "Memory free",
+      "label_ru": "Свободно памяти",
+      "type": "num",
+      "unit": "B",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_memory_free"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_storage_internal_free",
+      "label_en": "Internal storage free",
+      "label_ru": "Свободно во внутреннем хранилище",
+      "type": "num",
+      "unit": "B",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_storage_internal_free"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_storage_internal_total",
+      "label_en": "Internal storage total",
+      "label_ru": "Объём внутреннего хранилища",
+      "type": "num",
+      "unit": "B",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_storage_internal_total"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_storage_external_free",
+      "label_en": "External storage free",
+      "label_ru": "Свободно на внешнем носителе",
+      "type": "num",
+      "unit": "B",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_storage_external_free"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_storage_external_total",
+      "label_en": "External storage total",
+      "label_ru": "Объём внешнего носителя",
+      "type": "num",
+      "unit": "B",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_storage_external_total"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_data_tx",
+      "label_en": "Data sent",
+      "label_ru": "Передано данных",
+      "type": "num",
+      "unit": "B",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_data_tx"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_data_rx",
+      "label_en": "Data received",
+      "label_ru": "Принято данных",
+      "type": "num",
+      "unit": "B",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_data_rx"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_sim_carrier",
+      "label_en": "SIM carrier",
+      "label_ru": "Оператор SIM",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_sim_carrier"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_sim_country",
+      "label_en": "SIM country",
+      "label_ru": "Страна SIM",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_sim_country"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_android_os_version",
+      "label_en": "Android version",
+      "label_ru": "Версия Android",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_android_os_version"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_android_os_security_patch",
+      "label_en": "Security patch",
+      "label_ru": "Патч безопасности",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_android_os_security_patch"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_time_zone",
+      "label_en": "Time zone",
+      "label_ru": "Часовой пояс",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_time_zone"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_last_reboot",
+      "label_en": "Last reboot",
+      "label_ru": "Последняя перезагрузка",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_last_reboot"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_steps",
+      "label_en": "Steps",
+      "label_ru": "Шаги",
+      "type": "num",
+      "unit": "steps",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_steps"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_activity",
+      "label_en": "Activity",
+      "label_ru": "Активность",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_activity"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_location_lat",
+      "label_en": "Location latitude",
+      "label_ru": "Широта",
+      "type": "num",
+      "unit": "deg",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_location_lat"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_location_lon",
+      "label_en": "Location longitude",
+      "label_ru": "Долгота",
+      "type": "num",
+      "unit": "deg",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_location_lon"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_light",
+      "label_en": "Light",
+      "label_ru": "Освещённость",
+      "type": "num",
+      "unit": "lx",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_light"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_proximity",
+      "label_en": "Proximity",
+      "label_ru": "Приближение",
+      "type": "num",
+      "unit": "cm",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_proximity"
+        }
+      },
+      "expected_on": [
+        "phone"
+      ]
+    },
+    {
+      "key": "phone_pressure",
+      "label_en": "Pressure",
+      "label_ru": "Давление",
+      "type": "num",
+      "unit": "hPa",
+      "core": false,
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "voyah": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": {
+          "field": "phone_pressure"
+        }
+      },
+      "expected_on": [
+        "phone"
       ]
     }
   ]

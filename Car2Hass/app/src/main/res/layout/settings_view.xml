@@ -18,6 +18,7 @@
         <include layout="@layout/nav_item" android:id="@+id/navSettingsProtocols" />
         <include layout="@layout/nav_item" android:id="@+id/navSettingsSmarthome" />
         <include layout="@layout/nav_item" android:id="@+id/navSettingsCloud" />
+        <include layout="@layout/nav_item" android:id="@+id/navSettingsPhone" />
         <include layout="@layout/nav_item" android:id="@+id/navSettingsGeofences" />
         <include layout="@layout/nav_item" android:id="@+id/navSettingsCommands" />
         <include layout="@layout/nav_item" android:id="@+id/navSettingsTech" />
@@ -57,6 +58,9 @@
                 android:visibility="gone" />
             <include layout="@layout/settings_section_cloud"
                 android:id="@+id/settings_section_cloud"
+                android:visibility="gone" />
+            <include layout="@layout/settings_section_phone"
+                android:id="@+id/settings_section_phone"
                 android:visibility="gone" />
             <include layout="@layout/settings_section_tech"
                 android:id="@+id/settings_section_tech"

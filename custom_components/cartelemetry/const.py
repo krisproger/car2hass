@@ -25,11 +25,11 @@ COMMAND_DEPENDS_ON = {
 
 # Native signals: command-linked + common across most cars. Exposed as
 # regular entities; every other received signal is a diagnostics attribute.
-NATIVE_SENSORS = {'ac_set_temp', 'ac_state', 'app_version', 'battery_12v_voltage', 'battery_temp_max', 'cabin_temp', 'charge_gun_state', 'charging_state', 'dashcam_state', 'device_battery', 'doors_state', 'driver_door', 'driver_door_lock', 'driver_seatbelt', 'drl', 'engine_coolant_temp', 'engine_rpm', 'fan_speed', 'footwell_light', 'front_fog', 'gear', 'hazard', 'location_accuracy', 'location_altitude', 'location_bearing', 'location_lat', 'location_lon', 'location_provider', 'location_speed', 'low_beam', 'outside_temp', 'passenger_door', 'power_state', 'range', 'rear_defrost', 'rear_left_door', 'rear_right_door', 'remote_lock_state', 'soc', 'speed', 'steering_wheel_heat', 'sunroof', 'total_energy', 'trunk', 'tyre_pressure_fl', 'tyre_pressure_fr', 'tyre_pressure_rl', 'tyre_pressure_rr', 'window_fl', 'window_fr', 'window_rl', 'window_rr', 'windows_all_state', 'windows_state'}
+NATIVE_SENSORS = {'ac_set_temp', 'ac_state', 'app_version', 'battery_12v_voltage', 'battery_temp_max', 'cabin_temp', 'charge_gun_state', 'charging_state', 'dashcam_state', 'device_battery', 'doors_state', 'driver_door', 'driver_door_lock', 'driver_seatbelt', 'drl', 'engine_coolant_temp', 'engine_rpm', 'fan_speed', 'footwell_light', 'front_fog', 'gear', 'hazard', 'location_accuracy', 'location_altitude', 'location_bearing', 'location_lat', 'location_lon', 'location_provider', 'location_speed', 'low_beam', 'outside_temp', 'passenger_door', 'phone_activity', 'phone_android_os_security_patch', 'phone_android_os_version', 'phone_audio_mode', 'phone_battery_health', 'phone_battery_level', 'phone_battery_power', 'phone_battery_state', 'phone_battery_temperature', 'phone_charger_type', 'phone_connection_type', 'phone_data_rx', 'phone_data_tx', 'phone_doze', 'phone_hotspot_state', 'phone_interactive', 'phone_is_charging', 'phone_is_headphones', 'phone_is_mic_muted', 'phone_is_music_active', 'phone_is_speakerphone_on', 'phone_last_reboot', 'phone_light', 'phone_location_lat', 'phone_location_lon', 'phone_memory_free', 'phone_memory_used', 'phone_power_save', 'phone_pressure', 'phone_proximity', 'phone_remaining_charge_time', 'phone_ringer_mode', 'phone_screen_brightness', 'phone_screen_off_timeout', 'phone_screen_orientation', 'phone_screen_rotation', 'phone_sim_carrier', 'phone_sim_country', 'phone_steps', 'phone_storage_external_free', 'phone_storage_external_total', 'phone_storage_internal_free', 'phone_storage_internal_total', 'phone_time_zone', 'phone_transport_type', 'phone_volume_music', 'phone_wifi_bssid', 'phone_wifi_frequency', 'phone_wifi_ip', 'phone_wifi_link_speed', 'phone_wifi_signal', 'phone_wifi_ssid', 'phone_wifi_state', 'power_state', 'range', 'rear_defrost', 'rear_left_door', 'rear_right_door', 'remote_lock_state', 'soc', 'speed', 'steering_wheel_heat', 'sunroof', 'total_energy', 'trunk', 'tyre_pressure_fl', 'tyre_pressure_fr', 'tyre_pressure_rl', 'tyre_pressure_rr', 'window_fl', 'window_fr', 'window_rl', 'window_rr', 'windows_all_state', 'windows_state'}
 
 CONF_CAR_NAME = "car_name"
 
-INTEGRATION_VERSION = "3.5.0"
+INTEGRATION_VERSION = "3.5.1-beta.1"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.
@@ -702,6 +702,177 @@ NUMERIC_SENSORS = {
         "icon": "mdi:lightning-bolt",
         "state_class": "measurement",
     },
+    "phone_battery_level": {
+        "name": "Battery level",
+        "unit": "%",
+        "icon": "mdi:battery",
+        "device_class": "battery",
+        "state_class": "measurement",
+    },
+    "phone_battery_temperature": {
+        "name": "Battery temperature",
+        "unit": "°C",
+        "icon": "mdi:thermometer",
+        "device_class": "temperature",
+        "state_class": "measurement",
+    },
+    "phone_battery_power": {
+        "name": "Battery power",
+        "unit": "W",
+        "icon": "mdi:flash",
+        "device_class": "power",
+        "state_class": "measurement",
+    },
+    "phone_remaining_charge_time": {
+        "name": "Remaining charge time",
+        "unit": "s",
+        "icon": "mdi:battery-clock",
+        "device_class": "duration",
+        "state_class": "measurement",
+    },
+    "phone_wifi_frequency": {
+        "name": "Wi-Fi frequency",
+        "unit": "MHz",
+        "icon": "mdi:wifi",
+        "device_class": "frequency",
+        "state_class": "measurement",
+    },
+    "phone_wifi_link_speed": {
+        "name": "Wi-Fi link speed",
+        "unit": "Mbit/s",
+        "icon": "mdi:speedometer",
+        "device_class": "data_rate",
+        "state_class": "measurement",
+    },
+    "phone_wifi_signal": {
+        "name": "Wi-Fi signal",
+        "unit": "dBm",
+        "icon": "mdi:wifi",
+        "device_class": "signal_strength",
+        "state_class": "measurement",
+    },
+    "phone_screen_brightness": {
+        "name": "Screen brightness",
+        "icon": "mdi:brightness-6",
+        "state_class": "measurement",
+    },
+    "phone_screen_off_timeout": {
+        "name": "Screen off timeout",
+        "unit": "ms",
+        "icon": "mdi:timer-off",
+        "device_class": "duration",
+        "state_class": "measurement",
+    },
+    "phone_screen_rotation": {
+        "name": "Screen rotation",
+        "unit": "deg",
+        "icon": "mdi:screen-rotation",
+        "state_class": "measurement",
+    },
+    "phone_volume_music": {
+        "name": "Music volume",
+        "unit": "%",
+        "icon": "mdi:volume-high",
+        "state_class": "measurement",
+    },
+    "phone_memory_used": {
+        "name": "Memory used",
+        "unit": "B",
+        "icon": "mdi:memory",
+        "device_class": "data_size",
+        "state_class": "measurement",
+    },
+    "phone_memory_free": {
+        "name": "Memory free",
+        "unit": "B",
+        "icon": "mdi:memory",
+        "device_class": "data_size",
+        "state_class": "measurement",
+    },
+    "phone_storage_internal_free": {
+        "name": "Internal storage free",
+        "unit": "B",
+        "icon": "mdi:harddisk",
+        "device_class": "data_size",
+        "state_class": "measurement",
+    },
+    "phone_storage_internal_total": {
+        "name": "Internal storage total",
+        "unit": "B",
+        "icon": "mdi:harddisk",
+        "device_class": "data_size",
+        "state_class": "measurement",
+    },
+    "phone_storage_external_free": {
+        "name": "External storage free",
+        "unit": "B",
+        "icon": "mdi:harddisk",
+        "device_class": "data_size",
+        "state_class": "measurement",
+    },
+    "phone_storage_external_total": {
+        "name": "External storage total",
+        "unit": "B",
+        "icon": "mdi:harddisk",
+        "device_class": "data_size",
+        "state_class": "measurement",
+    },
+    "phone_data_tx": {
+        "name": "Data sent",
+        "unit": "B",
+        "icon": "mdi:upload-network",
+        "device_class": "data_size",
+        "state_class": "total_increasing",
+    },
+    "phone_data_rx": {
+        "name": "Data received",
+        "unit": "B",
+        "icon": "mdi:download-network",
+        "device_class": "data_size",
+        "state_class": "total_increasing",
+    },
+    "phone_last_reboot": {
+        "name": "Last reboot",
+        "icon": "mdi:restart",
+    },
+    "phone_steps": {
+        "name": "Steps",
+        "unit": "steps",
+        "icon": "mdi:walk",
+        "state_class": "measurement",
+    },
+    "phone_location_lat": {
+        "name": "Location latitude",
+        "unit": "deg",
+        "icon": "mdi:latitude",
+        "state_class": "measurement",
+    },
+    "phone_location_lon": {
+        "name": "Location longitude",
+        "unit": "deg",
+        "icon": "mdi:longitude",
+        "state_class": "measurement",
+    },
+    "phone_light": {
+        "name": "Light",
+        "unit": "lx",
+        "icon": "mdi:brightness-5",
+        "device_class": "illuminance",
+        "state_class": "measurement",
+    },
+    "phone_proximity": {
+        "name": "Proximity",
+        "unit": "cm",
+        "icon": "mdi:signal-distance-variant",
+        "state_class": "measurement",
+    },
+    "phone_pressure": {
+        "name": "Pressure",
+        "unit": "hPa",
+        "icon": "mdi:gauge",
+        "device_class": "pressure",
+        "state_class": "measurement",
+    },
 }
 
 # Enum/text signals — string-valued signals from the vehicle
@@ -877,6 +1048,74 @@ ENUM_SENSORS = {
     "mirror_fold": {
         "name": "Rear mirror fold",
         "icon": "mdi:car-side",
+    },
+    "phone_battery_state": {
+        "name": "Battery state",
+        "icon": "mdi:battery-charging",
+    },
+    "phone_charger_type": {
+        "name": "Charger type",
+        "icon": "mdi:power-plug",
+    },
+    "phone_battery_health": {
+        "name": "Battery health",
+        "icon": "mdi:battery-heart-variant",
+    },
+    "phone_connection_type": {
+        "name": "Connection type",
+        "icon": "mdi:network-outline",
+    },
+    "phone_wifi_ssid": {
+        "name": "Wi-Fi SSID",
+        "icon": "mdi:wifi",
+    },
+    "phone_wifi_bssid": {
+        "name": "Wi-Fi BSSID",
+        "icon": "mdi:wifi",
+    },
+    "phone_wifi_ip": {
+        "name": "Wi-Fi IP",
+        "icon": "mdi:ip-network",
+    },
+    "phone_transport_type": {
+        "name": "Transport type",
+        "icon": "mdi:network-outline",
+    },
+    "phone_screen_orientation": {
+        "name": "Screen orientation",
+        "icon": "mdi:screen-rotation",
+    },
+    "phone_ringer_mode": {
+        "name": "Ringer mode",
+        "icon": "mdi:volume-high",
+    },
+    "phone_audio_mode": {
+        "name": "Audio mode",
+        "icon": "mdi:volume-high",
+    },
+    "phone_sim_carrier": {
+        "name": "SIM carrier",
+        "icon": "mdi:sim",
+    },
+    "phone_sim_country": {
+        "name": "SIM country",
+        "icon": "mdi:flag",
+    },
+    "phone_android_os_version": {
+        "name": "Android version",
+        "icon": "mdi:android",
+    },
+    "phone_android_os_security_patch": {
+        "name": "Security patch",
+        "icon": "mdi:shield-check",
+    },
+    "phone_time_zone": {
+        "name": "Time zone",
+        "icon": "mdi:clock-outline",
+    },
+    "phone_activity": {
+        "name": "Activity",
+        "icon": "mdi:run",
     },
 }
 
@@ -1079,11 +1318,51 @@ BINARY_SENSORS = {
         "name": "Doors all locked",
         "device_class": "lock",
     },
+    "phone_is_charging": {
+        "name": "Is charging",
+        "device_class": "battery_charging",
+    },
+    "phone_wifi_state": {
+        "name": "Wi-Fi state",
+        "device_class": "connectivity",
+    },
+    "phone_hotspot_state": {
+        "name": "Hotspot state",
+        "device_class": None,
+    },
+    "phone_doze": {
+        "name": "Doze mode",
+        "device_class": None,
+    },
+    "phone_interactive": {
+        "name": "Interactive",
+        "device_class": None,
+    },
+    "phone_power_save": {
+        "name": "Power save",
+        "device_class": None,
+    },
+    "phone_is_headphones": {
+        "name": "Headphones connected",
+        "device_class": None,
+    },
+    "phone_is_mic_muted": {
+        "name": "Microphone muted",
+        "device_class": None,
+    },
+    "phone_is_speakerphone_on": {
+        "name": "Speakerphone",
+        "device_class": None,
+    },
+    "phone_is_music_active": {
+        "name": "Music active",
+        "device_class": "running",
+    },
 }
 
 # Map from binary sensor key → list of "truthy" string values
 # Used by binary_sensor.py _value_to_bool()
-BINARY_ON_MAP: dict[str, list[str]] = {'power_state': ['on', 'driving'], 'driver_seatbelt': ['buckled'], 'remote_lock_state': ['locked'], 'charging_state': ['Ready', 'started', 'charging', 'full'], 'left_turn': ['on', 'open'], 'right_turn': ['on', 'open'], 'driver_door_lock': ['locked'], 'passenger_seatbelt_warning': ['alarm'], 'seatbelt_2nd_left': ['buckled'], 'seatbelt_2nd_right': ['buckled'], 'seatbelt_2nd_center': ['buckled'], 'ac_state': ['on', 'open'], 'ac_recirculation': ['recirculation', 'recirc'], 'driver_door': ['open', 'on'], 'passenger_door': ['open', 'on'], 'rear_left_door': ['open', 'on'], 'rear_right_door': ['open', 'on'], 'bonnet': ['open', 'on'], 'trunk': ['open', 'on'], 'fuel_charge_flap': ['open', 'on'], 'auto_hold': ['active'], 'rear_left_approach_warning': ['car approaching', 'alarm'], 'rear_right_approach_warning': ['car approaching', 'alarm'], 'lane_keep_state': ['active1', 'active2'], 'rear_left_door_lock': ['locked'], 'passenger_door_lock': ['locked'], 'rear_right_door_lock': ['locked'], 'trunk_lock': ['locked'], 'rear_left_child_lock': ['locked'], 'rear_right_child_lock': ['locked'], 'sidelights': ['on', 'open'], 'low_beam': ['on', 'open'], 'high_beam': ['on', 'open'], 'front_fog': ['on', 'open'], 'rear_fog': ['on', 'open'], 'footwell_light': ['on', 'open'], 'drl': ['on', 'open'], 'hazard': ['on', 'open'], 'passenger_seatbelt': ['buckled'], 'turn_signal': ['left', 'left2', 'right', 'right2', 'hazard', 'emergency', 'rear flash', 'flash'], 'surround_view_state': ['shown'], 'wifi_state': ['connected'], 'bluetooth_state': ['connected'], 'dashcam_state': ['running'], 'wireless_adb_switch': ['on'], 'online': ['on'], 'windows_all_state': ['open', 'on'], 'doors_all_state': ['open', 'on'], 'doors_all_lock': ['locked']}
+BINARY_ON_MAP: dict[str, list[str]] = {'power_state': ['on', 'driving'], 'driver_seatbelt': ['buckled'], 'remote_lock_state': ['locked'], 'charging_state': ['Ready', 'started', 'charging', 'full'], 'left_turn': ['on', 'open'], 'right_turn': ['on', 'open'], 'driver_door_lock': ['locked'], 'passenger_seatbelt_warning': ['alarm'], 'seatbelt_2nd_left': ['buckled'], 'seatbelt_2nd_right': ['buckled'], 'seatbelt_2nd_center': ['buckled'], 'ac_state': ['on', 'open'], 'ac_recirculation': ['recirculation', 'recirc'], 'driver_door': ['open', 'on'], 'passenger_door': ['open', 'on'], 'rear_left_door': ['open', 'on'], 'rear_right_door': ['open', 'on'], 'bonnet': ['open', 'on'], 'trunk': ['open', 'on'], 'fuel_charge_flap': ['open', 'on'], 'auto_hold': ['active'], 'rear_left_approach_warning': ['car approaching', 'alarm'], 'rear_right_approach_warning': ['car approaching', 'alarm'], 'lane_keep_state': ['active1', 'active2'], 'rear_left_door_lock': ['locked'], 'passenger_door_lock': ['locked'], 'rear_right_door_lock': ['locked'], 'trunk_lock': ['locked'], 'rear_left_child_lock': ['locked'], 'rear_right_child_lock': ['locked'], 'sidelights': ['on', 'open'], 'low_beam': ['on', 'open'], 'high_beam': ['on', 'open'], 'front_fog': ['on', 'open'], 'rear_fog': ['on', 'open'], 'footwell_light': ['on', 'open'], 'drl': ['on', 'open'], 'hazard': ['on', 'open'], 'passenger_seatbelt': ['buckled'], 'turn_signal': ['left', 'left2', 'right', 'right2', 'hazard', 'emergency', 'rear flash', 'flash'], 'surround_view_state': ['shown'], 'wifi_state': ['connected'], 'bluetooth_state': ['connected'], 'dashcam_state': ['running'], 'wireless_adb_switch': ['on'], 'online': ['on'], 'windows_all_state': ['open', 'on'], 'doors_all_state': ['open', 'on'], 'doors_all_lock': ['locked'], 'phone_is_charging': ['true'], 'phone_wifi_state': ['enabled'], 'phone_hotspot_state': ['true'], 'phone_doze': ['true'], 'phone_interactive': ['true'], 'phone_power_save': ['true'], 'phone_is_headphones': ['true'], 'phone_is_mic_muted': ['true'], 'phone_is_speakerphone_on': ['true'], 'phone_is_music_active': ['true']}
 
 # Dynamic geofence virtual sensors sent by the Android app.
 # Keys look like "geo_<zoneId>" with values "inside"/"outside"; the optional

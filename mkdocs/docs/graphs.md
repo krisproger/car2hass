@@ -23,7 +23,7 @@ flowchart LR
   hassclient[hassclient] -->|posts| payload[payload]
 ```
 
-Узлов: 1001, рёбер: 1138. Структура кода — `repo → module → package → file → class/function`;
+Узлов: 1012, рёбер: 1149. Структура кода — `repo → module → package → file → class/function`;
 связи `imports`/`requires`/`routes-to`; размеченные data-flow вехи.
 
 ## Семантический граф — каналы → сенсоры → HA-сущности
@@ -92,5 +92,5 @@ flowchart LR
   hazard_off[/hazard_off/] -.controls.-> hazard
 ```
 
-Узлов: 254, рёбер: 828. Понятия: `sensor`, `channel`, `command`,
+Узлов: 308, рёбер: 988. Понятия: `sensor`, `channel`, `command`,
 `ha_entity_set`, `profile`, `project`, `role`; связи `provides`/`controls`/`maps-to`/`via`/`core`.

@@ -291,6 +291,12 @@ javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/UiRef
 echo "=== Compiling UiRefreshThrottleTest ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/UiRefreshThrottleTest.java"
 
+echo "=== Compiling PhoneSensors (pure, no Android dep) ==="
+javac -d "$OUT" -classpath "$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/PhoneSensors.java"
+
+echo "=== Compiling PhoneSensorsTest ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/PhoneSensorsTest.java"
+
 echo "=== Compiling channel worker registry (pure, no Android dep) ==="
 javac -d "$OUT" -source 17 -target 17 \
   "$SRC/com/car2hass/vehicle/WorkerRetryPolicy.java" \
@@ -402,7 +408,7 @@ echo "=== Compiling VehicleProfileTest ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/VehicleProfileTest.java"
 
 echo "=== Compiling ChannelResult ==="
-javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/ChannelPriority.java" "$SRC/com/car2hass/vehicle/ValueStore.java" "$SRC/com/car2hass/vehicle/ChannelResult.java" "$SRC/com/car2hass/vehicle/DataChannel.java"
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/ChannelPriority.java" "$SRC/com/car2hass/vehicle/ChannelIds.java" "$SRC/com/car2hass/vehicle/ValueStore.java" "$SRC/com/car2hass/vehicle/ChannelResult.java" "$SRC/com/car2hass/vehicle/DataChannel.java"
 
 echo "=== Compiling ChannelResultTest ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ChannelResultTest.java"
@@ -583,6 +589,9 @@ java -cp "$OUT" com.car2hass.TelemetryAgeTest
 
 echo "=== Running UiRefreshThrottleTest ==="
 java -cp "$OUT" com.car2hass.UiRefreshThrottleTest
+
+echo "=== Running PhoneSensorsTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.PhoneSensorsTest
 
 echo "=== Running WorkerRetryPolicyTest ==="
 java -cp "$OUT" com.car2hass.vehicle.WorkerRetryPolicyTest

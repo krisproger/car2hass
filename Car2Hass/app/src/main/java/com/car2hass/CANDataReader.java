@@ -370,6 +370,14 @@ public class CANDataReader {
             JSONObject report = loadProbeReport(context);
             SourceManager sm = new SourceManager(reg, active, profile, report);
             List<String> cycle = sm.cycleSourcePriority();
+            // Defensive: registry-only ids without a DataChannel implementation
+            // (e.g. the phone router) are not readable, so a selection made only
+            // of them must fall through to the legacy read path below.
+            List<String> readable = new ArrayList<>();
+            for (String ch : cycle) {
+                if (com.car2hass.vehicle.ChannelIds.hasImplementation(ch)) readable.add(ch);
+            }
+            cycle = readable;
             // Auto-fallback off: only the top-priority active channel.
             if (!AppConfig.isAutoFallback(context) && cycle.size() > 1) {
                 cycle = cycle.subList(0, 1);

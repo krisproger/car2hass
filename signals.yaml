@@ -2302,3 +2302,560 @@ signals:
   labels: {}
   ha_type: sensor
   icon: mdi:car-side
+- id: 9201
+  name: Battery level
+  description: Battery level
+  type: num
+  synthetic: true
+  key: phone_battery_level
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:battery
+  device_class: battery
+  state_class: measurement
+- id: 9202
+  name: Battery state
+  description: Battery state
+  type: enum
+  synthetic: true
+  key: phone_battery_state
+  labels: {}
+  ha_type: sensor
+  icon: mdi:battery-charging
+- id: 9203
+  name: Charger type
+  description: Charger type
+  type: enum
+  synthetic: true
+  key: phone_charger_type
+  labels: {}
+  ha_type: sensor
+  icon: mdi:power-plug
+- id: 9204
+  name: Is charging
+  description: Is charging
+  type: enum
+  synthetic: true
+  key: phone_is_charging
+  labels: {}
+  ha_type: binary_sensor
+  device_class: battery_charging
+  truthy:
+  - 'true'
+- id: 9205
+  name: Battery health
+  description: Battery health
+  type: enum
+  synthetic: true
+  key: phone_battery_health
+  labels: {}
+  ha_type: sensor
+  icon: mdi:battery-heart-variant
+- id: 9206
+  name: Battery temperature
+  description: Battery temperature
+  type: num
+  synthetic: true
+  key: phone_battery_temperature
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  device_class: temperature
+  state_class: measurement
+- id: 9207
+  name: Battery power
+  description: Battery power
+  type: num
+  synthetic: true
+  key: phone_battery_power
+  labels: {}
+  ha_type: sensor
+  unit: W
+  icon: mdi:flash
+  device_class: power
+  state_class: measurement
+- id: 9208
+  name: Remaining charge time
+  description: Remaining charge time
+  type: num
+  synthetic: true
+  key: phone_remaining_charge_time
+  labels: {}
+  ha_type: sensor
+  unit: s
+  icon: mdi:battery-clock
+  device_class: duration
+  state_class: measurement
+- id: 9209
+  name: Connection type
+  description: Connection type
+  type: enum
+  synthetic: true
+  key: phone_connection_type
+  labels: {}
+  ha_type: sensor
+  icon: mdi:network-outline
+- id: 9210
+  name: Wi-Fi SSID
+  description: Wi-Fi SSID
+  type: enum
+  synthetic: true
+  key: phone_wifi_ssid
+  labels: {}
+  ha_type: sensor
+  icon: mdi:wifi
+- id: 9211
+  name: Wi-Fi BSSID
+  description: Wi-Fi BSSID
+  type: enum
+  synthetic: true
+  key: phone_wifi_bssid
+  labels: {}
+  ha_type: sensor
+  icon: mdi:wifi
+- id: 9212
+  name: Wi-Fi frequency
+  description: Wi-Fi frequency
+  type: num
+  synthetic: true
+  key: phone_wifi_frequency
+  labels: {}
+  ha_type: sensor
+  unit: MHz
+  icon: mdi:wifi
+  device_class: frequency
+  state_class: measurement
+- id: 9213
+  name: Wi-Fi IP
+  description: Wi-Fi IP
+  type: enum
+  synthetic: true
+  key: phone_wifi_ip
+  labels: {}
+  ha_type: sensor
+  icon: mdi:ip-network
+- id: 9214
+  name: Wi-Fi link speed
+  description: Wi-Fi link speed
+  type: num
+  synthetic: true
+  key: phone_wifi_link_speed
+  labels: {}
+  ha_type: sensor
+  unit: Mbit/s
+  icon: mdi:speedometer
+  device_class: data_rate
+  state_class: measurement
+- id: 9215
+  name: Wi-Fi signal
+  description: Wi-Fi signal
+  type: num
+  synthetic: true
+  key: phone_wifi_signal
+  labels: {}
+  ha_type: sensor
+  unit: dBm
+  icon: mdi:wifi
+  device_class: signal_strength
+  state_class: measurement
+- id: 9216
+  name: Wi-Fi state
+  description: Wi-Fi state
+  type: enum
+  synthetic: true
+  key: phone_wifi_state
+  labels: {}
+  ha_type: binary_sensor
+  device_class: connectivity
+  truthy:
+  - 'enabled'
+- id: 9217
+  name: Hotspot state
+  description: Hotspot state
+  type: enum
+  synthetic: true
+  key: phone_hotspot_state
+  labels: {}
+  ha_type: binary_sensor
+  truthy:
+  - 'true'
+- id: 9218
+  name: Transport type
+  description: Transport type
+  type: enum
+  synthetic: true
+  key: phone_transport_type
+  labels: {}
+  ha_type: sensor
+  icon: mdi:network-outline
+- id: 9219
+  name: Screen brightness
+  description: Screen brightness
+  type: num
+  synthetic: true
+  key: phone_screen_brightness
+  labels: {}
+  ha_type: sensor
+  icon: mdi:brightness-6
+  state_class: measurement
+- id: 9220
+  name: Screen off timeout
+  description: Screen off timeout
+  type: num
+  synthetic: true
+  key: phone_screen_off_timeout
+  labels: {}
+  ha_type: sensor
+  unit: ms
+  icon: mdi:timer-off
+  device_class: duration
+  state_class: measurement
+- id: 9221
+  name: Screen orientation
+  description: Screen orientation
+  type: enum
+  synthetic: true
+  key: phone_screen_orientation
+  labels: {}
+  ha_type: sensor
+  icon: mdi:screen-rotation
+- id: 9222
+  name: Screen rotation
+  description: Screen rotation
+  type: num
+  synthetic: true
+  key: phone_screen_rotation
+  labels: {}
+  ha_type: sensor
+  unit: deg
+  icon: mdi:screen-rotation
+  state_class: measurement
+- id: 9223
+  name: Doze mode
+  description: Doze mode
+  type: enum
+  synthetic: true
+  key: phone_doze
+  labels: {}
+  ha_type: binary_sensor
+  truthy:
+  - 'true'
+- id: 9224
+  name: Interactive
+  description: Interactive
+  type: enum
+  synthetic: true
+  key: phone_interactive
+  labels: {}
+  ha_type: binary_sensor
+  truthy:
+  - 'true'
+- id: 9225
+  name: Power save
+  description: Power save
+  type: enum
+  synthetic: true
+  key: phone_power_save
+  labels: {}
+  ha_type: binary_sensor
+  truthy:
+  - 'true'
+- id: 9226
+  name: Ringer mode
+  description: Ringer mode
+  type: enum
+  synthetic: true
+  key: phone_ringer_mode
+  labels: {}
+  ha_type: sensor
+  icon: mdi:volume-high
+- id: 9227
+  name: Audio mode
+  description: Audio mode
+  type: enum
+  synthetic: true
+  key: phone_audio_mode
+  labels: {}
+  ha_type: sensor
+  icon: mdi:volume-high
+- id: 9228
+  name: Headphones connected
+  description: Headphones connected
+  type: enum
+  synthetic: true
+  key: phone_is_headphones
+  labels: {}
+  ha_type: binary_sensor
+  truthy:
+  - 'true'
+- id: 9229
+  name: Microphone muted
+  description: Microphone muted
+  type: enum
+  synthetic: true
+  key: phone_is_mic_muted
+  labels: {}
+  ha_type: binary_sensor
+  truthy:
+  - 'true'
+- id: 9230
+  name: Speakerphone
+  description: Speakerphone
+  type: enum
+  synthetic: true
+  key: phone_is_speakerphone_on
+  labels: {}
+  ha_type: binary_sensor
+  truthy:
+  - 'true'
+- id: 9231
+  name: Music active
+  description: Music active
+  type: enum
+  synthetic: true
+  key: phone_is_music_active
+  labels: {}
+  ha_type: binary_sensor
+  device_class: running
+  truthy:
+  - 'true'
+- id: 9232
+  name: Music volume
+  description: Music volume
+  type: num
+  synthetic: true
+  key: phone_volume_music
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:volume-high
+  state_class: measurement
+- id: 9233
+  name: Memory used
+  description: Memory used
+  type: num
+  synthetic: true
+  key: phone_memory_used
+  labels: {}
+  ha_type: sensor
+  unit: B
+  icon: mdi:memory
+  device_class: data_size
+  state_class: measurement
+- id: 9234
+  name: Memory free
+  description: Memory free
+  type: num
+  synthetic: true
+  key: phone_memory_free
+  labels: {}
+  ha_type: sensor
+  unit: B
+  icon: mdi:memory
+  device_class: data_size
+  state_class: measurement
+- id: 9235
+  name: Internal storage free
+  description: Internal storage free
+  type: num
+  synthetic: true
+  key: phone_storage_internal_free
+  labels: {}
+  ha_type: sensor
+  unit: B
+  icon: mdi:harddisk
+  device_class: data_size
+  state_class: measurement
+- id: 9236
+  name: Internal storage total
+  description: Internal storage total
+  type: num
+  synthetic: true
+  key: phone_storage_internal_total
+  labels: {}
+  ha_type: sensor
+  unit: B
+  icon: mdi:harddisk
+  device_class: data_size
+  state_class: measurement
+- id: 9237
+  name: External storage free
+  description: External storage free
+  type: num
+  synthetic: true
+  key: phone_storage_external_free
+  labels: {}
+  ha_type: sensor
+  unit: B
+  icon: mdi:harddisk
+  device_class: data_size
+  state_class: measurement
+- id: 9238
+  name: External storage total
+  description: External storage total
+  type: num
+  synthetic: true
+  key: phone_storage_external_total
+  labels: {}
+  ha_type: sensor
+  unit: B
+  icon: mdi:harddisk
+  device_class: data_size
+  state_class: measurement
+- id: 9239
+  name: Data sent
+  description: Data sent
+  type: num
+  synthetic: true
+  key: phone_data_tx
+  labels: {}
+  ha_type: sensor
+  unit: B
+  icon: mdi:upload-network
+  device_class: data_size
+  state_class: total_increasing
+- id: 9240
+  name: Data received
+  description: Data received
+  type: num
+  synthetic: true
+  key: phone_data_rx
+  labels: {}
+  ha_type: sensor
+  unit: B
+  icon: mdi:download-network
+  device_class: data_size
+  state_class: total_increasing
+- id: 9241
+  name: SIM carrier
+  description: SIM carrier
+  type: enum
+  synthetic: true
+  key: phone_sim_carrier
+  labels: {}
+  ha_type: sensor
+  icon: mdi:sim
+- id: 9242
+  name: SIM country
+  description: SIM country
+  type: enum
+  synthetic: true
+  key: phone_sim_country
+  labels: {}
+  ha_type: sensor
+  icon: mdi:flag
+- id: 9243
+  name: Android version
+  description: Android version
+  type: enum
+  synthetic: true
+  key: phone_android_os_version
+  labels: {}
+  ha_type: sensor
+  icon: mdi:android
+- id: 9244
+  name: Security patch
+  description: Security patch
+  type: enum
+  synthetic: true
+  key: phone_android_os_security_patch
+  labels: {}
+  ha_type: sensor
+  icon: mdi:shield-check
+- id: 9245
+  name: Time zone
+  description: Time zone
+  type: enum
+  synthetic: true
+  key: phone_time_zone
+  labels: {}
+  ha_type: sensor
+  icon: mdi:clock-outline
+- id: 9246
+  name: Last reboot
+  description: Last reboot
+  type: num
+  synthetic: true
+  key: phone_last_reboot
+  labels: {}
+  ha_type: sensor
+  icon: mdi:restart
+- id: 9247
+  name: Steps
+  description: Steps
+  type: num
+  synthetic: true
+  key: phone_steps
+  labels: {}
+  ha_type: sensor
+  unit: steps
+  icon: mdi:walk
+  state_class: measurement
+- id: 9248
+  name: Activity
+  description: Activity
+  type: enum
+  synthetic: true
+  key: phone_activity
+  labels: {}
+  ha_type: sensor
+  icon: mdi:run
+- id: 9249
+  name: Location latitude
+  description: Location latitude
+  type: num
+  synthetic: true
+  key: phone_location_lat
+  labels: {}
+  ha_type: sensor
+  unit: deg
+  icon: mdi:latitude
+  state_class: measurement
+- id: 9250
+  name: Location longitude
+  description: Location longitude
+  type: num
+  synthetic: true
+  key: phone_location_lon
+  labels: {}
+  ha_type: sensor
+  unit: deg
+  icon: mdi:longitude
+  state_class: measurement
+- id: 9251
+  name: Light
+  description: Light
+  type: num
+  synthetic: true
+  key: phone_light
+  labels: {}
+  ha_type: sensor
+  unit: lx
+  icon: mdi:brightness-5
+  device_class: illuminance
+  state_class: measurement
+- id: 9252
+  name: Proximity
+  description: Proximity
+  type: num
+  synthetic: true
+  key: phone_proximity
+  labels: {}
+  ha_type: sensor
+  unit: cm
+  icon: mdi:signal-distance-variant
+  state_class: measurement
+- id: 9253
+  name: Pressure
+  description: Pressure
+  type: num
+  synthetic: true
+  key: phone_pressure
+  labels: {}
+  ha_type: sensor
+  unit: hPa
+  icon: mdi:gauge
+  device_class: pressure
+  state_class: measurement

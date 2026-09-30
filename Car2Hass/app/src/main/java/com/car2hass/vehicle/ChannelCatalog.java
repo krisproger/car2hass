@@ -15,6 +15,7 @@ public final class ChannelCatalog {
 
     /** Creates the channel instance for a registry id, or null if unknown. */
     public static DataChannel create(String id) {
+        if (!ChannelIds.hasImplementation(id)) return null;
         if ("diplus".equals(id)) return new DiPlusChannel();
         if ("adb".equals(id) || "native".equals(id)) return new NativeChannel(); // "native": legacy id
         if ("dumpsys".equals(id)) return new SysPropsChannel();
