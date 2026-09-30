@@ -81,6 +81,9 @@ public final class UpdateDownloader {
             } finally {
                 conn.disconnect();
             }
+        } catch (java.net.UnknownHostException | java.net.SocketTimeoutException e) {
+            LogBuffer.w("UpdateDownloader", "httpGet transient: " + url + ": " + e.getClass().getSimpleName());
+            throw e;
         } catch (Exception e) {
             LogBuffer.e("UpdateDownloader", "httpGet failed url=" + url + ": "
                     + e.getClass().getSimpleName() + ": " + e.getMessage());

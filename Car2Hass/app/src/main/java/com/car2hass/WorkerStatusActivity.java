@@ -43,7 +43,7 @@ public class WorkerStatusActivity extends BaseLocalizedActivity {
 
         TelemetryService svc = MainActivity.getTelemetryService();
         if (svc == null) {
-            container.addView(row(getString(R.string.worker_status_no_service), R.color.textSecondary));
+            row(getString(R.string.worker_status_no_service), R.color.textSecondary);
             handler.postDelayed(refreshRunnable, REFRESH_MS);
             return;
         }
@@ -92,6 +92,7 @@ public class WorkerStatusActivity extends BaseLocalizedActivity {
         row(text, R.color.textSecondary);
     }
 
+    /** Creates a row TextView, adds it to the container, and returns it. */
     private TextView row(String text, int colorRes) {
         TextView tv = new TextView(this);
         tv.setText(text);

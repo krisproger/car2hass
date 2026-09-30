@@ -115,7 +115,7 @@ public final class PullChannelWorker implements ChannelWorker {
                 String raw = item.value.replace(',', '.');
                 ValueStore.putRaw(item.key, raw);
                 String translated = SignalTranslator.translateEnumValue(item.key, raw);
-                store.put(item.key, translated, channel.id());
+                store.put(item.key, SignalCanonicalizer.canonical(item.key, translated, channel.id()), channel.id());
                 written++;
             }
         }

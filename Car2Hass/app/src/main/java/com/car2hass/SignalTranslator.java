@@ -199,15 +199,27 @@ public class SignalTranslator {
             "persist_sys_byd_default_name", "persist_sys_byd_bluetooth_name",
             "persist_sys_byd_theme", "persist_sys_vehicle_40d_code",
             "persist_sys_vehicle_sales_record", "persist_sys_vehicle_rudder_info",
-            "vehicle_config_map", "sys_byd_cdr_recording", "sys_byd_pano"
+            "vehicle_config_map", "sys_byd_cdr_recording", "sys_byd_pano",
+            "location_provider", "location_accuracy"
     ));
+
+    /** True when a key carries free-form identifiers and must not warn when untranslated. */
+    static boolean isFreeTextKey(String key) {
+        return key != null && FREE_TEXT_KEYS.contains(key);
+    }
 
     // Numeric sensors may return values that are not Chinese labels and should
     // not produce "untranslated" warnings.
     //   ∞  = infinity (e.g. energy_per_100km while the car is parked)
     //   NaN / - / — / N/A = numeric "no value" markers
     private static final Set<String> KNOWN_NUMERIC_VALUES = new HashSet<>(Arrays.asList(
-            "∞", "+∞", "-∞", "NaN", "-", "—", "N/A"
+            "∞", "+∞", "-∞", "NaN", "-", "—", "N/A",
+            "-2.147483648E8", "-2.147483648E9"
+    ));
+
+    // Already-English state values that need no translation and must not warn.
+    private static final Set<String> KNOWN_TEXT_VALUES = new HashSet<>(Arrays.asList(
+            "on", "off", "true", "false", "yes", "no"
     ));
 
     /** Translate a Chinese value string to English, or return the original value. */
@@ -300,6 +312,11 @@ public class SignalTranslator {
         // (valid numeric result, e.g. consumption while parked) or NaN / —.
         // Keep the raw value and do not log a warning.
         if (KNOWN_NUMERIC_VALUES.contains(trimmed)) {
+            return text;
+        }
+
+        // Already-English boolean/state values need no translation and must not warn.
+        if (KNOWN_TEXT_VALUES.contains(trimmed.toLowerCase())) {
             return text;
         }
 

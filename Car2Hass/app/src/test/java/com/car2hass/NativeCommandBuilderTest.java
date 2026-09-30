@@ -22,10 +22,10 @@ public class NativeCommandBuilderTest {
 
     private static void testBuildTwoEntries() {
         List<NativeSignalMap.FidEntry> entries = new ArrayList<>();
-        entries.add(NativeSignalMap.get("soc"));
+        entries.add(NativeSignalMap.get("speed"));
         entries.add(NativeSignalMap.get("range"));
         String cmd = NativeCommandBuilder.build(entries);
-        assertContains(cmd, "echo \"@soc\"; service call autoservice 7 i32 1014 i32 1246777400", "soc tx7");
+        assertContains(cmd, "echo \"@speed\"; service call autoservice 7 i32 1013 i32 -1807745016", "speed tx7");
         assertContains(cmd, "echo \"@range\"; service call autoservice 5 i32 1014 i32 1246765072", "range tx5");
         if (!cmd.contains("; ")) {
             throw new AssertionError("entries must be joined with '; ', got: " + cmd);

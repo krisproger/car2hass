@@ -68,7 +68,6 @@ public final class NativeSignalMap {
 
     private static Map<String, FidEntry> buildEntries() {
         Map<String, FidEntry> m = new LinkedHashMap<>();
-        add(m, "soc", 1014, 1246777400, 7, ParamDecoder.FLOAT_PERCENT, 1.0);
         add(m, "speed", 1013, -1807745016, 7, ParamDecoder.FLOAT_KW, 1.0);
         add(m, "range", 1014, 1246765072, 5, ParamDecoder.INT_SCALED, 0.1);
         add(m, "gear", 1011, 555745336, 5, ParamDecoder.INT_ENUM, 1.0);
@@ -78,8 +77,6 @@ public final class NativeSignalMap {
         add(m, "battery_12v_voltage", 1001, 1128267816, 7, ParamDecoder.FLOAT_VOLT, 1.0);
         add(m, "battery_temp_max", 1014, 1148190752, 5, ParamDecoder.INT_TEMP_C_OFS40, 1.0);
         add(m, "battery_temp_min", 1014, 1148190736, 5, ParamDecoder.INT_TEMP_C_OFS40, 1.0);
-        add(m, "cell_voltage_max", 1014, 1147142192, 5, ParamDecoder.INT_SCALED, 0.001);
-        add(m, "cell_voltage_min", 1014, 1147142160, 5, ParamDecoder.INT_SCALED, 0.001);
         add(m, "cabin_temp", 1000, 1031798832, 5, ParamDecoder.INT_TEMP_C, 1.0);
         add(m, "outside_temp", 1000, 1077936184, 5, ParamDecoder.INT_TEMP_C, 1.0);
         add(m, "ac_set_temp", 1000, 1077936168, 5, ParamDecoder.INT_TEMP_C, 1.0);
@@ -109,7 +106,6 @@ public final class NativeSignalMap {
         add(m, "drive_mode", 1006, 555745294, 5, ParamDecoder.INT_ENUM, 1.0);
         add(m, "powertrain_mode", 1006, 874512420, 5, ParamDecoder.INT_ENUM, 1.0);
         add(m, "power_state", 1023, 315621408, 5, ParamDecoder.INT_ENUM, 1.0);
-        add(m, "charging_state", 1009, 876609560, 5, ParamDecoder.INT_ENUM, 1.0);
         add(m, "turn_signal", 1004, 950009900, 5, ParamDecoder.INT_ENUM, 1.0);
         return m;
     }

@@ -5,13 +5,14 @@ public class WorkerRetryPolicyTest {
     public static void main(String[] args) {
         WorkerRetryPolicy p = new WorkerRetryPolicy(2000, 30000);
 
-        if (p.onFailure() != 2000) throw new AssertionError("first failure -> base");
-        if (p.onFailure() != 4000) throw new AssertionError("second failure -> 2x");
-        if (p.onFailure() != 8000) throw new AssertionError("third failure -> 4x");
-        if (p.onFailure() != 16000) throw new AssertionError("fourth failure -> 8x");
-        if (p.onFailure() != 30000) throw new AssertionError("fifth failure -> capped");
+        if (p.onFailure() != 2000) throw new AssertionError("first failure -> base (soft)");
+        if (p.onFailure() != 2000) throw new AssertionError("second failure -> base (soft)");
+        if (p.onFailure() != 4000) throw new AssertionError("third failure -> 2x");
+        if (p.onFailure() != 8000) throw new AssertionError("fourth failure -> 4x");
+        if (p.onFailure() != 16000) throw new AssertionError("fifth failure -> 8x");
+        if (p.onFailure() != 30000) throw new AssertionError("sixth failure -> capped");
         if (p.onFailure() != 30000) throw new AssertionError("stays capped");
-        if (p.consecutiveFailures() != 6) throw new AssertionError("failure count");
+        if (p.consecutiveFailures() != 7) throw new AssertionError("failure count");
 
         if (p.onSuccess() != 2000) throw new AssertionError("success resets to base");
         if (p.consecutiveFailures() != 0) throw new AssertionError("failures reset");

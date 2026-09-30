@@ -84,20 +84,17 @@ def test_readme_download_links_match_manifest():
 
 
 @_release_only
-def test_site_index_matches_manifest():
-    text = _current_release_text(
-        (ROOT / "docs" / "cartelemetry" / "index.php").read_text(encoding="utf-8"),
-        '<details class="archive-block">',
-    )
-    links = set(re.findall(r"(?:car2hass|cartelemetry)-v([0-9][0-9.]*)\.(?:apk|zip)", text))
-    assert links == {_manifest_version()}, f"stale site download links: {links}"
+def test_version_registry_matches_manifest():
+    """The site's version registry ($RELEASES) top entry is the current release.
 
-
-@_release_only
-def test_site_download_php_matches_manifest():
-    text = (ROOT / "docs" / "cartelemetry" / "download.php").read_text(encoding="utf-8")
-    links = set(re.findall(r"(?:car2hass|cartelemetry)-v([0-9][0-9.]*)\.(?:apk|zip)", text))
-    assert links == {_manifest_version()}, f"stale download.php entries: {links}"
+    index.php / download.php resolve the version dynamically from this registry,
+    so there are no hardcoded download links to keep in sync.
+    """
+    text = (ROOT / "docs" / "cartelemetry" / "api" / "version" / "index.php").read_text(encoding="utf-8")
+    block = text.split("$RELEASES", 1)[1]
+    match = re.search(r"'([0-9][0-9.]*)'\s*=>", block)
+    assert match is not None, "$RELEASES first entry not found"
+    assert match.group(1) == _manifest_version(), f"registry top {match.group(1)} != {_manifest_version()}"
 
 
 @_release_only

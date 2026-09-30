@@ -159,6 +159,18 @@ public class VoyahChannel implements DataChannel {
     private static final String PATH_SM = "ServiceManager";
     private static final String PATH_BIND = "bindService";
 
+    /** Direct ServiceManager names to probe when listServices() is restricted. */
+    private static final String[] SERVICE_CANDIDATES = {
+            "canbus", "qg.canbus", "com.qinggan.canbus.ICanBusService"
+    };
+
+    /** (package, action) bind combinations tried in order; the first is the legacy route. */
+    private static final String[][] RAW_COMBOS = {
+            {RAW_PKG, RAW_ACTION},
+            {"com.qinggan.canbus", "com.qinggan.canbus.ICanBusService"},
+            {"com.qinggan.canbus.service", "com.qinggan.canbus.service.ICanBusService"},
+    };
+
     static final int RAW_INT = 0;
     static final int RAW_FLOAT = 1;
 
@@ -184,6 +196,8 @@ public class VoyahChannel implements DataChannel {
     private static volatile ClassLoader deviceCl;
     private volatile boolean probeFailed;
     private volatile boolean probed;
+    /** Whether the "channel down" line has already been logged this down-period. */
+    private volatile boolean downLogged;
     private volatile long lastProbeMs;
     private volatile boolean probing;
     private static final long PROBE_RETRY_MS = 60_000L;
@@ -258,7 +272,10 @@ public class VoyahChannel implements DataChannel {
         probed = true;
         String why = "ServiceManager=" + (smBinder == null ? "not-registered" : "no-readable-params")
                 + ", bindService=" + lastBindError;
-        LogBuffer.i("VoyahChannel", "channel down: " + why);
+        if (!downLogged) {
+            downLogged = true;
+            LogBuffer.i("VoyahChannel", "channel down: " + why);
+        }
         return ChannelResult.dead("сервис qinggan CANBus не найден (не Voyah?)");
     }
 
@@ -268,6 +285,7 @@ public class VoyahChannel implements DataChannel {
         if (ok > 1) {
             probeFailed = false;
             probed = true;
+            downLogged = false;
             LogBuffer.i("VoyahChannel", "values via " + path + "+reflection (" + ok + " params)");
             return ChannelResult.rawData("ICanBusService отвечает, параметров прочитано: " + ok);
         }
@@ -281,6 +299,7 @@ public class VoyahChannel implements DataChannel {
         if (soc != null) {
             probeFailed = false;
             probed = true;
+            downLogged = false;
             LogBuffer.i("VoyahChannel", "values via " + path + "+transact (SOC=" + soc + "%)");
             return ChannelResult.rawData("raw transact ok, SOC=" + soc + "%");
         }
@@ -495,6 +514,15 @@ public class VoyahChannel implements DataChannel {
     /** Binds to the exported CanBusService; true when a live binder was obtained. */
     private boolean bindRaw(Context ctx, long timeoutMs) {
         if (cachedBinder != null && cachedBinder.pingBinder()) return true;
+        // Try the known (package, action) combinations; bound each attempt so a
+        // rejected route cannot stall the probe cycle.
+        for (String[] combo : RAW_COMBOS) {
+            if (tryBind(ctx, combo[0], combo[1], Math.min(timeoutMs, 3000L))) return true;
+        }
+        return false;
+    }
+
+    private boolean tryBind(Context ctx, String pkg, String action, long timeoutMs) {
         try {
             rawContext = ctx.getApplicationContext();
             final java.util.concurrent.CountDownLatch latch =
@@ -508,23 +536,21 @@ public class VoyahChannel implements DataChannel {
                     cachedBinder = null;
                 }
             };
-            android.content.Intent intent = new android.content.Intent(RAW_ACTION).setPackage(RAW_PKG);
+            android.content.Intent intent = new android.content.Intent(action).setPackage(pkg);
             if (!rawContext.bindService(intent, conn, Context.BIND_AUTO_CREATE)) {
-                lastBindError = "bindService-false";
-                LogBuffer.d("VoyahChannel", "bindService(qg.canbus) returned false");
+                lastBindError = "bindService-false(" + pkg + "/" + action + ")";
                 return false;
             }
             if (!latch.await(timeoutMs, java.util.concurrent.TimeUnit.MILLISECONDS)) {
-                lastBindError = "timeout(" + timeoutMs + "ms)";
-                LogBuffer.d("VoyahChannel", "bind timeout");
+                lastBindError = "timeout(" + pkg + "/" + action + ")";
+                try { rawContext.unbindService(conn); } catch (Throwable ignored) {}
                 return false;
             }
             boolean ok = cachedBinder != null && cachedBinder.pingBinder();
-            if (!ok) lastBindError = "no-live-binder";
+            if (!ok) lastBindError = "no-live-binder(" + pkg + "/" + action + ")";
             return ok;
         } catch (Exception e) {
-            lastBindError = e.getClass().getSimpleName();
-            LogBuffer.d("VoyahChannel", "bindRaw: " + e.getClass().getSimpleName());
+            lastBindError = e.getClass().getSimpleName() + "(" + pkg + "/" + action + ")";
             return false;
         }
     }
@@ -728,6 +754,13 @@ public class VoyahChannel implements DataChannel {
                     } catch (Throwable ignored) {}
                 }
             }
+            // listServices() can be restricted on some heads; probe known names directly.
+            for (String name : SERVICE_CANDIDATES) {
+                try {
+                    IBinder b = (IBinder) getService.invoke(null, name);
+                    if (b != null) return b;
+                } catch (Throwable ignored) {}
+            }
         } catch (Throwable ignored) {}
         return null;
     }
@@ -784,7 +817,10 @@ public class VoyahChannel implements DataChannel {
     }
 
     private static String stringify(Object v) {
-        if (v instanceof Number) return v.toString();
+        if (v instanceof Number) {
+            if (com.car2hass.SentinelDecoder.isSentinelNumber((Number) v)) return null;
+            return v.toString();
+        }
         String s = String.valueOf(v);
         return s.isEmpty() ? null : s;
     }

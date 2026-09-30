@@ -43,7 +43,11 @@ markdown_extensions:
   - toc:
       permalink: true
   - pymdownx.details
-  - pymdownx.superfences
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
   - pymdownx.highlight:
       anchor_linenums: true
   - pymdownx.inlinehilite
@@ -76,6 +80,7 @@ nav:
     - Диагностика и FAQ: advanced/troubleshooting.md
   - История версий: changelog.md
   - Поддержать проект: donate.md
+  - Графы проекта: graphs.md
 
 extra:
   generator: false

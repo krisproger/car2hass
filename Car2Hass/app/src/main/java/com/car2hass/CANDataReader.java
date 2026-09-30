@@ -63,8 +63,6 @@ public class CANDataReader {
     private static final int CONNECT_TIMEOUT_MS = 3000;
     private static final int READ_TIMEOUT_MS = 8000;
     private static final int GETDIPARS_GROUP_SIZE = 20;
-    private static final long PING_CACHE_TTL_MS = 30000;
-    private static final long LAUNCH_COOLDOWN_MS = 60000;
 
     // Unit Separator is used to delimit values in getDiPars template. It is far less
     // likely to appear in signal values than a comma.
@@ -196,6 +194,13 @@ public class CANDataReader {
     private static volatile long lastPingSuccess = 0;
     private static volatile long lastPingFailure = 0;
     private static volatile long lastLaunchAttempt = 0;
+    /** Last time a real DiPlus API read returned data (the reliable liveness signal). */
+    private static volatile long lastReadSuccessMs = 0;
+    /** Service start time, used for the cold-start fast path. */
+    private static volatile long serviceStartMs = 0;
+    /** Single-flight guard for the async DiPlus launch. */
+    private static final java.util.concurrent.atomic.AtomicBoolean diplusLaunching =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
 
     public static String sVin = "---";
     public static String sFirmware = "---";
@@ -696,6 +701,7 @@ public class CANDataReader {
      */
     public static void resetRefreshState() {
         refreshing.set(false);
+        serviceStartMs = System.currentTimeMillis();
         LogBuffer.i("CANReader", "Refresh state reset");
     }
 
@@ -917,8 +923,14 @@ public class CANDataReader {
 
     public static boolean isDiplusAlive() {
         long now = System.currentTimeMillis();
-        if (now - lastPingSuccess < PING_CACHE_TTL_MS) return true;
-        if (now - lastPingFailure < PING_CACHE_TTL_MS / 2) return false;
+        if (com.car2hass.vehicle.DiPlusHealth.isAlive(now, lastReadSuccessMs, lastPingSuccess, lastPingFailure)) {
+            return true;
+        }
+        // Negative cache: skip probing until it expires (shorter during cold start).
+        if (lastPingFailure > 0 && now - lastPingFailure
+                < com.car2hass.vehicle.DiPlusHealth.negativeTtlMs(now, serviceStartMs)) {
+            return false;
+        }
         boolean alive = diplusPing();
         if (alive) lastPingSuccess = now;
         else lastPingFailure = now;
@@ -927,34 +939,57 @@ public class CANDataReader {
 
     private static List<CANDataItem> tryHttpApi(Context context, List<CANDataItem> items) {
         LogBuffer.i("CANReader", "=== DiPlus: batch read via getDiPars ===");
-        if (!isDiplusAlive()) {
-            long now = System.currentTimeMillis();
-            if (now - lastLaunchAttempt > LAUNCH_COOLDOWN_MS) {
-                lastLaunchAttempt = now;
-                LogBuffer.w("CANReader", "diplus not responding on 127.0.0.1:8988; trying to launch");
-                launchDiplus(context);
-                try {
-                    Thread.sleep(3000);
-                } catch (InterruptedException ignored) {}
-            } else {
-                LogBuffer.d("CANReader", "diplus not responding, launch on cooldown");
-            }
-            if (!isDiplusAlive()) {
-                LogBuffer.w("CANReader", "diplus still not responding");
-                return null;
-            }
-        }
 
-        // Primary: batch read via getDiPars
+        // Health is defined by a real read, so always attempt it first: the ping
+        // (GET /) can fail while the API works, and gating on it would block recovery.
         List<CANDataItem> result = diplusGetDiPars(context, items);
         if (result != null && !result.isEmpty()) {
+            lastReadSuccessMs = System.currentTimeMillis();
             LogBuffer.i("CANReader", "diplus getDiPars returned " + result.size() + " signal values");
             return result;
         }
 
         // Fallback: individual getVal calls
         LogBuffer.i("CANReader", "getDiPars returned no data, falling back to individual getVal");
-        return diplusReadSignals(context, items);
+        List<CANDataItem> fallback = diplusReadSignals(context, items);
+        if (fallback != null && !fallback.isEmpty()) {
+            lastReadSuccessMs = System.currentTimeMillis();
+            return fallback;
+        }
+
+        // No data at all: if DiPlus looks down, launch it (async, single-flight) for the next cycle.
+        if (!isDiplusAlive()) {
+            maybeLaunchDiplus(context);
+            LogBuffer.w("CANReader", "diplus not reachable this cycle");
+        }
+        return null;
+    }
+
+    /** Marks DiPlus as alive from a successful API call (e.g. a command). */
+    public static void markDiplusReadSuccess() {
+        lastReadSuccessMs = System.currentTimeMillis();
+    }
+
+    /** Launches DiPlus asynchronously, single-flight and throttled by the cold-start cooldown. */
+    private static void maybeLaunchDiplus(Context context) {
+        long now = System.currentTimeMillis();
+        if (now - lastLaunchAttempt <= com.car2hass.vehicle.DiPlusHealth.launchCooldownMs(now, serviceStartMs)) {
+            LogBuffer.d("CANReader", "diplus not responding, launch on cooldown");
+            return;
+        }
+        if (!diplusLaunching.compareAndSet(false, true)) return;
+        lastLaunchAttempt = now;
+        LogBuffer.w("CANReader", "diplus not responding; launching asynchronously");
+        final Context c = context;
+        Thread t = new Thread(() -> {
+            try {
+                launchDiplus(c);
+            } finally {
+                diplusLaunching.set(false);
+            }
+        }, "diplus-launch");
+        t.setDaemon(true);
+        t.start();
     }
 
     private static List<CANDataItem> diplusGetDiPars(Context context, List<CANDataItem> items) {

@@ -9,12 +9,15 @@ import java.util.UUID;
 
 public class Rule {
 
+    /** Default level-rule cooldown; edge rules ignore it unless explicitly lowered. */
+    public static final long DEFAULT_MIN_INTERVAL_SEC = 1800;
+
     public String id;
     public String name;
     public boolean enabled = true;
     public boolean fireOnRisingEdge = true;
     public boolean fireOncePerSession = false;
-    public long minIntervalSec = 1800;
+    public long minIntervalSec = DEFAULT_MIN_INTERVAL_SEC;
     public long antiLoopWindowSec = 60;
     public long holdSeconds = 0;
     public long lastExecutedAtMs = 0;
@@ -39,7 +42,7 @@ public class Rule {
         r.enabled = o.optBoolean("enabled", true);
         r.fireOnRisingEdge = o.optBoolean("fireOnRisingEdge", true);
         r.fireOncePerSession = o.optBoolean("fireOncePerSession", false);
-        r.minIntervalSec = o.optLong("minIntervalSec", 1800);
+        r.minIntervalSec = o.optLong("minIntervalSec", DEFAULT_MIN_INTERVAL_SEC);
         r.antiLoopWindowSec = o.optLong("antiLoopWindowSec", 60);
         r.holdSeconds = o.optLong("holdSeconds", 0);
         // The old 30-minute default anti-loop window was far too long for

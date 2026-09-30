@@ -23,7 +23,8 @@ public final class RuleEdgeLogic {
     public enum Suppress {
         NONE,
         MISSING,
-        RESTORED
+        RESTORED,
+        STALE
     }
 
     public static final class Suppression {
@@ -83,6 +84,19 @@ public final class RuleEdgeLogic {
     public static Suppression detectSuppression(List<RuleCondition> conditions,
             Function<String, String> valueLookup,
             Predicate<String> restoredLookup) {
+        return detectSuppression(conditions, valueLookup, restoredLookup, null, 0L);
+    }
+
+    /**
+     * As above, plus an age-based staleness guard: a referenced sensor whose value
+     * has not updated within {@code staleMs} (age from {@code ageLookup}) blocks the
+     * rule as {@link Suppress#STALE}. Uses the same value-age notion as the telemetry
+     * tab; it does not introduce an "unknown" state.
+     */
+    public static Suppression detectSuppression(List<RuleCondition> conditions,
+            Function<String, String> valueLookup,
+            Predicate<String> restoredLookup,
+            Function<String, Long> ageLookup, long staleMs) {
         if (conditions == null) return new Suppression(Suppress.NONE, null);
         for (RuleCondition c : conditions) {
             if (c == null || c.sensorKey == null || c.sensorKey.isEmpty()) continue;
@@ -91,6 +105,12 @@ public final class RuleEdgeLogic {
             }
             if (restoredLookup != null && Boolean.TRUE.equals(restoredLookup.test(c.sensorKey))) {
                 return new Suppression(Suppress.RESTORED, c.sensorKey);
+            }
+            if (ageLookup != null) {
+                Long age = ageLookup.apply(c.sensorKey);
+                if (age != null && age >= 0 && age > staleMs) {
+                    return new Suppression(Suppress.STALE, c.sensorKey);
+                }
             }
         }
         return new Suppression(Suppress.NONE, null);

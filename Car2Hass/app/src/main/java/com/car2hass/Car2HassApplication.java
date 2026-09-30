@@ -14,5 +14,8 @@ public class Car2HassApplication extends Application {
         LogBuffer.setSink(manager::log);
         manager.start();
         new CrashLogger(this).register();
+        if (AppConfig.isCloudSettingsEnabled(this)) {
+            CloudSettingsSync.syncAsync(this, "app_start");
+        }
     }
 }

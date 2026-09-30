@@ -866,4 +866,18 @@
     <string name="settings_section_cloud">Облачная синхронизация</string>
     <string name="settings_cloud_disconnect">Отключить</string>
     <string name="settings_cloud_disconnected">Отключено от облака</string>
+    <string name="settings_cloud_settings_toggle">Хранить настройки в облаке</string>
+    <string name="settings_cloud_store_secret">Также хранить секрет подключения к УД</string>
+    <string name="settings_cloud_sync_now">Синхронизировать сейчас</string>
+    <string name="settings_cloud_clone">Клонировать настройки с другого авто</string>
+    <string name="settings_cloud_settings_hint">Конфиг, правила и геозоны хранятся в папке устройства и синхронизируются в обе стороны (побеждает более новый файл).</string>
+    <string name="settings_cloud_clone_title">Клонирование настроек: авто-источник</string>
+    <string name="settings_cloud_clone_none">В облаке не найдено папок авто.</string>
+    <string name="settings_cloud_clone_secret">Также скопировать секрет подключения к УД</string>
+    <string name="settings_cloud_clone_secret_confirm">Скопировать секрет подключения на это авто? Только если оба авто работают с одним умным домом («одна семья — один сервер»).</string>
+    <string name="settings_cloud_clone_ok">Настройки склонированы</string>
+    <string name="settings_cloud_clone_failed">Не удалось склонировать: %1$s</string>
+    <string name="settings_cloud_sync_ok">Настройки синхронизированы</string>
+    <string name="settings_cloud_sync_failed">Не удалось синхронизировать: %1$s</string>
+    <string name="settings_cloud_login_needed">Сначала войдите в облако</string>
 </resources>

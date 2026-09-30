@@ -34,6 +34,16 @@ public class ChannelPriorityTest {
         if (ChannelPriority.shouldAccept(5, 100L, 5, 50L))
             throw new AssertionError("same rank/older ignored");
 
+        // Freshness: a fresh value from any channel beats a stale higher-priority value.
+        long now = 1_000_000L;
+        long stale = now - ChannelPriority.STALE_MS - 1;
+        if (!ChannelPriority.shouldAccept(ChannelPriority.rank("adb"), stale,
+                ChannelPriority.rank("diplus"), now))
+            throw new AssertionError("fresh lower-priority value must replace a stale higher-priority one");
+        if (!ChannelPriority.shouldAccept(ChannelPriority.rank("diplus"), now,
+                ChannelPriority.rank("adb"), now))
+            throw new AssertionError("fresh adb must still win");
+
         System.out.println("All ChannelPriority tests passed.");
     }
 }

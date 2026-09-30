@@ -12,8 +12,27 @@ public class SentinelDecoderTest {
         testIntSentinels();
         testFloatSentinels();
         testParseFloatFromShellInt();
+        testNumberSentinel();
 
         System.out.println("All SentinelDecoder tests passed.");
+    }
+
+    private static void testNumberSentinel() {
+        assertTrue(SentinelDecoder.isSentinelNumber(Integer.MIN_VALUE), "Integer.MIN_VALUE");
+        assertTrue(SentinelDecoder.isSentinelNumber(-9999), "-9999");
+        assertTrue(SentinelDecoder.isSentinelNumber(-2.147483648E8f), "scaled MIN_VALUE float");
+        assertTrue(SentinelDecoder.isSentinelNumber(Float.NaN), "NaN");
+        assertFalse(SentinelDecoder.isSentinelNumber(25), "25 valid");
+        assertFalse(SentinelDecoder.isSentinelNumber(-0.5f), "-0.5 valid");
+        assertFalse(SentinelDecoder.isSentinelNumber(120), "120 valid");
+    }
+
+    private static void assertTrue(boolean v, String what) {
+        if (!v) throw new AssertionError(what + ": expected true");
+    }
+
+    private static void assertFalse(boolean v, String what) {
+        if (v) throw new AssertionError(what + ": expected false");
     }
 
     private static void testIntSentinels() {

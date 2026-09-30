@@ -112,4 +112,63 @@
         android:paddingTop="6dp"
         android:textColor="?attr/carTextSecondary"
         android:textSize="13sp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="8dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/settings_cloud_settings_toggle"
+            android:textColor="?attr/carTextSecondary"
+            android:textSize="14sp" />
+
+        <android.widget.Switch
+            android:id="@+id/switchCloudSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/settings_cloud_store_secret"
+            android:textColor="?attr/carTextSecondary"
+            android:textSize="14sp" />
+
+        <android.widget.Switch
+            android:id="@+id/switchCloudStoreSecret"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnCloudSyncNow"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/surfaceVariant"
+        android:textColor="@color/accentGreen"
+        android:textSize="14sp"
+        android:text="@string/settings_cloud_sync_now" />
+
+    <Button
+        android:id="@+id/btnCloudClone"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="6dp"
+        android:background="@color/surfaceVariant"
+        android:textColor="@color/accentGreen"
+        android:textSize="14sp"
+        android:text="@string/settings_cloud_clone" />
 </LinearLayout>

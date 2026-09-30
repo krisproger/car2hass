@@ -78,7 +78,14 @@ public final class UploadQueueWorker {
                 return LogUploader.upload(ctx, e.message,
                         new String(bytes, java.nio.charset.StandardCharsets.UTF_8), e.id);
             }
-            return ProbeUploader.upload(ctx, e.path);
+            ProbeUploader.Result r = ProbeUploader.uploadResult(ctx, e.path);
+            if (r.ok) return true;
+            if (!ProbeUploadPolicy.isRetryableCode(r.code)) {
+                // 429: retrying now will not clear the server window — drop the stale entry.
+                LogBuffer.i("UploadQueueWorker", "probe entry dropped (code=" + r.code + ")");
+                return true;
+            }
+            return false;
         } catch (Exception ex) {
             LogBuffer.w("UploadQueueWorker", "send " + e.kind + ": " + ex.getMessage());
             return false;

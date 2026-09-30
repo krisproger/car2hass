@@ -119,6 +119,9 @@ javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2
 echo "=== Compiling RuleEdgeLogicTest ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/rules/RuleEdgeLogicTest.java"
 
+echo "=== Compiling RuleStalenessTest ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/rules/RuleStalenessTest.java"
+
 echo "=== Compiling RuleTriggerLogic (per-condition trigger state) ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/rules/RuleTriggerLogic.java"
 
@@ -233,6 +236,42 @@ javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2
 
 echo "=== Compiling CloudBatchBufferTest ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/CloudBatchBufferTest.java"
+
+echo "=== Compiling CloudSyncDecision (pure) ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/CloudSyncDecision.java"
+
+echo "=== Compiling CloudSyncDecisionTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/CloudSyncDecisionTest.java"
+
+echo "=== Compiling CloudSettingsJson (pure, org.json) ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/CloudSettingsJson.java"
+
+echo "=== Compiling CloudSettingsJsonTest ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/CloudSettingsJsonTest.java"
+
+echo "=== Compiling ProbeUploadPolicy (pure) ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/ProbeUploadPolicy.java"
+
+echo "=== Compiling ProbeUploadDecisionTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/ProbeUploadDecisionTest.java"
+
+echo "=== Compiling LogUploadPolicy (pure) ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/LogRecord.java" "$SRC/com/car2hass/LogUploadPolicy.java"
+
+echo "=== Compiling LogUploadDecisionTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/LogUploadDecisionTest.java"
+
+echo "=== Compiling DiPlusHealth (pure) ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/vehicle/DiPlusHealth.java"
+
+echo "=== Compiling SignalCanonicalizer (pure) ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/vehicle/SignalCanonicalizer.java"
+
+echo "=== Compiling SignalCanonicalizerTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/SignalCanonicalizerTest.java"
+
+echo "=== Compiling DiPlusHealthTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/DiPlusHealthTest.java"
 
 echo "=== Compiling QueueIndicator (pure) ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/QueueIndicator.java"
@@ -500,6 +539,9 @@ java -cp "$OUT:$JSON_JAR" com.car2hass.rules.RuleDescribeTest
 
 echo "=== Running RuleTestEvaluationTest ==="
 java -cp "$OUT:$JSON_JAR" com.car2hass.rules.RuleTestEvaluationTest
+
+echo "=== Running RuleStalenessTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.rules.RuleStalenessTest
 echo "=== Running RuleConnectorEditorTest ==="
 java -cp "$OUT:$JSON_JAR" com.car2hass.rules.RuleConnectorEditorTest
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.SensorValueHistoryTest
@@ -514,6 +556,24 @@ java -cp "$OUT:$JSON_JAR" com.car2hass.SendHistoryCoreTest
 
 echo "=== Running CloudBatchBufferTest ==="
 java -cp "$OUT:$JSON_JAR" com.car2hass.CloudBatchBufferTest
+
+echo "=== Running CloudSyncDecisionTest ==="
+java -cp "$OUT" com.car2hass.CloudSyncDecisionTest
+
+echo "=== Running CloudSettingsJsonTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.CloudSettingsJsonTest
+
+echo "=== Running ProbeUploadDecisionTest ==="
+java -cp "$OUT" com.car2hass.ProbeUploadDecisionTest
+
+echo "=== Running LogUploadDecisionTest ==="
+java -cp "$OUT" com.car2hass.LogUploadDecisionTest
+
+echo "=== Running DiPlusHealthTest ==="
+java -cp "$OUT" com.car2hass.vehicle.DiPlusHealthTest
+
+echo "=== Running SignalCanonicalizerTest ==="
+java -cp "$OUT" com.car2hass.vehicle.SignalCanonicalizerTest
 
 echo "=== Running QueueIndicatorTest ==="
 java -cp "$OUT" com.car2hass.QueueIndicatorTest

@@ -22,41 +22,41 @@ public class NativeReaderTest {
         System.out.println("All NativeReader tests passed.");
     }
 
-    /** A batch that returns soc=50.0f and range=182345 (→18234.5). */
+    /** A batch that returns speed=50.0f and range=182345 (→18234.5). */
     private static void testReadAllUpdatesItems() {
-        String output = "@soc\n"
+        String output = "@speed\n"
                 + "Result: Parcel(00000000 42480000)\n"   // 50.0f
                 + "@range\n"
                 + "Result: Parcel(00000000 0002C849)\n";  // 182345
-        List<CANDataItem> items = itemsWith("soc", "range");
+        List<CANDataItem> items = itemsWith("speed", "range");
         new NativeReader((host, port, cmd) -> output, "127.0.0.1", 5555, false).readAll(items);
 
-        CANDataItem soc = byKey(items, "soc");
+        CANDataItem speed = byKey(items, "speed");
         CANDataItem range = byKey(items, "range");
-        assertEquals("50", soc.value, "soc 50.0 -> 50");
+        assertEquals("50", speed.value, "speed 50.0 -> 50");
         assertEquals("18234.5", range.value, "range scaled 18234.5");
-        if (soc.lastUpdate == 0 || range.lastUpdate == 0) {
+        if (speed.lastUpdate == 0 || range.lastUpdate == 0) {
             throw new AssertionError("lastUpdate must be set");
         }
     }
 
     /** A null/errored ADB exec must leave every item untouched. */
     private static void testExecFailureLeavesItemsUntouched() {
-        List<CANDataItem> items = itemsWith("soc", "gear");
+        List<CANDataItem> items = itemsWith("speed", "gear");
         new NativeReader((host, port, cmd) -> null, "127.0.0.1", 5555, false).readAll(items);
-        assertEquals("---", byKey(items, "soc").value, "soc untouched");
+        assertEquals("---", byKey(items, "speed").value, "speed untouched");
         assertEquals("---", byKey(items, "gear").value, "gear untouched");
     }
 
     /** Sentinel values must be skipped (no value update). */
     private static void testSentinelSkipped() {
-        String output = "@soc\n"
+        String output = "@speed\n"
                 + "Result: Parcel(00000000 BF800000)\n"   // -1.0f float sentinel
                 + "@gear\n"
                 + "Result: Parcel(00000000 0000FFFF)\n";  // FEATURE_LINK_ERROR
-        List<CANDataItem> items = itemsWith("soc", "gear");
+        List<CANDataItem> items = itemsWith("speed", "gear");
         new NativeReader((host, port, cmd) -> output, "127.0.0.1", 5555, false).readAll(items);
-        assertEquals("---", byKey(items, "soc").value, "float sentinel soc untouched");
+        assertEquals("---", byKey(items, "speed").value, "float sentinel speed untouched");
         assertEquals("---", byKey(items, "gear").value, "int sentinel gear untouched");
     }
 
@@ -83,13 +83,13 @@ public class NativeReaderTest {
     }
 
     private static void testFormatting() {
-        List<CANDataItem> items = itemsWith("soc", "battery_12v_voltage");
-        String output = "@soc\n"
+        List<CANDataItem> items = itemsWith("speed", "battery_12v_voltage");
+        String output = "@speed\n"
                 + "Result: Parcel(00000000 42480000)\n"          // 50.0
                 + "@battery_12v_voltage\n"
                 + "Result: Parcel(00000000 4141999A)\n";         // 12.1
         new NativeReader((host, port, cmd) -> output, "127.0.0.1", 5555, false).readAll(items);
-        assertEquals("50", byKey(items, "soc").value, "integer value no .0");
+        assertEquals("50", byKey(items, "speed").value, "integer value no .0");
         assertEquals("12.1", byKey(items, "battery_12v_voltage").value, "1-decimal float");
     }
 

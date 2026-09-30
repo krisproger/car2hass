@@ -33,7 +33,8 @@ public final class LogUploadCoordinator {
 
     /** Returns the number of records attempted; 0 when nothing was unsent. */
     public int uploadOnce() {
-        List<LogRecord> logs = store.unsentLogs(batchLimit);
+        List<LogRecord> logs = LogUploadPolicy.selectForUpload(
+                store.unsentLogs(batchLimit), LogUploadPolicy.MAX_UPLOAD_BYTES);
         List<CrashRecord> crashes = store.unsentCrashes(batchLimit);
         if (logs.isEmpty() && crashes.isEmpty()) return 0;
 

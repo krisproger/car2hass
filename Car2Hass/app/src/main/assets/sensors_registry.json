@@ -22,7 +22,13 @@
         "diplus": {
           "name": "电源状态"
         },
-        "adb": null,
+        "adb": {
+          "device": 1023,
+          "fid": 315621408,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -44,7 +50,13 @@
         "diplus": {
           "name": "车速"
         },
-        "adb": null,
+        "adb": {
+          "device": 1013,
+          "fid": -1807745016,
+          "transact": 7,
+          "decoder": 10,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": {
@@ -72,7 +84,13 @@
         "diplus": {
           "name": "里程"
         },
-        "adb": null,
+        "adb": {
+          "device": 1014,
+          "fid": 1246765072,
+          "transact": 5,
+          "decoder": 2,
+          "scale": 0.1
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -98,7 +116,13 @@
         "diplus": {
           "name": "档位"
         },
-        "adb": null,
+        "adb": {
+          "device": 1011,
+          "fid": 555745336,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -246,7 +270,13 @@
         "diplus": {
           "name": "发动机功率"
         },
-        "adb": null,
+        "adb": {
+          "device": 1012,
+          "fid": 339738656,
+          "transact": 5,
+          "decoder": 0,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -290,7 +320,13 @@
         "diplus": {
           "name": "充电枪插枪状态"
         },
-        "adb": null,
+        "adb": {
+          "device": 1009,
+          "fid": 876609586,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -338,7 +374,13 @@
         "diplus": {
           "name": "最高电池温度"
         },
-        "adb": null,
+        "adb": {
+          "device": 1014,
+          "fid": 1148190752,
+          "transact": 5,
+          "decoder": 6,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -382,7 +424,13 @@
         "diplus": {
           "name": "最低电池温度"
         },
-        "adb": null,
+        "adb": {
+          "device": 1014,
+          "fid": 1148190736,
+          "transact": 5,
+          "decoder": 6,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -492,7 +540,13 @@
         "diplus": {
           "name": "主驾驶安全带状态"
         },
-        "adb": null,
+        "adb": {
+          "device": 1007,
+          "fid": 692060184,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -540,7 +594,13 @@
         "diplus": {
           "name": "车内温度"
         },
-        "adb": null,
+        "adb": {
+          "device": 1000,
+          "fid": 1031798832,
+          "transact": 5,
+          "decoder": 5,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -566,7 +626,13 @@
         "diplus": {
           "name": "车外温度"
         },
-        "adb": null,
+        "adb": {
+          "device": 1000,
+          "fid": 1077936184,
+          "transact": 5,
+          "decoder": 5,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -592,7 +658,13 @@
         "diplus": {
           "name": "主驾驶空调温度"
         },
-        "adb": null,
+        "adb": {
+          "device": 1000,
+          "fid": 1077936168,
+          "transact": 5,
+          "decoder": 5,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -702,7 +774,13 @@
         "diplus": {
           "name": "总电耗"
         },
-        "adb": null,
+        "adb": {
+          "device": 1014,
+          "fid": 1032871984,
+          "transact": 7,
+          "decoder": 11,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -862,7 +940,13 @@
         "diplus": {
           "name": "蓄电池电压"
         },
-        "adb": null,
+        "adb": {
+          "device": 1001,
+          "fid": 1128267816,
+          "transact": 7,
+          "decoder": 8,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1182,7 +1266,13 @@
         "diplus": {
           "name": "左前轮气压"
         },
-        "adb": null,
+        "adb": {
+          "device": 1016,
+          "fid": -1728052956,
+          "transact": 5,
+          "decoder": 7,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1204,7 +1294,13 @@
         "diplus": {
           "name": "右前轮气压"
         },
-        "adb": null,
+        "adb": {
+          "device": 1016,
+          "fid": -1728052952,
+          "transact": 5,
+          "decoder": 7,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1226,7 +1322,13 @@
         "diplus": {
           "name": "左后轮气压"
         },
-        "adb": null,
+        "adb": {
+          "device": 1016,
+          "fid": -1728052948,
+          "transact": 5,
+          "decoder": 7,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1248,7 +1350,13 @@
         "diplus": {
           "name": "右后轮气压"
         },
-        "adb": null,
+        "adb": {
+          "device": 1016,
+          "fid": -1728052944,
+          "transact": 5,
+          "decoder": 7,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1322,7 +1430,13 @@
         "diplus": {
           "name": "主驾车门锁"
         },
-        "adb": null,
+        "adb": {
+          "device": 1032,
+          "fid": 1081081864,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1344,7 +1458,13 @@
         "diplus": {
           "name": "主驾车窗打开百分比"
         },
-        "adb": null,
+        "adb": {
+          "device": 1001,
+          "fid": 947912728,
+          "transact": 5,
+          "decoder": 3,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1370,7 +1490,13 @@
         "diplus": {
           "name": "副驾车窗打开百分比"
         },
-        "adb": null,
+        "adb": {
+          "device": 1001,
+          "fid": 1267728400,
+          "transact": 5,
+          "decoder": 3,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1396,7 +1522,13 @@
         "diplus": {
           "name": "左后车窗打开百分比"
         },
-        "adb": null,
+        "adb": {
+          "device": 1001,
+          "fid": 947912736,
+          "transact": 5,
+          "decoder": 3,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1424,9 +1556,9 @@
         },
         "adb": {
           "device": 1001,
-          "fid": 1267728408,
+          "fid": 947912752,
           "transact": 5,
-          "decoder": "ParamDecoder.INT_PERCENT",
+          "decoder": 3,
           "scale": 1.0
         },
         "dumpsys": null,
@@ -1454,7 +1586,13 @@
         "diplus": {
           "name": "天窗打开百分比"
         },
-        "adb": null,
+        "adb": {
+          "device": 1001,
+          "fid": 1101004808,
+          "transact": 5,
+          "decoder": 3,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1506,7 +1644,13 @@
         "diplus": {
           "name": "整车工作模式"
         },
-        "adb": null,
+        "adb": {
+          "device": 1006,
+          "fid": 874512420,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1532,7 +1676,13 @@
         "diplus": {
           "name": "整车运行模式"
         },
-        "adb": null,
+        "adb": {
+          "device": 1006,
+          "fid": 555745294,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1734,7 +1884,13 @@
         "diplus": {
           "name": "空调状态"
         },
-        "adb": null,
+        "adb": {
+          "device": 1000,
+          "fid": 1077936144,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1760,7 +1916,13 @@
         "diplus": {
           "name": "风量档位"
         },
-        "adb": null,
+        "adb": {
+          "device": 1000,
+          "fid": 1077936156,
+          "transact": 5,
+          "decoder": 0,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1782,7 +1944,13 @@
         "diplus": {
           "name": "空调循环方式"
         },
-        "adb": null,
+        "adb": {
+          "device": 1000,
+          "fid": 1077936148,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1826,7 +1994,13 @@
         "diplus": {
           "name": "主驾车门"
         },
-        "adb": null,
+        "adb": {
+          "device": 1001,
+          "fid": 692060168,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1848,7 +2022,13 @@
         "diplus": {
           "name": "副驾车门"
         },
-        "adb": null,
+        "adb": {
+          "device": 1001,
+          "fid": 692060170,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1870,7 +2050,13 @@
         "diplus": {
           "name": "左后车门"
         },
-        "adb": null,
+        "adb": {
+          "device": 1001,
+          "fid": 692060172,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1896,7 +2082,13 @@
         "diplus": {
           "name": "右后车门"
         },
-        "adb": null,
+        "adb": {
+          "device": 1001,
+          "fid": 692060174,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -1922,7 +2114,13 @@
         "diplus": {
           "name": "引擎盖"
         },
-        "adb": null,
+        "adb": {
+          "device": 1001,
+          "fid": 692060188,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -2254,7 +2452,13 @@
         "diplus": {
           "name": "小灯"
         },
-        "adb": null,
+        "adb": {
+          "device": 1004,
+          "fid": 950009864,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -2280,7 +2484,13 @@
         "diplus": {
           "name": "近光灯"
         },
-        "adb": null,
+        "adb": {
+          "device": 1004,
+          "fid": 950009866,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -2306,7 +2516,13 @@
         "diplus": {
           "name": "远光灯"
         },
-        "adb": null,
+        "adb": {
+          "device": 1004,
+          "fid": 950009868,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -2406,7 +2622,13 @@
         "diplus": {
           "name": "日行灯"
         },
-        "adb": null,
+        "adb": {
+          "device": 1004,
+          "fid": 1231040528,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,
@@ -2604,7 +2826,13 @@
         "diplus": {
           "name": "转向信号"
         },
-        "adb": null,
+        "adb": {
+          "device": 1004,
+          "fid": 950009900,
+          "transact": 5,
+          "decoder": 4,
+          "scale": 1.0
+        },
         "dumpsys": null,
         "system": null,
         "obd": null,

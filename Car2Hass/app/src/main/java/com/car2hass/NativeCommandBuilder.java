@@ -35,9 +35,10 @@ public final class NativeCommandBuilder {
         }
         List<String> parts = new ArrayList<>(entries.size());
         for (NativeSignalMap.FidEntry e : entries) {
+            if (e == null) continue;
             parts.add("echo \"@" + e.key + "\"; service call autoservice "
                     + e.transact + " i32 " + e.device + " i32 " + e.fid);
         }
-        return String.join("; ", parts);
+        return parts.isEmpty() ? null : String.join("; ", parts);
     }
 }

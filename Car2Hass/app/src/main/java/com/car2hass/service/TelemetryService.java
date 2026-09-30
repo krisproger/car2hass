@@ -41,6 +41,7 @@ import com.car2hass.CloudSyncClient;
 import com.car2hass.CommandPoller;
 import com.car2hass.DerivedAggregates;
 import com.car2hass.ProbeUploader;
+import com.car2hass.ProbeUploadPolicy;
 import com.car2hass.vehicle.BydCloudChannel;
 import com.car2hass.vehicle.DataChannel;
 import com.car2hass.vehicle.DiPlusChannel;
@@ -234,7 +235,7 @@ public class TelemetryService extends Service {
         shutdownExecutors();
         telemetryExecutor = Executors.newSingleThreadExecutor();
         flushExecutor = Executors.newSingleThreadExecutor();
-        ruleEngine = new RuleEngine(getApplicationContext(), valueStore::get, valueStore::isRestored);
+        ruleEngine = new RuleEngine(getApplicationContext(), valueStore::get, valueStore::isRestored, valueStore::ageMs);
         // Event-driven rules: re-evaluate affected rules as soon as a channel
         // writes a changed value, instead of waiting for the 1s engine tick.
         valueStore.addListener((key, value, source) -> {
@@ -356,10 +357,17 @@ public class TelemetryService extends Service {
     /** Sends the report to the site when the user opted in (spec Section 5). */
     private void maybeUploadReport(String path) {
         if (path == null || !AppConfig.isProbeUploadEnabled(this)) return;
+        if (!ProbeUploadPolicy.shouldUpload(System.currentTimeMillis(),
+                AppConfig.getProbeLastUploadMs(this))) {
+            LogBuffer.i("TelemetryService", "probe upload skipped (within server window)");
+            return;
+        }
         new Thread(() -> {
-            boolean ok = ProbeUploader.upload(this, path);
-            LogBuffer.i("TelemetryService", "probe upload: " + ok);
-            if (!ok) {
+            ProbeUploader.Result r = ProbeUploader.uploadResult(this, path);
+            LogBuffer.i("TelemetryService", "probe upload: ok=" + r.ok + " code=" + r.code);
+            if (r.ok) {
+                AppConfig.setProbeLastUploadMs(this, System.currentTimeMillis());
+            } else if (ProbeUploadPolicy.isRetryableCode(r.code)) {
                 // Offline/server down: keep the report in the persistent queue
                 // for later retries (user decides about stale entries in-app).
                 try {
@@ -369,6 +377,9 @@ public class TelemetryService extends Service {
                 } catch (Exception e) {
                     LogBuffer.e("TelemetryService", "queue probe: " + e.getMessage());
                 }
+            } else {
+                // 429: the server says "too soon" — wait for the next window, do not queue.
+                LogBuffer.i("TelemetryService", "probe upload deferred (code=" + r.code + ")");
             }
         }, "probe-upload").start();
     }
@@ -1629,6 +1640,8 @@ public class TelemetryService extends Service {
 
     private static final String[] DERIVED_WINDOW_KEYS =
             {"window_fl", "window_fr", "window_rl", "window_rr", "sunroof", "sunshade"};
+    /** Skip derived-aggregate inputs whose source has not updated within this window. */
+    private static final long DERIVED_STALE_MS = 60_000L;
     private static final String[] DERIVED_DOOR_KEYS =
             {"driver_door", "passenger_door", "rear_left_door", "rear_right_door", "trunk"};
     private static final String[] DERIVED_COUNT_KEYS =
@@ -1671,33 +1684,54 @@ public class TelemetryService extends Service {
     private void refreshDerivedSensors() {
         try {
             int openWindows = 0, totalWindows = 0;
+            StringBuilder winLog = new StringBuilder();
             for (String k : DERIVED_WINDOW_KEYS) {
                 if (valueStore.isRestored(k)) continue;
+                long age = valueStore.ageMs(k);
+                if (age >= 0 && age > DERIVED_STALE_MS) continue; // source went silent
                 String v = valueStore.get(k);
                 if (v == null || v.isEmpty() || "---".equals(v)) continue;
+                boolean numeric = v.matches("-?\\d+(\\.\\d+)?");
+                double d = parseDoubleSafe(v);
+                if (numeric && (d < 0 || d > 100)) continue; // sentinel / out of range
                 totalWindows++;
-                if (parseDoubleSafe(v) > 0 || isOpenState(v)) openWindows++;
+                if ((numeric && d > 0) || isOpenState(v)) openWindows++;
+                winLog.append(k).append('=').append(v)
+                        .append('(').append(valueStore.sourceOf(k)).append(") ");
             }
             if (totalWindows > 0) {
+                String all = openWindows == 0 ? "closed" : "open";
+                if (!all.equals(valueStore.get("windows_all_state"))) {
+                    LogBuffer.i("TelemetryService", "windows_all_state=" + all + " from " + winLog.toString().trim());
+                }
                 valueStore.put("windows_state", String.valueOf(openWindows), "channel");
-                valueStore.put("windows_all_state", openWindows == 0 ? "closed" : "open", "channel");
+                valueStore.put("windows_all_state", all, "channel");
                 SensorValueHistory.recordValue("windows_state", String.valueOf(openWindows));
-                SensorValueHistory.recordValue("windows_all_state", openWindows == 0 ? "closed" : "open");
+                SensorValueHistory.recordValue("windows_all_state", all);
             }
 
             int openDoors = 0, totalDoors = 0;
+            StringBuilder doorLog = new StringBuilder();
             for (String k : DERIVED_DOOR_KEYS) {
                 if (valueStore.isRestored(k)) continue;
+                long age = valueStore.ageMs(k);
+                if (age >= 0 && age > DERIVED_STALE_MS) continue; // source went silent
                 String v = valueStore.get(k);
                 if (v == null || v.isEmpty() || "---".equals(v)) continue;
                 totalDoors++;
                 if (isOpenState(v)) openDoors++;
+                doorLog.append(k).append('=').append(v)
+                        .append('(').append(valueStore.sourceOf(k)).append(") ");
             }
             if (totalDoors > 0) {
+                String all = openDoors == 0 ? "closed" : "open";
+                if (!all.equals(valueStore.get("doors_all_state"))) {
+                    LogBuffer.i("TelemetryService", "doors_all_state=" + all + " from " + doorLog.toString().trim());
+                }
                 valueStore.put("doors_state", String.valueOf(openDoors), "channel");
-                valueStore.put("doors_all_state", openDoors == 0 ? "closed" : "open", "channel");
+                valueStore.put("doors_all_state", all, "channel");
                 SensorValueHistory.recordValue("doors_state", String.valueOf(openDoors));
-                SensorValueHistory.recordValue("doors_all_state", openDoors == 0 ? "closed" : "open");
+                SensorValueHistory.recordValue("doors_all_state", all);
             }
 
             String lockValue = DerivedAggregates.doorsAllLocked(valueStore) ? "locked" : "unlocked";

@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import com.car2hass.CommandRegistry;
 import com.car2hass.DiPlusCommandSender;
 import com.car2hass.LogBuffer;
+import com.car2hass.TelemetryAge;
 
 import org.json.JSONObject;
 
@@ -25,6 +26,8 @@ public class RuleEngine {
     private final Context appContext;
     private final Function<String, String> signalLookup;
     private final Predicate<String> restoredLookup;
+    /** Value age in ms (or -1 when unknown); used for the staleness guard. */
+    private final Function<String, Long> ageLookup;
     private final AntiLoopGuard guard = new AntiLoopGuard();
     private ScheduledExecutorService executor;
     private volatile boolean started = false;
@@ -54,9 +57,15 @@ public class RuleEngine {
 
     public RuleEngine(Context appContext, Function<String, String> signalLookup,
                       Predicate<String> restoredLookup) {
+        this(appContext, signalLookup, restoredLookup, null);
+    }
+
+    public RuleEngine(Context appContext, Function<String, String> signalLookup,
+                      Predicate<String> restoredLookup, Function<String, Long> ageLookup) {
         this.appContext = appContext;
         this.signalLookup = signalLookup;
         this.restoredLookup = restoredLookup;
+        this.ageLookup = ageLookup;
     }
 
     public synchronized void start() {
@@ -207,15 +216,21 @@ public class RuleEngine {
         // change on startup. Missing data is also skipped so a null value never
         // overwrites the persisted previous state.
         RuleEdgeLogic.Suppression suppression =
-                RuleEdgeLogic.detectSuppression(rule.conditions, signalLookup, restoredLookup);
+                RuleEdgeLogic.detectSuppression(rule.conditions, signalLookup, restoredLookup,
+                        ageLookup, TelemetryAge.MAX_MS);
         if (suppression.blocked()) {
             // Rate-limit: log only on first occurrence per session (not every tick).
             boolean restored = suppression.reason == RuleEdgeLogic.Suppress.RESTORED;
-            String tag = rule.id + (restored ? "_restored" : "_nostate");
+            boolean stale = suppression.reason == RuleEdgeLogic.Suppress.STALE;
+            String tag = rule.id + (restored ? "_restored" : stale ? "_stale" : "_nostate");
             if (!firedOncePerSession.contains(tag)) {
                 if (restored) {
                     LogBuffer.i("RuleEngine", "Rule '" + rule.name
                             + "': skip: restored value " + suppression.sensorKey
+                            + " | " + RuleDescribe.config(rule));
+                } else if (stale) {
+                    LogBuffer.i("RuleEngine", "Rule '" + rule.name
+                            + "': skip: stale value " + suppression.sensorKey
                             + " | " + RuleDescribe.config(rule));
                 } else {
                     LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': skip (missing sensor data)"
@@ -285,7 +300,17 @@ public class RuleEngine {
         // itself, so they only get a small fixed anti-bounce window; the
         // configurable minIntervalSec applies to level-triggered rules.
         long lastFiredAtMs = Math.max(rule.lastExecutedAtMs, rule.lastExecutedFalseAtMs);
-        long cooldownMs = rule.fireOnRisingEdge ? EDGE_ANTI_BOUNCE_MS : rule.minIntervalSec * 1000;
+        // Edge rules throttle on the transition itself (the UI greys out minInterval);
+        // honour minInterval only when the user explicitly lowered it below the default.
+        long cooldownMs;
+        if (rule.fireOnRisingEdge) {
+            long explicit = (rule.minIntervalSec > 0
+                    && rule.minIntervalSec != Rule.DEFAULT_MIN_INTERVAL_SEC)
+                    ? rule.minIntervalSec * 1000L : 0L;
+            cooldownMs = Math.max(EDGE_ANTI_BOUNCE_MS, explicit);
+        } else {
+            cooldownMs = rule.minIntervalSec * 1000L;
+        }
 
         RuleEvaluator.FireDecision decision = RuleEvaluator.decideFire(
                 rule.enabled, groupResult, !rule.actionsOnFalse.isEmpty(),

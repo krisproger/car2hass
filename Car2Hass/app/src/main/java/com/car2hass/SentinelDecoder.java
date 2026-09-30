@@ -46,6 +46,19 @@ public final class SentinelDecoder {
     }
 
     /**
+     * True when a numeric value read via reflection is a device "unknown" sentinel.
+     * Covers NaN/Inf, {@code -9999}, and {@link Integer#MIN_VALUE} — which some
+     * vendors return scaled by 0.1 as {@code -2.147483648E8}.
+     */
+    public static boolean isSentinelNumber(Number v) {
+        if (v == null) return false;
+        double d = v.doubleValue();
+        if (Double.isNaN(d) || Double.isInfinite(d)) return true;
+        if (v instanceof Integer && ((Integer) v).intValue() == -9999) return true;
+        return Math.abs(d) >= 2.0e8;
+    }
+
+    /**
      * {@code service call autoservice 7 i32 <dev> i32 <fid>} returns a 32-bit
      * value encoded as a hex int by the shell wrapper. The bytes are the IEEE
      * 754 representation of a float.

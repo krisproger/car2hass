@@ -57,6 +57,7 @@ public class AppConfig {
     private static final String KEY_PROBE_RUNS_COUNT = "probe_runs_count";
     private static final String KEY_PROBE_LAST_FULL_SCAN = "probe_last_full_scan_ms";
     private static final String KEY_PROBE_REPORT_PATH = "probe_report_path";
+    private static final String KEY_PROBE_LAST_UPLOAD_MS = "probe_last_upload_ms";
     private static final String KEY_SOURCES_ADDED = "sources_added";
     private static final String KEY_RESEARCH_DONE = "research_done";
     private static final String KEY_PRESET_FLAGS = "preset_flags";
@@ -543,6 +544,56 @@ public class AppConfig {
         prefs(ctx).edit().putString(KEY_CLOUD_BOUND_CARS, arr.toString()).apply();
     }
 
+    // ---- Cloud settings files (project filesettings) ----
+
+    public static boolean isCloudSettingsEnabled(Context ctx) {
+        return prefs(ctx).getBoolean("cloud_settings_enabled", false);
+    }
+
+    public static void setCloudSettingsEnabled(Context ctx, boolean enabled) {
+        prefs(ctx).edit().putBoolean("cloud_settings_enabled", enabled).apply();
+    }
+
+    public static boolean isCloudStoreSecret(Context ctx) {
+        return prefs(ctx).getBoolean("cloud_store_secret", false);
+    }
+
+    public static void setCloudStoreSecret(Context ctx, boolean store) {
+        prefs(ctx).edit().putBoolean("cloud_store_secret", store).apply();
+    }
+
+    /** Local modification time of one cloud settings file (ms since epoch; 0 = never changed). */
+    public static long getCloudFileMtimeMs(Context ctx, String file) {
+        return prefs(ctx).getLong("cloud_mtime_" + file, 0L);
+    }
+
+    public static void setCloudFileMtimeMs(Context ctx, String file, long ms) {
+        prefs(ctx).edit().putLong("cloud_mtime_" + file, ms).apply();
+    }
+
+    /** Bumps the local mtime monotonically, so a device clock behind the server still counts as "newer". */
+    public static void touchCloudFileMtimeMs(Context ctx, String file) {
+        long prev = getCloudFileMtimeMs(ctx, file);
+        setCloudFileMtimeMs(ctx, file, Math.max(System.currentTimeMillis(), prev + 1));
+    }
+
+    public static boolean isCloudSettingsJoined(Context ctx, String project) {
+        return prefs(ctx).getBoolean("cloud_joined_" + project, false);
+    }
+
+    public static void setCloudSettingsJoined(Context ctx, String project, boolean joined) {
+        prefs(ctx).edit().putBoolean("cloud_joined_" + project, joined).apply();
+    }
+
+    public static String getCloudMetaLabel(Context ctx) {
+        String s = prefs(ctx).getString("cloud_meta_label", "");
+        return s == null ? "" : s;
+    }
+
+    public static void setCloudMetaLabel(Context ctx, String label) {
+        prefs(ctx).edit().putString("cloud_meta_label", label == null ? "" : label).apply();
+    }
+
     public static String getVehicleProducer(Context ctx) {
         return prefs(ctx).getString(KEY_VEHICLE_PRODUCER, "BYD");
     }
@@ -605,6 +656,15 @@ public class AppConfig {
 
     public static void setProbeUploadEnabled(Context ctx, boolean enabled) {
         prefs(ctx).edit().putBoolean(KEY_PROBE_UPLOAD, enabled).apply();
+    }
+
+    /** Wall-clock time of the last successful probe upload (0 = never). */
+    public static long getProbeLastUploadMs(Context ctx) {
+        return prefs(ctx).getLong(KEY_PROBE_LAST_UPLOAD_MS, 0L);
+    }
+
+    public static void setProbeLastUploadMs(Context ctx, long ms) {
+        prefs(ctx).edit().putLong(KEY_PROBE_LAST_UPLOAD_MS, ms).apply();
     }
 
     /** OBD-II ELM327 channel (TCP/WiFi); off by default. */

@@ -79,6 +79,7 @@ public class DiPlusCommandSender {
                 String response = CANDataReader.sendRequestSync("GET", url, null);
                 long elapsed = System.currentTimeMillis() - start;
                 boolean ok = response != null && !response.contains("\"success\":false");
+                if (ok) CANDataReader.markDiplusReadSuccess();
                 LogBuffer.d("DiPlusCmd", "Result in " + elapsed + "ms: " + response);
                 return new Result(ok, response, null, elapsed);
             } catch (Exception e) {

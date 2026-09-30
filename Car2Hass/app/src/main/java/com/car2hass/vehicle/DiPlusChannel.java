@@ -20,12 +20,11 @@ public class DiPlusChannel implements DataChannel {
 
     @Override
     public ChannelResult probe(Context ctx) {
-        if (!CANDataReader.isDiplusAlive()) {
-            return ChannelResult.dead("DiPlus не отвечает (нет приложения на 127.0.0.1:8988)");
-        }
+        // Attempt a real read rather than gating on the ping: the ping can fail
+        // while the DiPlus API works.
         List<CANDataItem> items = CANDataReader.readHttpSnapshot(ctx);
         if (items == null || items.isEmpty()) {
-            return ChannelResult.rawData("DiPlus жив, но сенсоры не распознаны");
+            return ChannelResult.dead("DiPlus не отвечает (нет данных с 127.0.0.1:8988)");
         }
         int real = 0;
         for (CANDataItem it : items) {

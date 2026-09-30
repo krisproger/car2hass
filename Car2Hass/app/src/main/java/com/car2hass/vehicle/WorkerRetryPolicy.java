@@ -8,6 +8,9 @@ package com.car2hass.vehicle;
  */
 public final class WorkerRetryPolicy {
 
+    /** Consecutive empty cycles tolerated at the base cadence before backing off. */
+    public static final int SOFT_FAILURES = 2;
+
     private final long baseMs;
     private final long maxMs;
     private int consecutiveFailures;
@@ -24,13 +27,19 @@ public final class WorkerRetryPolicy {
         return baseMs;
     }
 
-    /** Records an empty/failed cycle and returns the next backoff delay. */
+    /**
+     * Records an empty/failed cycle. An intermittent channel keeps the base
+     * cadence for the first {@link #SOFT_FAILURES} cycles; only a persistent
+     * failure backs off (doubling up to the cap).
+     */
     public long onFailure() {
+        consecutiveFailures++;
+        if (consecutiveFailures <= SOFT_FAILURES) return baseMs;
+        int steps = consecutiveFailures - SOFT_FAILURES;
         long delay = baseMs;
-        for (int i = 0; i < consecutiveFailures && delay < maxMs; i++) {
+        for (int i = 0; i < steps && delay < maxMs; i++) {
             delay = Math.min(delay * 2, maxMs);
         }
-        consecutiveFailures++;
         return delay;
     }
 

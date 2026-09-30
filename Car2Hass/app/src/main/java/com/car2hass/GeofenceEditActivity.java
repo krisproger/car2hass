@@ -260,6 +260,7 @@ public class GeofenceEditActivity extends BaseLocalizedActivity {
         }
         if (!found) zones.add(zone);
         AppConfig.saveGeofences(this, zones);
+        markCloudTouched();
         Toast.makeText(this, R.string.geofence_save, Toast.LENGTH_SHORT).show();
         finish();
     }
@@ -268,6 +269,7 @@ public class GeofenceEditActivity extends BaseLocalizedActivity {
         List<GeofenceZone> zones = AppConfig.loadGeofences(this);
         zones.removeIf(z -> z.id.equals(zone.id));
         AppConfig.saveGeofences(this, zones);
+        markCloudTouched();
         Toast.makeText(this, R.string.geofence_delete, Toast.LENGTH_SHORT).show();
         finish();
     }
@@ -282,5 +284,10 @@ public class GeofenceEditActivity extends BaseLocalizedActivity {
     protected void onPause() {
         super.onPause();
         if (mapView != null) mapView.onPause();
+    }
+
+    private void markCloudTouched() {
+        AppConfig.touchCloudFileMtimeMs(this, CloudSettingsPayload.FILE_GEOFENCES);
+        CloudSettingsSync.syncAsync(this, "geofences");
     }
 }

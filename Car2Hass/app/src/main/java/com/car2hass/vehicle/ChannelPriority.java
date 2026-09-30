@@ -23,6 +23,9 @@ public final class ChannelPriority {
     /** Rank returned for channels absent from {@link #ORDER}. */
     public static final int UNKNOWN_RANK = ORDER.size();
 
+    /** A held value older than this (relative to the incoming timestamp) is stale. */
+    public static final long STALE_MS = 10_000L;
+
     public static int rank(String channel) {
         // Voyah occupies the same slot as DiPlus (mutually exclusive per car).
         if ("voyah".equals(channel)) channel = "diplus";
@@ -30,9 +33,12 @@ public final class ChannelPriority {
         return i >= 0 ? i : UNKNOWN_RANK;
     }
 
-    /** Lower rank wins; on equal rank the newer timestamp wins. */
+    /** Lower rank wins; on equal rank the newer timestamp wins; a stale held value loses to any fresh value. */
     public static boolean shouldAccept(int currentRank, long currentAtMs,
                                        int incomingRank, long incomingAtMs) {
+        // A fresh value from any channel replaces a stale higher-rank value, so an
+        // intermittent high-priority source cannot pin a dead value forever.
+        if (incomingAtMs - currentAtMs > STALE_MS) return true;
         if (incomingRank < currentRank) return true;
         if (incomingRank > currentRank) return false;
         return incomingAtMs >= currentAtMs;

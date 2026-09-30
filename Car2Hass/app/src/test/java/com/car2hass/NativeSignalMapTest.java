@@ -29,11 +29,11 @@ public class NativeSignalMapTest {
         System.out.println("All NativeSignalMap tests passed.");
     }
 
-    /** The map must cover the ~40 signals that have a verified fid card. */
+    /** The map must cover the verified fid card (soc/cell_voltage/charging_state were dropped as unreliable). */
     private static void testCoverageCount() {
         int size = NativeSignalMap.allEntries().size();
-        if (size < 40) {
-            throw new AssertionError("expected >= 40 entries, got " + size);
+        if (size < 39) {
+            throw new AssertionError("expected >= 39 entries, got " + size);
         }
     }
 
@@ -80,7 +80,6 @@ public class NativeSignalMapTest {
     }
 
     private static void testKnownFidEntries() {
-        assertEntry("soc", 1014, 1246777400, 7, ParamDecoder.FLOAT_PERCENT);
         assertEntry("range", 1014, 1246765072, 5, ParamDecoder.INT_SCALED);
         assertEntry("speed", 1013, -1807745016, 7, ParamDecoder.FLOAT_KW);
         assertEntry("turn_signal", 1004, 950009900, 5, ParamDecoder.INT_ENUM);
@@ -95,6 +94,12 @@ public class NativeSignalMapTest {
         }
         if (NativeSignalMap.get("trunk") != null) {
             throw new AssertionError("trunk must be excluded from native reading");
+        }
+        // Unreliable adb decode (differs from diplus): keep diplus as the source.
+        for (String k : new String[]{"soc", "cell_voltage_max", "cell_voltage_min", "charging_state"}) {
+            if (NativeSignalMap.get(k) != null) {
+                throw new AssertionError(k + " must be excluded from native reading (unreliable adb decode)");
+            }
         }
     }
 

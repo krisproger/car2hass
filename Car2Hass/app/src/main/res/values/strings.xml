@@ -882,4 +882,18 @@
     <string name="settings_section_cloud">Cloud</string>
     <string name="settings_cloud_disconnect">Disconnect</string>
     <string name="settings_cloud_disconnected">Disconnected from cloud</string>
+    <string name="settings_cloud_settings_toggle">Store settings in cloud</string>
+    <string name="settings_cloud_store_secret">Also store the home-automation connection secret</string>
+    <string name="settings_cloud_sync_now">Sync now</string>
+    <string name="settings_cloud_clone">Clone settings from another car</string>
+    <string name="settings_cloud_settings_hint">Config, rules and geofences are kept under your device folder and synced both ways (newest file wins).</string>
+    <string name="settings_cloud_clone_title">Clone settings: source car</string>
+    <string name="settings_cloud_clone_none">No car folders found in the cloud.</string>
+    <string name="settings_cloud_clone_secret">Also copy the home-automation connection secret</string>
+    <string name="settings_cloud_clone_secret_confirm">Copy the connection secret to this car? Only use this when both cars talk to the same home server ("one family — one server").</string>
+    <string name="settings_cloud_clone_ok">Settings cloned</string>
+    <string name="settings_cloud_clone_failed">Clone failed: %1$s</string>
+    <string name="settings_cloud_sync_ok">Settings synced</string>
+    <string name="settings_cloud_sync_failed">Sync failed: %1$s</string>
+    <string name="settings_cloud_login_needed">Sign in to the cloud first</string>
 </resources>

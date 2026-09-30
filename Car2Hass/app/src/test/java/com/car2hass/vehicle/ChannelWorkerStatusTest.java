@@ -39,9 +39,9 @@ public class ChannelWorkerStatusTest {
                 ChannelWorkerStatus.Result.OK, "", 500, 500);
         if (fast.cadenceSeconds() != 1) throw new AssertionError("sub-second cadence -> " + fast.cadenceSeconds());
 
-        // Backoff formatting agrees with the retry policy doubling sequence.
+        // Backoff formatting agrees with the retry policy (soft failures keep the base).
         WorkerRetryPolicy policy = new WorkerRetryPolicy(2000, 30000);
-        long[] expected = {2000, 4000, 8000, 16000, 30000};
+        long[] expected = {2000, 2000, 4000, 8000, 16000};
         for (int i = 0; i < expected.length; i++) {
             long delay = policy.onFailure();
             if (delay != expected[i]) throw new AssertionError("policy step " + i + " -> " + delay);

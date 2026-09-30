@@ -503,6 +503,8 @@ public class RuleEditActivity extends BaseLocalizedActivity {
         }
 
         RuleRegistry.upsert(this, rule);
+        com.car2hass.AppConfig.touchCloudFileMtimeMs(this, com.car2hass.CloudSettingsPayload.FILE_RULES);
+        com.car2hass.CloudSettingsSync.syncAsync(this, "rule_edit");
         notifyEngineChanged();
         finish();
     }

@@ -29,7 +29,7 @@ OUTPUT_DIR=$BUILD/apk
 
 COUNTER_FILE=$PROJECT/build_counter.txt
 BUILD_NUM=$(cat "$COUNTER_FILE" 2>/dev/null || echo 1)
-VERSION_NAME=${VERSION_NAME:-3.3.11}
+VERSION_NAME=${VERSION_NAME:-3.5.0}
 
 # --- osmdroid (OpenStreetMap library for geofence editing) ---
 # The AAR is fetched once from Maven Central into libs/ and reused offline.
@@ -255,11 +255,11 @@ build_variant "release" "false" "$OUTPUT_DIR/Car2Hass_v$VERSION_NAME.apk"
 KEEP=4
 cd "$OUTPUT_DIR" || exit 1
 KEEP_LIST=$(ls Car2Hass_v*.apk 2>/dev/null \
-    | sed -E 's/^Car2Hass_v([0-9][0-9.]*)(_test)?\.apk$/\1/' \
+    | sed -E 's/^Car2Hass_v([0-9][0-9.]*(-beta\.[0-9]+)?)(_test)?\.apk$/\1/' \
     | sort -Vu -r | head -n "$KEEP" | tr '\n' ' ')
 for f in Car2Hass_v*.apk; do
     [ -e "$f" ] || continue
-    v=$(echo "$f" | sed -E 's/^Car2Hass_v([0-9][0-9.]*)(_test)?\.apk$/\1/')
+    v=$(echo "$f" | sed -E 's/^Car2Hass_v([0-9][0-9.]*(-beta\.[0-9]+)?)(_test)?\.apk$/\1/')
     if ! echo "$KEEP_LIST" | grep -qw "$v"; then
         rm -f "$f"
     fi

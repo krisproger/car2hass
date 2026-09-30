@@ -32,28 +32,47 @@ public final class ProbeUploader {
         return body;
     }
 
-    /**
-     * Reads the stored report and uploads it; returns true on HTTP 200.
-     * Callers must gate on AppConfig.isProbeUploadEnabled (kept out of this
-     * class so the pure parts stay harness-testable).
-     */
+    /** Keep the boolean API for existing callers. */
     public static boolean upload(Context ctx, String reportPath) {
-        if (ctx == null || reportPath == null) return false;
+        return uploadResult(ctx, reportPath).ok;
+    }
+
+    /** Outcome of an upload attempt: success flag + HTTP status (0 = transport error). */
+    public static final class Result {
+        public final boolean ok;
+        public final int code;
+        public Result(boolean ok, int code) { this.ok = ok; this.code = code; }
+    }
+
+    /**
+     * Reads the stored report and uploads it; returns the outcome and HTTP code
+     * so callers can defer on 429. Callers must gate on AppConfig.isProbeUploadEnabled
+     * (kept out of this class so the pure parts stay harness-testable).
+     */
+    public static Result uploadResult(Context ctx, String reportPath) {
+        if (ctx == null || reportPath == null) return new Result(false, 0);
         try {
             JSONObject report = new JSONObject(readFile(new File(reportPath)));
             String anonId = com.car2hass.vehicle.DeviceAnon.fromContext(ctx);
-            return post(ENDPOINT, buildPayload(anonId, report).toString());
+            int code = postForCode(ENDPOINT, buildPayload(anonId, report).toString());
+            return new Result(code >= 200 && code < 300, code);
         } catch (Exception e) {
-            LogBuffer.e("ProbeUploader", "upload: " + e.getMessage());
-            return false;
+            LogBuffer.e("ProbeUploader", "uploadResult: " + e.getMessage());
+            return new Result(false, 0);
         }
     }
 
     static boolean post(String url, String jsonBody) {
+        int code = postForCode(url, jsonBody);
+        return code >= 200 && code < 300;
+    }
+
+    /** POSTs and returns the HTTP status (0 on transport/private-host failure). */
+    static int postForCode(String url, String jsonBody) {
         HttpURLConnection conn = null;
         try {
             URL u = new URL(url);
-            if (NetSafety.isPrivateHost(u.getHost())) return false;
+            if (NetSafety.isPrivateHost(u.getHost())) return 0;
             conn = (HttpURLConnection) u.openConnection();
             conn.setRequestMethod("POST");
             conn.setConnectTimeout(15000);
@@ -67,13 +86,12 @@ public final class ProbeUploader {
             int code = conn.getResponseCode();
             if (code < 200 || code >= 300) {
                 LogBuffer.w("ProbeUploader", "HTTP " + code + " body=" + readBody(conn));
-                return false;
             }
-            return true;
+            return code;
         } catch (Exception e) {
             LogBuffer.e("ProbeUploader", "post: " + e.getMessage()
                     + " body=" + (conn == null ? "" : readBody(conn)));
-            return false;
+            return 0;
         } finally {
             if (conn != null) conn.disconnect();
         }

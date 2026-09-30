@@ -201,6 +201,8 @@ public class MainActivity extends BaseLocalizedActivity {
     private Switch switchCloudSync;
     private EditText editCloudEmail, editCloudCode, editCloudCarName, editCloudBaseUrl;
     private TextView tvCloudStatus;
+    private Switch switchCloudSettings, switchCloudStoreSecret;
+    private Button btnCloudSyncNow, btnCloudClone;
     private android.widget.Button btnCloudLogin;
     private boolean updatingCloudToggle = false;
 
@@ -738,6 +740,8 @@ public class MainActivity extends BaseLocalizedActivity {
                     if (obj != null) imported.add(Rule.fromJson(obj));
                 }
                 RuleRegistry.save(this, imported);
+                AppConfig.touchCloudFileMtimeMs(this, CloudSettingsPayload.FILE_RULES);
+                CloudSettingsSync.syncAsync(this, "rules_import");
                 runOnUiThread(() -> {
                     setupRules();
                     notifyRuleEngineChanged();
@@ -2793,6 +2797,44 @@ public class MainActivity extends BaseLocalizedActivity {
         editCloudBaseUrl.addTextChangedListener(cloudWatcher(
                 () -> AppConfig.setCloudBaseUrl(this, editCloudBaseUrl.getText().toString())));
 
+        switchCloudSettings = settingsView.findViewById(R.id.switchCloudSettings);
+        switchCloudStoreSecret = settingsView.findViewById(R.id.switchCloudStoreSecret);
+        btnCloudSyncNow = settingsView.findViewById(R.id.btnCloudSyncNow);
+        btnCloudClone = settingsView.findViewById(R.id.btnCloudClone);
+        if (switchCloudSettings != null) {
+            switchCloudSettings.setChecked(AppConfig.isCloudSettingsEnabled(this));
+            switchCloudSettings.setOnCheckedChangeListener((b, checked) -> {
+                if (checked) {
+                    if (AppConfig.getCloudAccessToken(this).isEmpty()) {
+                        switchCloudSettings.setChecked(false);
+                        Toast.makeText(this, R.string.settings_cloud_login_needed, Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    CloudSettingsSync.onEnabled(this);
+                } else {
+                    AppConfig.setCloudSettingsEnabled(this, false);
+                }
+                updateCloudStatus();
+            });
+        }
+        if (switchCloudStoreSecret != null) {
+            switchCloudStoreSecret.setChecked(AppConfig.isCloudStoreSecret(this));
+            switchCloudStoreSecret.setOnCheckedChangeListener((b, checked) -> {
+                AppConfig.setCloudStoreSecret(this, checked);
+                CloudSettingsSync.syncAsync(this, "store_secret");
+            });
+        }
+        if (btnCloudSyncNow != null) {
+            btnCloudSyncNow.setOnClickListener(v -> CloudSettingsSync.syncNow(this, (ok, message) ->
+                    runOnUiThread(() -> Toast.makeText(this, ok
+                            ? getString(R.string.settings_cloud_sync_ok)
+                            : getString(R.string.settings_cloud_sync_failed, message),
+                            Toast.LENGTH_LONG).show())));
+        }
+        if (btnCloudClone != null) {
+            btnCloudClone.setOnClickListener(v -> showCloneDialog());
+        }
+
         btnCloudLogin = settingsView.findViewById(R.id.btnCloudLogin);
         btnCloudLogin.setOnClickListener(v -> {
             if (!AppConfig.getCloudAccessToken(this).isEmpty()) cloudDisconnect();
@@ -2896,6 +2938,73 @@ public class MainActivity extends BaseLocalizedActivity {
             updatingCloudToggle = true;
             switchCloudSync.setChecked(enabled);
             updatingCloudToggle = false;
+        }
+    }
+
+    private void showCloneDialog() {
+        if (AppConfig.getCloudAccessToken(this).isEmpty()) {
+            Toast.makeText(this, R.string.settings_cloud_login_needed, Toast.LENGTH_SHORT).show();
+            return;
+        }
+        final String ownAnon = com.car2hass.vehicle.DeviceAnon.fromContext(this);
+        CloudSettingsSync.listFolders(this, folders -> runOnUiThread(() -> {
+            if (folders == null || folders.length() == 0) {
+                Toast.makeText(this, R.string.settings_cloud_clone_none, Toast.LENGTH_LONG).show();
+                return;
+            }
+            final java.util.List<String> ids = new java.util.ArrayList<>();
+            final java.util.List<String> labels = new java.util.ArrayList<>();
+            for (int i = 0; i < folders.length(); i++) {
+                org.json.JSONObject o = folders.optJSONObject(i);
+                if (o == null) continue;
+                String id = o.optString("id", "").replace("car2hass/", "");
+                if (id.isEmpty() || id.equals(ownAnon)) continue;
+                ids.add(id);
+                labels.add(o.optString("label", id));
+            }
+            if (ids.isEmpty()) {
+                Toast.makeText(this, R.string.settings_cloud_clone_none, Toast.LENGTH_LONG).show();
+                return;
+            }
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.settings_cloud_clone_title)
+                    .setItems(labels.toArray(new String[0]), (d, which) ->
+                            confirmCloneSecret(ids.get(which), labels.get(which)))
+                    .setNegativeButton(R.string.menu_cancel, null)
+                    .show();
+        }));
+    }
+
+    private void confirmCloneSecret(String sourceId, String sourceLabel) {
+        CheckBox cb = new CheckBox(this);
+        cb.setText(R.string.settings_cloud_clone_secret);
+        new AlertDialog.Builder(this)
+                .setTitle(sourceLabel)
+                .setView(cb)
+                .setMessage(R.string.settings_cloud_clone_secret_confirm)
+                .setPositiveButton(R.string.settings_cloud_clone, (d, w) ->
+                        doClone(sourceId, cb.isChecked()))
+                .setNegativeButton(R.string.menu_cancel, null)
+                .show();
+    }
+
+    private void doClone(String sourceId, boolean includeSecret) {
+        try {
+            CloudSettingsSync.cloneAsync(this, sourceId, includeSecret, (ok, message) ->
+                    runOnUiThread(() -> {
+                        Toast.makeText(this, ok
+                                ? getString(R.string.settings_cloud_clone_ok)
+                                : getString(R.string.settings_cloud_clone_failed, message),
+                                Toast.LENGTH_LONG).show();
+                        if (ok) {
+                            loadConfig();
+                            setupRules();
+                            notifyRuleEngineChanged();
+                        }
+                    }));
+        } catch (Exception e) {
+            Toast.makeText(this, getString(R.string.settings_cloud_clone_failed, String.valueOf(e.getMessage())),
+                    Toast.LENGTH_LONG).show();
         }
     }
 
@@ -4263,8 +4372,9 @@ public class MainActivity extends BaseLocalizedActivity {
     private void maybeUploadReport(String path) {
         if (path == null || !AppConfig.isProbeUploadEnabled(this)) return;
         new Thread(() -> {
-            boolean ok = ProbeUploader.upload(this, path);
-            LogBuffer.i("MainActivity", "probe upload: " + ok);
+            ProbeUploader.Result r = ProbeUploader.uploadResult(this, path);
+            LogBuffer.i("MainActivity", "probe upload: ok=" + r.ok + " code=" + r.code);
+            if (r.ok) AppConfig.setProbeLastUploadMs(this, System.currentTimeMillis());
         }, "probe-upload").start();
     }
 
@@ -4995,6 +5105,8 @@ public class MainActivity extends BaseLocalizedActivity {
 
         AppConfig.save(this, host, port, token, carName, enabled, https, bootAutoStart, carControl, detailedLog);
         AppConfig.saveFileLogMode(this, fileLogMode);
+        AppConfig.touchCloudFileMtimeMs(this, CloudSettingsPayload.FILE_SETTINGS);
+        CloudSettingsSync.syncAsync(this, "settings");
         BackgroundModeManager.setEnabled(this, backgroundMode);
         AppConfig.saveQueueEnabled(this, queueEnabled);
         AppConfig.saveQueueMaxMb(this, queueMaxMb);
@@ -5376,26 +5488,8 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private JSONObject buildConfigJson(boolean includeToken) throws Exception {
-        JSONObject cfg = new JSONObject();
-        cfg.put("hass_host", AppConfig.getHassHost(this));
-        cfg.put("hass_port", AppConfig.getHassPort(this));
-        // The token is excluded by default (review #4): it grants full access
-        // to Home Assistant, so it must only be exported when the user
-        // explicitly opts in via the checkbox in the export dialog.
-        if (includeToken) {
-            cfg.put("hass_token", AppConfig.getHassToken(this));
-        }
+        JSONObject cfg = CloudSettingsPayload.coreSettings(this, includeToken);
         cfg.put("car_name", AppConfig.getCarName(this));
-        cfg.put("hass_https", AppConfig.isHassHttps(this));
-        cfg.put("hass_enabled", AppConfig.isHassEnabled(this));
-        cfg.put("boot_auto_start", AppConfig.isBootAutoStartEnabled(this));
-        cfg.put("car_control_enabled", AppConfig.isCarControlEnabled(this));
-        cfg.put("detailed_log_enabled", AppConfig.isDetailedLogEnabled(this));
-        cfg.put("file_log_mode", AppConfig.getFileLogMode(this));
-        cfg.put("queue_enabled", AppConfig.isQueueEnabled(this));
-        cfg.put("queue_max_mb", AppConfig.getQueueMaxMb(this));
-        cfg.put("queue_max_days", AppConfig.getQueueMaxDays(this));
-        cfg.put("disabled_signals", new org.json.JSONArray(AppConfig.getDisabledSignals(this)));
         org.json.JSONArray rulesArr = new org.json.JSONArray();
         for (Rule r : RuleRegistry.load(this)) rulesArr.put(r.toJson());
         cfg.put("rules", rulesArr);
@@ -5408,51 +5502,10 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void applyConfigJson(JSONObject cfg) {
-        String host = cfg.optString("hass_host", "").trim();
-        int port = cfg.optInt("hass_port", 8123);
-        String token = cfg.optString("hass_token", "").trim();
         String carName = cfg.optString("car_name", "").trim();
-        boolean https = cfg.optBoolean("hass_https", false);
-        boolean enabled = cfg.optBoolean("hass_enabled", false);
-        boolean bootAutoStart = cfg.optBoolean("boot_auto_start", true);
-        boolean carControl = cfg.optBoolean("car_control_enabled", false);
-        // file_log_mode wins when present; legacy detailed_log_enabled maps to detailed/basic.
-        int fileLogMode = cfg.has("file_log_mode")
-            ? cfg.optInt("file_log_mode", AppConfig.FILE_LOG_BASIC)
-            : (cfg.optBoolean("detailed_log_enabled", false)
-                ? AppConfig.FILE_LOG_DETAILED : AppConfig.FILE_LOG_BASIC);
-        boolean detailedLog = fileLogMode == AppConfig.FILE_LOG_DETAILED;
-
-        AppConfig.save(this, host, port, token, carName, enabled, https, bootAutoStart, carControl, detailedLog);
-        AppConfig.saveFileLogMode(this, fileLogMode);
-        AppConfig.saveQueueEnabled(this, cfg.optBoolean("queue_enabled", true));
-        AppConfig.saveQueueMaxMb(this, cfg.optInt("queue_max_mb", 100));
-        AppConfig.saveQueueMaxDays(this, cfg.optInt("queue_max_days", 7));
-
-        Set<String> disabledSignals = new HashSet<>();
-        org.json.JSONArray disabledArr = cfg.optJSONArray("disabled_signals");
-        if (disabledArr != null) {
-            for (int i = 0; i < disabledArr.length(); i++) {
-                String s = disabledArr.optString(i, null);
-                if (s != null && !s.isEmpty()) disabledSignals.add(s);
-            }
-        } else {
-            // Backward compatibility: convert v1.7 enabled-signals list.
-            boolean useEnabledFilter = cfg.optBoolean("use_enabled_filter", false);
-            org.json.JSONArray signalsArr = cfg.optJSONArray("enabled_signals");
-            if (useEnabledFilter && signalsArr != null) {
-                Set<String> enabledSignals = new HashSet<>();
-                for (int i = 0; i < signalsArr.length(); i++) {
-                    String s = signalsArr.optString(i, null);
-                    if (s != null && !s.isEmpty()) enabledSignals.add(s);
-                }
-                for (String[] sig : CANDataReader.SIGNAL_REGISTRY) {
-                    String k = sig[2];
-                    if (!enabledSignals.contains(k)) disabledSignals.add(k);
-                }
-            }
-        }
-        AppConfig.setDisabledSignals(this, disabledSignals);
+        if (carName.isEmpty()) carName = AppConfig.getCarName(this);
+        CloudSettingsPayload.applyCoreSettings(this, cfg, carName);
+        AppConfig.touchCloudFileMtimeMs(this, CloudSettingsPayload.FILE_SETTINGS);
 
         org.json.JSONArray rulesArr = cfg.optJSONArray("rules");
         LogBuffer.i("Main", "Config import: " + (rulesArr == null ? "no" : String.valueOf(rulesArr.length()))

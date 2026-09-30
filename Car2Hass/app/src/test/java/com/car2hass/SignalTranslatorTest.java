@@ -18,6 +18,7 @@ public class SignalTranslatorTest {
         failures += testNumericSentinels();
         failures += testOffStateDetection();
         failures += testNewlyAddedTranslations();
+        failures += testLocationProviderFreeText();
 
         if (failures > 0) {
             System.err.println("FAILURES: " + failures);
@@ -96,6 +97,14 @@ public class SignalTranslatorTest {
         // Шаг 7: DiPlus sends airflow labels without a slash.
         assertEquals("face+feet", SignalTranslator.translateValue("吹面吹脚"), "吹面吹脚 -> face+feet");
         assertEquals("feet+defrost", SignalTranslator.translateValue("吹脚除霜"), "吹脚除霜 -> feet+defrost");
+        return 0;
+    }
+
+    private static int testLocationProviderFreeText() {
+        assertTrue(SignalTranslator.isFreeTextKey("location_provider"),
+                "location_provider must be a free-text key (no untranslated warning)");
+        assertEquals("gps", SignalTranslator.translateEnumValue("location_provider", "gps"),
+                "location_provider 'gps' must pass through unchanged");
         return 0;
     }
 

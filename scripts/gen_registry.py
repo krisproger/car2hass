@@ -238,16 +238,41 @@ def parse_signal_registry():
     block = re.search(r"SIGNAL_REGISTRY\s*=\s*\{(.*?)\};", text, re.S).group(1)
     return re.findall(r'\{\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"([^"]+)"\s*,\s*"(num|enum)"\s*\}', block)
 
+DECODER_IDS = {
+    "ParamDecoder.INT_RAW": 0,
+    "ParamDecoder.INT_DIV10": 1,
+    "ParamDecoder.INT_SCALED": 2,
+    "ParamDecoder.INT_PERCENT": 3,
+    "ParamDecoder.INT_ENUM": 4,
+    "ParamDecoder.INT_TEMP_C": 5,
+    "ParamDecoder.INT_TEMP_C_OFS40": 6,
+    "ParamDecoder.INT_KPA": 7,
+    "ParamDecoder.FLOAT_VOLT": 8,
+    "ParamDecoder.FLOAT_PERCENT": 9,
+    "ParamDecoder.FLOAT_KW": 10,
+    "ParamDecoder.FLOAT_KWH": 11,
+}
+
 def parse_native_signals():
     text = open(os.path.join(JAVA, "NativeSignalMap.java"), encoding="utf-8").read()
     out = {}
+    # Primary table: add(m, "key", device, fid, transact, decoder, scale)
     for m in re.finditer(
-        r'm\.put\(\s*"([^"]+)"\s*,\s*new FidEntry\(\s*"[^"]+"\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([^,]+?)\s*,\s*([\d.]+)\s*\)\s*\)',
+        r'add\(\s*m\s*,\s*"([^"]+)"\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*([^,]+?)\s*,\s*([\d.]+)\s*\)',
         text):
         key, device, fid, transact, decoder, scale = m.groups()
         out[key] = {"device": int(device), "fid": int(fid),
-                    "transact": int(transact), "decoder": decoder.strip(),
+                    "transact": int(transact), "decoder": DECODER_IDS.get(decoder.strip(), 0),
                     "scale": float(scale)}
+    # Fallback table: m.put("key", new FidEntry("key", device, fid, transact, decoder, scale)).
+    # The fallback is applied at runtime (getFallbackFid); the registry keeps the primary fid.
+    for m in re.finditer(
+        r'm\.put\(\s*"([^"]+)"\s*,\s*new FidEntry\(\s*"[^"]+"\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*([^,]+?)\s*,\s*([\d.]+)\s*\)\s*\)',
+        text):
+        key, device, fid, transact, decoder, scale = m.groups()
+        out.setdefault(key, {"device": int(device), "fid": int(fid),
+                    "transact": int(transact), "decoder": DECODER_IDS.get(decoder.strip(), 0),
+                    "scale": float(scale)})
     return out
 
 # Universal core sensors — the open contract every source/app should provide
