@@ -106,7 +106,7 @@ public class VehicleResearchTest {
         VehicleResearch.runWithRegistry(null, rs, new ArrayList<>(), null, null, probe,
                 (c, p, a, rp) -> { });
         check(probedChannels.contains("diplus"), "diplus probed");
-        check(!probedChannels.contains("phone"), "phone must not be probed");
+        check(probedChannels.contains("phone"), "phone must be probed");
     }
 
     private static void testProgressListener() {

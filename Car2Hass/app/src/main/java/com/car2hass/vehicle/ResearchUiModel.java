@@ -14,7 +14,7 @@ import java.util.Map;
 public final class ResearchUiModel {
     /** Fallback when the registry has no channels_priority block. */
     public static final List<String> CYCLE_PRIORITY = Arrays.asList(
-            "diplus", "adb", "dumpsys", "system", "obd", "diplus_push", "byd_cloud");
+            "diplus", "adb", "dumpsys", "system", "obd", "diplus_push", "byd_cloud", "phone");
 
     public static final class ProfileOption {
         public final String id;

@@ -8,54 +8,51 @@ import java.util.Set;
 public class PhoneSensorsTest {
 
     public static void main(String[] args) {
-        // Master off -> nothing enabled, regardless of the per-key opt-ins.
-        if (!PhoneSensors.enabledKeys(false, new HashSet<>()).isEmpty()) {
-            throw new AssertionError("master off -> empty");
-        }
-        if (!PhoneSensors.enabledKeys(false, setOf("phone_steps", "phone_battery_level")).isEmpty()) {
-            throw new AssertionError("master off -> empty even with per-key opt-ins");
+        // Channel off -> nothing, regardless of opt-ins.
+        if (!PhoneSensors.effectiveKeys(false, setOf("phone_steps"), new HashSet<>()).isEmpty()) {
+            throw new AssertionError("channel off -> empty");
         }
 
-        // Master on, nothing opted in -> still empty (per-sensor prefs default off).
-        if (!PhoneSensors.enabledKeys(true, new HashSet<>()).isEmpty()) {
-            throw new AssertionError("master on, no opt-ins -> empty");
-        }
-
-        // Master on + an opted-in non-sensitive key -> that key is enabled.
-        Set<String> perKey = setOf("phone_battery_level", "phone_wifi_ssid");
-        List<String> on = PhoneSensors.enabledKeys(true, perKey);
+        // Channel on, no opt-ins, nothing disabled -> all non-sensitive keys.
+        List<String> on = PhoneSensors.effectiveKeys(true, new HashSet<>(), new HashSet<>());
         if (!on.contains("phone_battery_level")) {
-            throw new AssertionError("master on + non-sensitive key -> key enabled");
+            throw new AssertionError("non-sensitive key must be enabled by default");
         }
-        if (!on.contains("phone_wifi_ssid")) {
-            throw new AssertionError("master on + second non-sensitive key -> key enabled");
+        if (on.contains("phone_steps") || on.contains("phone_location_lat")) {
+            throw new AssertionError("sensitive keys excluded unless opted in");
+        }
+        for (String k : on) {
+            if (PhoneSensors.isSensitive(k)) {
+                throw new AssertionError("sensitive key leaked: " + k);
+            }
         }
 
-        // Sensitive keys are excluded unless explicitly added.
-        if (on.contains("phone_steps")) {
-            throw new AssertionError("sensitive key excluded when not opted in");
+        // Sensitive opt-in enables exactly that key.
+        if (!PhoneSensors.effectiveKeys(true, setOf("phone_steps"), new HashSet<>()).contains("phone_steps")) {
+            throw new AssertionError("sensitive opt-in");
         }
-        if (PhoneSensors.enabledKeys(true, new HashSet<>()).contains("phone_steps")) {
-            throw new AssertionError("sensitive key excluded by default");
-        }
-        if (!PhoneSensors.enabledKeys(true, setOf("phone_steps")).contains("phone_steps")) {
-            throw new AssertionError("sensitive key included when explicitly added");
-        }
-        if (!PhoneSensors.enabledKeys(true, setOf("phone_location_lat")).contains("phone_location_lat")) {
+        if (!PhoneSensors.effectiveKeys(true, setOf("phone_location_lat"), new HashSet<>())
+                .contains("phone_location_lat")) {
             throw new AssertionError("sensitive location opt-in");
         }
 
-        // Unknown / non-phone keys in the opt-in set are ignored.
-        if (PhoneSensors.enabledKeys(true, setOf("bogus_key")).contains("bogus_key")) {
-            throw new AssertionError("unknown key ignored");
+        // The global attribute filter (disabled) wins over opt-in / default.
+        if (PhoneSensors.effectiveKeys(true, new HashSet<>(), setOf("phone_battery_level"))
+                .contains("phone_battery_level")) {
+            throw new AssertionError("disabled key must be excluded");
+        }
+        if (PhoneSensors.effectiveKeys(true, setOf("phone_steps"), setOf("phone_steps"))
+                .contains("phone_steps")) {
+            throw new AssertionError("disabled sensitive key must be excluded");
         }
 
         // Result preserves KEYS order (stable output).
-        List<String> ordered = PhoneSensors.enabledKeys(true, new HashSet<>(PhoneSensors.KEYS));
+        List<String> ordered = PhoneSensors.effectiveKeys(true,
+                new HashSet<>(PhoneSensors.SENSITIVE_KEYS), new HashSet<>());
         int prev = -1;
         for (String k : ordered) {
             int idx = PhoneSensors.KEYS.indexOf(k);
-            if (idx <= prev) throw new AssertionError("enabledKeys must preserve KEYS order");
+            if (idx <= prev) throw new AssertionError("effectiveKeys must preserve KEYS order");
             prev = idx;
         }
 

@@ -28,6 +28,7 @@ public final class ChannelWorkerFactory implements WorkerFactory {
     public ChannelWorker create(String channelId) {
         String id = normalize(channelId);
         if ("system".equals(id)) return new SystemWorker(ctx, store);
+        if ("phone".equals(id)) return new PhoneWorker(ctx, store);
         if ("obd".equals(id)) return new ObdWorker(ctx, store);
         DataChannel channel = ChannelCatalog.create(id);
         if (channel == null) return null;
@@ -43,6 +44,7 @@ public final class ChannelWorkerFactory implements WorkerFactory {
 
     static long cadenceFor(String id) {
         if ("system".equals(id)) return 1000;
+        if ("phone".equals(id)) return 60_000;
         if ("dumpsys".equals(id)) return 5000;
         if ("diplus_push".equals(id) || "byd_cloud".equals(id)) return 30_000;
         return 2000;

@@ -294,6 +294,28 @@ public class AppConfig {
         prefs(ctx).edit().putString(KEY_PHONE_NAME, name == null ? "" : name.trim()).apply();
     }
 
+    /** True when the phone channel is among the active channels (its master switch). */
+    public static boolean isPhoneChannelEnabled(Context ctx) {
+        List<String> active = getActiveChannels(ctx);
+        return active != null && active.contains("phone");
+    }
+
+    /**
+     * One-shot migration from the old bespoke phone source: a previously enabled
+     * master toggle becomes the phone channel (added + active); the old per-key
+     * opt-ins are kept as sensitive opt-ins. The old master pref is then cleared.
+     */
+    public static void migratePhoneChannel(Context ctx) {
+        if (!isPhoneSensorsEnabled(ctx)) return;
+        List<String> added = new ArrayList<>(getAddedSources(ctx));
+        if (!added.contains("phone")) added.add("phone");
+        setAddedSources(ctx, added);
+        List<String> active = new ArrayList<>(getActiveChannels(ctx));
+        if (!active.contains("phone")) active.add("phone");
+        updateActiveChannels(ctx, active);
+        setPhoneSensorsEnabled(ctx, false); // migration done
+    }
+
     private static String defaultPhoneName() {
         String manufacturer = Build.MANUFACTURER == null ? "" : Build.MANUFACTURER.trim();
         String model = Build.MODEL == null ? "" : Build.MODEL.trim();

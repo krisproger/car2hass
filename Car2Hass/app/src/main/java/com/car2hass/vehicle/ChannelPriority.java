@@ -18,7 +18,7 @@ public final class ChannelPriority {
     /** Highest first. DiPlus and Voyah are mutually exclusive native channels
      *  (a car has one or the other), so they share a single priority slot. */
     public static final List<String> ORDER = Arrays.asList(
-            "adb", "system", "dumpsys", "diplus", "obd", "byd_cloud");
+            "adb", "system", "dumpsys", "diplus", "obd", "byd_cloud", "phone");
 
     /** Rank returned for channels absent from {@link #ORDER}. */
     public static final int UNKNOWN_RANK = ORDER.size();

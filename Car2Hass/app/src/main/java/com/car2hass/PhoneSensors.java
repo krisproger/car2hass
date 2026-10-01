@@ -119,16 +119,22 @@ public final class PhoneSensors {
     }
 
     /**
-     * Effective enabled keys: empty while the master toggle is off. When it is
-     * on, only keys present in {@code perKey} are enabled, emitted in
-     * {@link #KEYS} order. Sensitive keys are therefore never enabled unless
-     * explicitly listed by the user.
+     * Effective keys for the phone channel: empty when the channel is off.
+     * Non-sensitive keys are on unless listed in {@code disabled} (the global
+     * attribute filter); sensitive keys require an explicit {@code sensitiveOptIn}.
+     * Emitted in {@link #KEYS} order.
      */
-    public static List<String> enabledKeys(boolean master, Set<String> perKey) {
+    public static List<String> effectiveKeys(boolean channelEnabled,
+                                             Set<String> sensitiveOptIn,
+                                             Set<String> disabled) {
         List<String> out = new ArrayList<>();
-        if (!master || perKey == null || perKey.isEmpty()) return out;
+        if (!channelEnabled) return out;
+        Set<String> optIn = sensitiveOptIn != null ? sensitiveOptIn : Collections.<String>emptySet();
+        Set<String> off = disabled != null ? disabled : Collections.<String>emptySet();
         for (String key : KEYS) {
-            if (perKey.contains(key)) out.add(key);
+            if (off.contains(key)) continue;
+            if (isSensitive(key) && !optIn.contains(key)) continue;
+            out.add(key);
         }
         return out;
     }

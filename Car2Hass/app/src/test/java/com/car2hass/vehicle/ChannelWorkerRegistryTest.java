@@ -80,6 +80,17 @@ public class ChannelWorkerRegistryTest {
         if (reg.status("obd") != null) throw new AssertionError("status leaked for disabled channel");
         if (reg.statuses().size() != 2) throw new AssertionError("statuses size " + reg.statuses().size());
 
+        // restart() re-creates a running worker; a non-running id is a no-op.
+        int createdBefore = factory.created.size();
+        reg.restart("system");
+        if (factory.created.size() != createdBefore + 1)
+            throw new AssertionError("restart must create a fresh worker " + factory.created);
+        if (!reg.isRunning("system")) throw new AssertionError("restart must leave the channel running");
+        int afterRestart = factory.created.size();
+        reg.restart("not_running");
+        if (factory.created.size() != afterRestart)
+            throw new AssertionError("restart of a non-running channel must be a no-op");
+
         System.out.println("All ChannelWorkerRegistry tests passed.");
     }
 }

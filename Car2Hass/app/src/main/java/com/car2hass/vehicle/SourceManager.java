@@ -16,7 +16,7 @@ import java.util.List;
 public final class SourceManager {
     /** Fallback when the registry has no channels_priority block. */
     private static final List<String> CYCLE_PRIORITY = Arrays.asList(
-            "diplus", "adb", "dumpsys", "system", "obd", "diplus_push", "byd_cloud");
+            "diplus", "adb", "dumpsys", "system", "obd", "diplus_push", "byd_cloud", "phone");
 
     private final List<String> cyclePriority;
 

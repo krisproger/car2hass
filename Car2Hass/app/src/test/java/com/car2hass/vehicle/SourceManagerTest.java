@@ -18,7 +18,7 @@ public class SourceManagerTest {
         testSystemAlways(sm);
         testCyclePriority(sm);
         testBuildItems(sm);
-        testPhantomChannelSkipped();
+        testPhoneChannelIncluded();
         System.out.println("All SourceManager tests passed.");
     }
     private static void testOrderedChannelsDiplus(SourceManager sm) throws Exception {
@@ -38,17 +38,17 @@ public class SourceManagerTest {
         if (items.size() != 3) throw new AssertionError("items=" + items.size());
     }
 
-    /** A registry-only channel (no DataChannel) must never enter the read cycle. */
-    private static void testPhantomChannelSkipped() throws Exception {
+    /** phone is a real channel now: it participates in the cycle like any other. */
+    private static void testPhoneChannelIncluded() throws Exception {
         RegistryStore rs = RegistryStore.of(
             new JSONObject("{\"channels_priority\":[\"diplus\",\"phone\"],\"sensors\":["
                 + "{\"key\":\"speed\",\"channels\":{\"diplus\":{\"name\":\"车速\"},\"phone\":{\"field\":\"speed\"}}}]}"),
             new JSONObject("{\"commands\":[]}"),
             new JSONObject("{\"profiles\":[]}"));
         SourceManager sm = new SourceManager(rs, Arrays.asList("diplus", "phone"), "byd_generic", null);
-        if (!sm.cycleSourcePriority().equals(Arrays.asList("diplus")))
-            throw new AssertionError("phone must be skipped: " + sm.cycleSourcePriority());
-        if (!sm.orderedChannels("speed").equals(Arrays.asList("diplus")))
-            throw new AssertionError("phone must not be ordered: " + sm.orderedChannels("speed"));
+        if (!sm.cycleSourcePriority().equals(Arrays.asList("diplus", "phone")))
+            throw new AssertionError("phone must be in the cycle: " + sm.cycleSourcePriority());
+        if (!sm.orderedChannels("speed").equals(Arrays.asList("diplus", "phone")))
+            throw new AssertionError("phone must be ordered: " + sm.orderedChannels("speed"));
     }
 }

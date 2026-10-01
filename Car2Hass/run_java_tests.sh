@@ -416,6 +416,9 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/
 echo "=== Compiling ChannelPriorityTest ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ChannelPriorityTest.java"
 
+echo "=== Compiling ChannelIdsTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ChannelIdsTest.java"
+
 echo "=== Compiling DerivedAggregates (pure, no Android dep) ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$SRC/com/car2hass/DerivedAggregates.java"
 
@@ -637,6 +640,9 @@ java -cp "$OUT" com.car2hass.vehicle.ValueStoreTest
 
 echo "=== Running ChannelPriorityTest ==="
 java -cp "$OUT" com.car2hass.vehicle.ChannelPriorityTest
+
+echo "=== Running ChannelIdsTest ==="
+java -cp "$OUT" com.car2hass.vehicle.ChannelIdsTest
 
 echo "=== Running DerivedAggregatesTest ==="
 java -cp "$OUT" com.car2hass.DerivedAggregatesTest

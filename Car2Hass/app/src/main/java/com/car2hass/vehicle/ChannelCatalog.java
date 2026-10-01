@@ -24,6 +24,7 @@ public final class ChannelCatalog {
         if ("diplus_push".equals(id)) return new DiPlusPushChannel();
         if ("byd_cloud".equals(id)) return new BydCloudChannel();
         if ("voyah".equals(id)) return new VoyahChannel();
+        if ("phone".equals(id)) return new PhoneChannel();
         return null;
     }
 

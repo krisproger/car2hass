@@ -1,4 +1,4 @@
-package com.car2hass;
+package com.car2hass.vehicle;
 
 import android.app.AlarmManager;
 import android.content.BroadcastReceiver;
@@ -32,10 +32,13 @@ import android.telephony.TelephonyManager;
 import android.view.Display;
 import android.view.WindowManager;
 
-import com.car2hass.vehicle.ValueStore;
+import com.car2hass.AppConfig;
+import com.car2hass.LogBuffer;
+import com.car2hass.PhoneSensors;
 
 import java.lang.reflect.Method;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -46,28 +49,31 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Collects a curated set of Android phone sensors and writes them into the
- * shared {@link ValueStore} with source {@code "phone"} (the phone device in HA).
- *
- * <p>Discrete state is event-driven (battery/charger, connectivity/WiFi, screen,
- * power, audio); continuous values are refreshed by a 60 s periodic task. Every
- * write is gated on {@link PhoneSensors#enabledKeys}: nothing is written unless
- * the master toggle is on and the individual key was explicitly opted in, so
- * sensitive keys (steps/light/proximity/pressure) are never collected by default.
+ * Phone channel worker: event-driven phone sensors plus a 60 s periodic refresh,
+ * written to the shared {@link ValueStore} with source {@code "phone"} (the
+ * phone device in HA). Enablement follows the channel state (master) plus the
+ * global attribute filter and per-sensitive opt-ins; see
+ * {@link PhoneSensors#effectiveKeys}.
  *
  * <p>Crash-safe: every read is wrapped so a failing subsystem never takes the
  * telemetry service down.
  */
-public final class PhoneSensorSource {
+public final class PhoneWorker implements ChannelWorker {
 
-    private static final String TAG = "PhoneSensorSource";
+    private static final String TAG = "PhoneWorker";
     private static final String SOURCE = "phone";
-    private static final long PERIODIC_INTERVAL_MS = 60_000L;
+    static final long CADENCE_MS = 60_000L;
 
-    private Context ctx;
-    private ValueStore store;
+    private final Context ctx;
+    private final ValueStore store;
     private final Set<String> enabled = Collections.newSetFromMap(new ConcurrentHashMap<>());
     private volatile boolean running;
+    private volatile ChannelWorkerStatus.Result lastResult = ChannelWorkerStatus.Result.OK;
+    private volatile String lastError = "";
+    private volatile long cycleCount;
+    private volatile long lastCycleAtMs;
+    private volatile long threadStartAtMs;
+    private volatile long errorCount;
     private ScheduledExecutorService executor;
 
     private BroadcastReceiver batteryReceiver;
@@ -77,18 +83,27 @@ public final class PhoneSensorSource {
     private SensorManager sensorManager;
     private final Map<String, SensorEventListener> activeSensors = new ConcurrentHashMap<>();
 
-    // ── Lifecycle ────────────────────────────────────────────────────────────
+    public PhoneWorker(Context ctx, ValueStore store) {
+        this.ctx = ctx.getApplicationContext();
+        this.store = store;
+    }
 
-    /** Starts (or refreshes) the source; safe to call repeatedly. */
-    public synchronized void start(Context context, ValueStore valueStore) {
-        this.ctx = context.getApplicationContext();
-        this.store = valueStore;
-        if (running) {
-            refreshEnabled();
-            return;
-        }
-        refreshEnabled();
+    // ── ChannelWorker ────────────────────────────────────────────────────────
+
+    @Override public String channelId() { return SOURCE; }
+    @Override public boolean isRunning() { return running; }
+
+    @Override public ChannelWorkerStatus status() {
+        return new ChannelWorkerStatus(SOURCE, running, lastResult, lastError,
+                CADENCE_MS, CADENCE_MS, cycleCount, lastCycleAtMs, threadStartAtMs, errorCount);
+    }
+
+    @Override
+    public synchronized void start() {
+        if (running) return;
         running = true;
+        threadStartAtMs = System.currentTimeMillis();
+        refreshEnabled();
         try { registerBatteryReceiver(); } catch (Exception e) { LogBuffer.d(TAG, "battery: " + e.getMessage()); }
         try { registerStateReceiver(); } catch (Exception e) { LogBuffer.d(TAG, "state: " + e.getMessage()); }
         try { registerConnectivity(); } catch (Exception e) { LogBuffer.d(TAG, "connectivity: " + e.getMessage()); }
@@ -100,16 +115,16 @@ public final class PhoneSensorSource {
         try { readWifi(); } catch (Exception e) { LogBuffer.d(TAG, "wifi: " + e.getMessage()); }
         try { readBattery(null); } catch (Exception e) { LogBuffer.d(TAG, "battery read: " + e.getMessage()); }
         executor = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread t = new Thread(r, "phone-sensor-source");
+            Thread t = new Thread(r, "phone-worker");
             t.setDaemon(true);
             return t;
         });
-        executor.scheduleWithFixedDelay(this::safePeriodic, 0, PERIODIC_INTERVAL_MS,
+        executor.scheduleWithFixedDelay(this::safePeriodic, CADENCE_MS, CADENCE_MS,
                 TimeUnit.MILLISECONDS);
         LogBuffer.i(TAG, "started, enabled=" + enabled.size());
     }
 
-    /** Stops all listeners and the periodic task; safe to call repeatedly. */
+    @Override
     public synchronized void stop() {
         if (!running) return;
         running = false;
@@ -130,16 +145,12 @@ public final class PhoneSensorSource {
         LogBuffer.i(TAG, "stopped");
     }
 
-    public boolean isRunning() {
-        return running;
-    }
-
-    /** Re-reads the master + per-key settings; reconciles registered sensors. */
+    /** Re-reads the channel state + opt-ins + global filter; reconciles sensors. */
     public synchronized void refreshEnabled() {
-        if (ctx == null) return;
-        boolean master = AppConfig.isPhoneSensorsEnabled(ctx);
-        Set<String> effective = new java.util.HashSet<>(
-                PhoneSensors.enabledKeys(master, AppConfig.getPhoneEnabledKeys(ctx)));
+        Set<String> effective = new HashSet<>(PhoneSensors.effectiveKeys(
+                AppConfig.isPhoneChannelEnabled(ctx),
+                AppConfig.getPhoneEnabledKeys(ctx),
+                AppConfig.getDisabledSignals(ctx)));
         enabled.clear();
         enabled.addAll(effective);
         if (running) {
@@ -506,6 +517,7 @@ public final class PhoneSensorSource {
 
     private void safePeriodic() {
         if (!running) return;
+        refreshEnabled();
         try { readBattery(null); } catch (Exception ignored) {}
         try { readPower(); } catch (Exception ignored) {}
         try { readAudio(); } catch (Exception ignored) {}
@@ -518,7 +530,10 @@ public final class PhoneSensorSource {
         try { readBatteryProperties(); } catch (Exception ignored) {}
         try { readSim(); } catch (Exception ignored) {}
         try { readBuildAndTime(); } catch (Exception ignored) {}
-        try { readNextAlarm(); } catch (Exception ignored) {}
+        lastResult = ChannelWorkerStatus.Result.OK;
+        lastError = "";
+        cycleCount++;
+        lastCycleAtMs = System.currentTimeMillis();
     }
 
     private void readMemory() {
@@ -575,13 +590,6 @@ public final class PhoneSensorSource {
         put("phone_time_zone", TimeZone.getDefault().getID());
         long rebootSeconds = (System.currentTimeMillis() - SystemClock.elapsedRealtime()) / 1000L;
         if (rebootSeconds > 0) put("phone_last_reboot", rebootSeconds);
-    }
-
-    private void readNextAlarm() {
-        AlarmManager am = (AlarmManager) ctx.getSystemService(Context.ALARM_SERVICE);
-        if (am == null) return;
-        AlarmManager.AlarmClockInfo info = am.getNextAlarmClock();
-        if (info != null) put("phone_next_alarm", info.getTriggerTime());
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

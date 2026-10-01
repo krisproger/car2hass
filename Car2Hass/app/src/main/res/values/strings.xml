@@ -206,6 +206,7 @@
     <string name="channel_diplus_push">DiPlus Push</string>
     <string name="channel_byd_cloud">BYD Cloud</string>
     <string name="channel_voyah">Voyah CANBus</string>
+    <string name="channel_phone">Phone (device sensors)</string>
     <string name="settings_channel_status_off">off</string>
     <string name="settings_channel_status_ok">working · %1$d s</string>
     <string name="settings_channel_status_retry">not responding · retry in %1$d s</string>
@@ -898,12 +899,9 @@
     <string name="settings_cloud_login_needed">Sign in to the cloud first</string>
 
     <!-- Phone sensor source (second device in HA) -->
-    <string name="settings_section_phone">Phone sensors</string>
-    <string name="settings_phone_title">Phone sensors</string>
-    <string name="settings_phone_hint">Collect sensors from this phone and expose them as a second device in Home Assistant.</string>
-    <string name="settings_phone_toggle">Enable phone sensors</string>
-    <string name="settings_phone_name_hint">Phone name</string>
-    <string name="settings_phone_privacy">Sensitive sensors (location, steps, activity, light, proximity, pressure) are opt-in and require permission.</string>
+    <string name="settings_phone_all">All phone sensors</string>
+    <string name="settings_phone_name">Phone name</string>
+    <string name="settings_phone_privacy">Sensitive sensors are opt-in and may require permission.</string>
     <string name="settings_phone_sensitive_mark">· sensitive</string>
     <string name="settings_phone_permission_denied">Permission denied — the sensor stays off.</string>
 

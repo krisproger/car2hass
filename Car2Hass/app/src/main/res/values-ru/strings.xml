@@ -198,6 +198,7 @@
     <string name="channel_diplus_push">DiPlus Push</string>
     <string name="channel_byd_cloud">BYD Cloud</string>
     <string name="channel_voyah">Voyah CANBus</string>
+    <string name="channel_phone">Телефон (сенсоры устройства)</string>
     <string name="settings_channel_status_off">выключен</string>
     <string name="settings_channel_status_ok">работает · %1$d с</string>
     <string name="settings_channel_status_retry">не отвечает · повтор через %1$d с</string>
@@ -882,12 +883,9 @@
     <string name="settings_cloud_login_needed">Сначала войдите в облако</string>
 
     <!-- Phone sensor source (second device in HA) -->
-    <string name="settings_section_phone">Сенсоры телефона</string>
-    <string name="settings_phone_title">Сенсоры телефона</string>
-    <string name="settings_phone_hint">Собирать датчики этого телефона и показывать их вторым устройством в Home Assistant.</string>
-    <string name="settings_phone_toggle">Включить сенсоры телефона</string>
-    <string name="settings_phone_name_hint">Имя телефона</string>
-    <string name="settings_phone_privacy">Чувствительные датчики (геолокация, шаги, активность, освещённость, приближение, давление) включаются только вручную и требуют разрешения.</string>
+    <string name="settings_phone_all">Все датчики телефона</string>
+    <string name="settings_phone_name">Имя телефона</string>
+    <string name="settings_phone_privacy">Чувствительные датчики включаются только вручную и могут требовать разрешения.</string>
     <string name="settings_phone_sensitive_mark">· чувствительный</string>
     <string name="settings_phone_permission_denied">Разрешение не выдано — датчик останется выключенным.</string>
 

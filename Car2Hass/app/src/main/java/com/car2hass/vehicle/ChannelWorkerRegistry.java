@@ -63,6 +63,19 @@ public final class ChannelWorkerRegistry {
         workers.clear();
     }
 
+    /** Stops and re-creates one running worker (settings changed for that channel). */
+    public synchronized void restart(String channelId) {
+        ChannelWorker old = workers.get(channelId);
+        if (old == null) return;
+        safeStop(old);
+        workers.remove(channelId);
+        ChannelWorker fresh;
+        try { fresh = factory.create(channelId); } catch (Exception e) { return; }
+        if (fresh == null) return;
+        workers.put(channelId, fresh);
+        try { fresh.start(); } catch (Exception ignored) {}
+    }
+
     public synchronized boolean isRunning(String channelId) {
         return workers.containsKey(channelId);
     }

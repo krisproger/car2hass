@@ -334,7 +334,7 @@ public class HassClient {
                 // Built at the top level (not per snapshot) so queued snapshots,
                 // which are persisted without it, still carry the descriptor.
                 String devJson = PhoneSensors.deviceBlockJson(
-                        AppConfig.getDeviceClass(ctx),
+                        AppConfig.isPhoneChannelEnabled(ctx) ? "phone" : "car",
                         com.car2hass.vehicle.DeviceAnon.fromContext(ctx),
                         AppConfig.getPhoneName(ctx));
                 if (devJson != null) {

@@ -145,7 +145,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
     // Settings sections (two-column layout)
     private int selectedSettingsSection = 0;
-    private final View[] settingsSections = new View[9];
+    private final View[] settingsSections = new View[8];
     private Button btnRestartResearch;
     private ProgressDialog researchProgressDialog;
     private String pendingResearchPath = null;
@@ -206,10 +206,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private android.widget.Button btnCloudLogin;
     private boolean updatingCloudToggle = false;
 
-    // Phone sensor UI
-    private Switch switchPhoneSensors;
-    private EditText editPhoneName;
-    private LinearLayout phoneSensorList;
+    // Phone sensor UI (sensitive opt-in switches in the phone channel block)
     private boolean updatingPhoneToggle = false;
     private String pendingPhonePermissionKey;
     private CompoundButton pendingPhonePermissionSwitch;
@@ -2852,57 +2849,6 @@ public class MainActivity extends BaseLocalizedActivity {
         updateCloudStatus();
     }
 
-    private void setupPhoneSettings() {
-        View section = settingsView.findViewById(R.id.settings_section_phone);
-        View nav = settingsView.findViewById(R.id.navSettingsPhone);
-        boolean isPhone = "phone".equals(AppConfig.getDeviceClass(this));
-        if (section != null) section.setVisibility(View.GONE);
-        if (nav != null) nav.setVisibility(isPhone ? View.VISIBLE : View.GONE);
-        if (!isPhone) return;
-
-        switchPhoneSensors = settingsView.findViewById(R.id.switchPhoneSensors);
-        editPhoneName = settingsView.findViewById(R.id.editPhoneName);
-        phoneSensorList = settingsView.findViewById(R.id.phoneSensorList);
-        if (switchPhoneSensors == null || phoneSensorList == null) return;
-
-        if (editPhoneName != null) {
-            editPhoneName.setText(AppConfig.getPhoneName(this));
-            editPhoneName.addTextChangedListener(cloudWatcher(() ->
-                    AppConfig.setPhoneName(this, editPhoneName.getText().toString())));
-        }
-
-        switchPhoneSensors.setChecked(AppConfig.isPhoneSensorsEnabled(this));
-        switchPhoneSensors.setOnCheckedChangeListener((b, checked) -> {
-            if (updatingPhoneToggle) return;
-            AppConfig.setPhoneSensorsEnabled(this, checked);
-            setPhoneChildrenEnabled(checked);
-            refreshPhoneSource();
-        });
-
-        buildPhoneSensorList();
-        setPhoneChildrenEnabled(switchPhoneSensors.isChecked());
-    }
-
-    private void buildPhoneSensorList() {
-        if (phoneSensorList == null) return;
-        phoneSensorList.removeAllViews();
-        Set<String> enabled = AppConfig.getPhoneEnabledKeys(this);
-        for (String key : PhoneSensors.KEYS) {
-            Switch sw = new Switch(this);
-            sw.setLayoutParams(new LinearLayout.LayoutParams(
-                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-            String label = phoneSensorLabel(key);
-            if (PhoneSensors.isSensitive(key)) {
-                label += " " + getString(R.string.settings_phone_sensitive_mark);
-            }
-            sw.setText(label);
-            sw.setTextColor(getResources().getColor(R.color.textPrimary, getTheme()));
-            sw.setChecked(enabled.contains(key));
-            sw.setOnCheckedChangeListener((b, checked) -> onPhoneSensorToggled(key, sw, checked));
-            phoneSensorList.addView(sw);
-        }
-    }
-
     private void onPhoneSensorToggled(String key, CompoundButton sw, boolean checked) {
         if (updatingPhoneToggle) return;
         if (checked) {
@@ -2925,7 +2871,12 @@ public class MainActivity extends BaseLocalizedActivity {
             }
         }
         AppConfig.setPhoneEnabledKey(this, key, checked);
-        refreshPhoneSource();
+        restartPhoneChannel();
+    }
+
+    /** Restarts the phone worker so an opt-in change applies immediately. */
+    private void restartPhoneChannel() {
+        if (serviceBound && telemetryService != null) telemetryService.restartChannel("phone");
     }
 
     /** Runtime permission required to enable a phone sensor, or null if none. */
@@ -2957,21 +2908,6 @@ public class MainActivity extends BaseLocalizedActivity {
             pretty = Character.toUpperCase(pretty.charAt(0)) + pretty.substring(1);
         }
         return pretty;
-    }
-
-    private void setPhoneChildrenEnabled(boolean enabled) {
-        if (phoneSensorList == null) return;
-        for (int i = 0; i < phoneSensorList.getChildCount(); i++) {
-            View child = phoneSensorList.getChildAt(i);
-            child.setEnabled(enabled);
-            child.setAlpha(enabled ? 1f : 0.5f);
-        }
-    }
-
-    private void refreshPhoneSource() {
-        if (serviceBound && telemetryService != null) {
-            telemetryService.refreshPhoneSource();
-        }
     }
 
     private TextWatcher cloudWatcher(Runnable action) {
@@ -3650,7 +3586,7 @@ public class MainActivity extends BaseLocalizedActivity {
             if (key != null) {
                 if (granted) {
                     AppConfig.setPhoneEnabledKey(this, key, true);
-                    refreshPhoneSource();
+                    restartPhoneChannel();
                 } else {
                     if (sw != null) {
                         updatingPhoneToggle = true;
@@ -3745,7 +3681,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
         refreshIntegrationUpdateHint();
         setupCloudSettings();
-        setupPhoneSettings();
+        AppConfig.migratePhoneChannel(this);
 
         settingsView.findViewById(R.id.btnTest).setOnClickListener(v -> testConnection());
         settingsView.findViewById(R.id.btnLocationTest).setOnClickListener(v -> showLocationTest());
@@ -3787,13 +3723,11 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsSections[5] = settingsView.findViewById(R.id.settings_section_research);
         settingsSections[6] = settingsView.findViewById(R.id.settings_section_commands);
         settingsSections[7] = settingsView.findViewById(R.id.settings_section_cloud);
-        settingsSections[8] = settingsView.findViewById(R.id.settings_section_phone);
 
         configureNavItem(R.id.navSettingsCar, "◈", R.string.settings_section_car);
         configureNavItem(R.id.navSettingsProtocols, "⇄", R.string.settings_section_protocols);
         configureNavItem(R.id.navSettingsSmarthome, "⌂", R.string.settings_section_smarthome);
         configureNavItem(R.id.navSettingsCloud, "☁", R.string.settings_section_cloud);
-        configureNavItem(R.id.navSettingsPhone, "☎", R.string.settings_section_phone);
         configureNavItem(R.id.navSettingsGeofences, "◎", R.string.nav_geofences);
         configureNavItem(R.id.navSettingsCommands, "⌘", R.string.settings_section_commands);
         configureNavItem(R.id.navSettingsTech, "⚙", R.string.settings_section_tech);
@@ -3803,7 +3737,6 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsView.findViewById(R.id.navSettingsProtocols).setOnClickListener(v -> selectSettingsSection(1));
         settingsView.findViewById(R.id.navSettingsSmarthome).setOnClickListener(v -> selectSettingsSection(2));
         settingsView.findViewById(R.id.navSettingsCloud).setOnClickListener(v -> selectSettingsSection(7));
-        settingsView.findViewById(R.id.navSettingsPhone).setOnClickListener(v -> selectSettingsSection(8));
         settingsView.findViewById(R.id.navSettingsGeofences).setOnClickListener(v -> selectSettingsSection(3));
         settingsView.findViewById(R.id.btnAddGeofence).setOnClickListener(v ->
                 startActivity(new Intent(this, GeofenceEditActivity.class)));
@@ -3837,10 +3770,8 @@ public class MainActivity extends BaseLocalizedActivity {
             settingsSections[i].setVisibility(visible ? View.VISIBLE : View.GONE);
         }
         int[] navIds = {R.id.navSettingsCar, R.id.navSettingsProtocols, R.id.navSettingsSmarthome,
-                        R.id.navSettingsGeofences, R.id.navSettingsTech, R.id.navSettingsCommands,
-                        R.id.navSettingsPhone};
-        boolean[] selected = {index == 0, index == 1, index == 2, index == 3, index == 4, index == 6,
-                        index == 8};
+                        R.id.navSettingsGeofences, R.id.navSettingsTech, R.id.navSettingsCommands};
+        boolean[] selected = {index == 0, index == 1, index == 2, index == 3, index == 4, index == 6};
         for (int i = 0; i < navIds.length; i++) {
             View item = settingsView.findViewById(navIds[i]);
             item.setSelected(selected[i]);
@@ -4291,8 +4222,44 @@ public class MainActivity extends BaseLocalizedActivity {
             }
             if ("diplus".equals(name) || "diplus_push".equals(name)) {
                 channelContainer.addView(createInlineField(R.string.settings_diplus_auth,
-                        AppConfig.getDiplusAuth(this), "",
+                        AppConfig.getDiplusAuth(this), "", 
                         v -> AppConfig.setDiplusAuth(this, v)));
+            }
+            if ("phone".equals(name)) {
+                // Master: the channel's active state == "all phone sensors".
+                Switch all = new Switch(this);
+                all.setText(R.string.settings_phone_all);
+                all.setTextColor(getResources().getColor(R.color.textPrimary));
+                all.setChecked(on);
+                all.setOnCheckedChangeListener((b, checked) -> {
+                    List<String> active = new ArrayList<>(AppConfig.getActiveChannels(MainActivity.this));
+                    if (checked) { if (!active.contains("phone")) active.add("phone"); }
+                    else active.remove("phone");
+                    AppConfig.updateActiveChannels(MainActivity.this, active);
+                    renderResearch();
+                });
+                channelContainer.addView(all);
+
+                channelContainer.addView(createInlineField(R.string.settings_phone_name,
+                        AppConfig.getPhoneName(this), "",
+                        v -> AppConfig.setPhoneName(this, v)));
+
+                TextView hint = new TextView(this);
+                hint.setText(R.string.settings_phone_privacy);
+                hint.setTextColor(getResources().getColor(R.color.textTertiary));
+                hint.setTextSize(12);
+                channelContainer.addView(hint);
+
+                Set<String> opted = AppConfig.getPhoneEnabledKeys(this);
+                for (String key : PhoneSensors.SENSITIVE_KEYS) {
+                    Switch sw = new Switch(this);
+                    sw.setText(phoneSensorLabel(key) + " "
+                            + getString(R.string.settings_phone_sensitive_mark));
+                    sw.setTextColor(getResources().getColor(R.color.textPrimary));
+                    sw.setChecked(opted.contains(key));
+                    sw.setOnCheckedChangeListener((b, checked) -> onPhoneSensorToggled(key, sw, checked));
+                    channelContainer.addView(sw);
+                }
             }
         }
 
@@ -4371,7 +4338,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
     /** Supported source ids the user can add (system is always present). */
     private static final List<String> ADDABLE_SOURCES = java.util.Arrays.asList(
-            "diplus", "adb", "obd", "voyah", "dumpsys", "diplus_push", "byd_cloud");
+            "diplus", "adb", "obd", "voyah", "dumpsys", "diplus_push", "byd_cloud", "phone");
 
     private void showAddSourceDialog() {
         List<String> added = AppConfig.getAddedSources(this);
@@ -4464,6 +4431,7 @@ public class MainActivity extends BaseLocalizedActivity {
             case "diplus_push": return R.string.channel_diplus_push;
             case "byd_cloud": return R.string.channel_byd_cloud;
             case "voyah": return R.string.channel_voyah;
+            case "phone": return R.string.channel_phone;
             default: return R.string.settings_research_channels_label;
         }
     }

@@ -73,7 +73,7 @@ public final class RegistryStore {
 
     /** Canonical channel order used when sorting the per-sensor key union. */
     private static final List<String> CANONICAL_CHANNEL_ORDER = java.util.Arrays.asList(
-            "diplus", "adb", "dumpsys", "system", "obd", "diplus_push", "byd_cloud", "voyah");
+            "diplus", "adb", "dumpsys", "system", "obd", "diplus_push", "byd_cloud", "voyah", "phone");
 
     /**
      * Channel ids in canonical priority order from sensors_registry.json

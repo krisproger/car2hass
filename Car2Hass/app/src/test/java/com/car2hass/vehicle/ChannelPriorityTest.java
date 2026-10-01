@@ -5,8 +5,10 @@ import java.util.Arrays;
 public class ChannelPriorityTest {
     public static void main(String[] args) {
         if (!ChannelPriority.ORDER.equals(Arrays.asList(
-                "adb", "system", "dumpsys", "diplus", "obd", "byd_cloud")))
+                "adb", "system", "dumpsys", "diplus", "obd", "byd_cloud", "phone")))
             throw new AssertionError("priority order mismatch: " + ChannelPriority.ORDER);
+        if (ChannelPriority.rank("phone") != ChannelPriority.ORDER.size() - 1)
+            throw new AssertionError("phone must rank lowest (unique keys, no overlap)");
         if (ChannelPriority.rank("adb") != 0) throw new AssertionError("adb rank");
         if (!(ChannelPriority.rank("system") < ChannelPriority.rank("dumpsys")))
             throw new AssertionError("system must rank above dumpsys");

@@ -114,6 +114,7 @@ public class WorkerStatusActivity extends BaseLocalizedActivity {
             case "voyah": return "Voyah";
             case "dumpsys": return "Dumpsys";
             case "byd_cloud": return "BYD Cloud";
+            case "phone": return "Phone";
             default: return id;
         }
     }
