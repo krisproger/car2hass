@@ -1,37 +1,38 @@
 package com.car2hass;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
- * Pure helper: inserts non-selectable category header rows before each run of
- * signals sharing a category, so the expandable telemetry list shows a second
- * level (availability group -> category -> signals). Items keep their incoming
- * (key) order; categories follow the taxonomy order.
+ * Pure helper for the telemetry list: builds the visible rows of one
+ * availability group as availability -> category -> signals. A category header
+ * is always shown; its signals only when the category is expanded.
  */
 public final class TelemetryGroups {
 
-    public static List<CANDataItem> withCategoryHeaders(List<CANDataItem> items,
-                                                        Function<String, String> categoryOf,
-                                                        List<String> order) {
+    public static List<CANDataItem> buildRows(List<CANDataItem> items,
+                                              Function<String, String> categoryOf,
+                                              List<String> order,
+                                              Set<String> expandedCategories) {
         List<CANDataItem> out = new ArrayList<>();
         if (items == null || items.isEmpty()) return out;
+        Set<String> expanded = expandedCategories != null
+                ? expandedCategories : Collections.<String>emptySet();
         for (String cat : order) {
-            boolean headerAdded = false;
+            List<CANDataItem> inCat = new ArrayList<>();
             for (CANDataItem it : items) {
-                String c = categoryOf.apply(it.key);
-                if (!cat.equals(c)) continue;
-                if (!headerAdded) {
-                    CANDataItem h = new CANDataItem(0, cat, "", 0);
-                    h.isHeader = true;
-                    h.groupKey = cat;
-                    h.headerText = "";
-                    out.add(h);
-                    headerAdded = true;
-                }
-                out.add(it);
+                if (cat.equals(categoryOf.apply(it.key))) inCat.add(it);
             }
+            if (inCat.isEmpty()) continue;
+            CANDataItem h = new CANDataItem(0, cat, "", 0);
+            h.isHeader = true;
+            h.groupKey = cat;
+            h.headerText = "";
+            out.add(h);
+            if (expanded.contains(cat)) out.addAll(inCat);
         }
         // Defensive: items whose category is not in `order` are appended as-is.
         for (CANDataItem it : items) {

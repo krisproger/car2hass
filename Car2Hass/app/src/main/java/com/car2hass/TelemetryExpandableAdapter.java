@@ -25,7 +25,9 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
 
     private final Context context;
     private final List<Group> groups = new ArrayList<>();
+    private final java.util.Set<String> expandedCategories = new java.util.HashSet<>();
     private Consumer<String> onHeaderClick;
+    private Consumer<String> onCategoryClick;
     private Consumer<CANDataItem> onCheckChanged;
 
     public TelemetryExpandableAdapter(Context context) {
@@ -34,6 +36,14 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
 
     public void setOnHeaderClick(Consumer<String> listener) { this.onHeaderClick = listener; }
     public void setOnCheckChanged(Consumer<CANDataItem> listener) { this.onCheckChanged = listener; }
+
+    public void setExpandedCategories(java.util.Set<String> cats) {
+        expandedCategories.clear();
+        if (cats != null) expandedCategories.addAll(cats);
+        notifyDataSetChanged();
+    }
+
+    public void setOnCategoryClick(Consumer<String> listener) { this.onCategoryClick = listener; }
 
     public void setGroups(List<Group> data) {
         groups.clear();
@@ -91,7 +101,13 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
             View hv = LayoutInflater.from(context).inflate(
                     com.car2hass.R.layout.can_data_header, parent, false);
             TextView ht = hv.findViewById(com.car2hass.R.id.rowName);
-            if (ht != null) ht.setText(categoryLabel(rowItem.groupKey));
+            if (ht != null) {
+                ht.setText(categoryLabel(rowItem.groupKey)
+                        + (expandedCategories.contains(rowItem.groupKey) ? " ▾" : " ▸"));
+            }
+            hv.setOnClickListener(v -> {
+                if (onCategoryClick != null) onCategoryClick.accept(rowItem.groupKey);
+            });
             return hv;
         }
 

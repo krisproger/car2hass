@@ -411,6 +411,7 @@ public class MainActivity extends BaseLocalizedActivity {
             else disabled.add(item.key);
             AppConfig.setDisabledSignals(this, disabled);
         });
+        expAdapter.setOnCategoryClick(this::toggleCategoryExpanded);
         expList.setAdapter(expAdapter);
         // Persist the expand/collapse of a group. Returning true consumes the
         // click so the default in-memory toggle doesn't fight the saved state
@@ -3290,35 +3291,33 @@ public class MainActivity extends BaseLocalizedActivity {
         unreachable.sort(byKey);
         disWith.sort(byKey);
         dis.sort(byKey);
-        // Second level: category sub-headers inside each availability group.
+        // Second level: collapsible category groups inside each availability group.
+        java.util.Set<String> expandedCats = AppConfig.getExpandedCategories(this);
         java.util.function.Function<String, String> catOf = key -> {
             try { return displayRegistry().category(key); } catch (Exception e) { return "other"; }
         };
         List<String> catOrder = java.util.Arrays.asList(
                 "drive", "battery", "climate", "access", "lights", "tyres",
                 "safety", "sentry", "media", "location", "device", "phone", "other");
-        active = com.car2hass.TelemetryGroups.withCategoryHeaders(active, catOf, catOrder);
-        expected = com.car2hass.TelemetryGroups.withCategoryHeaders(expected, catOf, catOrder);
-        unreachable = com.car2hass.TelemetryGroups.withCategoryHeaders(unreachable, catOf, catOrder);
-        disWith = com.car2hass.TelemetryGroups.withCategoryHeaders(disWith, catOf, catOrder);
-        dis = com.car2hass.TelemetryGroups.withCategoryHeaders(dis, catOf, catOrder);
         List<TelemetryExpandableAdapter.Group> groups = new ArrayList<>();
-        addGroup(groups, "active", R.string.telemetry_group_active, active);
-        addGroup(groups, "expected", R.string.telemetry_group_expected, expected);
-        addGroup(groups, "unreachable", R.string.telemetry_group_unreachable, unreachable);
-        addGroup(groups, "diswith", R.string.telemetry_group_active_off, disWith);
-        addGroup(groups, "dis", R.string.telemetry_group_expected_off, dis);
+        addGroup(groups, "active", R.string.telemetry_group_active, active, catOf, catOrder, expandedCats);
+        addGroup(groups, "expected", R.string.telemetry_group_expected, expected, catOf, catOrder, expandedCats);
+        addGroup(groups, "unreachable", R.string.telemetry_group_unreachable, unreachable, catOf, catOrder, expandedCats);
+        addGroup(groups, "diswith", R.string.telemetry_group_active_off, disWith, catOf, catOrder, expandedCats);
+        addGroup(groups, "dis", R.string.telemetry_group_expected_off, dis, catOf, catOrder, expandedCats);
         return groups;
     }
 
     private void addGroup(List<TelemetryExpandableAdapter.Group> out, String key, int titleRes,
-                          List<CANDataItem> items) {
+                          List<CANDataItem> items,
+                          java.util.function.Function<String, String> catOf,
+                          List<String> catOrder, java.util.Set<String> expandedCats) {
         if (items.isEmpty()) return;
         int count = 0;
         for (CANDataItem it : items) if (!it.isHeader) count++;
         TelemetryExpandableAdapter.Group g = new TelemetryExpandableAdapter.Group(key,
                 getString(titleRes) + " (" + count + ")");
-        g.items.addAll(items);
+        g.items.addAll(com.car2hass.TelemetryGroups.buildRows(items, catOf, catOrder, expandedCats));
         out.add(g);
     }
 
@@ -3329,6 +3328,15 @@ public class MainActivity extends BaseLocalizedActivity {
         else expanded.add(groupKey);
         AppConfig.setExpandedGroups(this, expanded);
         applyExpandedState();
+    }
+
+    /** Toggles a signal category inside the telemetry list and rebuilds it. */
+    private void toggleCategoryExpanded(String categoryKey) {
+        java.util.Set<String> expanded = new HashSet<>(AppConfig.getExpandedCategories(this));
+        if (expanded.contains(categoryKey)) expanded.remove(categoryKey);
+        else expanded.add(categoryKey);
+        AppConfig.setExpandedCategories(this, expanded);
+        renderTelemetryTab();
     }
 
     private void applyExpandedState() {
@@ -3538,6 +3546,7 @@ public class MainActivity extends BaseLocalizedActivity {
         String fp = groupsFingerprint(groups);
         if (!fp.equals(lastGroupsFingerprint)) {
             lastGroupsFingerprint = fp;
+            expAdapter.setExpandedCategories(AppConfig.getExpandedCategories(this));
             expAdapter.setGroups(groups);
             applyExpandedState();
         }

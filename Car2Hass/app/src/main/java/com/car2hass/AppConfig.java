@@ -369,24 +369,40 @@ public class AppConfig {
     }
 
     private static final String KEY_EXPANDED_GROUPS = "telemetry_expanded_groups";
+    private static final String KEY_EXPANDED_CATEGORIES = "telemetry_expanded_categories";
 
-    /** Telemetry tab groups that stay expanded (default: active only). */
+    /** Telemetry tab availability groups that stay expanded (default: none). */
     public static Set<String> getExpandedGroups(Context ctx) {
-        String json = prefs(ctx).getString(KEY_EXPANDED_GROUPS, "[\"active\"]");
+        return readStringSet(ctx, KEY_EXPANDED_GROUPS);
+    }
+
+    public static void setExpandedGroups(Context ctx, Set<String> groups) {
+        writeStringSet(ctx, KEY_EXPANDED_GROUPS, groups);
+    }
+
+    /** Expanded signal categories in the telemetry list (default: none). */
+    public static Set<String> getExpandedCategories(Context ctx) {
+        return readStringSet(ctx, KEY_EXPANDED_CATEGORIES);
+    }
+
+    public static void setExpandedCategories(Context ctx, Set<String> categories) {
+        writeStringSet(ctx, KEY_EXPANDED_CATEGORIES, categories);
+    }
+
+    private static Set<String> readStringSet(Context ctx, String key) {
+        String json = prefs(ctx).getString(key, "[]");
         Set<String> set = new HashSet<>();
         try {
             JSONArray arr = new JSONArray(json);
             for (int i = 0; i < arr.length(); i++) set.add(arr.optString(i));
-        } catch (Exception e) {
-            set.add("active");
-        }
+        } catch (Exception ignored) {}
         return set;
     }
 
-    public static void setExpandedGroups(Context ctx, Set<String> groups) {
+    private static void writeStringSet(Context ctx, String key, Set<String> values) {
         JSONArray arr = new JSONArray();
-        if (groups != null) for (String g : groups) arr.put(g);
-        prefs(ctx).edit().putString(KEY_EXPANDED_GROUPS, arr.toString()).apply();
+        if (values != null) for (String v : values) arr.put(v);
+        prefs(ctx).edit().putString(key, arr.toString()).apply();
     }
 
     /**

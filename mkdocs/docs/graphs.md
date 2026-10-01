@@ -23,7 +23,7 @@ flowchart LR
   hassclient[hassclient] -->|posts| payload[payload]
 ```
 
-Узлов: 1016, рёбер: 1153. Структура кода — `repo → module → package → file → class/function`;
+Узлов: 1018, рёбер: 1155. Структура кода — `repo → module → package → file → class/function`;
 связи `imports`/`requires`/`routes-to`; размеченные data-flow вехи.
 
 ## Семантический граф — каналы → сенсоры → HA-сущности
