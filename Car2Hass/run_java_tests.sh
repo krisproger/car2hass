@@ -297,6 +297,14 @@ javac -d "$OUT" -classpath "$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/
 echo "=== Compiling PhoneSensorsTest ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/PhoneSensorsTest.java"
 
+echo "=== Compiling TelemetryGroups (pure) ==="
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
+  "$SRC/com/car2hass/CANDataItem.java" "$SRC/com/car2hass/TelemetryGroups.java"
+
+echo "=== Compiling TelemetryGroupsTest ==="
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
+  "$TEST/com/car2hass/TelemetryGroupsTest.java"
+
 echo "=== Compiling channel worker registry (pure, no Android dep) ==="
 javac -d "$OUT" -source 17 -target 17 \
   "$SRC/com/car2hass/vehicle/WorkerRetryPolicy.java" \
@@ -595,6 +603,9 @@ java -cp "$OUT" com.car2hass.UiRefreshThrottleTest
 
 echo "=== Running PhoneSensorsTest ==="
 java -cp "$OUT:$JSON_JAR" com.car2hass.PhoneSensorsTest
+
+echo "=== Running TelemetryGroupsTest ==="
+java -cp "$OUT:$ANDROID_JAR" com.car2hass.TelemetryGroupsTest
 
 echo "=== Running WorkerRetryPolicyTest ==="
 java -cp "$OUT" com.car2hass.vehicle.WorkerRetryPolicyTest

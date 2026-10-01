@@ -19,6 +19,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "电源状态"
@@ -48,6 +49,7 @@
       "type": "num",
       "unit": null,
       "core": true,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "车速"
@@ -83,6 +85,7 @@
       "type": "num",
       "unit": null,
       "core": true,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "里程"
@@ -116,6 +119,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "档位"
@@ -149,6 +153,7 @@
       "type": "num",
       "unit": null,
       "core": true,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "发动机转速"
@@ -174,6 +179,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "刹车深度"
@@ -201,6 +207,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "加速踏板深度"
@@ -230,6 +237,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "前电机转速"
@@ -253,6 +261,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "后电机转速"
@@ -276,6 +285,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "发动机功率"
@@ -305,6 +315,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "前电机扭矩"
@@ -328,6 +339,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "充电枪插枪状态"
@@ -361,6 +373,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "百公里电耗"
@@ -384,6 +397,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "最高电池温度"
@@ -413,6 +427,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "平均电池温度"
@@ -436,6 +451,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "最低电池温度"
@@ -465,6 +481,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "最高电池电压"
@@ -488,6 +505,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "最低电池电压"
@@ -511,6 +529,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "上次雨刮时间"
@@ -534,6 +553,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "天气"
@@ -557,6 +577,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "主驾驶安全带状态"
@@ -590,6 +611,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "远程锁车状态"
@@ -613,6 +635,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "车内温度"
@@ -646,6 +669,7 @@
       "type": "num",
       "unit": null,
       "core": true,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "车外温度"
@@ -679,6 +703,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "主驾驶空调温度"
@@ -708,6 +733,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "温度单位"
@@ -731,6 +757,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "电池容量"
@@ -754,6 +781,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "方向盘转角"
@@ -777,6 +805,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "方向盘转速"
@@ -800,6 +829,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "总电耗"
@@ -833,6 +863,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "电量百分比"
@@ -856,6 +887,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "油量百分比"
@@ -881,6 +913,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "总燃油消耗"
@@ -904,6 +937,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "车道线曲率"
@@ -927,6 +961,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "右侧线距离"
@@ -950,6 +985,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "左侧线距离"
@@ -973,6 +1009,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "蓄电池电压"
@@ -1002,6 +1039,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "雷达左前"
@@ -1025,6 +1063,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "雷达右前"
@@ -1048,6 +1087,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "雷达左后"
@@ -1071,6 +1111,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "雷达右后"
@@ -1094,6 +1135,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "雷达左"
@@ -1117,6 +1159,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "雷达前左中"
@@ -1140,6 +1183,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "雷达前右中"
@@ -1163,6 +1207,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "雷达中后"
@@ -1186,6 +1231,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "前雨刮速度"
@@ -1213,6 +1259,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "雨刮档位"
@@ -1236,6 +1283,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "巡航开关"
@@ -1263,6 +1311,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "前车距离"
@@ -1286,6 +1335,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "充电状态"
@@ -1313,6 +1363,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "tyres",
       "channels": {
         "diplus": {
           "name": "左前轮气压"
@@ -1342,6 +1393,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "tyres",
       "channels": {
         "diplus": {
           "name": "右前轮气压"
@@ -1371,6 +1423,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "tyres",
       "channels": {
         "diplus": {
           "name": "左后轮气压"
@@ -1400,6 +1453,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "tyres",
       "channels": {
         "diplus": {
           "name": "右后轮气压"
@@ -1429,6 +1483,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": {
           "name": "左转向灯"
@@ -1456,6 +1511,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": {
           "name": "右转向灯"
@@ -1483,6 +1539,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "主驾车门锁"
@@ -1512,6 +1569,7 @@
       "type": "num",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "主驾车窗打开百分比"
@@ -1545,6 +1603,7 @@
       "type": "num",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "副驾车窗打开百分比"
@@ -1578,6 +1637,7 @@
       "type": "num",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "左后车窗打开百分比"
@@ -1611,6 +1671,7 @@
       "type": "num",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "右后车窗打开百分比"
@@ -1644,6 +1705,7 @@
       "type": "num",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "天窗打开百分比"
@@ -1677,6 +1739,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "遮阳帘打开百分比"
@@ -1704,6 +1767,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "整车工作模式"
@@ -1737,6 +1801,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "整车运行模式"
@@ -1770,6 +1835,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "device",
       "channels": {
         "diplus": {
           "name": "月"
@@ -1793,6 +1859,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "device",
       "channels": {
         "diplus": {
           "name": "日"
@@ -1816,6 +1883,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "device",
       "channels": {
         "diplus": {
           "name": "时"
@@ -1839,6 +1907,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "device",
       "channels": {
         "diplus": {
           "name": "分"
@@ -1862,6 +1931,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "副驾安全带警告"
@@ -1885,6 +1955,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "二排左安全带"
@@ -1908,6 +1979,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "二排右安全带"
@@ -1931,6 +2003,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "二排中安全带"
@@ -1954,6 +2027,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "空调状态"
@@ -1987,6 +2061,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "风量档位"
@@ -2016,6 +2091,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "空调循环方式"
@@ -2045,6 +2121,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "空调出风模式"
@@ -2068,6 +2145,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "主驾车门"
@@ -2097,6 +2175,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "副驾车门"
@@ -2126,6 +2205,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "左后车门"
@@ -2159,6 +2239,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "右后车门"
@@ -2192,6 +2273,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "引擎盖"
@@ -2221,6 +2303,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "后备箱门"
@@ -2244,6 +2327,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "油箱盖"
@@ -2271,6 +2355,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "自动驻车"
@@ -2298,6 +2383,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "ACC巡航状态"
@@ -2325,6 +2411,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "左后接近告警"
@@ -2348,6 +2435,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "右后接近告警"
@@ -2371,6 +2459,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "车道保持状态"
@@ -2398,6 +2487,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "左后车门锁"
@@ -2425,6 +2515,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "副驾车门锁"
@@ -2448,6 +2539,7 @@
       "type": "enum",
       "unit": null,
       "core": true,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "右后车门锁"
@@ -2475,6 +2567,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "后备箱门锁"
@@ -2498,6 +2591,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "左后儿童锁"
@@ -2521,6 +2615,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "右后儿童锁"
@@ -2544,6 +2639,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": {
           "name": "小灯"
@@ -2577,6 +2673,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": {
           "name": "近光灯"
@@ -2610,6 +2707,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": {
           "name": "远光灯"
@@ -2643,6 +2741,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": {
           "name": "前雾灯"
@@ -2670,6 +2769,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": {
           "name": "后雾灯"
@@ -2697,6 +2797,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": {
           "name": "脚照灯"
@@ -2720,6 +2821,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": {
           "name": "日行灯"
@@ -2753,6 +2855,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "发动机水温"
@@ -2782,6 +2885,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": {
           "name": "双闪"
@@ -2809,6 +2913,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "坡度"
@@ -2832,6 +2937,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "雨量"
@@ -2855,6 +2961,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "副驾安全带"
@@ -2882,6 +2989,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "秒"
@@ -2905,6 +3013,7 @@
       "type": "num",
       "unit": null,
       "core": true,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "SOC"
@@ -2932,6 +3041,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": {
           "name": "转向信号"
@@ -2961,6 +3071,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "全景状态"
@@ -2984,6 +3095,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": {
           "name": "配置UI版本"
@@ -3007,6 +3119,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "sentry",
       "channels": {
         "diplus": {
           "name": "哨兵状态"
@@ -3030,6 +3143,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "sentry",
       "channels": {
         "diplus": {
           "name": "熄火录像配置开关"
@@ -3053,6 +3167,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "sentry",
       "channels": {
         "diplus": {
           "name": "熄火哨兵报警"
@@ -3076,6 +3191,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": {
           "name": "WIFI状态"
@@ -3099,6 +3215,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": {
           "name": "蓝牙状态"
@@ -3122,6 +3239,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": {
           "name": "蓝牙信号强度"
@@ -3145,6 +3263,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "晃动幅度"
@@ -3168,6 +3287,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "振动幅度"
@@ -3191,6 +3311,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": {
           "name": "屏幕宽度"
@@ -3214,6 +3335,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": {
           "name": "屏幕高度"
@@ -3237,6 +3359,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "sentry",
       "channels": {
         "diplus": {
           "name": "全景记录仪状态"
@@ -3260,6 +3383,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "无线ADB开关"
@@ -3283,6 +3407,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": {
           "name": "媒体音量"
@@ -3306,6 +3431,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": {
           "name": "导航音量"
@@ -3329,6 +3455,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "sentry",
       "channels": {
         "diplus": {
           "name": "AI识别人可信度"
@@ -3352,6 +3479,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "sentry",
       "channels": {
         "diplus": {
           "name": "AI识别车可信度"
@@ -3375,6 +3503,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "sentry",
       "channels": {
         "diplus": {
           "name": "上次哨兵触发时间"
@@ -3398,6 +3527,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "sentry",
       "channels": {
         "diplus": {
           "name": "上次录像文件开始时间"
@@ -3421,6 +3551,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "sentry",
       "channels": {
         "diplus": {
           "name": "上次录像文件结束时间"
@@ -3444,6 +3575,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "safety",
       "channels": {
         "diplus": {
           "name": "前车起步状态"
@@ -3467,6 +3599,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "发动机负荷"
@@ -3492,6 +3625,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "进气温度"
@@ -3517,6 +3651,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "空气质量流量"
@@ -3542,6 +3677,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "环境温度"
@@ -3571,6 +3707,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "机油温度"
@@ -3596,6 +3733,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "燃油消耗率"
@@ -3621,6 +3759,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "主驾座椅加热"
@@ -3648,6 +3787,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "副驾座椅加热"
@@ -3675,6 +3815,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "主驾座椅通风"
@@ -3702,6 +3843,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "副驾座椅通风"
@@ -3729,6 +3871,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "后排左侧座椅加热"
@@ -3756,6 +3899,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "后排右侧座椅加热"
@@ -3783,6 +3927,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": {
           "name": "方向盘加热"
@@ -3810,6 +3955,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": {
           "name": "后挡风玻璃加热"
@@ -3837,6 +3983,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": {
           "name": "充电功率"
@@ -3864,6 +4011,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": {
           "name": "后视镜折叠"
@@ -3891,6 +4039,7 @@
       "type": "gps",
       "unit": null,
       "core": true,
+      "category": "location",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -3915,6 +4064,7 @@
       "type": "gps",
       "unit": null,
       "core": true,
+      "category": "location",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -3939,6 +4089,7 @@
       "type": "gps",
       "unit": "km/h",
       "core": true,
+      "category": "location",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -3963,6 +4114,7 @@
       "type": "gps",
       "unit": "deg",
       "core": true,
+      "category": "location",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -3987,6 +4139,7 @@
       "type": "gps",
       "unit": "m",
       "core": true,
+      "category": "location",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4011,6 +4164,7 @@
       "type": "gps",
       "unit": "m",
       "core": true,
+      "category": "location",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4035,6 +4189,7 @@
       "type": "gps",
       "unit": null,
       "core": true,
+      "category": "location",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4059,6 +4214,7 @@
       "type": "device",
       "unit": "%",
       "core": true,
+      "category": "device",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4083,6 +4239,7 @@
       "type": "device",
       "unit": "hPa",
       "core": false,
+      "category": "device",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4107,6 +4264,7 @@
       "type": "device",
       "unit": "%",
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4131,6 +4289,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4155,6 +4314,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4179,6 +4339,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4203,6 +4364,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4227,6 +4389,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4251,6 +4414,7 @@
       "type": "num",
       "unit": "min",
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4275,6 +4439,7 @@
       "type": "num",
       "unit": "km/h",
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4299,6 +4464,7 @@
       "type": "num",
       "unit": "kW",
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4323,6 +4489,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4347,6 +4514,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4371,6 +4539,7 @@
       "type": "num",
       "unit": "V",
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4395,6 +4564,7 @@
       "type": "num",
       "unit": "A",
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4419,6 +4589,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4443,6 +4614,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4467,6 +4639,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4491,6 +4664,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4515,6 +4689,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4539,6 +4714,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4563,6 +4739,7 @@
       "type": "num",
       "unit": "km",
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4587,6 +4764,7 @@
       "type": "num",
       "unit": "µg/m³",
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4611,6 +4789,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4635,6 +4814,7 @@
       "type": "num",
       "unit": "°C",
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4659,6 +4839,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4683,6 +4864,7 @@
       "type": "num",
       "unit": "%",
       "core": false,
+      "category": "lights",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4707,6 +4889,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "drive",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4731,6 +4914,7 @@
       "type": "num",
       "unit": "%",
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4755,6 +4939,7 @@
       "type": "num",
       "unit": "%",
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4779,6 +4964,7 @@
       "type": "num",
       "unit": "%",
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4803,6 +4989,7 @@
       "type": "num",
       "unit": "%",
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4827,6 +5014,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "access",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4851,6 +5039,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4875,6 +5064,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4899,6 +5089,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4923,6 +5114,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "climate",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4947,6 +5139,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "device",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4971,6 +5164,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -4995,6 +5189,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5019,6 +5214,7 @@
       "type": "num",
       "unit": "dBm",
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5043,6 +5239,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "media",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5067,6 +5264,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "device",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5091,6 +5289,7 @@
       "type": "num",
       "unit": "V",
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5115,6 +5314,7 @@
       "type": "num",
       "unit": "A",
       "core": false,
+      "category": "battery",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5139,6 +5339,7 @@
       "type": "num",
       "unit": "%",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5163,6 +5364,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5187,6 +5389,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5211,6 +5414,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5235,6 +5439,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5259,6 +5464,7 @@
       "type": "num",
       "unit": "°C",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5283,6 +5489,7 @@
       "type": "num",
       "unit": "W",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5307,6 +5514,7 @@
       "type": "num",
       "unit": "s",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5331,6 +5539,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5355,6 +5564,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5379,6 +5589,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5403,6 +5614,7 @@
       "type": "num",
       "unit": "MHz",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5427,6 +5639,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5451,6 +5664,7 @@
       "type": "num",
       "unit": "Mbit/s",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5475,6 +5689,7 @@
       "type": "num",
       "unit": "dBm",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5499,6 +5714,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5523,6 +5739,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5547,6 +5764,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5571,6 +5789,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5595,6 +5814,7 @@
       "type": "num",
       "unit": "ms",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5619,6 +5839,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5643,6 +5864,7 @@
       "type": "num",
       "unit": "deg",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5667,6 +5889,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5691,6 +5914,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5715,6 +5939,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5739,6 +5964,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5763,6 +5989,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5787,6 +6014,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5811,6 +6039,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5835,6 +6064,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5859,6 +6089,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5883,6 +6114,7 @@
       "type": "num",
       "unit": "%",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5907,6 +6139,7 @@
       "type": "num",
       "unit": "B",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5931,6 +6164,7 @@
       "type": "num",
       "unit": "B",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5955,6 +6189,7 @@
       "type": "num",
       "unit": "B",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5979,6 +6214,7 @@
       "type": "num",
       "unit": "B",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6003,6 +6239,7 @@
       "type": "num",
       "unit": "B",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6027,6 +6264,7 @@
       "type": "num",
       "unit": "B",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6051,6 +6289,7 @@
       "type": "num",
       "unit": "B",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6075,6 +6314,7 @@
       "type": "num",
       "unit": "B",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6099,6 +6339,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6123,6 +6364,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6147,6 +6389,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6171,6 +6414,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6195,6 +6439,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6219,6 +6464,7 @@
       "type": "num",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6243,6 +6489,7 @@
       "type": "num",
       "unit": "steps",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6267,6 +6514,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6291,6 +6539,7 @@
       "type": "num",
       "unit": "deg",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6315,6 +6564,7 @@
       "type": "num",
       "unit": "deg",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6339,6 +6589,7 @@
       "type": "num",
       "unit": "lx",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6363,6 +6614,7 @@
       "type": "num",
       "unit": "cm",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -6387,6 +6639,7 @@
       "type": "num",
       "unit": "hPa",
       "core": false,
+      "category": "phone",
       "channels": {
         "diplus": null,
         "adb": null,

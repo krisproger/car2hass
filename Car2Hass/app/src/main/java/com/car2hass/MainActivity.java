@@ -3290,6 +3290,18 @@ public class MainActivity extends BaseLocalizedActivity {
         unreachable.sort(byKey);
         disWith.sort(byKey);
         dis.sort(byKey);
+        // Second level: category sub-headers inside each availability group.
+        java.util.function.Function<String, String> catOf = key -> {
+            try { return displayRegistry().category(key); } catch (Exception e) { return "other"; }
+        };
+        List<String> catOrder = java.util.Arrays.asList(
+                "drive", "battery", "climate", "access", "lights", "tyres",
+                "safety", "sentry", "media", "location", "device", "phone", "other");
+        active = com.car2hass.TelemetryGroups.withCategoryHeaders(active, catOf, catOrder);
+        expected = com.car2hass.TelemetryGroups.withCategoryHeaders(expected, catOf, catOrder);
+        unreachable = com.car2hass.TelemetryGroups.withCategoryHeaders(unreachable, catOf, catOrder);
+        disWith = com.car2hass.TelemetryGroups.withCategoryHeaders(disWith, catOf, catOrder);
+        dis = com.car2hass.TelemetryGroups.withCategoryHeaders(dis, catOf, catOrder);
         List<TelemetryExpandableAdapter.Group> groups = new ArrayList<>();
         addGroup(groups, "active", R.string.telemetry_group_active, active);
         addGroup(groups, "expected", R.string.telemetry_group_expected, expected);
@@ -3302,8 +3314,10 @@ public class MainActivity extends BaseLocalizedActivity {
     private void addGroup(List<TelemetryExpandableAdapter.Group> out, String key, int titleRes,
                           List<CANDataItem> items) {
         if (items.isEmpty()) return;
+        int count = 0;
+        for (CANDataItem it : items) if (!it.isHeader) count++;
         TelemetryExpandableAdapter.Group g = new TelemetryExpandableAdapter.Group(key,
-                getString(titleRes) + " (" + items.size() + ")");
+                getString(titleRes) + " (" + count + ")");
         g.items.addAll(items);
         out.add(g);
     }

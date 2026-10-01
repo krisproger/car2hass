@@ -23,6 +23,15 @@ CONST_PY = ROOT / "custom_components" / "cartelemetry" / "const.py"
 SIGNALS_YAML = ROOT / "signals.yaml"
 
 
+def _signal_categories():
+    import importlib.util
+    path = ROOT / "scripts" / "signal_categories.py"
+    spec = importlib.util.spec_from_file_location("signal_categories", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def _parse_java_registry():
     text = JAVA_READER.read_text(encoding="utf-8")
     match = re.search(r"SIGNAL_REGISTRY\s*=\s*\{(.*?)\};", text, re.DOTALL)
@@ -413,22 +422,12 @@ def cmd_gen_py(args):
 
 def cmd_gen_md(args):
     signals = _load_yaml()
+    cats = _signal_categories()
     sections = {}
     for s in signals:
-        sid = s.get("id")
-        if sid is None:
-            section = "Unknown"
-        elif sid < 200:
-            section = "Ходовые / силовая установка / батарея (1–199)"
-        elif sid < 1000:
-            section = "Системные / мультимедиа (200–999)"
-        elif sid < 1200:
-            section = "Мультимедиа / регистратор / система (1000–1199)"
-        elif sid < 2100:
-            section = "ИИ-распознавание / записи (2000–2099)"
-        else:
-            section = "Прочие"
-        sections.setdefault(section, []).append(s)
+        cat = s.get("category") or cats.category_for(s["key"])
+        sections.setdefault(cat, []).append(s)
+    ordered = [(k, sections[k]) for k, _, _ in cats.CATEGORIES if k in sections]
 
     out = ["# diplus — полный каталог сигналов (`/api/getVal?name=`)", ""]
     out.append("Источник: `com.van.diplus.cmd.s` (конструктор), декомпиляция diplus 1.3.8-beta18.")
@@ -443,8 +442,8 @@ def cmd_gen_md(args):
     out.append("```")
     out.append("")
 
-    for section, rows in sections.items():
-        out.append(f"## {section}")
+    for cat, rows in ordered:
+        out.append(f"## {cats.label_ru(cat)} / {cats.label_en(cat)}")
         out.append("")
         out.append("| ID | Ключ (`name`) | Значение | Тип | Метки enum |")
         out.append("|---:|---|---|---|---|")
@@ -470,13 +469,19 @@ def cmd_gen_spec(args):
     sensors = json.loads((assets / "sensors_registry.json").read_text(encoding="utf-8"))
     commands = json.loads((assets / "commands_registry.json").read_text(encoding="utf-8"))
 
+    cats = _signal_categories()
+
     def sensor_entry(s):
+        cat = s.get("category", "other")
         return {
             "key": s["key"],
             "type": s.get("type", "num"),
             "unit": s.get("unit"),
             "label_en": s.get("label_en"),
             "label_ru": s.get("label_ru"),
+            "category": cat,
+            "category_label_en": cats.label_en(cat),
+            "category_label_ru": cats.label_ru(cat),
         }
 
     core = [sensor_entry(s) for s in sensors["sensors"] if s.get("core")]
@@ -515,6 +520,8 @@ def cmd_gen_spec(args):
                 }
             ],
         },
+        "categories": [{"key": k, "label_en": en, "label_ru": ru}
+                       for k, en, ru in cats.CATEGORIES],
         "sensors_core": core,
         "sensors_extended": extended,
         "commands": cmds,

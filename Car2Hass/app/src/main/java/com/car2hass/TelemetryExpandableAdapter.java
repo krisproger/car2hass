@@ -54,7 +54,15 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
         return groupPosition * 10000L + childPosition;
     }
     @Override public boolean hasStableIds() { return false; }
-    @Override public boolean isChildSelectable(int groupPosition, int childPosition) { return true; }
+    @Override public boolean isChildSelectable(int groupPosition, int childPosition) {
+        return !groups.get(groupPosition).items.get(childPosition).isHeader;
+    }
+
+    private String categoryLabel(String key) {
+        int res = context.getResources().getIdentifier(
+                "sensor_category_" + key, "string", context.getPackageName());
+        return res != 0 ? context.getString(res) : key;
+    }
 
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded,
@@ -90,6 +98,13 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
         }
 
         final CANDataItem rowItem = groups.get(groupPosition).items.get(childPosition);
+        if (rowItem.isHeader) {
+            View hv = LayoutInflater.from(context).inflate(
+                    com.car2hass.R.layout.can_data_header, parent, false);
+            TextView ht = hv.findViewById(com.car2hass.R.id.rowName);
+            if (ht != null) ht.setText(categoryLabel(rowItem.groupKey));
+            return hv;
+        }
         boolean systemKey = isSystemKey(rowItem.key);
         vh.idText.setText(rowItem.key != null && !rowItem.key.isEmpty()
                 ? rowItem.key : rowItem.diplusName);

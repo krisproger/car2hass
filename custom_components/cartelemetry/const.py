@@ -29,7 +29,7 @@ NATIVE_SENSORS = {'ac_set_temp', 'ac_state', 'app_version', 'battery_12v_voltage
 
 CONF_CAR_NAME = "car_name"
 
-INTEGRATION_VERSION = "3.5.1-beta.2"
+INTEGRATION_VERSION = "3.5.1-beta.3"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.

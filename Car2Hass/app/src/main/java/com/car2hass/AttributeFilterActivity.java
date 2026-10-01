@@ -54,6 +54,28 @@ public class AttributeFilterActivity extends BaseLocalizedActivity {
         // Persist the implicit disabled state for currently unsupported signals.
         AppConfig.setDisabledSignals(this, disabledKeys);
 
+        // Group by signal category (headers), preserving the taxonomy order.
+        java.util.Map<String, String> categoryOf = new java.util.HashMap<>();
+        com.car2hass.vehicle.RegistryStore reg = null;
+        try { reg = com.car2hass.vehicle.RegistryStore.load(this); } catch (Exception ignored) {}
+        for (SignalEntry e : entries) {
+            try { categoryOf.put(e.key, reg != null ? reg.category(e.key) : "other"); }
+            catch (Exception ex) { categoryOf.put(e.key, "other"); }
+        }
+        List<String> order = java.util.Arrays.asList(
+                "drive", "battery", "climate", "access", "lights", "tyres",
+                "safety", "sentry", "media", "location", "device", "phone", "other");
+        List<SignalEntry> grouped = new ArrayList<>();
+        for (String cat : order) {
+            boolean header = false;
+            for (SignalEntry e : entries) {
+                if (!cat.equals(categoryOf.get(e.key))) continue;
+                if (!header) { grouped.add(SignalEntry.header(cat)); header = true; }
+                grouped.add(e);
+            }
+        }
+        entries = grouped;
+
         adapter = new SignalAdapter();
         listView.setAdapter(adapter);
 
@@ -82,7 +104,7 @@ public class AttributeFilterActivity extends BaseLocalizedActivity {
         boolean anyChecked = false;
         boolean hasSelectable = false;
         for (SignalEntry e : entries) {
-            if (e.unsupported) continue;
+            if (e.unsupported || e.isHeader) continue;
             hasSelectable = true;
             if (e.checked) anyChecked = true;
             else allChecked = false;
@@ -103,7 +125,7 @@ public class AttributeFilterActivity extends BaseLocalizedActivity {
             if (!buttonView.isPressed()) return;
             checkSelectAll.setOnCheckedChangeListener(null);
             for (SignalEntry e : entries) {
-                if (e.unsupported) continue;
+                if (e.unsupported || e.isHeader) continue;
                 e.checked = isChecked;
                 if (isChecked) {
                     disabledKeys.remove(e.key);
@@ -121,10 +143,13 @@ public class AttributeFilterActivity extends BaseLocalizedActivity {
     private void updateCountText(TextView tv) {
         if (tv == null) return;
         int checked = 0;
+        int total = 0;
         for (SignalEntry e : entries) {
+            if (e.isHeader) continue;
+            total++;
             if (e.checked) checked++;
         }
-        tv.setText(getString(R.string.filter_count, checked, entries.size()));
+        tv.setText(getString(R.string.filter_count, checked, total));
     }
 
     private void scheduleDisabledSave() {
@@ -139,16 +164,33 @@ public class AttributeFilterActivity extends BaseLocalizedActivity {
         finish();
     }
 
+    private String categoryLabel(String key) {
+        int res = getResources().getIdentifier(
+                "sensor_category_" + key, "string", getPackageName());
+        return res != 0 ? getString(res) : key;
+    }
+
     private static class SignalEntry {
         final String key;
         final String name;
         boolean checked;
         final boolean unsupported;
+        final boolean isHeader;
+        final String groupKey;
         SignalEntry(String key, String name, boolean checked, boolean unsupported) {
+            this(key, name, checked, unsupported, false, null);
+        }
+        SignalEntry(String key, String name, boolean checked, boolean unsupported,
+                    boolean isHeader, String groupKey) {
             this.key = key;
             this.name = name;
             this.checked = checked;
             this.unsupported = unsupported;
+            this.isHeader = isHeader;
+            this.groupKey = groupKey;
+        }
+        static SignalEntry header(String groupKey) {
+            return new SignalEntry("", "", false, false, true, groupKey);
         }
     }
 
@@ -179,6 +221,17 @@ public class AttributeFilterActivity extends BaseLocalizedActivity {
             }
 
             SignalEntry entry = entries.get(position);
+            if (entry.isHeader) {
+                vh.checkBox.setVisibility(View.GONE);
+                vh.nameText.setText(categoryLabel(entry.groupKey));
+                vh.keyText.setText("");
+                vh.nameText.setEnabled(true);
+                vh.keyText.setEnabled(true);
+                convertView.setOnClickListener(null);
+                convertView.setBackgroundColor(0xFF2A2A2A);
+                return convertView;
+            }
+            vh.checkBox.setVisibility(View.VISIBLE);
             vh.nameText.setText(entry.name);
             vh.keyText.setText(entry.key);
 

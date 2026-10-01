@@ -104,6 +104,7 @@ signals:
   description: Power state
   type: enum
   key: power_state
+  category: drive
   labels:
     0: 'off'
     1: 'on'
@@ -118,6 +119,7 @@ signals:
   description: Speed (km/h)
   type: num
   key: speed
+  category: drive
   labels: {}
   ha_type: sensor
   unit: km/h
@@ -129,6 +131,7 @@ signals:
   description: Range / mileage
   type: num
   key: range
+  category: battery
   labels: {}
   ha_type: sensor
   unit: km
@@ -139,6 +142,7 @@ signals:
   description: Gear
   type: enum
   key: gear
+  category: drive
   labels:
     0: —
     1: P
@@ -154,6 +158,7 @@ signals:
   description: Engine RPM
   type: num
   key: engine_rpm
+  category: drive
   labels: {}
   ha_type: sensor
   unit: rpm
@@ -164,6 +169,7 @@ signals:
   description: Brake pedal depth
   type: num
   key: brake_pedal
+  category: drive
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -174,6 +180,7 @@ signals:
   description: Accelerator pedal depth
   type: num
   key: accel_pedal
+  category: drive
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -184,6 +191,7 @@ signals:
   description: Front motor RPM
   type: num
   key: front_motor_rpm
+  category: drive
   labels: {}
   ha_type: sensor
   unit: rpm
@@ -194,6 +202,7 @@ signals:
   description: Rear motor RPM
   type: num
   key: rear_motor_rpm
+  category: drive
   labels: {}
   ha_type: sensor
   unit: rpm
@@ -204,6 +213,7 @@ signals:
   description: Engine power
   type: num
   key: engine_power
+  category: drive
   labels: {}
   ha_type: sensor
   unit: kW
@@ -214,6 +224,7 @@ signals:
   description: Front motor torque
   type: num
   key: front_motor_torque
+  category: drive
   labels: {}
   ha_type: sensor
   unit: Nm
@@ -224,6 +235,7 @@ signals:
   description: Charge gun plug state
   type: enum
   key: charge_gun_state
+  category: battery
   labels:
     0: —
     1: disconnected
@@ -238,6 +250,7 @@ signals:
   description: Energy per 100 km
   type: num
   key: energy_per_100km
+  category: battery
   labels: {}
   ha_type: sensor
   unit: kWh
@@ -248,6 +261,7 @@ signals:
   description: Max battery temp
   type: num
   key: battery_temp_max
+  category: climate
   labels: {}
   ha_type: sensor
   unit: °C
@@ -259,6 +273,7 @@ signals:
   description: Avg battery temp
   type: num
   key: battery_temp_avg
+  category: climate
   labels: {}
   ha_type: sensor
   unit: °C
@@ -270,6 +285,7 @@ signals:
   description: Min battery temp
   type: num
   key: battery_temp_min
+  category: climate
   labels: {}
   ha_type: sensor
   unit: °C
@@ -281,6 +297,7 @@ signals:
   description: Max cell voltage
   type: num
   key: cell_voltage_max
+  category: battery
   labels: {}
   ha_type: sensor
   unit: V
@@ -292,6 +309,7 @@ signals:
   description: Min cell voltage
   type: num
   key: cell_voltage_min
+  category: battery
   labels: {}
   ha_type: sensor
   unit: V
@@ -303,6 +321,7 @@ signals:
   description: Last wiper time
   type: num
   key: last_wiper_time
+  category: access
   labels: {}
   ha_type: sensor
   unit: s
@@ -312,6 +331,7 @@ signals:
   description: Weather
   type: enum
   key: weather
+  category: access
   labels:
     0: clear
     1: rain
@@ -328,6 +348,7 @@ signals:
   description: Driver seatbelt state
   type: enum
   key: driver_seatbelt
+  category: access
   labels:
     0: unbuckled
     1: buckled
@@ -341,6 +362,7 @@ signals:
   description: Remote lock state
   type: enum
   key: remote_lock_state
+  category: access
   labels:
     0: unlocked
     1: locked
@@ -353,6 +375,7 @@ signals:
   description: Cabin temperature
   type: num
   key: cabin_temp
+  category: climate
   labels: {}
   ha_type: sensor
   unit: °C
@@ -364,6 +387,7 @@ signals:
   description: Outside temperature
   type: num
   key: outside_temp
+  category: climate
   labels: {}
   ha_type: sensor
   unit: °C
@@ -375,6 +399,7 @@ signals:
   description: Driver A/C set temp
   type: num
   key: ac_set_temp
+  category: climate
   labels: {}
   ha_type: sensor
   unit: °C
@@ -386,6 +411,7 @@ signals:
   description: Temperature unit
   type: enum
   key: temp_unit
+  category: climate
   labels:
     0: °F
     1: °C
@@ -396,6 +422,7 @@ signals:
   description: Battery capacity
   type: num
   key: battery_capacity
+  category: battery
   labels: {}
   ha_type: sensor
   unit: kWh
@@ -406,6 +433,7 @@ signals:
   description: Steering wheel angle
   type: num
   key: steering_angle
+  category: drive
   labels: {}
   ha_type: sensor
   unit: °
@@ -416,6 +444,7 @@ signals:
   description: Steering wheel rate
   type: num
   key: steering_rate
+  category: drive
   labels: {}
   ha_type: sensor
   unit: °/s
@@ -426,6 +455,7 @@ signals:
   description: Total energy consumption
   type: num
   key: total_energy
+  category: drive
   labels: {}
   ha_type: sensor
   unit: kWh
@@ -436,6 +466,7 @@ signals:
   description: Battery charge (%)
   type: num
   key: battery_charge
+  category: battery
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -447,6 +478,7 @@ signals:
   description: Fuel level (%)
   type: num
   key: fuel_level
+  category: battery
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -457,6 +489,7 @@ signals:
   description: Total fuel consumption
   type: num
   key: total_fuel
+  category: battery
   labels: {}
   ha_type: sensor
   unit: L
@@ -467,6 +500,7 @@ signals:
   description: Lane curvature
   type: num
   key: lane_curvature
+  category: safety
   labels: {}
   ha_type: sensor
   unit: ''
@@ -477,6 +511,7 @@ signals:
   description: Right lane distance
   type: num
   key: right_lane_distance
+  category: drive
   labels: {}
   ha_type: sensor
   unit: m
@@ -487,6 +522,7 @@ signals:
   description: Left lane distance
   type: num
   key: left_lane_distance
+  category: drive
   labels: {}
   ha_type: sensor
   unit: m
@@ -497,6 +533,7 @@ signals:
   description: 12V battery voltage
   type: num
   key: battery_12v_voltage
+  category: battery
   labels: {}
   ha_type: sensor
   unit: V
@@ -508,6 +545,7 @@ signals:
   description: Radar front-left
   type: num
   key: radar_fl
+  category: safety
   labels: {}
   ha_type: sensor
   unit: m
@@ -518,6 +556,7 @@ signals:
   description: Radar front-right
   type: num
   key: radar_fr
+  category: safety
   labels: {}
   ha_type: sensor
   unit: m
@@ -528,6 +567,7 @@ signals:
   description: Radar rear-left
   type: num
   key: radar_rl
+  category: safety
   labels: {}
   ha_type: sensor
   unit: m
@@ -538,6 +578,7 @@ signals:
   description: Radar rear-right
   type: num
   key: radar_rr
+  category: safety
   labels: {}
   ha_type: sensor
   unit: m
@@ -548,6 +589,7 @@ signals:
   description: Radar left
   type: num
   key: radar_left
+  category: safety
   labels: {}
   ha_type: sensor
   unit: m
@@ -558,6 +600,7 @@ signals:
   description: Radar front-left-center
   type: num
   key: radar_flc
+  category: safety
   labels: {}
   ha_type: sensor
   unit: m
@@ -568,6 +611,7 @@ signals:
   description: Radar front-right-center
   type: num
   key: radar_frc
+  category: safety
   labels: {}
   ha_type: sensor
   unit: m
@@ -578,6 +622,7 @@ signals:
   description: Radar rear-center
   type: num
   key: radar_rc
+  category: safety
   labels: {}
   ha_type: sensor
   unit: m
@@ -588,6 +633,7 @@ signals:
   description: Front wiper speed
   type: num
   key: front_wiper_speed
+  category: access
   labels: {}
   ha_type: sensor
   unit: ''
@@ -598,6 +644,7 @@ signals:
   description: Wiper mode
   type: num
   key: wiper_mode
+  category: access
   labels: {}
   ha_type: sensor
   unit: ''
@@ -607,6 +654,7 @@ signals:
   description: Cruise switch
   type: num
   key: cruise_switch
+  category: drive
   labels: {}
   ha_type: sensor
   unit: ''
@@ -616,6 +664,7 @@ signals:
   description: Distance to car ahead
   type: num
   key: distance_to_car_ahead
+  category: safety
   labels: {}
   ha_type: sensor
   unit: m
@@ -626,6 +675,7 @@ signals:
   description: Charging state
   type: enum
   key: charging_state
+  category: battery
   labels:
     0: invalid
     1: Ready
@@ -644,6 +694,7 @@ signals:
   description: Tyre pressure FL
   type: num
   key: tyre_pressure_fl
+  category: tyres
   labels: {}
   ha_type: sensor
   unit: kPa
@@ -655,6 +706,7 @@ signals:
   description: Tyre pressure FR
   type: num
   key: tyre_pressure_fr
+  category: tyres
   labels: {}
   ha_type: sensor
   unit: kPa
@@ -666,6 +718,7 @@ signals:
   description: Tyre pressure RL
   type: num
   key: tyre_pressure_rl
+  category: tyres
   labels: {}
   ha_type: sensor
   unit: kPa
@@ -677,6 +730,7 @@ signals:
   description: Tyre pressure RR
   type: num
   key: tyre_pressure_rr
+  category: tyres
   labels: {}
   ha_type: sensor
   unit: kPa
@@ -688,6 +742,7 @@ signals:
   description: Left turn signal
   type: enum
   key: left_turn
+  category: lights
   labels:
     0: 'off'
     1: 'on'
@@ -701,6 +756,7 @@ signals:
   description: Right turn signal
   type: enum
   key: right_turn
+  category: lights
   labels:
     0: 'off'
     1: 'on'
@@ -714,6 +770,7 @@ signals:
   description: Driver door lock
   type: enum
   key: driver_door_lock
+  category: access
   labels:
     0: —
     1: unlocked
@@ -727,6 +784,7 @@ signals:
   description: Window FL open (%)
   type: num
   key: window_fl
+  category: access
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -737,6 +795,7 @@ signals:
   description: Window FR open (%)
   type: num
   key: window_fr
+  category: access
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -747,6 +806,7 @@ signals:
   description: Window RL open (%)
   type: num
   key: window_rl
+  category: access
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -757,6 +817,7 @@ signals:
   description: Window RR open (%)
   type: num
   key: window_rr
+  category: access
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -767,6 +828,7 @@ signals:
   description: Sunroof open (%)
   type: num
   key: sunroof
+  category: access
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -777,6 +839,7 @@ signals:
   description: Sunshade open (%)
   type: num
   key: sunshade
+  category: access
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -787,6 +850,7 @@ signals:
   description: Powertrain work mode
   type: enum
   key: powertrain_mode
+  category: drive
   labels:
     0: stop
     1: EV
@@ -799,6 +863,7 @@ signals:
   description: Drive mode
   type: enum
   key: drive_mode
+  category: drive
   labels:
     0: NORMAL
     1: ECO
@@ -810,6 +875,7 @@ signals:
   description: Month
   type: num
   key: month
+  category: device
   labels: {}
   ha_type: sensor
   unit: ''
@@ -819,6 +885,7 @@ signals:
   description: Day
   type: num
   key: day
+  category: device
   labels: {}
   ha_type: sensor
   unit: ''
@@ -828,6 +895,7 @@ signals:
   description: Hour
   type: num
   key: hour
+  category: device
   labels: {}
   ha_type: sensor
   unit: ''
@@ -837,6 +905,7 @@ signals:
   description: Minute
   type: num
   key: minute
+  category: device
   labels: {}
   ha_type: sensor
   unit: ''
@@ -846,6 +915,7 @@ signals:
   description: Passenger seatbelt warning
   type: enum
   key: passenger_seatbelt_warning
+  category: access
   labels:
     0: —
     1: alarm
@@ -859,6 +929,7 @@ signals:
   description: 2nd row left seatbelt
   type: enum
   key: seatbelt_2nd_left
+  category: access
   labels:
     0: unbuckled
     1: buckled
@@ -872,6 +943,7 @@ signals:
   description: 2nd row right seatbelt
   type: enum
   key: seatbelt_2nd_right
+  category: access
   labels:
     0: unbuckled
     1: buckled
@@ -885,6 +957,7 @@ signals:
   description: 2nd row center seatbelt
   type: enum
   key: seatbelt_2nd_center
+  category: access
   labels:
     0: unbuckled
     1: buckled
@@ -898,6 +971,7 @@ signals:
   description: A/C state
   type: enum
   key: ac_state
+  category: climate
   labels:
     0: 'off'
     1: 'on'
@@ -911,6 +985,7 @@ signals:
   description: Fan speed level
   type: num
   key: fan_speed
+  category: drive
   labels: {}
   ha_type: sensor
   unit: ''
@@ -921,6 +996,7 @@ signals:
   description: A/C recirculation
   type: enum
   key: ac_recirculation
+  category: climate
   labels:
     0: fresh
     1: recirc
@@ -934,6 +1010,7 @@ signals:
   description: A/C airflow mode
   type: enum
   key: ac_airflow_mode
+  category: climate
   labels:
     0: —
     1: face
@@ -950,6 +1027,7 @@ signals:
   description: Driver door
   type: enum
   key: driver_door
+  category: access
   labels:
     0: closed
     1: open
@@ -963,6 +1041,7 @@ signals:
   description: Passenger door
   type: enum
   key: passenger_door
+  category: access
   labels:
     0: closed
     1: open
@@ -976,6 +1055,7 @@ signals:
   description: Rear-left door
   type: enum
   key: rear_left_door
+  category: access
   labels:
     0: closed
     1: open
@@ -989,6 +1069,7 @@ signals:
   description: Rear-right door
   type: enum
   key: rear_right_door
+  category: access
   labels:
     0: closed
     1: open
@@ -1002,6 +1083,7 @@ signals:
   description: Bonnet
   type: enum
   key: bonnet
+  category: access
   labels:
     0: closed
     1: open
@@ -1015,6 +1097,7 @@ signals:
   description: Trunk
   type: enum
   key: trunk
+  category: access
   labels:
     0: closed
     1: open
@@ -1028,6 +1111,7 @@ signals:
   description: Fuel/charge flap
   type: enum
   key: fuel_charge_flap
+  category: battery
   labels:
     0: closed
     1: open
@@ -1041,6 +1125,7 @@ signals:
   description: Auto hold
   type: enum
   key: auto_hold
+  category: drive
   labels:
     0: disabled
     1: pending
@@ -1055,6 +1140,7 @@ signals:
   description: ACC cruise state
   type: enum
   key: acc_cruise_state
+  category: drive
   labels:
     0: disabled
     1: cancelled
@@ -1069,6 +1155,7 @@ signals:
   description: Rear-left approach warning
   type: enum
   key: rear_left_approach_warning
+  category: safety
   labels:
     0: no warning
     1: car approaching
@@ -1083,6 +1170,7 @@ signals:
   description: Rear-right approach warning
   type: enum
   key: rear_right_approach_warning
+  category: safety
   labels:
     0: no warning
     1: car approaching
@@ -1097,6 +1185,7 @@ signals:
   description: Lane keep state
   type: enum
   key: lane_keep_state
+  category: drive
   labels:
     0: 'off'
     1: inactive
@@ -1113,6 +1202,7 @@ signals:
   description: Rear-left door lock
   type: enum
   key: rear_left_door_lock
+  category: access
   labels:
     0: invalid
     1: unlocked
@@ -1126,6 +1216,7 @@ signals:
   description: Passenger door lock
   type: enum
   key: passenger_door_lock
+  category: access
   labels:
     0: invalid
     1: unlocked
@@ -1139,6 +1230,7 @@ signals:
   description: Rear-right door lock
   type: enum
   key: rear_right_door_lock
+  category: access
   labels:
     0: invalid
     1: unlocked
@@ -1152,6 +1244,7 @@ signals:
   description: Trunk lock
   type: enum
   key: trunk_lock
+  category: access
   labels:
     0: invalid
     1: unlocked
@@ -1165,6 +1258,7 @@ signals:
   description: Rear-left child lock
   type: enum
   key: rear_left_child_lock
+  category: access
   labels:
     0: invalid
     1: unlocked
@@ -1178,6 +1272,7 @@ signals:
   description: Rear-right child lock
   type: enum
   key: rear_right_child_lock
+  category: access
   labels:
     0: invalid
     1: unlocked
@@ -1191,6 +1286,7 @@ signals:
   description: Sidelights
   type: enum
   key: sidelights
+  category: lights
   labels:
     0: 'off'
     1: open
@@ -1204,6 +1300,7 @@ signals:
   description: Low beam
   type: enum
   key: low_beam
+  category: lights
   labels:
     0: 'off'
     1: open
@@ -1217,6 +1314,7 @@ signals:
   description: High beam
   type: enum
   key: high_beam
+  category: lights
   labels:
     0: 'off'
     1: open
@@ -1230,6 +1328,7 @@ signals:
   description: Front fog
   type: enum
   key: front_fog
+  category: lights
   labels:
     0: 'off'
     1: open
@@ -1243,6 +1342,7 @@ signals:
   description: Rear fog
   type: enum
   key: rear_fog
+  category: lights
   labels:
     0: 'off'
     1: open
@@ -1256,6 +1356,7 @@ signals:
   description: Footwell light
   type: enum
   key: footwell_light
+  category: lights
   labels:
     0: 'off'
     1: open
@@ -1269,6 +1370,7 @@ signals:
   description: DRL
   type: enum
   key: drl
+  category: lights
   labels:
     0: invalid
     1: open
@@ -1284,6 +1386,7 @@ signals:
   description: Engine coolant temp
   type: num
   key: engine_coolant_temp
+  category: climate
   labels: {}
   ha_type: sensor
   unit: °C
@@ -1295,6 +1398,7 @@ signals:
   description: Hazard lights
   type: enum
   key: hazard
+  category: lights
   labels:
     0: invalid
     1: 'off'
@@ -1309,6 +1413,7 @@ signals:
   description: Slope / grade
   type: num
   key: slope
+  category: drive
   labels: {}
   ha_type: sensor
   unit: °
@@ -1319,6 +1424,7 @@ signals:
   description: Rain amount
   type: num
   key: rain_amount
+  category: access
   labels: {}
   ha_type: sensor
   unit: mm
@@ -1330,6 +1436,7 @@ signals:
   description: Passenger seatbelt
   type: enum
   key: passenger_seatbelt
+  category: access
   labels:
     0: unbuckled
     1: buckled
@@ -1343,6 +1450,7 @@ signals:
   description: Second
   type: num
   key: second
+  category: battery
   labels: {}
   ha_type: sensor
   unit: ''
@@ -1352,6 +1460,7 @@ signals:
   description: Battery SOC (%)
   type: num
   key: soc
+  category: battery
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -1363,6 +1472,7 @@ signals:
   description: Turn signal
   type: enum
   key: turn_signal
+  category: lights
   labels:
     0: 'off'
     1: 'off'
@@ -1390,6 +1500,7 @@ signals:
   description: Surround-view state
   type: enum
   key: surround_view_state
+  category: safety
   labels:
     0: hidden
     1: shown
@@ -1402,6 +1513,7 @@ signals:
   description: UI config version
   type: enum
   key: ui_config_version
+  category: media
   labels:
     0: UI3
     1: UI4
@@ -1412,6 +1524,7 @@ signals:
   description: Sentry state
   type: enum
   key: sentry_state
+  category: sentry
   labels: {}
   ha_type: sensor
   unit: ''
@@ -1421,6 +1534,7 @@ signals:
   description: Parked-recording switch
   type: enum
   key: parked_recording_switch
+  category: sentry
   labels: {}
   ha_type: sensor
   unit: ''
@@ -1430,6 +1544,7 @@ signals:
   description: Parked sentry alarm
   type: enum
   key: parked_sentry_alarm
+  category: sentry
   labels: {}
   ha_type: sensor
   unit: ''
@@ -1439,6 +1554,7 @@ signals:
   description: Wi-Fi state
   type: enum
   key: wifi_state
+  category: media
   labels:
     0: disconnected
     1: connected
@@ -1451,6 +1567,7 @@ signals:
   description: Bluetooth state
   type: enum
   key: bluetooth_state
+  category: media
   labels:
     0: disconnected
     1: connected
@@ -1463,6 +1580,7 @@ signals:
   description: Bluetooth signal
   type: num
   key: bluetooth_signal
+  category: media
   labels: {}
   ha_type: sensor
   unit: dBm
@@ -1473,6 +1591,7 @@ signals:
   description: Sway magnitude
   type: num
   key: sway_magnitude
+  category: drive
   labels: {}
   ha_type: sensor
   unit: ''
@@ -1483,6 +1602,7 @@ signals:
   description: Vibration magnitude
   type: num
   key: vibration_magnitude
+  category: drive
   labels: {}
   ha_type: sensor
   unit: ''
@@ -1493,6 +1613,7 @@ signals:
   description: Screen width
   type: num
   key: screen_width
+  category: media
   labels: {}
   ha_type: sensor
   unit: px
@@ -1502,6 +1623,7 @@ signals:
   description: Screen height
   type: num
   key: screen_height
+  category: media
   labels: {}
   ha_type: sensor
   unit: px
@@ -1511,6 +1633,7 @@ signals:
   description: Dashcam state
   type: enum
   key: dashcam_state
+  category: sentry
   labels:
     0: stop
     1: starting
@@ -1525,6 +1648,7 @@ signals:
   description: Wireless ADB switch
   type: enum
   key: wireless_adb_switch
+  category: drive
   labels:
     0: 'off'
     1: 'on'
@@ -1537,6 +1661,7 @@ signals:
   description: Media volume
   type: num
   key: media_volume
+  category: media
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -1547,6 +1672,7 @@ signals:
   description: Navigation volume
   type: num
   key: navigation_volume
+  category: media
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -1557,6 +1683,7 @@ signals:
   description: AI person confidence
   type: num
   key: ai_person_confidence
+  category: sentry
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -1567,6 +1694,7 @@ signals:
   description: AI vehicle confidence
   type: num
   key: ai_vehicle_confidence
+  category: sentry
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -1577,6 +1705,7 @@ signals:
   description: Last sentry trigger time
   type: num
   key: last_sentry_trigger_time
+  category: sentry
   labels: {}
   ha_type: sensor
   unit: s
@@ -1586,6 +1715,7 @@ signals:
   description: Last clip start time
   type: num
   key: last_clip_start_time
+  category: sentry
   labels: {}
   ha_type: sensor
   unit: s
@@ -1595,6 +1725,7 @@ signals:
   description: Last clip end time
   type: num
   key: last_clip_end_time
+  category: sentry
   labels: {}
   ha_type: sensor
   unit: s
@@ -1604,6 +1735,7 @@ signals:
   description: Lead-car start state
   type: enum
   key: lead_car_start_state
+  category: safety
   labels: {}
   ha_type: sensor
   unit: ''
@@ -1614,6 +1746,7 @@ signals:
   type: enum
   synthetic: true
   key: online
+  category: media
   labels:
     0: 'off'
     1: 'on'
@@ -1627,6 +1760,7 @@ signals:
   type: enum
   synthetic: true
   key: app_version
+  category: device
   labels: {}
   ha_type: sensor
   unit: ''
@@ -1637,6 +1771,7 @@ signals:
   type: enum
   synthetic: true
   key: wifi_ssid
+  category: media
   labels: {}
   ha_type: sensor
   unit: ''
@@ -1647,6 +1782,7 @@ signals:
   type: enum
   synthetic: true
   key: wifi_bssid
+  category: media
   labels: {}
   ha_type: sensor
   unit: ''
@@ -1657,6 +1793,7 @@ signals:
   type: num
   synthetic: true
   key: wifi_rssi
+  category: media
   labels: {}
   ha_type: sensor
   unit: dBm
@@ -1669,6 +1806,7 @@ signals:
   type: num
   synthetic: true
   key: location_lat
+  category: location
   labels: {}
   ha_type: sensor
   unit: deg
@@ -1680,6 +1818,7 @@ signals:
   type: num
   synthetic: true
   key: location_lon
+  category: location
   labels: {}
   ha_type: sensor
   unit: deg
@@ -1691,6 +1830,7 @@ signals:
   type: num
   synthetic: true
   key: location_speed
+  category: location
   labels: {}
   ha_type: sensor
   unit: km/h
@@ -1703,6 +1843,7 @@ signals:
   type: num
   synthetic: true
   key: location_bearing
+  category: location
   labels: {}
   ha_type: sensor
   unit: deg
@@ -1714,6 +1855,7 @@ signals:
   type: num
   synthetic: true
   key: location_altitude
+  category: location
   labels: {}
   ha_type: sensor
   unit: m
@@ -1726,6 +1868,7 @@ signals:
   type: num
   synthetic: true
   key: location_accuracy
+  category: location
   labels: {}
   ha_type: sensor
   unit: m
@@ -1738,6 +1881,7 @@ signals:
   type: num
   synthetic: true
   key: device_battery
+  category: device
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -1750,6 +1894,7 @@ signals:
   type: enum
   synthetic: true
   key: location_provider
+  category: location
   labels: {}
   ha_type: sensor
 - id: 9109
@@ -1758,6 +1903,7 @@ signals:
   type: num
   synthetic: true
   key: system_media_volume
+  category: media
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -1769,6 +1915,7 @@ signals:
   type: num
   synthetic: true
   key: windows_state
+  category: access
   labels: {}
   ha_type: sensor
   icon: mdi:car-door
@@ -1779,6 +1926,7 @@ signals:
   type: num
   synthetic: true
   key: doors_state
+  category: access
   labels: {}
   ha_type: sensor
   icon: mdi:car-door
@@ -1789,6 +1937,7 @@ signals:
   type: enum
   synthetic: true
   key: windows_all_state
+  category: access
   labels:
     'open': open
     'closed': closed
@@ -1803,6 +1952,7 @@ signals:
   type: enum
   synthetic: true
   key: doors_all_state
+  category: access
   labels:
     'open': open
     'closed': closed
@@ -1817,6 +1967,7 @@ signals:
   type: num
   synthetic: true
   key: battery_remaining_charge_time
+  category: battery
   labels: {}
   ha_type: sensor
   unit: min
@@ -1828,6 +1979,7 @@ signals:
   type: num
   synthetic: true
   key: avg_speed
+  category: drive
   labels: {}
   ha_type: sensor
   unit: km/h
@@ -1840,6 +1992,7 @@ signals:
   type: num
   synthetic: true
   key: avg_power
+  category: drive
   labels: {}
   ha_type: sensor
   unit: kW
@@ -1851,6 +2004,7 @@ signals:
   type: enum
   synthetic: true
   key: energy_recovery_gear
+  category: battery
   labels: {}
   ha_type: sensor
   icon: mdi:battery-charging
@@ -1860,6 +2014,7 @@ signals:
   type: enum
   synthetic: true
   key: energy_flow
+  category: battery
   labels: {}
   ha_type: sensor
   icon: mdi:transit-connection-variant
@@ -1869,6 +2024,7 @@ signals:
   type: num
   synthetic: true
   key: traction_battery_voltage
+  category: battery
   labels: {}
   ha_type: sensor
   unit: V
@@ -1880,6 +2036,7 @@ signals:
   type: num
   synthetic: true
   key: traction_battery_current
+  category: battery
   labels: {}
   ha_type: sensor
   unit: A
@@ -1891,6 +2048,7 @@ signals:
   type: enum
   synthetic: true
   key: vin
+  category: device
   labels: {}
   ha_type: sensor
   icon: mdi:car-info
@@ -1900,6 +2058,7 @@ signals:
   type: enum
   synthetic: true
   key: doors_all_lock
+  category: access
   labels:
     'locked': locked
     'unlocked': unlocked
@@ -1913,6 +2072,7 @@ signals:
   type: num
   synthetic: true
   key: device_pressure
+  category: device
   labels: {}
   ha_type: sensor
   unit: hPa
@@ -1925,6 +2085,7 @@ signals:
   type: num
   synthetic: true
   key: charge_voltage
+  category: battery
   labels: {}
   ha_type: sensor
   unit: V
@@ -1937,6 +2098,7 @@ signals:
   type: num
   synthetic: true
   key: charge_current
+  category: battery
   labels: {}
   ha_type: sensor
   unit: A
@@ -1948,6 +2110,7 @@ signals:
   type: enum
   synthetic: true
   key: ac_charge_state
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:ev-station
@@ -1957,6 +2120,7 @@ signals:
   type: enum
   synthetic: true
   key: dc_charge_state
+  category: drive
   labels: {}
   ha_type: sensor
   icon: mdi:ev-station
@@ -1966,6 +2130,7 @@ signals:
   type: enum
   synthetic: true
   key: ac_charge_connected
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:power-plug
@@ -1975,6 +2140,7 @@ signals:
   type: enum
   synthetic: true
   key: dc_charge_connected
+  category: drive
   labels: {}
   ha_type: sensor
   icon: mdi:power-plug
@@ -1984,6 +2150,7 @@ signals:
   type: enum
   synthetic: true
   key: charge_port_flap
+  category: battery
   labels:
     0: closed
     1: open
@@ -1995,6 +2162,7 @@ signals:
   type: enum
   synthetic: true
   key: wireless_charge_state
+  category: drive
   labels: {}
   ha_type: sensor
   icon: mdi:cellphone-charging
@@ -2004,6 +2172,7 @@ signals:
   type: num
   synthetic: true
   key: trip_distance
+  category: drive
   labels: {}
   ha_type: sensor
   unit: km
@@ -2016,6 +2185,7 @@ signals:
   type: num
   synthetic: true
   key: pm25
+  category: climate
   labels: {}
   ha_type: sensor
   unit: µg/m³
@@ -2027,6 +2197,7 @@ signals:
   type: enum
   synthetic: true
   key: clean_air_level
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:air-purifier
@@ -2036,6 +2207,7 @@ signals:
   type: num
   synthetic: true
   key: trans_oil_temp
+  category: climate
   labels: {}
   ha_type: sensor
   unit: °C
@@ -2048,6 +2220,7 @@ signals:
   type: enum
   synthetic: true
   key: ambient_light_color
+  category: lights
   labels: {}
   ha_type: sensor
   icon: mdi:palette
@@ -2057,6 +2230,7 @@ signals:
   type: num
   synthetic: true
   key: ambient_light_brightness
+  category: lights
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -2068,6 +2242,7 @@ signals:
   type: enum
   synthetic: true
   key: ready_lamp
+  category: drive
   labels: {}
   ha_type: sensor
   icon: mdi:car-electric
@@ -2077,6 +2252,7 @@ signals:
   type: num
   synthetic: true
   key: window_fl_position
+  category: access
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -2088,6 +2264,7 @@ signals:
   type: num
   synthetic: true
   key: window_fr_position
+  category: access
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -2099,6 +2276,7 @@ signals:
   type: num
   synthetic: true
   key: window_rl_position
+  category: access
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -2110,6 +2288,7 @@ signals:
   type: num
   synthetic: true
   key: window_rr_position
+  category: access
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -2121,6 +2300,7 @@ signals:
   type: enum
   synthetic: true
   key: vehicle_locked
+  category: access
   labels: {}
   ha_type: sensor
   icon: mdi:lock
@@ -2130,6 +2310,7 @@ signals:
   type: enum
   synthetic: true
   key: driver_seat_massage
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:car-seat
@@ -2139,6 +2320,7 @@ signals:
   type: enum
   synthetic: true
   key: passenger_seat_massage
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:car-seat
@@ -2148,6 +2330,7 @@ signals:
   type: enum
   synthetic: true
   key: rear_left_seat_massage
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:car-seat
@@ -2157,6 +2340,7 @@ signals:
   type: enum
   synthetic: true
   key: rear_right_seat_massage
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:car-seat
@@ -2165,6 +2349,7 @@ signals:
   description: Engine load
   type: num
   key: engine_load
+  category: drive
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -2175,6 +2360,7 @@ signals:
   description: Intake air temperature
   type: num
   key: intake_air_temp
+  category: climate
   labels: {}
   ha_type: sensor
   unit: °C
@@ -2185,6 +2371,7 @@ signals:
   description: MAF air flow
   type: num
   key: maf
+  category: drive
   labels: {}
   ha_type: sensor
   unit: g/s
@@ -2195,6 +2382,7 @@ signals:
   description: Ambient temperature
   type: num
   key: ambient_temp
+  category: climate
   labels: {}
   ha_type: sensor
   unit: °C
@@ -2205,6 +2393,7 @@ signals:
   description: Engine oil temperature
   type: num
   key: engine_oil_temp
+  category: climate
   labels: {}
   ha_type: sensor
   unit: °C
@@ -2215,6 +2404,7 @@ signals:
   description: Fuel consumption rate
   type: num
   key: fuel_rate
+  category: drive
   labels: {}
   ha_type: sensor
   unit: L/h
@@ -2225,6 +2415,7 @@ signals:
   description: Driver seat heating
   type: enum
   key: driver_seat_heat
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:car-seat-heater
@@ -2233,6 +2424,7 @@ signals:
   description: Passenger seat heating
   type: enum
   key: passenger_seat_heat
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:car-seat-heater
@@ -2241,6 +2433,7 @@ signals:
   description: Driver seat ventilation
   type: enum
   key: driver_seat_vent
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:fan
@@ -2249,6 +2442,7 @@ signals:
   description: Passenger seat ventilation
   type: enum
   key: passenger_seat_vent
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:fan
@@ -2257,6 +2451,7 @@ signals:
   description: Rear-left seat heating
   type: enum
   key: rear_left_seat_heat
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:car-seat-heater
@@ -2265,6 +2460,7 @@ signals:
   description: Rear-right seat heating
   type: enum
   key: rear_right_seat_heat
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:car-seat-heater
@@ -2273,6 +2469,7 @@ signals:
   description: Steering wheel heating
   type: enum
   key: steering_wheel_heat
+  category: drive
   labels: {}
   ha_type: sensor
   icon: mdi:car-defrost-rear
@@ -2281,6 +2478,7 @@ signals:
   description: Rear window defrost
   type: enum
   key: rear_defrost
+  category: climate
   labels: {}
   ha_type: sensor
   icon: mdi:car-defrost-rear
@@ -2289,6 +2487,7 @@ signals:
   description: Charge rate
   type: num
   key: charge_rate
+  category: battery
   labels: {}
   ha_type: sensor
   unit: kW
@@ -2299,6 +2498,7 @@ signals:
   description: Rear mirror fold
   type: enum
   key: mirror_fold
+  category: access
   labels: {}
   ha_type: sensor
   icon: mdi:car-side
@@ -2308,6 +2508,7 @@ signals:
   type: num
   synthetic: true
   key: phone_battery_level
+  category: phone
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -2320,6 +2521,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_battery_state
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:battery-charging
@@ -2329,6 +2531,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_charger_type
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:power-plug
@@ -2338,6 +2541,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_is_charging
+  category: phone
   labels: {}
   ha_type: binary_sensor
   device_class: battery_charging
@@ -2349,6 +2553,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_battery_health
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:battery-heart-variant
@@ -2358,6 +2563,7 @@ signals:
   type: num
   synthetic: true
   key: phone_battery_temperature
+  category: phone
   labels: {}
   ha_type: sensor
   unit: °C
@@ -2370,6 +2576,7 @@ signals:
   type: num
   synthetic: true
   key: phone_battery_power
+  category: phone
   labels: {}
   ha_type: sensor
   unit: W
@@ -2382,6 +2589,7 @@ signals:
   type: num
   synthetic: true
   key: phone_remaining_charge_time
+  category: phone
   labels: {}
   ha_type: sensor
   unit: s
@@ -2394,6 +2602,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_connection_type
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:network-outline
@@ -2403,6 +2612,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_wifi_ssid
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:wifi
@@ -2412,6 +2622,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_wifi_bssid
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:wifi
@@ -2421,6 +2632,7 @@ signals:
   type: num
   synthetic: true
   key: phone_wifi_frequency
+  category: phone
   labels: {}
   ha_type: sensor
   unit: MHz
@@ -2433,6 +2645,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_wifi_ip
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:ip-network
@@ -2442,6 +2655,7 @@ signals:
   type: num
   synthetic: true
   key: phone_wifi_link_speed
+  category: phone
   labels: {}
   ha_type: sensor
   unit: Mbit/s
@@ -2454,6 +2668,7 @@ signals:
   type: num
   synthetic: true
   key: phone_wifi_signal
+  category: phone
   labels: {}
   ha_type: sensor
   unit: dBm
@@ -2466,6 +2681,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_wifi_state
+  category: phone
   labels: {}
   ha_type: binary_sensor
   device_class: connectivity
@@ -2477,6 +2693,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_hotspot_state
+  category: phone
   labels: {}
   ha_type: binary_sensor
   truthy:
@@ -2487,6 +2704,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_transport_type
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:network-outline
@@ -2496,6 +2714,7 @@ signals:
   type: num
   synthetic: true
   key: phone_screen_brightness
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:brightness-6
@@ -2506,6 +2725,7 @@ signals:
   type: num
   synthetic: true
   key: phone_screen_off_timeout
+  category: phone
   labels: {}
   ha_type: sensor
   unit: ms
@@ -2518,6 +2738,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_screen_orientation
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:screen-rotation
@@ -2527,6 +2748,7 @@ signals:
   type: num
   synthetic: true
   key: phone_screen_rotation
+  category: phone
   labels: {}
   ha_type: sensor
   unit: deg
@@ -2538,6 +2760,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_doze
+  category: phone
   labels: {}
   ha_type: binary_sensor
   truthy:
@@ -2548,6 +2771,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_interactive
+  category: phone
   labels: {}
   ha_type: binary_sensor
   truthy:
@@ -2558,6 +2782,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_power_save
+  category: phone
   labels: {}
   ha_type: binary_sensor
   truthy:
@@ -2568,6 +2793,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_ringer_mode
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:volume-high
@@ -2577,6 +2803,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_audio_mode
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:volume-high
@@ -2586,6 +2813,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_is_headphones
+  category: phone
   labels: {}
   ha_type: binary_sensor
   truthy:
@@ -2596,6 +2824,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_is_mic_muted
+  category: phone
   labels: {}
   ha_type: binary_sensor
   truthy:
@@ -2606,6 +2835,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_is_speakerphone_on
+  category: phone
   labels: {}
   ha_type: binary_sensor
   truthy:
@@ -2616,6 +2846,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_is_music_active
+  category: phone
   labels: {}
   ha_type: binary_sensor
   device_class: running
@@ -2627,6 +2858,7 @@ signals:
   type: num
   synthetic: true
   key: phone_volume_music
+  category: phone
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -2638,6 +2870,7 @@ signals:
   type: num
   synthetic: true
   key: phone_memory_used
+  category: phone
   labels: {}
   ha_type: sensor
   unit: B
@@ -2650,6 +2883,7 @@ signals:
   type: num
   synthetic: true
   key: phone_memory_free
+  category: phone
   labels: {}
   ha_type: sensor
   unit: B
@@ -2662,6 +2896,7 @@ signals:
   type: num
   synthetic: true
   key: phone_storage_internal_free
+  category: phone
   labels: {}
   ha_type: sensor
   unit: B
@@ -2674,6 +2909,7 @@ signals:
   type: num
   synthetic: true
   key: phone_storage_internal_total
+  category: phone
   labels: {}
   ha_type: sensor
   unit: B
@@ -2686,6 +2922,7 @@ signals:
   type: num
   synthetic: true
   key: phone_storage_external_free
+  category: phone
   labels: {}
   ha_type: sensor
   unit: B
@@ -2698,6 +2935,7 @@ signals:
   type: num
   synthetic: true
   key: phone_storage_external_total
+  category: phone
   labels: {}
   ha_type: sensor
   unit: B
@@ -2710,6 +2948,7 @@ signals:
   type: num
   synthetic: true
   key: phone_data_tx
+  category: phone
   labels: {}
   ha_type: sensor
   unit: B
@@ -2722,6 +2961,7 @@ signals:
   type: num
   synthetic: true
   key: phone_data_rx
+  category: phone
   labels: {}
   ha_type: sensor
   unit: B
@@ -2734,6 +2974,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_sim_carrier
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:sim
@@ -2743,6 +2984,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_sim_country
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:flag
@@ -2752,6 +2994,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_android_os_version
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:android
@@ -2761,6 +3004,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_android_os_security_patch
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:shield-check
@@ -2770,6 +3014,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_time_zone
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:clock-outline
@@ -2779,6 +3024,7 @@ signals:
   type: num
   synthetic: true
   key: phone_last_reboot
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:restart
@@ -2788,6 +3034,7 @@ signals:
   type: num
   synthetic: true
   key: phone_steps
+  category: phone
   labels: {}
   ha_type: sensor
   unit: steps
@@ -2799,6 +3046,7 @@ signals:
   type: enum
   synthetic: true
   key: phone_activity
+  category: phone
   labels: {}
   ha_type: sensor
   icon: mdi:run
@@ -2808,6 +3056,7 @@ signals:
   type: num
   synthetic: true
   key: phone_location_lat
+  category: phone
   labels: {}
   ha_type: sensor
   unit: deg
@@ -2819,6 +3068,7 @@ signals:
   type: num
   synthetic: true
   key: phone_location_lon
+  category: phone
   labels: {}
   ha_type: sensor
   unit: deg
@@ -2830,6 +3080,7 @@ signals:
   type: num
   synthetic: true
   key: phone_light
+  category: phone
   labels: {}
   ha_type: sensor
   unit: lx
@@ -2842,6 +3093,7 @@ signals:
   type: num
   synthetic: true
   key: phone_proximity
+  category: phone
   labels: {}
   ha_type: sensor
   unit: cm
@@ -2853,6 +3105,7 @@ signals:
   type: num
   synthetic: true
   key: phone_pressure
+  category: phone
   labels: {}
   ha_type: sensor
   unit: hPa

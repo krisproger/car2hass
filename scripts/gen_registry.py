@@ -20,8 +20,30 @@ def _load_sensor_labels():
                 r'<string name="sensor_([a-z0-9_]+)">(.*?)</string>', text):
             SENSOR_LABELS[lang].setdefault(key, value)
 
-
 _load_sensor_labels()
+
+SIGNAL_CATEGORIES = {}
+
+
+def _load_signal_categories():
+    import importlib.util
+    path = os.path.join(REPO, "scripts", "signal_categories.py")
+    spec = importlib.util.spec_from_file_location("signal_categories", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    try:
+        import yaml
+        signals = yaml.safe_load(
+            open(os.path.join(REPO, "signals.yaml"), encoding="utf-8").read())["signals"]
+        for s in signals:
+            if s.get("key"):
+                SIGNAL_CATEGORIES[s["key"]] = s.get("category") or mod.category_for(s["key"])
+    except Exception:
+        pass
+
+
+_load_signal_categories()
+
 
 GPS_SENSORS = [
     ("location_lat", "Latitude", "gps", None),
@@ -394,6 +416,7 @@ def build_sensors():
             "label_ru": SENSOR_LABELS["ru"].get(key, english),
             "type": stype, "unit": None,
             "core": key in CORE_SENSORS,
+            "category": SIGNAL_CATEGORIES.get(key, "other"),
             "channels": channels, "expected_on": expected,
         })
     for key, english, stype, unit in GPS_SENSORS + DEVICE_SENSORS + DERIVED_SENSORS:
@@ -402,6 +425,7 @@ def build_sensors():
             "label_ru": SENSOR_LABELS["ru"].get(key, english),
             "type": stype, "unit": unit,
             "core": key in CORE_SENSORS,
+            "category": SIGNAL_CATEGORIES.get(key, "other"),
             "channels": {k: None for k in
                 ["diplus", "adb", "dumpsys", "obd", "voyah", "diplus_push", "byd_cloud", "phone"]}
                 | {"system": {"field": key}},
@@ -413,6 +437,7 @@ def build_sensors():
             "label_ru": SENSOR_LABELS["ru"].get(key, english),
             "type": stype, "unit": unit,
             "core": False,
+            "category": SIGNAL_CATEGORIES.get(key, "other"),
             "channels": {k: None for k in
                 ["diplus", "adb", "dumpsys", "obd", "diplus_push", "byd_cloud", "system", "phone"]}
                 | {"voyah": voyah_descriptor(key)},
@@ -427,6 +452,7 @@ def build_sensors():
             "label_ru": SENSOR_LABELS["ru"].get(key, english),
             "type": stype, "unit": unit,
             "core": key in CORE_SENSORS,
+            "category": SIGNAL_CATEGORIES.get(key, "other"),
             "channels": channels,
             "expected_on": ["system" if channel == "system" else "byd_generic"],
         })
@@ -436,6 +462,7 @@ def build_sensors():
             "label_ru": SENSOR_LABELS["ru"].get(key, english),
             "type": stype, "unit": unit,
             "core": False,
+            "category": SIGNAL_CATEGORIES.get(key, "other"),
             "channels": {k: None for k in
                 ["diplus", "adb", "dumpsys", "obd", "voyah", "diplus_push", "byd_cloud", "system"]}
                 | {"phone": {"field": key}},

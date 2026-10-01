@@ -63,6 +63,14 @@ public final class RegistryStore {
         return null;
     }
 
+    /** Category key for a signal, or "other" when absent. */
+    public String category(String key) throws org.json.JSONException {
+        JSONObject s = getSensor(key);
+        if (s == null) return "other";
+        String c = s.optString("category", "");
+        return c.isEmpty() ? "other" : c;
+    }
+
     public JSONObject sensorChannel(String key, String channel) throws org.json.JSONException {
         JSONObject s = getSensor(key);
         if (s == null) return null;
