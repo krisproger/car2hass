@@ -58,6 +58,13 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
         return !groups.get(groupPosition).items.get(childPosition).isHeader;
     }
 
+    // Two child view types (0 = sensor row, 1 = category header) so the
+    // recycler never hands a header layout to a row (or vice versa).
+    @Override public int getChildTypeCount() { return 2; }
+    @Override public int getChildType(int groupPosition, int childPosition) {
+        return groups.get(groupPosition).items.get(childPosition).isHeader ? 1 : 0;
+    }
+
     private String categoryLabel(String key) {
         int res = context.getResources().getIdentifier(
                 "sensor_category_" + key, "string", context.getPackageName());
@@ -78,9 +85,19 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
     @Override
     public View getChildView(int groupPosition, int childPosition,
                              boolean isLastChild, View convertView, ViewGroup parent) {
+        final CANDataItem rowItem = groups.get(groupPosition).items.get(childPosition);
+
+        if (rowItem.isHeader) {
+            View hv = LayoutInflater.from(context).inflate(
+                    com.car2hass.R.layout.can_data_header, parent, false);
+            TextView ht = hv.findViewById(com.car2hass.R.id.rowName);
+            if (ht != null) ht.setText(categoryLabel(rowItem.groupKey));
+            return hv;
+        }
+
         View v;
         ViewHolder vh;
-        if (convertView == null) {
+        if (convertView == null || !(convertView.getTag() instanceof ViewHolder)) {
             v = LayoutInflater.from(context).inflate(
                     com.car2hass.R.layout.can_data_row, parent, false);
             vh = new ViewHolder();
@@ -97,14 +114,6 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
             vh = (ViewHolder) v.getTag();
         }
 
-        final CANDataItem rowItem = groups.get(groupPosition).items.get(childPosition);
-        if (rowItem.isHeader) {
-            View hv = LayoutInflater.from(context).inflate(
-                    com.car2hass.R.layout.can_data_header, parent, false);
-            TextView ht = hv.findViewById(com.car2hass.R.id.rowName);
-            if (ht != null) ht.setText(categoryLabel(rowItem.groupKey));
-            return hv;
-        }
         boolean systemKey = isSystemKey(rowItem.key);
         vh.idText.setText(rowItem.key != null && !rowItem.key.isEmpty()
                 ? rowItem.key : rowItem.diplusName);
