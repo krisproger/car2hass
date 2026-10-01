@@ -60,6 +60,10 @@ echo "=== Compiling Elm327SessionTest ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 \
   "$TEST/com/car2hass/vehicle/Elm327SessionTest.java"
 
+echo "=== Compiling Elm327IoTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 \
+  "$TEST/com/car2hass/vehicle/Elm327IoTest.java"
+
 echo "=== Overriding with test-only LogBuffer stub ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/LogBuffer.java"
 
@@ -514,8 +518,14 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
   "$SRC/com/car2hass/vehicle/ObdPidCodec.java"
 
 echo "=== Compiling Phase-6 OBD codec test ==="
-javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 \
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
   "$TEST/com/car2hass/vehicle/ObdCodecTest.java"
+
+echo "=== Compiling ObdError (pure) ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/vehicle/ObdError.java"
+
+echo "=== Compiling ObdErrorTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ObdErrorTest.java"
 
 echo "=== Compiling Phase-6 OBD transport (pure classes) ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 \
@@ -695,7 +705,11 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 \
 echo "=== Running Phase-6 OBD codec test ==="
 java -cp "$OUT" com.car2hass.vehicle.ObdCodecTest
 
+echo "=== Running ObdErrorTest ==="
+java -cp "$OUT" com.car2hass.vehicle.ObdErrorTest
+
 echo "=== Running Phase-6 OBD transport test ==="
 java -cp "$OUT" com.car2hass.vehicle.obd.ObdIoTest
 java -cp "$OUT" com.car2hass.vehicle.Elm327SessionTest
+java -cp "$OUT" com.car2hass.vehicle.Elm327IoTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.UpdateCheckerTest

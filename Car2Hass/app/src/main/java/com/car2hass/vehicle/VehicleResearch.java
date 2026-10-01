@@ -373,6 +373,14 @@ public final class VehicleResearch {
                     }
                 }
                 diag.put("obd_supported_pids", pidCount);
+                diag.put("obd_phase", appConfigGet(ctx, "getObdPhase"));
+                diag.put("obd_last_error_code", appConfigGet(ctx, "getObdLastError"));
+                int obdErrors = 0;
+                try { obdErrors = Integer.parseInt(appConfigGet(ctx, "getObdErrorCount")); } catch (Exception ignored) {}
+                diag.put("obd_error_count", obdErrors);
+                long obdBackoff = 0;
+                try { obdBackoff = Long.parseLong(appConfigGet(ctx, "getObdBackoffMs")); } catch (Exception ignored) {}
+                diag.put("obd_backoff_ms", obdBackoff);
                 // Location baseline diagnostics: the live telemetry depends on the
                 // same getLastKnownLocation to carry a position without GPS fixes.
                 try {

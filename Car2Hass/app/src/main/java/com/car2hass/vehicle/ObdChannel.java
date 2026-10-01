@@ -63,7 +63,7 @@ public class ObdChannel implements DataChannel {
     }
 
     /** Queries 0100/0120/0140 and returns the mode-01 PIDs the car reports supported. */
-    private static Set<String> readSupportedPids(ObdSession s) {
+    private static Set<String> readSupportedPids(ObdSession s) throws Exception {
         Set<String> supported = new LinkedHashSet<>();
         for (Map.Entry<String, String> e : ObdPidCodec.PID_TO_KEY.entrySet()) {
             String pid = e.getKey();
@@ -216,7 +216,7 @@ public class ObdChannel implements DataChannel {
      * supported-PID bitmap) until it answers, then batch-read the target PIDs.
      * Stores the raw 0100 reply for diagnostics.
      */
-    private static boolean warmUpProtocol(Context ctx, ObdSession s) {
+    private static boolean warmUpProtocol(Context ctx, ObdSession s) throws Exception {
         for (int i = 0; i < 10; i++) {
             String resp = s.transact("0100", 1);
             AppConfig.setObdRawSample(ctx, firstLine(resp));

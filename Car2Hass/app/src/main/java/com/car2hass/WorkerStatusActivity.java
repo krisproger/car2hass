@@ -57,6 +57,9 @@ public class WorkerStatusActivity extends BaseLocalizedActivity {
         for (ChannelWorkerStatus s : statuses) {
             addHeader(channelLabel(s.channelId()));
             addRow(statusText(s));
+            if (!s.phase().isEmpty()) {
+                addRow(getString(R.string.worker_status_phase, s.phase()));
+            }
             addRow(getString(R.string.worker_status_cycles, s.cycleCount(), s.errorCount()));
             addRow(getString(R.string.worker_status_uptime, fmt(s.threadUptimeMs())));
             addRow(getString(R.string.worker_status_last_cycle, fmt(s.lastCycleAgeMs())));

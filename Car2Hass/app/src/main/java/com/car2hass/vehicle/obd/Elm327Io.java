@@ -14,7 +14,7 @@ public final class Elm327Io {
     private Elm327Io() {}
 
     public static String transact(InputStream is, OutputStream os,
-                                  String command, int expectedLines) {
+                                  String command, int expectedLines) throws java.io.IOException {
         // Soft-fail: a single empty/short response is retried once before the
         // caller treats it as a session failure (avoids needless reconnects).
         String r = transactOnce(is, os, command, expectedLines);
@@ -29,7 +29,7 @@ public final class Elm327Io {
     }
 
     private static String transactOnce(InputStream is, OutputStream os,
-                                       String command, int expectedLines) {
+                                       String command, int expectedLines) throws java.io.IOException {
         try {
             os.write((command + "\r").getBytes(StandardCharsets.US_ASCII));
             os.flush();
@@ -50,7 +50,10 @@ public final class Elm327Io {
                 }
             }
             return sb.length() > 0 ? sb.toString() : null;
-        } catch (Exception e) {
+        } catch (java.io.IOException io) {
+            throw io; // a broken stream must reconnect, not silently read empty
+        } catch (InterruptedException ie) {
+            Thread.currentThread().interrupt();
             return null;
         }
     }

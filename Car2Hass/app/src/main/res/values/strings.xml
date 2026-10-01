@@ -202,6 +202,16 @@
     <string name="obd_connected">Connected: %1$s (ELM327 %2$s)</string>
     <string name="obd_link_ok"> · connected</string>
     <string name="obd_link_down"> · no link</string>
+    <string name="obd_err_bt_off">Bluetooth is off</string>
+    <string name="obd_err_bt_not_paired">Adapter not paired</string>
+    <string name="obd_err_bt_connect_io">Adapter not responding</string>
+    <string name="obd_err_bt_connect_timeout">Connection timeout</string>
+    <string name="obd_err_init_failed">Adapter init failed</string>
+    <string name="obd_err_no_data">No data from adapter</string>
+    <string name="obd_err_io_error">Link lost</string>
+    <string name="obd_err_unknown">Unknown error</string>
+    <string name="obd_retry_in"> · retry in %1$ds</string>
+    <string name="worker_status_phase">Phase: %1$s</string>
     <string name="settings_enable_bt">Enable Bluetooth</string>
     <string name="channel_diplus_push">DiPlus Push</string>
     <string name="channel_byd_cloud">BYD Cloud</string>

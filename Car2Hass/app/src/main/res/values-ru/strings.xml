@@ -194,6 +194,16 @@
     <string name="obd_connected">Подключено: %1$s (ELM327 %2$s)</string>
     <string name="obd_link_ok"> · подключено</string>
     <string name="obd_link_down"> · нет связи</string>
+    <string name="obd_err_bt_off">Bluetooth выключен</string>
+    <string name="obd_err_bt_not_paired">Адаптер не сопряжён</string>
+    <string name="obd_err_bt_connect_io">Адаптер не отвечает</string>
+    <string name="obd_err_bt_connect_timeout">Таймаут подключения</string>
+    <string name="obd_err_init_failed">Ошибка инициализации адаптера</string>
+    <string name="obd_err_no_data">Нет данных от адаптера</string>
+    <string name="obd_err_io_error">Связь потеряна</string>
+    <string name="obd_err_unknown">Неизвестная ошибка</string>
+    <string name="obd_retry_in"> · повтор через %1$dс</string>
+    <string name="worker_status_phase">Фаза: %1$s</string>
     <string name="settings_enable_bt">Включить Bluetooth</string>
     <string name="channel_diplus_push">DiPlus Push</string>
     <string name="channel_byd_cloud">BYD Cloud</string>

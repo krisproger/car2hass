@@ -21,12 +21,15 @@ public final class ObdWorker implements ChannelWorker {
     private volatile boolean running;
     private volatile ChannelWorkerStatus.Result lastResult = ChannelWorkerStatus.Result.OK;
     private volatile String lastError = "";
+    private volatile String lastPhase = "";
     private volatile long retryBackoffMs = POLL_INTERVAL_MS;
     private volatile long cycleCount;
     private volatile long lastCycleAtMs;
     private volatile long threadStartAtMs;
     private volatile long errorCount;
     private Thread thread;
+    private final WorkerRetryPolicy policy =
+            new WorkerRetryPolicy(POLL_INTERVAL_MS, MAX_RETRY_BACKOFF_MS);
     private static final long POLL_INTERVAL_MS = 2000;
     private static final long MAX_RETRY_BACKOFF_MS = 30_000;
 
@@ -43,7 +46,7 @@ public final class ObdWorker implements ChannelWorker {
 
     @Override
     public ChannelWorkerStatus status() {
-        return new ChannelWorkerStatus("obd", running, lastResult, lastError,
+        return new ChannelWorkerStatus("obd", running, lastResult, lastError, lastPhase,
                 POLL_INTERVAL_MS, retryBackoffMs, cycleCount, lastCycleAtMs,
                 threadStartAtMs, errorCount);
     }
@@ -75,6 +78,7 @@ public final class ObdWorker implements ChannelWorker {
                 close(session);
                 session = null;
                 vinRead = false;
+                policy.onSuccess();
                 retryBackoffMs = POLL_INTERVAL_MS;
                 sleep(2000);
                 continue;
@@ -83,18 +87,34 @@ public final class ObdWorker implements ChannelWorker {
             String phase = "open";
             try {
                 if (session == null) {
+                    AppConfig.setObdStatus(ctx, "connecting");
+                    AppConfig.setObdPhase(ctx, "open");
                     ObdTransport t = ObdTransportFactory.create(ctx);
                     // Plain open(): unlike openForced it never calls
                     // adapter.isDiscovering(), which requires the runtime
                     // BLUETOOTH_SCAN permission on Android 12+.
                     session = t.open();
                     phase = "warmUp";
+                    AppConfig.setObdPhase(ctx, "warmUp");
                     if (session.initWarmUp() == null) {
+                        String code = ObdError.INIT_FAILED;
+                        AppConfig.setObdStatus(ctx, "disconnected");
+                        AppConfig.setObdLastError(ctx, code);
+                        AppConfig.setObdPhase(ctx, "warmUp");
+                        lastResult = ChannelWorkerStatus.Result.ERROR;
+                        lastError = code;
+                        errorCount++;
+                        retryBackoffMs = policy.onFailure();
                         LogBuffer.w("ObdWorker", "warmUp failed after "
-                                + (System.currentTimeMillis() - cycleT0) + "ms");
+                                + (System.currentTimeMillis() - cycleT0) + "ms — retry in "
+                                + retryBackoffMs + " ms");
                         close(session);
                         session = null;
-                        sleep(3000);
+                        AppConfig.setObdErrorCount(ctx, (int) errorCount);
+                        AppConfig.setObdBackoffMs(ctx, retryBackoffMs);
+                        cycleCount++;
+                        lastCycleAtMs = System.currentTimeMillis();
+                        sleep(retryBackoffMs);
                         continue;
                     }
                     LogBuffer.i("ObdWorker", "session established in "
@@ -129,6 +149,7 @@ public final class ObdWorker implements ChannelWorker {
                     }
                 }
                 phase = "read";
+                AppConfig.setObdPhase(ctx, "read");
                 Set<String> supported = ObdChannel.supportedPidsPref(ctx);
                 int ok = 0;
                 for (Map.Entry<String, String> e : ObdPidCodec.PID_TO_KEY.entrySet()) {
@@ -142,29 +163,35 @@ public final class ObdWorker implements ChannelWorker {
                     }
                 }
                 phase = "done";
-                AppConfig.setObdStatus(ctx, ok > 0 ? "connected" : "connected");
-                AppConfig.setObdLastError(ctx, "");
-                retryBackoffMs = POLL_INTERVAL_MS; // healthy cycle — reset backoff
+                AppConfig.setObdStatus(ctx, ok > 0 ? "connected" : "disconnected");
+                AppConfig.setObdLastError(ctx, ok > 0 ? "" : ObdError.NO_DATA);
+                AppConfig.setObdPhase(ctx, "done");
+                retryBackoffMs = policy.onSuccess(); // healthy cycle — reset backoff
                 lastResult = ok > 0 ? ChannelWorkerStatus.Result.OK : ChannelWorkerStatus.Result.EMPTY;
-                lastError = "";
+                lastError = ok > 0 ? "" : ObdError.NO_DATA;
                 if (ok == 0) {
                     LogBuffer.d("ObdWorker", "cycle ok=0 pids (read phase took "
                             + (System.currentTimeMillis() - cycleT0) + "ms)");
                 }
             } catch (Exception ex) {
+                String code = ObdError.classify(phase, ex);
                 AppConfig.setObdStatus(ctx, "disconnected");
-                AppConfig.setObdLastError(ctx, ex.getMessage());
+                AppConfig.setObdLastError(ctx, code);
+                AppConfig.setObdPhase(ctx, phase);
                 lastResult = ChannelWorkerStatus.Result.ERROR;
-                lastError = ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName();
+                lastError = code;
                 errorCount++;
-                retryBackoffMs = Math.min(retryBackoffMs * 2, MAX_RETRY_BACKOFF_MS);
+                retryBackoffMs = policy.onFailure();
                 LogBuffer.w("ObdWorker", "cycle failed in " + phase + " after "
-                        + (System.currentTimeMillis() - cycleT0) + "ms: " + ex.getMessage()
-                        + " — retry in " + retryBackoffMs + " ms");
+                        + (System.currentTimeMillis() - cycleT0) + "ms: " + code
+                        + " (" + ex.getMessage() + ") — retry in " + retryBackoffMs + " ms");
                 close(session);
                 session = null;
                 vinRead = false;
             }
+            lastPhase = phase;
+            AppConfig.setObdErrorCount(ctx, (int) errorCount);
+            AppConfig.setObdBackoffMs(ctx, retryBackoffMs);
             cycleCount++;
             lastCycleAtMs = System.currentTimeMillis();
             sleep(retryBackoffMs);

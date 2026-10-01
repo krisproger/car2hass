@@ -14,6 +14,7 @@ public final class ChannelWorkerStatus {
     private final boolean running;
     private final Result lastResult;
     private final String lastError;
+    private final String phase;
     private final long cadenceMs;
     private final long retryDelayMs;
     private final long cycleCount;
@@ -30,10 +31,19 @@ public final class ChannelWorkerStatus {
                                String lastError, long cadenceMs, long retryDelayMs,
                                long cycleCount, long lastCycleAtMs, long threadStartAtMs,
                                long errorCount) {
+        this(channelId, running, lastResult, lastError, "", cadenceMs, retryDelayMs,
+                cycleCount, lastCycleAtMs, threadStartAtMs, errorCount);
+    }
+
+    public ChannelWorkerStatus(String channelId, boolean running, Result lastResult,
+                               String lastError, String phase, long cadenceMs, long retryDelayMs,
+                               long cycleCount, long lastCycleAtMs, long threadStartAtMs,
+                               long errorCount) {
         this.channelId = channelId != null ? channelId : "";
         this.running = running;
         this.lastResult = lastResult != null ? lastResult : Result.OK;
         this.lastError = lastError != null ? lastError : "";
+        this.phase = phase != null ? phase : "";
         this.cadenceMs = cadenceMs > 0 ? cadenceMs : 0;
         this.retryDelayMs = retryDelayMs > 0 ? retryDelayMs : 0;
         this.cycleCount = cycleCount;
@@ -46,6 +56,7 @@ public final class ChannelWorkerStatus {
     public boolean running() { return running; }
     public Result lastResult() { return lastResult; }
     public String lastError() { return lastError; }
+    public String phase() { return phase; }
     public long cadenceMs() { return cadenceMs; }
     public long retryDelayMs() { return retryDelayMs; }
     public long cycleCount() { return cycleCount; }

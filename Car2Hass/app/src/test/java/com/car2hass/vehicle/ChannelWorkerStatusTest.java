@@ -52,6 +52,14 @@ public class ChannelWorkerStatusTest {
         }
         if (policy.onSuccess() != 2000) throw new AssertionError("success reset");
 
+        // phase round-trips (11-arg ctor) and defaults to "" for the legacy ctors.
+        ChannelWorkerStatus withPhase = new ChannelWorkerStatus("obd", true,
+                ChannelWorkerStatus.Result.ERROR, "bt_connect_io", "read", 2000, 8000,
+                5L, 100L, 50L, 3L);
+        if (!"read".equals(withPhase.phase())) throw new AssertionError("phase must round-trip");
+        if (!withPhase.inBackoff()) throw new AssertionError("8000 > 2000 must be in backoff");
+        if (!"".equals(ok.phase())) throw new AssertionError("legacy ctor phase must be empty");
+
         System.out.println("All ChannelWorkerStatus tests passed.");
     }
 }

@@ -4346,6 +4346,15 @@ public class MainActivity extends BaseLocalizedActivity {
         com.car2hass.vehicle.ChannelWorkerStatus s =
                 svc.channelStatus(com.car2hass.vehicle.ChannelWorkerFactory.normalize(channelId));
         if (s == null) return "";
+        if ("obd".equals(channelId)) {
+            String st = AppConfig.getObdStatus(this);
+            String code = AppConfig.getObdLastError(this);
+            if (!"connected".equals(st) && !code.isEmpty()) {
+                String line = obdErrorLabel(code);
+                if (s.inBackoff()) line += getString(R.string.obd_retry_in, s.retryDelaySeconds());
+                return line;
+            }
+        }
         switch (s.lastResult()) {
             case ERROR: {
                 String reason = s.lastError();
@@ -4357,6 +4366,13 @@ public class MainActivity extends BaseLocalizedActivity {
             default:
                 return getString(R.string.settings_channel_status_ok, s.cadenceSeconds());
         }
+    }
+
+    /** Human label for a stable OBD error code (see ObdError). */
+    private String obdErrorLabel(String code) {
+        if (code == null || code.isEmpty()) return "";
+        int res = getResources().getIdentifier("obd_err_" + code, "string", getPackageName());
+        return res != 0 ? getString(res) : code;
     }
 
     /** Supported source ids the user can add (system is always present). */

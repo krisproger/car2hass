@@ -16,12 +16,12 @@ public class Elm327Session implements ObdSession {
     }
 
     @Override
-    public String transact(String command, int expectedLines) {
+    public String transact(String command, int expectedLines) throws java.io.IOException {
         return Elm327Io.transact(in, out, command, expectedLines);
     }
 
     @Override
-    public String initWarmUp() {
+    public String initWarmUp() throws java.io.IOException {
         for (int attempt = 0; attempt < 2; attempt++) {
             String atz = null;
             try {
@@ -46,7 +46,7 @@ public class Elm327Session implements ObdSession {
     }
 
     @Override
-    public String lightInit() {
+    public String lightInit() throws java.io.IOException {
         if (!cmdOk(transact("ATE0", 0), "OK")) return null;
         if (!cmdOk(transact("ATH0", 0), "OK")) return null;
         if (!cmdOk(transact("ATL0", 0), "OK")) return null;

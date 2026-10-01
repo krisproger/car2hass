@@ -1235,6 +1235,37 @@ public class AppConfig {
         prefs(ctx).edit().putString(KEY_OBD_LAST_ERROR, v == null ? "" : v).apply();
     }
 
+    private static final String KEY_OBD_PHASE = "obd_phase";
+    private static final String KEY_OBD_ERROR_COUNT = "obd_error_count";
+    private static final String KEY_OBD_BACKOFF_MS = "obd_backoff_ms";
+
+    /** Last OBD worker phase ("open"/"warmUp"/"read"/"done"). */
+    public static String getObdPhase(Context ctx) {
+        return prefs(ctx).getString(KEY_OBD_PHASE, "");
+    }
+
+    public static void setObdPhase(Context ctx, String v) {
+        prefs(ctx).edit().putString(KEY_OBD_PHASE, v == null ? "" : v).apply();
+    }
+
+    /** Cumulative OBD worker error count. */
+    public static int getObdErrorCount(Context ctx) {
+        return prefs(ctx).getInt(KEY_OBD_ERROR_COUNT, 0);
+    }
+
+    public static void setObdErrorCount(Context ctx, int v) {
+        prefs(ctx).edit().putInt(KEY_OBD_ERROR_COUNT, v).apply();
+    }
+
+    /** Current OBD retry backoff in ms (base cadence when healthy). */
+    public static long getObdBackoffMs(Context ctx) {
+        return prefs(ctx).getLong(KEY_OBD_BACKOFF_MS, 0L);
+    }
+
+    public static void setObdBackoffMs(Context ctx, long v) {
+        prefs(ctx).edit().putLong(KEY_OBD_BACKOFF_MS, v).apply();
+    }
+
     /** Detected ELM327 protocol (ATDP output), "" when not analyzed yet. */
     public static String getObdProtocol(Context ctx) {
         return prefs(ctx).getString(KEY_OBD_PROTOCOL, "");

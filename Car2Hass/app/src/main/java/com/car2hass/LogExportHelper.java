@@ -124,8 +124,11 @@ public class LogExportHelper {
         lines.add("OBD: enabled=" + AppConfig.isObdEnabled(context)
                 + " mode=" + AppConfig.getObdMode(context)
                 + " status=" + AppConfig.getObdStatus(context)
+                + " phase=" + AppConfig.getObdPhase(context)
                 + " protocol=" + AppConfig.getObdProtocol(context)
                 + " supported_pids=" + countPids(AppConfig.getObdSupportedPids(context))
+                + " error_count=" + AppConfig.getObdErrorCount(context)
+                + " backoff_ms=" + AppConfig.getObdBackoffMs(context)
                 + " last_error=" + AppConfig.getObdLastError(context));
         lines.add("OBD device: " + AppConfig.getObdBtName(context)
                 + " (" + AppConfig.getObdBtAddress(context) + ")");
