@@ -241,6 +241,12 @@ javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2
 echo "=== Compiling CloudBatchBufferTest ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/CloudBatchBufferTest.java"
 
+echo "=== Compiling CloudQueuePolicy (pure) ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/CloudQueuePolicy.java"
+
+echo "=== Compiling CloudQueuePolicyTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/CloudQueuePolicyTest.java"
+
 echo "=== Compiling CloudSyncDecision (pure) ==="
 javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/CloudSyncDecision.java"
 
@@ -583,6 +589,9 @@ java -cp "$OUT:$JSON_JAR" com.car2hass.SendHistoryCoreTest
 
 echo "=== Running CloudBatchBufferTest ==="
 java -cp "$OUT:$JSON_JAR" com.car2hass.CloudBatchBufferTest
+
+echo "=== Running CloudQueuePolicyTest ==="
+java -cp "$OUT" com.car2hass.CloudQueuePolicyTest
 
 echo "=== Running CloudSyncDecisionTest ==="
 java -cp "$OUT" com.car2hass.CloudSyncDecisionTest

@@ -12,6 +12,7 @@ public class CloudBatchBufferTest {
         boundAndDrain();
         addAllHonoursBound();
         payloadShape();
+        wireShape();
         System.out.println("All CloudBatchBuffer tests passed.");
     }
 
@@ -58,6 +59,24 @@ public class CloudBatchBufferTest {
         }
         b.addAll(arr);
         if (b.size() != CloudBatchBuffer.MAX_SNAPSHOTS) throw new AssertionError("addAll must enforce the bound");
+    }
+
+    /** The exact site wire shape used by CloudSyncClient: {car_name, batch:[{t,g,s}]}. */
+    private static void wireShape() throws Exception {
+        JSONObject s1 = new JSONObject();
+        s1.put("speed", 42);
+        JSONObject s2 = new JSONObject();
+        s2.put("speed", 43);
+        JSONArray batch = new JSONArray();
+        batch.put(CloudBatchBuffer.buildSnapshot(100, s1, 55.75, 37.62));
+        batch.put(CloudBatchBuffer.buildSnapshot(101, s2, null, null));
+        JSONObject p = CloudBatchBuffer.buildPayload("BYDSongPRO", batch);
+        if (!"BYDSongPRO".equals(p.getString("car_name"))) throw new AssertionError("car_name");
+        JSONArray b = p.getJSONArray("batch");
+        if (b.length() != 2) throw new AssertionError("batch length");
+        if (!b.getJSONObject(0).has("g")) throw new AssertionError("first must carry a fix");
+        if (b.getJSONObject(1).has("g")) throw new AssertionError("second has no fix -> no g");
+        if (b.getJSONObject(0).getLong("t") != 100) throw new AssertionError("t order");
     }
 
     private static void payloadShape() throws Exception {

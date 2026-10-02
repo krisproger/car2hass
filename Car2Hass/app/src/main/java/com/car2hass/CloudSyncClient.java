@@ -13,6 +13,9 @@ import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -21,8 +24,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Optional cloud synchronization of telemetry to the mytechnic.ru unified
  * account. Login is by email + TOTP code; access/refresh tokens live in
- * SecureStorage. Sending is buffered and performed on a background executor so
- * it never blocks the HA telemetry path.
+ * SecureStorage. Sending mirrors the HA path: snapshots are staged in an
+ * in-memory buffer and persisted to {@link CloudSnapshotQueue} on failure, so
+ * data survives offline periods and app restarts; rows are removed only after a
+ * confirmed send.
  */
 public final class CloudSyncClient {
 
@@ -33,10 +38,15 @@ public final class CloudSyncClient {
     private static final int MAX_RESPONSE_BYTES = 4096;
     private static final long EXPIRY_SKEW_MS = 60000;
 
+    private static final long MIN_FLUSH_BACKOFF_MS = 12000;
+    private static final long MAX_FLUSH_BACKOFF_MS = 300000;
+    private static final long NETWORK_RETRY_DELAY_MS = 12000;
+
     private static final CloudBatchBuffer buffer = new CloudBatchBuffer();
     private static final ExecutorService executor = Executors.newSingleThreadExecutor();
     private static final AtomicBoolean flushInProgress = new AtomicBoolean(false);
     private static volatile long lastFlushAttemptMs = 0;
+    private static volatile long currentFlushBackoffMs = MIN_FLUSH_BACKOFF_MS;
 
     private CloudSyncClient() {}
 
@@ -134,7 +144,7 @@ public final class CloudSyncClient {
     }
 
     /** Buffers a snapshot; flushes on a background thread by time or threshold. */
-    public static void sendBatch(Context ctx, Map<String, Object> sensors, Double lat, Double lon) {
+    public static void collectSnapshot(Context ctx, Map<String, Object> sensors, Double lat, Double lon) {
         try {
             if (ctx == null || sensors == null || sensors.isEmpty()) return;
             if (!AppConfig.isCloudSyncEnabled(ctx)) return;
@@ -147,50 +157,73 @@ public final class CloudSyncClient {
             }
             if (s.length() == 0) return;
 
-            if (lat != null && lon != null && !lat.isNaN() && !lon.isNaN()) {
-                LogBuffer.d(TAG, "snapshot location " + lat + "," + lon
-                        + " provider=" + s.optString("location_provider", "")
-                        + " acc=" + s.optString("location_accuracy", ""));
-            }
-
             buffer.add(CloudBatchBuffer.buildSnapshot(System.currentTimeMillis() / 1000, s, lat, lon));
             long now = System.currentTimeMillis();
             if (buffer.size() >= FLUSH_THRESHOLD || now - lastFlushAttemptMs >= FLUSH_INTERVAL_MS) {
                 flushAsync(ctx.getApplicationContext());
             }
         } catch (Exception e) {
-            LogBuffer.e(TAG, "sendBatch: " + e.getMessage());
+            LogBuffer.e(TAG, "collectSnapshot: " + e.getMessage());
         }
     }
 
-    /** Non-blocking flush of all buffered snapshots. */
+    /** Backwards-compatible alias for {@link #collectSnapshot}. */
+    public static void sendBatch(Context ctx, Map<String, Object> sensors, Double lat, Double lon) {
+        collectSnapshot(ctx, sensors, lat, lon);
+    }
+
+    /** Non-blocking flush of queued + buffered snapshots. */
     public static void flushAsync(final Context ctx) {
         if (!flushInProgress.compareAndSet(false, true)) return;
         executor.submit(() -> {
+            JSONArray ram = null;
             try {
                 if (!AppConfig.isCloudSyncEnabled(ctx)) return;
                 if (AppConfig.getCloudAccessToken(ctx).isEmpty()) return;
-                if (buffer.isEmpty()) return;
+
+                long now = System.currentTimeMillis();
+                // Backoff only holds back an idle flush; anything to send goes now.
+                if (now - lastFlushAttemptMs < currentFlushBackoffMs
+                        && CloudSnapshotQueue.getCount(ctx) == 0 && buffer.isEmpty()) {
+                    return;
+                }
+
+                List<CloudSnapshotQueue.Snapshot> queued =
+                        CloudSnapshotQueue.dequeueChunk(ctx, CloudSnapshotQueue.DEQUEUE_CHUNK_SIZE);
+                ram = buffer.drain();
+                if (queued.isEmpty() && ram.length() == 0) return;
 
                 lastFlushAttemptMs = System.currentTimeMillis();
-                JSONArray batch = buffer.drain();
+
+                List<JSONObject> batchList = new ArrayList<>();
+                long maxQueuedId = -1;
+                for (CloudSnapshotQueue.Snapshot q : queued) {
+                    batchList.add(CloudBatchBuffer.buildSnapshot(q.ts, new JSONObject(q.signalJson), q.lat, q.lon));
+                    if (q.queueId > maxQueuedId) maxQueuedId = q.queueId;
+                }
+                for (int i = 0; i < ram.length(); i++) {
+                    JSONObject o = ram.optJSONObject(i);
+                    if (o != null) batchList.add(o);
+                }
+                batchList.sort(Comparator.comparingLong(o -> o.optLong("t", 0)));
+                JSONArray batch = new JSONArray();
+                for (JSONObject o : batchList) batch.put(o);
                 if (batch.length() == 0) return;
 
                 if (!isNetworkAvailable(ctx)) {
-                    buffer.addAll(batch);
-                    LogBuffer.d(TAG, "No network, " + batch.length() + " snapshots buffered");
+                    persist(ctx, ram);
+                    LogBuffer.d(TAG, "No network, " + batch.length() + " snapshots kept");
                     return;
                 }
 
                 String carName = AppConfig.getCloudCarName(ctx);
                 if (carName.isEmpty()) {
-                    buffer.addAll(batch);
+                    persist(ctx, ram);
                     AppConfig.setCloudLastStatus(ctx, "no_car_name");
                     return;
                 }
-
                 if (!ensureCarBound(ctx)) {
-                    buffer.addAll(batch);
+                    persist(ctx, ram);
                     AppConfig.setCloudLastStatus(ctx, "car_not_bound");
                     return;
                 }
@@ -198,21 +231,70 @@ public final class CloudSyncClient {
                 HttpResult r = authorizedPost(ctx, "/api/telemetry",
                         CloudBatchBuffer.buildPayload(carName, batch));
                 if (r != null && r.code == 200) {
+                    if (maxQueuedId >= 0) CloudSnapshotQueue.deleteUpTo(ctx, maxQueuedId);
                     AppConfig.setCloudLastSyncMs(ctx, System.currentTimeMillis());
                     AppConfig.setCloudLastStatus(ctx, "ok");
+                    currentFlushBackoffMs = MIN_FLUSH_BACKOFF_MS;
                     LogBuffer.i(TAG, "Cloud sync OK: " + batch.length() + " snapshots");
                 } else {
-                    buffer.addAll(batch);
+                    persist(ctx, ram);
                     int code = r == null ? 0 : r.code;
                     AppConfig.setCloudLastStatus(ctx, "http_" + code);
-                    LogBuffer.w(TAG, "Cloud sync failed: HTTP " + code);
+                    currentFlushBackoffMs = Math.min(currentFlushBackoffMs * 2, MAX_FLUSH_BACKOFF_MS);
+                    LogBuffer.w(TAG, "Cloud sync failed: HTTP " + code
+                            + " — retry in " + currentFlushBackoffMs + " ms");
                 }
             } catch (Exception e) {
+                // Queue rows were never deleted; persist the RAM batch so it
+                // survives a restart (previously the drained batch was lost here).
                 LogBuffer.e(TAG, "flush: " + e.getMessage());
+                persist(ctx, ram);
+                currentFlushBackoffMs = Math.min(currentFlushBackoffMs * 2, MAX_FLUSH_BACKOFF_MS);
             } finally {
                 flushInProgress.set(false);
             }
         });
+    }
+
+    /** Re-flushes promptly when connectivity returns. */
+    public static void onNetworkAvailable(final Context ctx) {
+        try {
+            if (!AppConfig.isCloudSyncEnabled(ctx)) return;
+            if (flushInProgress.get()) {
+                executor.submit(() -> {
+                    try { Thread.sleep(NETWORK_RETRY_DELAY_MS); } catch (InterruptedException ignored) {}
+                    flushAsync(ctx.getApplicationContext());
+                });
+            } else {
+                flushAsync(ctx.getApplicationContext());
+            }
+        } catch (Exception e) {
+            LogBuffer.e(TAG, "onNetworkAvailable: " + e.getMessage());
+        }
+    }
+
+    /** Persists drained RAM snapshots to the durable queue (restart-safe). */
+    private static void persist(Context ctx, JSONArray ram) {
+        if (ram == null || ram.length() == 0) return;
+        try {
+            List<CloudSnapshotQueue.Snapshot> snaps = new ArrayList<>();
+            for (int i = 0; i < ram.length(); i++) {
+                JSONObject o = ram.optJSONObject(i);
+                if (o == null) continue;
+                double lat = Double.NaN, lon = Double.NaN;
+                JSONObject g = o.optJSONObject("g");
+                if (g != null) {
+                    lat = g.optDouble("lat", Double.NaN);
+                    lon = g.optDouble("lon", Double.NaN);
+                }
+                JSONObject s = o.optJSONObject("s");
+                snaps.add(new CloudSnapshotQueue.Snapshot(
+                        o.optLong("t", 0), lat, lon, s == null ? "{}" : s.toString()));
+            }
+            CloudSnapshotQueue.enqueueAll(ctx, snaps);
+        } catch (Exception e) {
+            LogBuffer.e(TAG, "persist: " + e.getMessage());
+        }
     }
 
     private static HttpResult authorizedPost(Context ctx, String path, JSONObject body) throws Exception {

@@ -249,6 +249,45 @@ public class AppConfig {
         prefs(ctx).edit().putString(KEY_QUEUE_MAX_DAYS, String.valueOf(days)).apply();
     }
 
+    // ---- Cloud (site) telemetry queue ----
+
+    private static final String KEY_CLOUD_QUEUE_ENABLED = "cloud_queue_enabled";
+    private static final String KEY_CLOUD_QUEUE_MAX_MB = "cloud_queue_max_mb";
+    private static final String KEY_CLOUD_QUEUE_MAX_DAYS = "cloud_queue_max_days";
+
+    /** Persistent site-upload queue; when off, snapshots are discarded (like HA). */
+    public static boolean isCloudQueueEnabled(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_CLOUD_QUEUE_ENABLED, true);
+    }
+
+    public static void setCloudQueueEnabled(Context ctx, boolean enabled) {
+        prefs(ctx).edit().putBoolean(KEY_CLOUD_QUEUE_ENABLED, enabled).apply();
+    }
+
+    public static int getCloudQueueMaxMb(Context ctx) {
+        try {
+            return Integer.parseInt(prefs(ctx).getString(KEY_CLOUD_QUEUE_MAX_MB, "100"));
+        } catch (Exception e) {
+            return 100;
+        }
+    }
+
+    public static void setCloudQueueMaxMb(Context ctx, int mb) {
+        prefs(ctx).edit().putString(KEY_CLOUD_QUEUE_MAX_MB, String.valueOf(mb)).apply();
+    }
+
+    public static int getCloudQueueMaxDays(Context ctx) {
+        try {
+            return Integer.parseInt(prefs(ctx).getString(KEY_CLOUD_QUEUE_MAX_DAYS, "7"));
+        } catch (Exception e) {
+            return 7;
+        }
+    }
+
+    public static void setCloudQueueMaxDays(Context ctx, int days) {
+        prefs(ctx).edit().putString(KEY_CLOUD_QUEUE_MAX_DAYS, String.valueOf(days)).apply();
+    }
+
     // ---- Phone sensor source ----
 
     /** Master toggle for phone sensor collection; off by default. */

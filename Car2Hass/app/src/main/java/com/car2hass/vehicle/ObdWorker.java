@@ -27,6 +27,8 @@ public final class ObdWorker implements ChannelWorker {
     private volatile long lastCycleAtMs;
     private volatile long threadStartAtMs;
     private volatile long errorCount;
+    /** Consecutive failed connects; after a few, try the heavier forced open. */
+    private int openFailures = 0;
     private Thread thread;
     private final WorkerRetryPolicy policy =
             new WorkerRetryPolicy(POLL_INTERVAL_MS, MAX_RETRY_BACKOFF_MS);
@@ -80,6 +82,15 @@ public final class ObdWorker implements ChannelWorker {
                 vinRead = false;
                 policy.onSuccess();
                 retryBackoffMs = POLL_INTERVAL_MS;
+                // OBD is off: clear the runtime state so the diagnostics line
+                // does not keep a stale status/error from a previous session.
+                AppConfig.setObdStatus(ctx, "disconnected");
+                AppConfig.setObdLastError(ctx, "");
+                AppConfig.setObdPhase(ctx, "");
+                AppConfig.setObdBackoffMs(ctx, 0);
+                AppConfig.setObdErrorCount(ctx, 0);
+                errorCount = 0;
+                openFailures = 0;
                 sleep(2000);
                 continue;
             }
@@ -90,10 +101,19 @@ public final class ObdWorker implements ChannelWorker {
                     AppConfig.setObdStatus(ctx, "connecting");
                     AppConfig.setObdPhase(ctx, "open");
                     ObdTransport t = ObdTransportFactory.create(ctx);
-                    // Plain open(): unlike openForced it never calls
-                    // adapter.isDiscovering(), which requires the runtime
-                    // BLUETOOTH_SCAN permission on Android 12+.
-                    session = t.open();
+                    // Plain open() avoids adapter.isDiscovering() (BLUETOOTH_SCAN
+                    // on Android 12+). After repeated connect failures, try the
+                    // heavier forced open (cancel discovery + re-bind), falling
+                    // back to plain open when it is not permitted.
+                    if (openFailures >= 3) {
+                        try {
+                            session = t.openForced();
+                        } catch (Exception forcedEx) {
+                            session = t.open();
+                        }
+                    } else {
+                        session = t.open();
+                    }
                     phase = "warmUp";
                     AppConfig.setObdPhase(ctx, "warmUp");
                     if (session.initWarmUp() == null) {
@@ -117,6 +137,7 @@ public final class ObdWorker implements ChannelWorker {
                         sleep(retryBackoffMs);
                         continue;
                     }
+                    openFailures = 0;
                     LogBuffer.i("ObdWorker", "session established in "
                             + (System.currentTimeMillis() - cycleT0) + "ms");
                     // Real VIN over OBD (Mode 09 PID 02) — read once per session,
@@ -181,6 +202,7 @@ public final class ObdWorker implements ChannelWorker {
                 lastResult = ChannelWorkerStatus.Result.ERROR;
                 lastError = code;
                 errorCount++;
+                openFailures++;
                 retryBackoffMs = policy.onFailure();
                 LogBuffer.w("ObdWorker", "cycle failed in " + phase + " after "
                         + (System.currentTimeMillis() - cycleT0) + "ms: " + code

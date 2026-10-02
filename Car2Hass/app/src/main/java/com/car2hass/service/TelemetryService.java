@@ -724,6 +724,9 @@ public class TelemetryService extends Service {
                         }
                     });
                 }
+                if (AppConfig.isCloudSyncEnabled(this)) {
+                    CloudSyncClient.flushAsync(this);
+                }
                 // Persist the dynamic sensor-value dictionary at most once
                 // per minute when it changed (see SensorValueHistory).
                 if (SensorValueHistory.needsFlush(System.currentTimeMillis())) {
@@ -1030,6 +1033,18 @@ public class TelemetryService extends Service {
             // measurement moment instead of the snapshot collection time.
             long fixTimeSec = hasValidLocation() ? lastLocTime / 1000 : 0;
             HassClient.collectSnapshot(this, lastLat, lastLon, lastAccuracy, fixTimeSec, sig.toString());
+            // Same assembled snapshot also feeds the site track (unified set).
+            if (AppConfig.isCloudSyncEnabled(this)) {
+                java.util.Map<String, Object> cloudSensors = new java.util.LinkedHashMap<>();
+                java.util.Iterator<String> it = sig.keys();
+                while (it.hasNext()) {
+                    String k = it.next();
+                    cloudSensors.put(k, sig.opt(k));
+                }
+                if (!cloudSensors.isEmpty()) {
+                    CloudSyncClient.collectSnapshot(this, cloudSensors, lastLat, lastLon);
+                }
+            }
         } catch (Exception e) {
             LogBuffer.e("TelemetryService", "collectSnapshot failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
         }
@@ -1184,7 +1199,7 @@ public class TelemetryService extends Service {
         HassClient.collectSnapshot(this, l.lat, l.lon, l.accuracy,
                 l.timeMs > 0 ? l.timeMs / 1000 : 0, sig.toString());
         if (AppConfig.isCloudSyncEnabled(this) && !cloudSensors.isEmpty()) {
-            CloudSyncClient.sendBatch(this, cloudSensors, l.lat, l.lon);
+            CloudSyncClient.collectSnapshot(this, cloudSensors, l.lat, l.lon);
         }
     }
 
@@ -1478,14 +1493,17 @@ public class TelemetryService extends Service {
             networkCallback = new ConnectivityManager.NetworkCallback() {
                 @Override
                 public void onAvailable(Network network) {
-                    if (!AppConfig.isHassEnabled(TelemetryService.this)) return;
+                    boolean hass = AppConfig.isHassEnabled(TelemetryService.this);
+                    boolean cloud = AppConfig.isCloudSyncEnabled(TelemetryService.this);
+                    if (!hass && !cloud) return;
                     long now = System.currentTimeMillis();
                     if (now - lastNetworkFlushMs < NETWORK_FLUSH_DEBOUNCE_MS) {
                         LogBuffer.d("TelemetryService", "Network available, flush debounced");
                         return;
                     }
                     lastNetworkFlushMs = now;
-                    HassClient.onNetworkAvailable(TelemetryService.this);
+                    if (hass) HassClient.onNetworkAvailable(TelemetryService.this);
+                    if (cloud) CloudSyncClient.onNetworkAvailable(TelemetryService.this);
                 }
             };
             cm.registerNetworkCallback(req, networkCallback);
