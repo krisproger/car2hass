@@ -394,6 +394,10 @@ public class VoyahChannel implements DataChannel {
 
     private static volatile boolean acProbed;
 
+    /** Full raw dump of every mapped Voyah param/getter, throttled to one per interval. */
+    private static final long RAW_DUMP_INTERVAL_MS = 15_000L;
+    private volatile long lastRawDumpMs;
+
     /** Reads every known key once; returns how many produced a value. */
     private int collect(List<CANDataItem> knownItems, List<CANDataItem> out) {
         int count = 0;
@@ -414,7 +418,54 @@ public class VoyahChannel implements DataChannel {
         }
         if (diag.length() > 0) LogBuffer.d("VoyahChannel", "raw " + diag.toString().trim());
         if (cachedIface != null) logAirConditionProbe();
+        maybeRawDump();
         return count;
+    }
+
+    /**
+     * Dumps the RAW (pre-decode) value of every mapped Voyah param/getter to the
+     * log (tag {@code VoyahDump}), throttled. Used to calibrate scales/sentinels
+     * and enum encodings against the dashboard (a broken value on the site/app
+     * still needs the raw reading to be fixed).
+     */
+    private void maybeRawDump() {
+        long now = System.currentTimeMillis();
+        if (now - lastRawDumpMs < RAW_DUMP_INTERVAL_MS) return;
+        lastRawDumpMs = now;
+        Object iface = cachedIface;
+        LogBuffer.i("VoyahDump", "begin path=" + binderPath + " iface=" + (iface != null));
+        for (Map.Entry<String, String> e : VOYAH_PARAMS.entrySet()) {
+            String raw = null;
+            if (iface != null) {
+                Object v = queryState(iface, cachedIfaceClass, e.getValue());
+                raw = v == null ? null : stringify(v);
+            }
+            LogBuffer.i("VoyahDump", e.getKey() + " " + e.getValue() + " = "
+                    + (raw == null ? "null" : raw));
+        }
+        for (Map.Entry<String, String> e : VOYAH_METHODS.entrySet()) {
+            String raw = iface == null ? null : invokeGetter(cachedIfaceClass, iface, e.getValue());
+            LogBuffer.i("VoyahDump", e.getKey() + " " + e.getValue() + "() = "
+                    + (raw == null ? "null" : raw));
+        }
+        for (Map.Entry<String, String> e : VOYAH_AC_METHODS.entrySet()) {
+            String raw = iface == null ? null : readAirConditionValue(cachedIfaceClass, iface, e.getValue());
+            LogBuffer.i("VoyahDump", e.getKey() + " ac:" + e.getValue() + "() = "
+                    + (raw == null ? "null" : raw));
+        }
+        for (Map.Entry<String, int[]> e : VOYAH_RAW_TX.entrySet()) {
+            int[] tx = e.getValue();
+            String raw;
+            if (tx[1] == RAW_FLOAT) {
+                Float f = transactFloat(tx[0]);
+                raw = f == null ? null : String.valueOf(f);
+            } else {
+                Integer i = transactInt(tx[0]);
+                raw = i == null ? null : String.valueOf(i);
+            }
+            LogBuffer.i("VoyahDump", e.getKey() + " tx" + tx[0] + " = " + (raw == null ? "null" : raw));
+        }
+        LogBuffer.i("VoyahDump", "end");
     }
 
     private static boolean isDiagKey(String key) {
