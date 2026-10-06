@@ -554,6 +554,16 @@ public class TelemetryService extends Service {
     public void onDestroy() {
         LogBuffer.i("TelemetryService", "onDestroy — explicitStop=" + explicitStopRequested);
         running.set(false);
+        // Drop the foreground state FIRST: Android 14+/16 crashes the process with
+        // ForegroundServiceDidNotStopInTimeException if a typed FGS is still
+        // foreground when the stop deadline passes, and the shutdown work below
+        // (log flush, value save, worker stop) can run long.
+        try {
+            stopForeground(STOP_FOREGROUND_REMOVE);
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "onDestroy stopForeground failed: "
+                    + e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
         LogBuffer.flush();
         mainHandler.removeCallbacks(autoLogDumpRunnable);
         stopLocationUpdates();
