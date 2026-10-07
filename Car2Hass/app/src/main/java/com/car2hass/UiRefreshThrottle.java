@@ -33,4 +33,14 @@ public final class UiRefreshThrottle {
         scheduled = false;
         nextAllowedMs = nowMs + intervalMs;
     }
+
+    /**
+     * Clears the pending flag. Use when the host (Activity) resumes so a refresh
+     * that was scheduled but never ran (its Runnable removed on the previous
+     * instance) cannot leave the throttle stuck returning -1 forever.
+     */
+    public synchronized void reset() {
+        scheduled = false;
+        nextAllowedMs = 0L;
+    }
 }

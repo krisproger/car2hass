@@ -279,6 +279,15 @@ public class TelemetryService extends Service {
                     new com.car2hass.vehicle.ChannelWorkerFactory(this, valueStore,
                             new ArrayList<>(knownItems)));
             workerRegistry.sync(enabledChannelIds());
+            // OBD disabled: no worker runs to clear the runtime state, so the
+            // diagnostics line would keep a stale status/error from a past session.
+            if (!AppConfig.isObdEnabled(this)) {
+                AppConfig.setObdStatus(this, "disconnected");
+                AppConfig.setObdLastError(this, "");
+                AppConfig.setObdPhase(this, "");
+                AppConfig.setObdBackoffMs(this, 0);
+                AppConfig.setObdErrorCount(this, 0);
+            }
             // Baseline GPS: ensure telemetry carries a location even before the
             // first live fix (Car Scanner-style "always have a position").
             try {

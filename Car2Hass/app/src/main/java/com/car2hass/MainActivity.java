@@ -236,6 +236,7 @@ public class MainActivity extends BaseLocalizedActivity {
                 renderDashboardFromStore();
                 updateLocationText();
                 LogBuffer.i("Main", getString(R.string.service_bound));
+                LogBuffer.i("DashDiag", "onServiceConnected tiles=" + dashboardTiles.size());
             } catch (Exception e) {
                 LogBuffer.e("Main", "onServiceConnected failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
             }
@@ -1031,11 +1032,24 @@ public class MainActivity extends BaseLocalizedActivity {
     protected void onStart() {
         super.onStart();
         LogBuffer.d("Main", "onStart");
+        uiAlive = true;
         if (!serviceBound) {
             bindTelemetryService();
         }
         // Attach to the live store even before the binding callback arrives.
         ensureStoreSubscription();
+        // Returning to the activity: a refresh scheduled on a previous instance
+        // could have left the throttle stuck (its Runnable was removed), so reset
+        // it, force an immediate repaint from the store, and re-arm the safety
+        // ticker. Without this the dashboard could stay blank after home→return.
+        uiRefreshThrottle.reset();
+        renderTelemetryTab();
+        renderDashboardFromStore();
+        handler.removeCallbacks(telemetryFallbackTicker);
+        handler.postDelayed(telemetryFallbackTicker, TELEMETRY_FALLBACK_TICK_MS);
+        LogBuffer.i("DashDiag", "onStart store="
+                + (currentValueStore() == null ? "null" : "ok")
+                + " tiles=" + dashboardTiles.size() + " bound=" + serviceBound);
         // Car Scanner-style: with OBD enabled and an adapter configured, try to
         // (re)connect right away so the user sees the live status on launch.
         if (AppConfig.isObdEnabled(this)
@@ -1050,6 +1064,7 @@ public class MainActivity extends BaseLocalizedActivity {
         super.onResume();
         instance = this;
         LogBuffer.d("Main", "onResume");
+        LogBuffer.i("DashDiag", "onResume bound=" + serviceBound + " uiAlive=" + uiAlive);
         ensureStoreSubscription();
         SensorCommandRegistry.getInstance(this).checkForUpdates();
         DashboardPresetRegistry.getInstance(this).checkForUpdates();
@@ -1081,6 +1096,7 @@ public class MainActivity extends BaseLocalizedActivity {
     protected void onStop() {
         super.onStop();
         LogBuffer.d("Main", "onStop");
+        LogBuffer.i("DashDiag", "onStop bound=" + serviceBound);
         if (serviceBound) {
             try {
                 telemetryService.setCallback(null);
@@ -3481,7 +3497,10 @@ public class MainActivity extends BaseLocalizedActivity {
 
     /** Coalesces ValueStore changes into at most one repaint per throttle window. */
     private void scheduleUiRefresh() {
-        if (!uiAlive) return;
+        if (!uiAlive) {
+            LogBuffer.i("DashDiag", "scheduleUiRefresh skipped: !uiAlive");
+            return;
+        }
         long delay = uiRefreshThrottle.schedule(android.os.SystemClock.uptimeMillis());
         if (delay < 0) return;
         if (delay == 0) handler.post(uiRefreshRunnable);
