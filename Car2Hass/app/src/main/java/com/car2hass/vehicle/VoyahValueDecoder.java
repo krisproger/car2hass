@@ -83,9 +83,42 @@ public final class VoyahValueDecoder {
         return portCap(raw, true);
     }
 
-    /** CHRG_PORT_CAP_STS uses the regular 0 = closed / 1 = open convention. */
+    /**
+     * CHRG_PORT_CAP_STS. A raw dump (2026-10-07) with the charge port physically
+     * closed reported 1, i.e. the same inverted convention as the fuel flap.
+     */
     static String chargePortCap(String raw) {
-        return portCap(raw, false);
+        return portCap(raw, true);
+    }
+
+    /** Temperature keys where a negative value is physically meaningful. */
+    private static boolean isTemperatureKey(String key) {
+        return "outside_temp".equals(key) || "cabin_temp".equals(key) || "ambient_temp".equals(key);
+    }
+
+    /**
+     * Whether a raw Voyah reading is the platform's "unknown" sentinel rather
+     * than a real value, so the key is skipped (or the next read source is
+     * tried) instead of being published as -1.
+     *
+     * <p>From the demo/firmware sources the sentinels are {@code Integer.MIN_VALUE}
+     * and {@code -9999} (ints), {@code NaN}/{@code Float.MIN_VALUE} (floats); a
+     * raw dump additionally showed {@code -1} for every unavailable state and
+     * {@code 2550} (= 255 × 10) for "no charge-time estimate". {@code -1} is a
+     * valid temperature, so temperature keys keep negatives.
+     */
+    public static boolean isUnavailable(String key, String raw) {
+        if (raw == null) return true;
+        String s = raw.trim();
+        if (s.isEmpty()) return true;
+        Double v = parseDouble(s);
+        if (v == null) return false;
+        if (v.isNaN() || v.isInfinite()) return true;
+        if (Math.abs(v) >= 2.0e8) return true;
+        if (v == -9999.0) return true;
+        if ("battery_remaining_charge_time".equals(key) && v == 2550.0) return true;
+        if (isTemperatureKey(key)) return false;
+        return v == -1.0;
     }
 
     private static String portCap(String raw, boolean inverted) {

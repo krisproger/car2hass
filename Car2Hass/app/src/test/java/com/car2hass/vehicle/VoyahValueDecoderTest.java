@@ -44,9 +44,25 @@ public class VoyahValueDecoderTest {
         // Fuel flap: Voyah reports 1 while (physically) closed -> inverted.
         eq(VoyahValueDecoder.decode("fuel_charge_flap", "0"), "open", "fuel flap open");
         eq(VoyahValueDecoder.decode("fuel_charge_flap", "1"), "closed", "fuel flap closed");
-        // Charge port: regular convention, matching the enum labels.
-        eq(VoyahValueDecoder.decode("charge_port_flap", "0"), "closed", "charge flap closed");
-        eq(VoyahValueDecoder.decode("charge_port_flap", "1"), "open", "charge flap open");
+        // Charge port: same inverted convention as the fuel flap (raw 1 while closed).
+        eq(VoyahValueDecoder.decode("charge_port_flap", "0"), "open", "charge flap open");
+        eq(VoyahValueDecoder.decode("charge_port_flap", "1"), "closed", "charge flap closed");
+
+        // Unavailable/sentinel detection (raw dump 2026-10-07).
+        check(VoyahValueDecoder.isUnavailable("gear", "-1"), "gear -1 unavailable");
+        check(VoyahValueDecoder.isUnavailable("high_beam", "-1"), "high beam -1 unavailable");
+        check(!VoyahValueDecoder.isUnavailable("outside_temp", "-1"), "temp -1 is valid");
+        check(VoyahValueDecoder.isUnavailable("engine_coolant_temp", "-9999"), "coolant -9999");
+        check(VoyahValueDecoder.isUnavailable("speed", "-2147483648"), "MIN_VALUE");
+        check(VoyahValueDecoder.isUnavailable("outside_temp", "-214748364.8"), "huge temp sentinel");
+        check(VoyahValueDecoder.isUnavailable("battery_remaining_charge_time", "2550"), "charge time 2550");
+        check(!VoyahValueDecoder.isUnavailable("battery_remaining_charge_time", "60"), "charge time 60");
+        check(!VoyahValueDecoder.isUnavailable("soc", "47"), "soc valid");
+        check(!VoyahValueDecoder.isUnavailable("left_turn", "1"), "turn enum valid");
+        check(!VoyahValueDecoder.isUnavailable("left_turn", "on"), "non-numeric valid");
+        check(VoyahValueDecoder.isUnavailable("soc", "NaN"), "NaN unavailable");
+        check(VoyahValueDecoder.isUnavailable("soc", null), "null unavailable");
+        check(VoyahValueDecoder.isUnavailable("soc", ""), "empty unavailable");
 
         // Unknown keys and null/blank inputs are untouched.
         eq(VoyahValueDecoder.decode("speed", "42"), "42", "unrelated key passthrough");

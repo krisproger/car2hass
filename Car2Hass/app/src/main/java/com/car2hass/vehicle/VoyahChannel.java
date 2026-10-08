@@ -9,9 +9,11 @@ import com.car2hass.LogBuffer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Voyah read-only telemetry channel. On Voyah head units the vendor CAN bus
@@ -190,6 +192,14 @@ public class VoyahChannel implements DataChannel {
         m.put("powertrain_mode", new int[]{43, RAW_INT}); // getHevSysMode
         VOYAH_RAW_TX = java.util.Collections.unmodifiableMap(m);
     }
+
+    /**
+     * Keys whose raw getter transaction is tried before the VehicleState
+     * constant. The demo documents {@code getVehicleSpeed} (tx 26) in km/h while
+     * the 2026-10-07 raw dump showed {@code GW_ESC_VEHSPD} unavailable (-1), so
+     * tx 26 is authoritative for speed and the constant is only a fallback.
+     */
+    private static final Set<String> TX_FIRST_KEYS = Collections.singleton("speed");
 
     private volatile Object cachedIface;
     private volatile Class<?> cachedIfaceClass;
@@ -481,34 +491,48 @@ public class VoyahChannel implements DataChannel {
     private String readRaw(String key) {
         String value = null;
         Object iface = cachedIface;
+        if (TX_FIRST_KEYS.contains(key)) {
+            value = readRawTx(key);
+            if (value != null) return value;
+        }
         if (iface != null) {
             String param = VOYAH_PARAMS.get(key);
             if (param != null) {
                 Object raw = queryState(iface, cachedIfaceClass, param);
-                if (raw != null) value = stringify(raw);
+                if (raw != null) value = accept(key, stringify(raw));
             }
             if (value == null) {
                 String method = VOYAH_METHODS.get(key);
-                if (method != null) value = invokeGetter(cachedIfaceClass, iface, method);
+                if (method != null) value = accept(key, invokeGetter(cachedIfaceClass, iface, method));
             }
             if (value == null) {
                 String ac = VOYAH_AC_METHODS.get(key);
-                if (ac != null) value = readAirConditionValue(cachedIfaceClass, iface, ac);
+                if (ac != null) value = accept(key, readAirConditionValue(cachedIfaceClass, iface, ac));
             }
         }
-        if (value == null) {
-            int[] tx = VOYAH_RAW_TX.get(key);
-            if (tx != null) {
-                if (tx[1] == RAW_FLOAT) {
-                    Float f = transactFloat(tx[0]);
-                    value = f == null ? null : String.valueOf(Math.round(f));
-                } else {
-                    Integer i = transactInt(tx[0]);
-                    value = i == null ? null : String.valueOf(i);
-                }
-            }
-        }
+        if (value == null) value = readRawTx(key);
         return value;
+    }
+
+    /** A raw getter transaction value, or null when the key has none / it is a sentinel. */
+    private String readRawTx(String key) {
+        int[] tx = VOYAH_RAW_TX.get(key);
+        if (tx == null) return null;
+        String v;
+        if (tx[1] == RAW_FLOAT) {
+            Float f = transactFloat(tx[0]);
+            v = f == null ? null : String.valueOf(Math.round(f));
+        } else {
+            Integer i = transactInt(tx[0]);
+            v = i == null ? null : String.valueOf(i);
+        }
+        return accept(key, v);
+    }
+
+    /** Drops the Voyah "unknown" sentinel (-1 / MIN_VALUE / -9999 / huge / 2550) for a key. */
+    private static String accept(String key, String raw) {
+        if (raw == null) return null;
+        return VoyahValueDecoder.isUnavailable(key, raw) ? null : raw;
     }
 
     /**
