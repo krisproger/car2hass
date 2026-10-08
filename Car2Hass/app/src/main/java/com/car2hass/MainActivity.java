@@ -4951,12 +4951,12 @@ public class MainActivity extends BaseLocalizedActivity {
     private void downloadUpdate(UpdateChecker.UpdateInfo info) {
         // Reuse an already-landed copy (e.g. install failed earlier) before
         // downloading again.
-        File existing = UpdateDownloader.findDownloadedFile(this, -1, info.version);
+        File existing = UpdateDownloader.findDownloadedFile(this, -1, info.version, info.sha256);
         LogBuffer.i("Main", "update: version=" + info.version + " size=" + info.size
                 + " sha256=" + info.sha256 + " existing=" + existing
                 + (existing != null ? " length=" + existing.length() : ""));
         if (existing != null) {
-            if (UpdateDownloader.installFile(this, existing)) {
+            if (UpdateDownloader.installFile(this, existing, info.sha256)) {
                 LogBuffer.i("Main", "update: installing already-downloaded " + existing);
                 return;
             }
@@ -4983,7 +4983,7 @@ public class MainActivity extends BaseLocalizedActivity {
                 LogBuffer.i("Main", "update: download returned " + apk + " length="
                         + (apk == null ? -1 : apk.length()));
                 runOnUiThread(progress::dismiss);
-                if (!UpdateDownloader.installFile(this, apk)) {
+                if (!UpdateDownloader.installFile(this, apk, info.sha256)) {
                     LogBuffer.e("Main", "update: install refused/failed for " + apk
                             + " — showing update_install_failed toast");
                     runOnUiThread(() -> Toast.makeText(this,

@@ -43,6 +43,9 @@ public final class UpdateDownloader {
         if (!UpdateChecker.isNewer(info.version, installed)) {
             LogBuffer.i("UpdateDownloader", "check: up to date installed=" + installed
                     + " remote=" + info.version);
+            // The previously downloaded update has been installed — remove the
+            // leftover APK so a re-check cannot offer a stale/broken file again.
+            cleanupDownloaded(ctx);
             return null;
         }
         LogBuffer.i("UpdateDownloader", "check: update available installed=" + installed
@@ -113,7 +116,7 @@ public final class UpdateDownloader {
      * must not be trusted. Prefers the DownloadManager's reported path, then
      * scans Downloads for "Car2Hass-<version>*" with any extension.
      */
-    public static File findDownloadedFile(Context ctx, long id, String version) {
+    public static File findDownloadedFile(Context ctx, long id, String version, String expectedSha256) {
         if (ctx != null && id >= 0) {
             try {
                 DownloadManager dm = (DownloadManager) ctx.getSystemService(Context.DOWNLOAD_SERVICE);
@@ -126,14 +129,14 @@ public final class UpdateDownloader {
                                     c.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_FILENAME));
                             if (localFile != null) {
                                 File f = new File(localFile);
-                                if (f.exists() && f.length() > 0) return f;
+                                if (verifiedOrDrop(f, expectedSha256)) return f;
                             }
                             String localUri = c.getString(
                                     c.getColumnIndexOrThrow(DownloadManager.COLUMN_LOCAL_URI));
                             if (localUri != null) {
                                 try {
                                     File f = new File(Uri.parse(localUri).getPath());
-                                    if (f.exists() && f.length() > 0) return f;
+                                    if (verifiedOrDrop(f, expectedSha256)) return f;
                                 } catch (Exception ignored) {
                                 }
                             }
@@ -149,13 +152,25 @@ public final class UpdateDownloader {
         // Public Downloads may not hold the file at all (Voyah head units save
         // elsewhere); also scan the app-private dirs used by download().
         File pub = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-        best = better(best, bestMatch(pub, version));
+        best = better(best, bestMatch(pub, version, expectedSha256));
         if (ctx != null) {
             File priv = ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
-            if (priv != null) best = better(best, bestMatch(priv, version));
-            best = better(best, bestMatch(ctx.getCacheDir(), version));
+            if (priv != null) best = better(best, bestMatch(priv, version, expectedSha256));
+            best = better(best, bestMatch(ctx.getCacheDir(), version, expectedSha256));
         }
         return best;
+    }
+
+    /**
+     * True when the file exists and its SHA-256 matches (when known). A
+     * mismatching leftover is deleted so a re-check cannot offer it again.
+     */
+    private static boolean verifiedOrDrop(File f, String expectedSha256) {
+        if (f == null || !f.exists() || f.length() <= 0) return false;
+        if (verifySha256(f, expectedSha256)) return true;
+        LogBuffer.w("UpdateDownloader", "dropping downloaded file with bad SHA-256: " + f);
+        f.delete();
+        return false;
     }
 
     /** Largest valid candidate: name contains the version or the app prefix, any
@@ -164,7 +179,8 @@ public final class UpdateDownloader {
      *  When a specific version is requested, only files carrying that version in
      *  their name qualify — a leftover "Car2Hass-<old>.apk" from a previous
      *  update must never be picked up and installed over the requested one. */
-    private static File bestMatch(File dir, String version) {
+    private static File bestMatch(File dir, String version, String expectedSha256) {
+        if (dir == null) return null;
         File[] files = dir.listFiles((d, name) -> {
             String lower = name.toLowerCase(Locale.ROOT);
             if (version != null && !version.isEmpty()) {
@@ -175,9 +191,9 @@ public final class UpdateDownloader {
         File best = null;
         if (files != null) {
             for (File f : files) {
-                if (f.isFile() && isValidApk(f) && (best == null || f.length() > best.length())) {
-                    best = f;
-                }
+                if (!f.isFile() || !isValidApk(f)) continue;
+                if (!verifiedOrDrop(f, expectedSha256)) continue;
+                if (best == null || f.length() > best.length()) best = f;
             }
         }
         return best;
@@ -222,10 +238,23 @@ public final class UpdateDownloader {
 
     /** Fires the package installer for an existing file; false on failure. */
     public static boolean installFile(Context ctx, File file) {
-        if (file == null || !isValidApk(file)) {
-            LogBuffer.e("UpdateDownloader", "installFile: not a valid APK, refusing to install file="
+        return installFile(ctx, file, null);
+    }
+
+    /**
+     * Like {@link #installFile(Context, File)} but also verifies the APK's
+     * SHA-256 against {@code expectedSha256} (when known). A file that is a zip
+     * but has a mismatching hash is a corrupt download and is deleted instead of
+     * being handed to the installer ("invalid package").
+     */
+    public static boolean installFile(Context ctx, File file, String expectedSha256) {
+        if (file == null || !isValidApk(file) || !verifySha256(file, expectedSha256)) {
+            LogBuffer.e("UpdateDownloader", "installFile: not a valid/verified APK, refusing file="
                     + file + " length=" + (file == null ? -1 : file.length())
                     + " head=" + headHex(file));
+            if (file != null && file.exists() && expectedSha256 != null && !expectedSha256.isEmpty()) {
+                file.delete();
+            }
             return false;
         }
         try {
@@ -268,15 +297,16 @@ public final class UpdateDownloader {
                 + " url=" + info.apkUrl + " expectedSize=" + info.size
                 + " expectedSha256=" + info.sha256 + " dest=" + target);
         if (target.exists()) {
-            // Reuse a complete download; drop a corrupt/stale leftover so it
-            // cannot be installed ("broken APK") and re-download it below.
-            if (isValidApk(target) && target.length() > 0) {
-                LogBuffer.i("UpdateDownloader", "download: reusing existing valid APK "
+            // Reuse only a complete download whose SHA-256 matches the published
+            // one; drop a corrupt/stale leftover so it cannot be installed
+            // ("broken APK") and re-download it below.
+            if (isValidApk(target) && verifySha256(target, info.sha256)) {
+                LogBuffer.i("UpdateDownloader", "download: reusing existing verified APK "
                         + target + " length=" + target.length());
                 return target;
             }
-            LogBuffer.w("UpdateDownloader", "download: deleting leftover " + target
-                    + " length=" + target.length() + " head=" + headHex(target));
+            LogBuffer.w("UpdateDownloader", "download: deleting corrupt/mismatched leftover "
+                    + target + " length=" + target.length() + " head=" + headHex(target));
             target.delete();
         }
         File tmp = new File(dir, target.getName() + ".part");
@@ -358,6 +388,58 @@ public final class UpdateDownloader {
         StringBuilder sb = new StringBuilder(bytes.length * 2);
         for (byte b : bytes) sb.append(String.format(Locale.ROOT, "%02x", b & 0xff));
         return sb.toString();
+    }
+
+    /**
+     * True when the file's SHA-256 matches {@code expected} (case-insensitive).
+     * A null/empty expectation means "cannot verify" → true (never blocks when
+     * the server published no hash). A missing/empty file is always false.
+     */
+    public static boolean verifySha256(File f, String expected) {
+        if (f == null || !f.exists() || f.length() <= 0) return false;
+        if (expected == null || expected.isEmpty()) return true;
+        try (java.io.FileInputStream in = new java.io.FileInputStream(f)) {
+            java.security.MessageDigest md = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = in.read(buf)) > 0) md.update(buf, 0, n);
+            boolean ok = toHex(md.digest()).equalsIgnoreCase(expected);
+            if (!ok) LogBuffer.w("UpdateDownloader", "verifySha256 mismatch file=" + f
+                    + " length=" + f.length() + " expected=" + expected);
+            return ok;
+        } catch (Exception e) {
+            LogBuffer.e("UpdateDownloader", "verifySha256 failed: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Deletes any downloaded update APKs (leftovers from previous updates) once
+     * the update is known to be installed. Scans the public Downloads dir, the
+     * app-private Downloads dir and the cache — the places download()/DM use.
+     */
+    public static void cleanupDownloaded(Context ctx) {
+        java.util.List<File> dirs = new java.util.ArrayList<>();
+        dirs.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS));
+        if (ctx != null) {
+            File priv = ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+            if (priv != null) dirs.add(priv);
+            dirs.add(ctx.getCacheDir());
+        }
+        int deleted = 0;
+        for (File dir : dirs) {
+            if (dir == null) continue;
+            File[] files = dir.listFiles((d, name) ->
+                    name.toLowerCase(Locale.ROOT).startsWith("car2hass-"));
+            if (files == null) continue;
+            for (File f : files) {
+                if (f.isFile() && f.delete()) deleted++;
+            }
+        }
+        if (deleted > 0) {
+            LogBuffer.i("UpdateDownloader", "cleanup: deleted " + deleted
+                    + " downloaded update file(s) after install");
+        }
     }
 
     /** Polls the download status; "done", "failed" or a progress percentage. */
