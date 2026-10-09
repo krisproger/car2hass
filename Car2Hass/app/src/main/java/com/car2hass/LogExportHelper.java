@@ -87,13 +87,16 @@ public class LogExportHelper {
         if (researchPath == null) return base;
         File f = new File(researchPath);
         if (!f.isFile()) return base;
-        try (FileInputStream in = new FileInputStream(f)) {
-            StringBuilder sb = new StringBuilder(new String(base, "UTF-8"));
-            sb.append("\n--- Research Report ---\n");
+        // Append bytes directly instead of round-tripping the whole log through a
+        // String (which doubled the memory footprint of a multi-MB log).
+        try (FileInputStream in = new FileInputStream(f);
+             java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream(base.length + 65536)) {
+            out.write(base);
+            out.write("\n--- Research Report ---\n".getBytes(StandardCharsets.UTF_8));
             byte[] buf = new byte[8192];
             int n;
-            while ((n = in.read(buf)) > 0) sb.append(new String(buf, 0, n, "UTF-8"));
-            return sb.toString().getBytes("UTF-8");
+            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
+            return out.toByteArray();
         } catch (Exception e) {
             LogBuffer.w("LogExportHelper", "research attach fail: " + e.getMessage());
             return base;

@@ -91,7 +91,7 @@ public final class CloudSyncClient {
     public static boolean refreshToken(Context ctx) {
         String refresh = AppConfig.getCloudRefreshToken(ctx);
         if (refresh == null || refresh.isEmpty()) {
-            invalidateTokens(ctx);
+            invalidateTokens(ctx, "logged_out");
             return false;
         }
         try {
@@ -107,7 +107,7 @@ public final class CloudSyncClient {
                 }
             }
             LogBuffer.w(TAG, "Token refresh failed: HTTP " + r.code);
-            invalidateTokens(ctx);
+            invalidateTokens(ctx, "session_expired");
             return false;
         } catch (Exception e) {
             LogBuffer.e(TAG, "refreshToken: " + e.getMessage());
@@ -131,7 +131,7 @@ public final class CloudSyncClient {
                 return true;
             }
             if (r.code == 401) {
-                invalidateTokens(ctx);
+                invalidateTokens(ctx, "session_expired");
             } else {
                 AppConfig.setCloudLastStatus(ctx, "bind_http_" + r.code);
                 LogBuffer.w(TAG, "Car bind failed: HTTP " + r.code);
@@ -326,11 +326,11 @@ public final class CloudSyncClient {
         AppConfig.setCloudTokenExpiryMs(ctx, System.currentTimeMillis() + expiresIn * 1000L);
     }
 
-    private static void invalidateTokens(Context ctx) {
+    private static void invalidateTokens(Context ctx, String status) {
         AppConfig.clearCloudTokens(ctx);
         AppConfig.setCloudSyncEnabled(ctx, false);
-        AppConfig.setCloudLastStatus(ctx, "logged_out");
-        LogBuffer.w(TAG, "Cloud tokens cleared, cloud sync disabled");
+        AppConfig.setCloudLastStatus(ctx, status);
+        LogBuffer.w(TAG, "Cloud tokens cleared (" + status + "), cloud sync disabled");
     }
 
     private static String error(JSONObject o, String fallback) {

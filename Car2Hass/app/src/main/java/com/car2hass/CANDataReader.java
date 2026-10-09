@@ -1331,11 +1331,10 @@ public class CANDataReader {
                 if (trimmed.startsWith("{")) {
                     JSONObject obj = new JSONObject(trimmed);
                     if (obj.has("success") && !obj.optBoolean("success", true)) {
-                        // DiPlus reports failure for the whole batch; log the reason
-                        // (or the raw body when no reason field exists) and return
-                        // empty so the caller can fall back to smaller groups /
-                        // individual getVal.
-                        LogBuffer.w("CANReader", "getDiPars group error: " + extractDiParsErrorReason(obj, trimmed));
+                        // DiPlus reports failure for the whole batch; the caller
+                        // retries with smaller groups / individual getVal, so this
+                        // transient result is logged at debug to avoid flooding.
+                        LogBuffer.d("CANReader", "getDiPars group error: " + extractDiParsErrorReason(obj, trimmed));
                         return values;
                     }
                     if (obj.has("data") && obj.get("data") instanceof org.json.JSONArray) {

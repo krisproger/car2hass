@@ -286,6 +286,7 @@
     <string name="settings_cloud_err_bad_input">Invalid input</string>
     <string name="settings_cloud_err_failed">Login failed: %1$s</string>
     <string name="settings_cloud_status_logged_out">need to sign in</string>
+    <string name="settings_cloud_status_session_expired">Cloud session expired — sign in again</string>
     <string name="settings_cloud_status_car_not_bound">car not bound</string>
     <string name="settings_cloud_status_no_car_name">set a car name</string>
     <string name="settings_cloud_status_sync_error">sync error</string>
@@ -302,6 +303,7 @@
     <string name="update_download">Download and install</string>
     <string name="update_downloading">Downloading: %1$s</string>
     <string name="update_download_failed">Download failed</string>
+    <string name="update_manual_download">Or download the APK manually: %1$s</string>
     <string name="update_support_caption">If you like the app — support the project. Thank you!</string>
     <string name="update_install_failed">Install failed — the APK is in Downloads, open it manually</string>
     <string name="update_check_failed">Update check failed</string>

@@ -24,6 +24,9 @@ public final class VoyahValueDecoder {
                 return fuelPortCap(raw);
             case "charge_port_flap":
                 return chargePortCap(raw);
+            case "left_turn":
+            case "right_turn":
+                return turnSignal(raw);
             case "outside_temp":
             case "cabin_temp":
             case "ambient_temp":
@@ -89,6 +92,19 @@ public final class VoyahValueDecoder {
      */
     static String chargePortCap(String raw) {
         return portCap(raw, true);
+    }
+
+    /**
+     * LEFT_DIRECTION_LIGHT / RIGHT_DIRECTION_LIGHT. Owner feedback + raw dump
+     * (2026-10-08, blink test): idle = 1, active = 2 — inverse of the BYD enum
+     * (0 = off, 1 = on). Emit the shared labels so the display and HA stay right.
+     */
+    static String turnSignal(String raw) {
+        Integer v = parseInt(raw);
+        if (v == null) return raw;
+        if (v == 1) return "off";
+        if (v == 2) return "on";
+        return raw;
     }
 
     /** Temperature keys where a negative value is physically meaningful. */

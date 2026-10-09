@@ -739,7 +739,13 @@ public class TelemetryService extends Service {
                 if (AppConfig.isHassEnabled(this)) {
                     HassClient.flush(this, (success, msg) -> {
                         if (!success) {
-                            LogBuffer.w("TelemetryService", "HA flush failed: " + msg);
+                            // "flush in progress" just means the previous flush is
+                            // still running (normal on a slow link) — not an error.
+                            if ("flush in progress".equals(msg)) {
+                                LogBuffer.d("TelemetryService", "HA flush skipped: previous still running");
+                            } else {
+                                LogBuffer.w("TelemetryService", "HA flush failed: " + msg);
+                            }
                         }
                     });
                 }

@@ -9,8 +9,10 @@ import com.car2hass.LogBuffer;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -405,8 +407,31 @@ public class VoyahChannel implements DataChannel {
     private static volatile boolean acProbed;
 
     /** Full raw dump of every mapped Voyah param/getter, throttled to one per interval. */
-    private static final long RAW_DUMP_INTERVAL_MS = 15_000L;
+    private static final long RAW_DUMP_INTERVAL_MS = 60_000L;
     private volatile long lastRawDumpMs;
+
+    /**
+     * Keys logged on change (not on a timer), so brief states the owner triggers
+     * (turn signals, hazard, charge port, charging) are captured even though a
+     * periodic dump would miss them. Continuously-varying keys (speed, soc) are
+     * left out to avoid flooding the log.
+     */
+    private static final Set<String> CHANGE_WATCH = new HashSet<>(Arrays.asList(
+            "left_turn", "right_turn", "hazard",
+            "charge_port_flap", "fuel_charge_flap",
+            "battery_remaining_charge_time",
+            "ac_charge_state", "dc_charge_state",
+            "ac_charge_connected", "dc_charge_connected", "charge_gun_state",
+            "gear", "powertrain_mode"));
+    private final Map<String, String> lastWatched = new HashMap<>();
+
+    /** Off-hot-path executor so the periodic full dump never stalls the read cycle. */
+    private static final java.util.concurrent.ExecutorService DUMP_EXEC =
+            java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+                Thread t = new Thread(r, "voyah-dump");
+                t.setDaemon(true);
+                return t;
+            });
 
     /** Reads every known key once; returns how many produced a value. */
     private int collect(List<CANDataItem> knownItems, List<CANDataItem> out) {
@@ -417,6 +442,7 @@ public class VoyahChannel implements DataChannel {
             if (item == null || item.key == null) continue;
             String raw = readRaw(item.key);
             if (raw == null) continue;
+            logWatchedChange(item.key, raw);
             String value = VoyahValueDecoder.decode(item.key, raw);
             item.value = value;
             item.lastUpdate = now;
@@ -428,20 +454,35 @@ public class VoyahChannel implements DataChannel {
         }
         if (diag.length() > 0) LogBuffer.d("VoyahChannel", "raw " + diag.toString().trim());
         if (cachedIface != null) logAirConditionProbe();
-        maybeRawDump();
+        scheduleFullRawDump();
         return count;
+    }
+
+    /** Logs a watched key's raw value only when it changes from the previous cycle. */
+    private void logWatchedChange(String key, String raw) {
+        if (!CHANGE_WATCH.contains(key)) return;
+        String prev = lastWatched.get(key);
+        if (raw.equals(prev)) return;
+        lastWatched.put(key, raw);
+        LogBuffer.i("VoyahDump", (prev == null ? "init " : "CHANGE ") + key
+                + (prev == null ? " = " + raw : " " + prev + " -> " + raw));
+    }
+
+    /** Runs the periodic full dump on a background thread when its interval elapsed. */
+    private void scheduleFullRawDump() {
+        long now = System.currentTimeMillis();
+        if (now - lastRawDumpMs < RAW_DUMP_INTERVAL_MS) return;
+        lastRawDumpMs = now;
+        DUMP_EXEC.execute(this::fullRawDump);
     }
 
     /**
      * Dumps the RAW (pre-decode) value of every mapped Voyah param/getter to the
-     * log (tag {@code VoyahDump}), throttled. Used to calibrate scales/sentinels
-     * and enum encodings against the dashboard (a broken value on the site/app
-     * still needs the raw reading to be fixed).
+     * log (tag {@code VoyahDump}). Runs off the read thread; throttled by the
+     * caller. Used to calibrate scales/sentinels and enum encodings against the
+     * dashboard (a broken value on the site/app still needs the raw reading).
      */
-    private void maybeRawDump() {
-        long now = System.currentTimeMillis();
-        if (now - lastRawDumpMs < RAW_DUMP_INTERVAL_MS) return;
-        lastRawDumpMs = now;
+    private void fullRawDump() {
         Object iface = cachedIface;
         LogBuffer.i("VoyahDump", "begin path=" + binderPath + " iface=" + (iface != null));
         for (Map.Entry<String, String> e : VOYAH_PARAMS.entrySet()) {

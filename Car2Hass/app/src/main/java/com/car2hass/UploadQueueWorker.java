@@ -73,10 +73,11 @@ public final class UploadQueueWorker {
         try {
             if (UploadQueue.KIND_LOG.equals(e.kind)) {
                 // Full app journal (LogBuffer + logcat) with the research report
-                // appended when available; delivered in 2 MiB chunks.
+                // appended when available; delivered in 500 KiB chunks. Bytes are
+                // passed straight to the uploader to avoid a second full-size
+                // String copy (OOM risk on head units with multi-MB logs).
                 byte[] bytes = LogExportHelper.buildLogBytes(ctx, e.path);
-                return LogUploader.upload(ctx, e.message,
-                        new String(bytes, java.nio.charset.StandardCharsets.UTF_8), e.id);
+                return LogUploader.uploadBytes(ctx, e.message, bytes, e.id);
             }
             ProbeUploader.Result r = ProbeUploader.uploadResult(ctx, e.path);
             if (r.ok) return true;

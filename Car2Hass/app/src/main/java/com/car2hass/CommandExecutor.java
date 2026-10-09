@@ -117,6 +117,13 @@ public class CommandExecutor {
         if (preferredIfaces.isEmpty()) {
             preferredIfaces.add(lastNativeWriteWasOk ? CommandWriter.IFACE_NATIVE : CommandWriter.IFACE_DIPLUS);
         }
+        // Native path demoted after repeated rejections: try it last (as a
+        // last-resort fallback) so DiPlus is attempted first.
+        if (!NativeCommandWriter.isAvailable()
+                && preferredIfaces.contains(CommandWriter.IFACE_NATIVE)) {
+            preferredIfaces.remove(CommandWriter.IFACE_NATIVE);
+            preferredIfaces.add(CommandWriter.IFACE_NATIVE);
+        }
 
         CommandWriter writer = new CommandWriter(
             new NativeCommandWriter(

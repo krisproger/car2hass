@@ -971,11 +971,12 @@ public class MainActivity extends BaseLocalizedActivity {
             }
         }
         // Fallback (API 24-28 or MediaStore failure): share as truncated text.
-        String text = new String(logBytes);
-        if (text.length() > MAX_SHARE_TEXT_LENGTH) {
-            text = getString(R.string.log_share_truncated)
-                    + text.substring(text.length() - MAX_SHARE_TEXT_LENGTH);
-        }
+        // Decode only the tail bytes so a multi-MB log is never materialised as
+        // one giant String (OOM risk on head units).
+        int start = Math.max(0, logBytes.length - MAX_SHARE_TEXT_LENGTH);
+        String tail = new String(logBytes, start, logBytes.length - start,
+                java.nio.charset.StandardCharsets.UTF_8);
+        String text = start > 0 ? getString(R.string.log_share_truncated) + tail : tail;
         Intent share = new Intent(Intent.ACTION_SEND);
         share.setType("text/plain");
         share.putExtra(Intent.EXTRA_TEXT, text);
@@ -1077,6 +1078,7 @@ public class MainActivity extends BaseLocalizedActivity {
         if (selectedSettingsSection == 3) {
             renderGeofences();
         }
+        maybeNotifyCloudSessionExpired();
         // Retry queued uploads in the background; ask the user only when the
         // queue is explicitly flushed from the log-send dialog.
         new Thread(() -> {
@@ -1086,6 +1088,17 @@ public class MainActivity extends BaseLocalizedActivity {
                 LogBuffer.d("Main", "background queue flush: " + e.getMessage());
             }
         }, "queue-flush").start();
+    }
+
+    private boolean cloudExpiryNotified;
+
+    /** One-time heads-up that the cloud session expired and needs a re-login. */
+    private void maybeNotifyCloudSessionExpired() {
+        if (cloudExpiryNotified) return;
+        if ("session_expired".equals(AppConfig.getCloudLastStatus(this))) {
+            cloudExpiryNotified = true;
+            Toast.makeText(this, R.string.settings_cloud_status_session_expired, Toast.LENGTH_LONG).show();
+        }
     }
 
     public static TelemetryService getTelemetryService() {
@@ -2985,6 +2998,7 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         switch (status) {
             case "logged_out": return getString(R.string.settings_cloud_status_logged_out);
+            case "session_expired": return getString(R.string.settings_cloud_status_session_expired);
             case "car_not_bound": return getString(R.string.settings_cloud_status_car_not_bound);
             case "no_car_name": return getString(R.string.settings_cloud_status_no_car_name);
             default: return status;
@@ -3008,9 +3022,11 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         tvCloudStatus.setText(sb.toString());
         tvCloudStatus.setBackgroundResource(0);
-        tvCloudStatus.setTextColor(loggedIn
-                ? getResources().getColor(R.color.accentGreen)
-                : getResources().getColor(R.color.textTertiary));
+        boolean expired = "session_expired".equals(status);
+        tvCloudStatus.setTextColor(expired
+                ? getResources().getColor(R.color.accentRed)
+                : (loggedIn ? getResources().getColor(R.color.accentGreen)
+                            : getResources().getColor(R.color.textTertiary)));
         int authVis = loggedIn ? View.GONE : View.VISIBLE;
         editCloudEmail.setVisibility(authVis);
         editCloudCode.setVisibility(authVis);
@@ -4889,7 +4905,18 @@ public class MainActivity extends BaseLocalizedActivity {
                     tvNotes.setText(notes.isEmpty() ? getString(R.string.whatsnew_none) : notes);
                     tvNotes.setTextSize(15);
                     tvNotes.setTextColor(getResources().getColor(R.color.textPrimary));
-                    content.addView(tvNotes);
+        content.addView(tvNotes);
+
+        final String manualUrl = "https://mytechnic.ru/cartelemetry/download.php?file=app&channel="
+                + AppConfig.getUpdateChannel(this);
+        TextView tvManual = new TextView(this);
+        tvManual.setText(getString(R.string.update_manual_download, manualUrl));
+        tvManual.setTextSize(13);
+        tvManual.setTextColor(getResources().getColor(R.color.secondary));
+        tvManual.setPaintFlags(tvManual.getPaintFlags() | android.graphics.Paint.UNDERLINE_TEXT_FLAG);
+        tvManual.setPadding(0, dp(10), 0, 0);
+        tvManual.setOnClickListener(v -> openUrl(manualUrl));
+        content.addView(tvManual);
                     showScrollDialog(R.string.whatsnew_title, content,
                             android.R.string.ok, null, 0, null);
                 });

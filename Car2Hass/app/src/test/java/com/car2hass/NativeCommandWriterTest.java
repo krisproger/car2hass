@@ -16,8 +16,34 @@ public class NativeCommandWriterTest {
         testNoParcelData();
         testNullOutputUnavailable();
         testEmptyOutputUnavailable();
+        testCircuitBreaker();
 
         System.out.println("All NativeCommandWriter tests passed.");
+    }
+
+    private static void testCircuitBreaker() {
+        NativeCommandWriter.resetBreaker();
+        if (!NativeCommandWriter.isAvailable()) {
+            throw new AssertionError("breaker must start available");
+        }
+        run("Result: Parcel(00000000 00000000)\n", 1000, 1, 1);
+        run("Result: Parcel(00000000 00000000)\n", 1000, 1, 1);
+        if (!NativeCommandWriter.isAvailable()) {
+            throw new AssertionError("breaker must not trip before the threshold");
+        }
+        run("Result: Parcel(00000000 00000000)\n", 1000, 1, 1);
+        if (NativeCommandWriter.isAvailable()) {
+            throw new AssertionError("breaker must trip after 3 consecutive rejects");
+        }
+        // A success clears the streak, but the cooldown stays until it expires.
+        run("Result: Parcel(00000000 00000001)\n", 1000, 1, 1);
+        if (NativeCommandWriter.isAvailable()) {
+            throw new AssertionError("cooldown must persist after a success");
+        }
+        NativeCommandWriter.resetBreaker();
+        if (!NativeCommandWriter.isAvailable()) {
+            throw new AssertionError("reset must clear the demotion");
+        }
     }
 
     private static void testBuildCommand() {

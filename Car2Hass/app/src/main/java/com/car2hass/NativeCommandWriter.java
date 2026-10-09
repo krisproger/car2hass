@@ -28,6 +28,42 @@ public class NativeCommandWriter {
     /** Successful setInt status. */
     public static final int STATUS_OK = 1;
 
+    /**
+     * Circuit breaker: after this many consecutive non-OK writes (e.g. the
+     * autoservice {@code status -999} seen on some firmwares) the native path is
+     * demoted for a cooldown, so every command stops paying the multi-second ADB
+     * attempt before the DiPlus fallback that actually works.
+     */
+    private static final int FAIL_THRESHOLD = 3;
+    private static final long DOWN_COOLDOWN_MS = 10 * 60 * 1000L;
+    private static volatile int failStreak = 0;
+    private static volatile long downUntilMs = 0;
+
+    /** True while the native write path is demoted after repeated rejections. */
+    public static boolean isAvailable() {
+        return System.currentTimeMillis() >= downUntilMs;
+    }
+
+    /** Test hook: clears the demotion state (not used in production). */
+    static void resetBreaker() {
+        failStreak = 0;
+        downUntilMs = 0;
+    }
+
+    private static void record(boolean ok) {
+        if (ok) {
+            failStreak = 0;
+            return;
+        }
+        failStreak++;
+        if (failStreak >= FAIL_THRESHOLD && System.currentTimeMillis() >= downUntilMs) {
+            downUntilMs = System.currentTimeMillis() + DOWN_COOLDOWN_MS;
+            failStreak = 0;
+            LogBuffer.w(TAG, "native writes repeatedly rejected (status != 1) — demoting to DiPlus for "
+                    + (DOWN_COOLDOWN_MS / 60000) + " min");
+        }
+    }
+
     public static class Result {
         public final boolean success;
         public final int status;
@@ -78,10 +114,12 @@ public class NativeCommandWriter {
 
         int status = parseStatus(output);
         if (status == STATUS_OK) {
+            record(true);
             LogBuffer.i(TAG, "write ok dev=" + dev + " fid=" + fid
                     + " value=" + value + " in " + elapsed + " ms");
             return new Result(true, status, null, elapsed);
         }
+        record(false);
         LogBuffer.w(TAG, "write rejected dev=" + dev + " fid=" + fid
                 + " value=" + value + " status=" + status + " raw=" + output.trim());
         return new Result(false, status, "autoservice setInt rejected (status " + status + ")", elapsed);

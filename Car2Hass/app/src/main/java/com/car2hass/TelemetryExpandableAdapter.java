@@ -24,14 +24,17 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
     }
 
     private final Context context;
+    private final LayoutInflater inflater;
     private final List<Group> groups = new ArrayList<>();
     private final java.util.Set<String> expandedCategories = new java.util.HashSet<>();
+    private final java.util.Map<String, String> categoryLabelCache = new java.util.HashMap<>();
     private Consumer<String> onHeaderClick;
     private Consumer<String> onCategoryClick;
     private Consumer<CANDataItem> onCheckChanged;
 
     public TelemetryExpandableAdapter(Context context) {
         this.context = context;
+        this.inflater = LayoutInflater.from(context);
     }
 
     public void setOnHeaderClick(Consumer<String> listener) { this.onHeaderClick = listener; }
@@ -76,16 +79,22 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
     }
 
     private String categoryLabel(String key) {
+        String cached = categoryLabelCache.get(key);
+        if (cached != null) return cached;
         int res = context.getResources().getIdentifier(
                 "sensor_category_" + key, "string", context.getPackageName());
-        return res != 0 ? context.getString(res) : key;
+        String label = res != 0 ? context.getString(res) : key;
+        categoryLabelCache.put(key, label);
+        return label;
     }
 
     @Override
     public View getGroupView(int groupPosition, boolean isExpanded,
                              View convertView, ViewGroup parent) {
-        View v = LayoutInflater.from(context).inflate(
-                com.car2hass.R.layout.can_data_header, parent, false);
+        View v = convertView;
+        if (v == null) {
+            v = inflater.inflate(com.car2hass.R.layout.can_data_header, parent, false);
+        }
         Group g = groups.get(groupPosition);
         TextView tv = v.findViewById(com.car2hass.R.id.rowName);
         if (tv != null) tv.setText(g.title + (isExpanded ? " ▾" : " ▸"));
@@ -98,15 +107,18 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
         final CANDataItem rowItem = groups.get(groupPosition).items.get(childPosition);
 
         if (rowItem.isHeader) {
-            View hv = LayoutInflater.from(context).inflate(
-                    com.car2hass.R.layout.can_data_header, parent, false);
+            View hv = convertView;
+            if (hv == null) {
+                hv = inflater.inflate(com.car2hass.R.layout.can_data_header, parent, false);
+            }
             TextView ht = hv.findViewById(com.car2hass.R.id.rowName);
             if (ht != null) {
                 ht.setText(categoryLabel(rowItem.groupKey)
                         + (expandedCategories.contains(rowItem.groupKey) ? " ▾" : " ▸"));
             }
+            final String groupKey = rowItem.groupKey;
             hv.setOnClickListener(v -> {
-                if (onCategoryClick != null) onCategoryClick.accept(rowItem.groupKey);
+                if (onCategoryClick != null) onCategoryClick.accept(groupKey);
             });
             return hv;
         }
@@ -114,8 +126,7 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
         View v;
         ViewHolder vh;
         if (convertView == null || !(convertView.getTag() instanceof ViewHolder)) {
-            v = LayoutInflater.from(context).inflate(
-                    com.car2hass.R.layout.can_data_row, parent, false);
+            v = inflater.inflate(com.car2hass.R.layout.can_data_row, parent, false);
             vh = new ViewHolder();
             vh.checkBox = v.findViewById(com.car2hass.R.id.rowCheck);
             vh.idText = v.findViewById(com.car2hass.R.id.rowId);

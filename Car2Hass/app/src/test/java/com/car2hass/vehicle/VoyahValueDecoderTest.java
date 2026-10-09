@@ -48,6 +48,13 @@ public class VoyahValueDecoderTest {
         eq(VoyahValueDecoder.decode("charge_port_flap", "0"), "open", "charge flap open");
         eq(VoyahValueDecoder.decode("charge_port_flap", "1"), "closed", "charge flap closed");
 
+        // Turn signals: Voyah idle=1 (off), active=2 (on) — inverse of the BYD enum.
+        eq(VoyahValueDecoder.decode("left_turn", "1"), "off", "left turn idle");
+        eq(VoyahValueDecoder.decode("left_turn", "2"), "on", "left turn active");
+        eq(VoyahValueDecoder.decode("right_turn", "1"), "off", "right turn idle");
+        eq(VoyahValueDecoder.decode("right_turn", "2"), "on", "right turn active");
+        eq(VoyahValueDecoder.decode("left_turn", "0"), "0", "left turn unknown passthrough");
+
         // Unavailable/sentinel detection (raw dump 2026-10-07).
         check(VoyahValueDecoder.isUnavailable("gear", "-1"), "gear -1 unavailable");
         check(VoyahValueDecoder.isUnavailable("high_beam", "-1"), "high beam -1 unavailable");

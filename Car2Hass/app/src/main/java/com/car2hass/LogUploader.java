@@ -23,9 +23,19 @@ public final class LogUploader {
 
     /** Sends the log in chunks; returns true when every chunk got HTTP 200. */
     public static boolean upload(Context ctx, String message, String logText, String uploadId) {
+        byte[] logBytes = (logText == null ? "" : logText).getBytes(StandardCharsets.UTF_8);
+        return uploadBytes(ctx, message, logBytes, uploadId);
+    }
+
+    /**
+     * Sends the log bytes in 500 KiB chunks without first materialising the whole
+     * log as one String (the previous path built a ~2× larger char[] and could
+     * OOM on head units when sending a multi-MB log). Returns true on all-200.
+     */
+    public static boolean uploadBytes(Context ctx, String message, byte[] logBytes, String uploadId) {
         try {
             String anonId = com.car2hass.vehicle.DeviceAnon.fromContext(ctx);
-            byte[] logBytes = (logText == null ? "" : logText).getBytes(StandardCharsets.UTF_8);
+            if (logBytes == null) logBytes = new byte[0];
             final int MAX_CHUNK = 500 * 1024; // 500 KiB per chunk (server cap 4 MiB)
             int total = Math.max(1, (logBytes.length + MAX_CHUNK - 1) / MAX_CHUNK);
             String chunkId = uploadId == null || uploadId.isEmpty()

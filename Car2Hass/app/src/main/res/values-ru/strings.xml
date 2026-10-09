@@ -278,6 +278,7 @@
     <string name="settings_cloud_err_bad_input">Некорректные данные</string>
     <string name="settings_cloud_err_failed">Ошибка входа: %1$s</string>
     <string name="settings_cloud_status_logged_out">нужно войти</string>
+    <string name="settings_cloud_status_session_expired">Сессия облака истекла — войдите заново</string>
     <string name="settings_cloud_status_car_not_bound">авто не привязано</string>
     <string name="settings_cloud_status_no_car_name">укажите имя авто</string>
     <string name="settings_cloud_status_sync_error">ошибка синхронизации</string>
@@ -295,6 +296,7 @@
     <string name="update_download">Скачать и установить</string>
     <string name="update_downloading">Скачивание: %1$s</string>
     <string name="update_download_failed">Ошибка скачивания</string>
+    <string name="update_manual_download">Или скачайте APK вручную: %1$s</string>
     <string name="update_support_caption">Если вам нравится приложение — Поддержите проект. Спасибо!</string>
     <string name="update_install_failed">Не удалось запустить установку — APK лежит в Загрузках, откройте его вручную</string>
     <string name="update_check_failed">Не удалось проверить обновления</string>
