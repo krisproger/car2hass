@@ -111,6 +111,13 @@ public class AppConfig {
         return prefs(ctx).getString(KEY_HOST, "");
     }
 
+    /** True when host, token and car name are all set (a flush can be attempted). */
+    public static boolean isHassConfigured(Context ctx) {
+        return !getHassHost(ctx).isEmpty()
+                && !getHassToken(ctx).isEmpty()
+                && !getCarName(ctx).isEmpty();
+    }
+
     public static int getHassPort(Context ctx) {
         try {
             return Integer.parseInt(prefs(ctx).getString(KEY_PORT, "8123"));

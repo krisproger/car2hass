@@ -147,7 +147,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private int selectedSettingsSection = 0;
     private final View[] settingsSections = new View[8];
     private Button btnRestartResearch;
-    private ProgressDialog researchProgressDialog;
+
     private String pendingResearchPath = null;
     private final Map<String, TextView> channelStatusViews = new HashMap<>();
 
@@ -3969,22 +3969,14 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         final int researchTotal = researchChannels.size() + researchSensorCount;
 
-        researchProgressDialog = new ProgressDialog(this);
-        researchProgressDialog.setTitle(R.string.settings_vehicle_research);
-        researchProgressDialog.setMessage(getString(R.string.settings_vehicle_research_progress, 0, researchTotal));
-        researchProgressDialog.setProgressStyle(ProgressDialog.STYLE_HORIZONTAL);
-        researchProgressDialog.setMax(researchTotal);
-        researchProgressDialog.setCancelable(false);
-        researchProgressDialog.show();
+        final String researchTitle = getString(R.string.settings_vehicle_research);
+        TaskNotifier.progress(this, researchTitle,
+                getString(R.string.settings_vehicle_research_progress, 0, researchTotal), 0, researchTotal);
 
         new Thread(() -> {
-            VehicleResearch.ProgressListener listener = (done, total, name) -> runOnUiThread(() -> {
-                if (researchProgressDialog != null) {
-                    researchProgressDialog.setProgress(done);
-                    researchProgressDialog.setMessage(
-                            getString(R.string.settings_vehicle_research_progress, done, total));
-                }
-            });
+            VehicleResearch.ProgressListener listener = (done, total, name) -> runOnUiThread(() ->
+                    TaskNotifier.progress(MainActivity.this, researchTitle,
+                            getString(R.string.settings_vehicle_research_progress, done, total), done, total));
             VehicleResearch.ResearchOutcome outcome;
             try {
                 // When the user picked the profile manually the probe result
@@ -4012,10 +4004,8 @@ public class MainActivity extends BaseLocalizedActivity {
             String reportSummary = buildResearchSummary(outcome);
             final String autoProfile = outcome.selectedProfile;
             runOnUiThread(() -> {
-                if (researchProgressDialog != null) {
-                    researchProgressDialog.dismiss();
-                    researchProgressDialog = null;
-                }
+                TaskNotifier.done(MainActivity.this, researchTitle,
+                        getString(R.string.settings_vehicle_research_done));
                 btnRestartResearch.setEnabled(true);
                 if (firstLaunchResearch) {
                     firstLaunchResearch = false;

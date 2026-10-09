@@ -149,6 +149,7 @@
     <string name="settings_vehicle_channels_universal">Каналы: системные свойства + экспериментальные; DiPlus/ADB зондируются для анализа.</string>
     <string name="settings_vehicle_commands_disabled">Управление командами недоступно для выбранного авто.</string>
     <string name="settings_vehicle_research">Исследование каналов</string>
+    <string name="settings_vehicle_research_done">Исследование каналов завершено</string>
     <string name="settings_vehicle_research_progress">Исследование: %1$d/%2$d</string>
     <string name="settings_vehicle_research_profile">Исследование: профиль авто %1$s</string>
     <string name="settings_vehicle_research_channels">Активные каналы: %1$s</string>
@@ -229,6 +230,7 @@
     <string name="settings_sources_status">Состояние источников</string>
     <string name="worker_status_title">Состояние источников</string>
     <string name="worker_status_no_service">Сервис телеметрии не запущен</string>
+    <string name="worker_status_reconnecting">Переподключение к сервису… (показан последний снимок)</string>
     <string name="worker_status_threads">Активных потоков: %1$d</string>
     <string name="worker_status_values">Сигналов в кэше: %1$d</string>
     <string name="worker_status_queue">Очередь загрузки: %1$d</string>

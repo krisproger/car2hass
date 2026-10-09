@@ -102,6 +102,8 @@ public class TelemetryService extends Service {
     private ExecutorService telemetryExecutor;
     private ExecutorService flushExecutor;
     private final AtomicBoolean running = new AtomicBoolean(false);
+    /** Throttle for repeated "HA flush failed" warnings (one per 5 min). */
+    private volatile long lastHassFlushLogMs = 0L;
 
     private List<CANDataItem> knownItems;
     private LocationListener locationListener;
@@ -736,15 +738,20 @@ public class TelemetryService extends Service {
                     break;
                 }
                 if (!running.get()) break;
-                if (AppConfig.isHassEnabled(this)) {
+                if (AppConfig.isHassEnabled(this) && AppConfig.isHassConfigured(this)) {
                     HassClient.flush(this, (success, msg) -> {
                         if (!success) {
-                            // "flush in progress" just means the previous flush is
-                            // still running (normal on a slow link) — not an error.
-                            if ("flush in progress".equals(msg)) {
-                                LogBuffer.d("TelemetryService", "HA flush skipped: previous still running");
+                            // "flush in progress"/"backed off" are normal; repeated
+                            // HTTP failures are throttled to one line per 5 min so a
+                            // misconfigured/unreachable HA cannot flood the log.
+                            if ("flush in progress".equals(msg) || "backed off".equals(msg)) {
+                                LogBuffer.d("TelemetryService", "HA flush skipped: " + msg);
                             } else {
-                                LogBuffer.w("TelemetryService", "HA flush failed: " + msg);
+                                long nowMs = System.currentTimeMillis();
+                                if (nowMs - lastHassFlushLogMs > 300_000L) {
+                                    lastHassFlushLogMs = nowMs;
+                                    LogBuffer.w("TelemetryService", "HA flush failed: " + msg);
+                                }
                             }
                         }
                     });

@@ -978,8 +978,32 @@ public class CANDataReader {
         lastReadSuccessMs = System.currentTimeMillis();
     }
 
+    /** Cached result of the DiPlus package presence check. */
+    private static volatile Boolean diplusInstalled;
+
+    private static boolean isDiplusInstalled(Context ctx) {
+        Boolean cached = diplusInstalled;
+        if (cached != null) return cached;
+        boolean installed;
+        try {
+            ctx.getPackageManager().getPackageInfo("com.van.diplus", 0);
+            installed = true;
+        } catch (Exception e) {
+            installed = false;
+        }
+        diplusInstalled = installed;
+        if (!installed) {
+            LogBuffer.i("CANReader", "DiPlus app not installed — launch attempts disabled");
+        }
+        return installed;
+    }
+
     /** Launches DiPlus asynchronously, single-flight and throttled by the cold-start cooldown. */
     private static void maybeLaunchDiplus(Context context) {
+        // DiPlus (com.van.diplus) only exists on BYD DiLink head units; on other
+        // profiles (e.g. Voyah) attempting to launch it just throws
+        // "Unable to find explicit activity class". Skip when it is not installed.
+        if (context == null || !isDiplusInstalled(context)) return;
         long now = System.currentTimeMillis();
         if (now - lastLaunchAttempt <= com.car2hass.vehicle.DiPlusHealth.launchCooldownMs(now, serviceStartMs)) {
             LogBuffer.d("CANReader", "diplus not responding, launch on cooldown");

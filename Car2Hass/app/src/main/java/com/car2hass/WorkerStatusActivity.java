@@ -10,6 +10,7 @@ import android.widget.TextView;
 import com.car2hass.service.TelemetryService;
 import com.car2hass.vehicle.ChannelWorkerStatus;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /** Read-only diagnostics page: per-channel worker state + global counters. */
@@ -20,6 +21,15 @@ public class WorkerStatusActivity extends BaseLocalizedActivity {
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final Runnable refreshRunnable = this::refresh;
     private LinearLayout container;
+
+    /** Last rendered content signature; skips the rebuild when nothing changed. */
+    private String lastSignature;
+    /** Last good snapshot, kept so a momentary service unbind does not blank the page. */
+    private List<ChannelWorkerStatus> cachedStatuses;
+    private int cachedThreads;
+    private int cachedValues;
+    private int cachedQueue;
+    private boolean haveSnapshot;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,33 +49,83 @@ public class WorkerStatusActivity extends BaseLocalizedActivity {
 
     private void refresh() {
         if (container == null || isFinishing()) return;
-        container.removeAllViews();
 
         TelemetryService svc = MainActivity.getTelemetryService();
-        if (svc == null) {
-            row(getString(R.string.worker_status_no_service), R.color.textSecondary);
-            handler.postDelayed(refreshRunnable, REFRESH_MS);
-            return;
+        boolean live = svc != null;
+        if (live) {
+            cachedThreads = svc.liveWorkerThreadCount();
+            cachedValues = svc.valueStoreSize();
+            cachedQueue = svc.uploadQueueSize();
+            cachedStatuses = svc.channelStatuses();
+            haveSnapshot = true;
         }
 
-        addHeader(getString(R.string.worker_status_title));
-        addRow(getString(R.string.worker_status_threads, svc.liveWorkerThreadCount()));
-        addRow(getString(R.string.worker_status_values, svc.valueStoreSize()));
-        addRow(getString(R.string.worker_status_queue, svc.uploadQueueSize()));
-
-        List<ChannelWorkerStatus> statuses = svc.channelStatuses();
-        for (ChannelWorkerStatus s : statuses) {
-            addHeader(channelLabel(s.channelId()));
-            addRow(statusText(s));
-            if (!s.phase().isEmpty()) {
-                addRow(getString(R.string.worker_status_phase, s.phase()));
+        List<Row> rows = new ArrayList<>();
+        if (!live && !haveSnapshot) {
+            rows.add(new Row(getString(R.string.worker_status_no_service), R.color.textSecondary, 13, false));
+        } else {
+            rows.add(new Row(getString(R.string.worker_status_title), R.color.textPrimary, 16, true));
+            rows.add(new Row(getString(R.string.worker_status_threads, cachedThreads), R.color.textSecondary, 13, false));
+            rows.add(new Row(getString(R.string.worker_status_values, cachedValues), R.color.textSecondary, 13, false));
+            rows.add(new Row(getString(R.string.worker_status_queue, cachedQueue), R.color.textSecondary, 13, false));
+            if (!live) {
+                // Keep the last snapshot on screen instead of blanking it.
+                rows.add(new Row(getString(R.string.worker_status_reconnecting), R.color.accentYellow, 13, false));
             }
-            addRow(getString(R.string.worker_status_cycles, s.cycleCount(), s.errorCount()));
-            addRow(getString(R.string.worker_status_uptime, fmt(s.threadUptimeMs())));
-            addRow(getString(R.string.worker_status_last_cycle, fmt(s.lastCycleAgeMs())));
+            if (cachedStatuses != null) {
+                for (ChannelWorkerStatus s : cachedStatuses) {
+                    rows.add(new Row(channelLabel(s.channelId()), R.color.textPrimary, 16, true));
+                    rows.add(new Row(statusText(s), R.color.textSecondary, 13, false));
+                    if (!s.phase().isEmpty()) {
+                        rows.add(new Row(getString(R.string.worker_status_phase, s.phase()), R.color.textSecondary, 13, false));
+                    }
+                    rows.add(new Row(getString(R.string.worker_status_cycles, s.cycleCount(), s.errorCount()), R.color.textSecondary, 13, false));
+                    rows.add(new Row(getString(R.string.worker_status_uptime, fmt(s.threadUptimeMs())), R.color.textSecondary, 13, false));
+                    rows.add(new Row(getString(R.string.worker_status_last_cycle, fmt(s.lastCycleAgeMs())), R.color.textSecondary, 13, false));
+                }
+            }
         }
-
+        render(rows);
         handler.postDelayed(refreshRunnable, REFRESH_MS);
+    }
+
+    private void render(List<Row> rows) {
+        StringBuilder sig = new StringBuilder();
+        for (Row r : rows) sig.append(r.text).append('\u0001').append(r.colorRes).append('\u0001')
+                .append(r.size).append('\u0001').append(r.bold).append('\u0002');
+        String signature = sig.toString();
+        if (signature.equals(lastSignature)) return;
+        lastSignature = signature;
+
+        container.removeAllViews();
+        for (Row r : rows) {
+            TextView tv = new TextView(this);
+            tv.setText(r.text);
+            tv.setTextSize(r.size);
+            tv.setTextColor(getResources().getColor(r.colorRes));
+            if (r.bold) {
+                tv.setTypeface(null, Typeface.BOLD);
+                tv.setPadding(0, dp(12), 0, dp(4));
+            } else {
+                tv.setPadding(0, dp(4), 0, dp(4));
+            }
+            container.addView(tv, new LinearLayout.LayoutParams(
+                    LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
+        }
+    }
+
+    /** One rendered line (text + style), used to detect changes without rebuilding. */
+    private static final class Row {
+        final String text;
+        final int colorRes;
+        final float size;
+        final boolean bold;
+        Row(String text, int colorRes, float size, boolean bold) {
+            this.text = text;
+            this.colorRes = colorRes;
+            this.size = size;
+            this.bold = bold;
+        }
     }
 
     private String statusText(ChannelWorkerStatus s) {
@@ -80,31 +140,6 @@ public class WorkerStatusActivity extends BaseLocalizedActivity {
             default:
                 return getString(R.string.settings_channel_status_ok, s.cadenceSeconds());
         }
-    }
-
-    private void addHeader(String text) {
-        TextView tv = row(text, R.color.textPrimary);
-        tv.setTextSize(16);
-        tv.setTypeface(null, Typeface.BOLD);
-        LinearLayout.LayoutParams lp = (LinearLayout.LayoutParams) tv.getLayoutParams();
-        lp.topMargin = dp(12);
-        tv.setLayoutParams(lp);
-    }
-
-    private void addRow(String text) {
-        row(text, R.color.textSecondary);
-    }
-
-    /** Creates a row TextView, adds it to the container, and returns it. */
-    private TextView row(String text, int colorRes) {
-        TextView tv = new TextView(this);
-        tv.setText(text);
-        tv.setTextSize(13);
-        tv.setTextColor(getResources().getColor(colorRes));
-        tv.setPadding(0, dp(4), 0, dp(4));
-        container.addView(tv, new LinearLayout.LayoutParams(
-                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT));
-        return tv;
     }
 
     private static String channelLabel(String id) {

@@ -159,6 +159,7 @@
     <string name="settings_vehicle_channels_universal">Channels: system properties + experimental; DiPlus/ADB are probed for analysis.</string>
     <string name="settings_vehicle_commands_disabled">Command control is unavailable for the selected car.</string>
     <string name="settings_vehicle_research">Probe data channels</string>
+    <string name="settings_vehicle_research_done">Channel research finished</string>
     <string name="settings_vehicle_research_progress">Research: %1$d/%2$d</string>
     <string name="settings_vehicle_research_profile">Probe: vehicle profile %1$s</string>
     <string name="settings_vehicle_research_channels">Active channels: %1$s</string>
@@ -237,6 +238,7 @@
     <string name="settings_sources_status">Source state</string>
     <string name="worker_status_title">Source state</string>
     <string name="worker_status_no_service">Telemetry service is not running</string>
+    <string name="worker_status_reconnecting">Reconnecting to service… (showing the last snapshot)</string>
     <string name="worker_status_threads">Live threads: %1$d</string>
     <string name="worker_status_values">Signals in cache: %1$d</string>
     <string name="worker_status_queue">Upload queue: %1$d</string>

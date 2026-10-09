@@ -438,6 +438,9 @@ public class VoyahChannel implements DataChannel {
         int count = 0;
         long now = System.currentTimeMillis();
         StringBuilder diag = new StringBuilder();
+        String leftTurn = null;
+        String rightTurn = null;
+        boolean hazardRead = false;
         for (CANDataItem item : knownItems) {
             if (item == null || item.key == null) continue;
             String raw = readRaw(item.key);
@@ -448,14 +451,36 @@ public class VoyahChannel implements DataChannel {
             item.lastUpdate = now;
             out.add(item);
             count++;
+            if ("left_turn".equals(item.key)) leftTurn = value;
+            else if ("right_turn".equals(item.key)) rightTurn = value;
+            else if ("hazard".equals(item.key)) hazardRead = true;
             if (isDiagKey(item.key)) {
                 diag.append(item.key).append('=').append(raw).append(' ');
+            }
+        }
+        // WARNING_LIGHT is dead (-1) on the tested firmware, so hazard is derived
+        // from both direction indicators being on (that is what the button does).
+        // A real WARNING_LIGHT reading, when the firmware provides one, wins.
+        if (!hazardRead && "on".equals(leftTurn) && "on".equals(rightTurn)) {
+            CANDataItem hz = findByKey(knownItems, "hazard");
+            if (hz != null) {
+                hz.value = "on";
+                hz.lastUpdate = now;
+                out.add(hz);
+                count++;
             }
         }
         if (diag.length() > 0) LogBuffer.d("VoyahChannel", "raw " + diag.toString().trim());
         if (cachedIface != null) logAirConditionProbe();
         scheduleFullRawDump();
         return count;
+    }
+
+    private static CANDataItem findByKey(List<CANDataItem> items, String key) {
+        for (CANDataItem it : items) {
+            if (it != null && key.equals(it.key)) return it;
+        }
+        return null;
     }
 
     /** Logs a watched key's raw value only when it changes from the previous cycle. */

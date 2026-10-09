@@ -106,8 +106,18 @@ public final class CloudSyncClient {
                     return true;
                 }
             }
-            LogBuffer.w(TAG, "Token refresh failed: HTTP " + r.code);
-            invalidateTokens(ctx, "session_expired");
+            // Only a definitive invalid_grant means the session is really gone.
+            // A transient error (5xx/429/timeout/garbled body) must NOT log the
+            // user out — keep the tokens and retry on the next flush.
+            String err = "";
+            try { err = new JSONObject(r.body).optString("error", ""); } catch (Exception ignored) {}
+            if (r.code == 400 && "invalid_grant".equals(err)) {
+                LogBuffer.w(TAG, "Refresh token rejected (invalid_grant) — signing out");
+                invalidateTokens(ctx, "session_expired");
+            } else {
+                LogBuffer.w(TAG, "Token refresh transient failure: HTTP " + r.code
+                        + (err.isEmpty() ? "" : " " + err) + " — keeping tokens");
+            }
             return false;
         } catch (Exception e) {
             LogBuffer.e(TAG, "refreshToken: " + e.getMessage());

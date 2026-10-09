@@ -125,10 +125,26 @@ public final class BtSppTransport implements ObdTransport {
     }
 
     private static BluetoothSocket connect(BluetoothDevice device) throws Exception {
+        // Cheap ELM327 clones often refuse the standard secure SPP link
+        // ("read failed ... read ret: -1") or don't advertise the SPP UUID at
+        // all. Try the standard socket first, then the insecure variant, then a
+        // raw RFCOMM channel 1 (reflection) before giving up.
+        Exception last = null;
+        for (int strategy = 0; strategy < 3; strategy++) {
+            try {
+                return connectWithTimeout(device, strategy);
+            } catch (Exception e) {
+                last = e;
+            }
+        }
+        throw last != null ? last : new Exception("bt connect failed");
+    }
+
+    private static BluetoothSocket connectWithTimeout(BluetoothDevice device, int strategy) throws Exception {
         final java.util.concurrent.atomic.AtomicReference<BluetoothSocket> ref =
                 new java.util.concurrent.atomic.AtomicReference<>();
         FutureTask<BluetoothSocket> task = new FutureTask<>(() -> {
-            BluetoothSocket s = device.createRfcommSocketToServiceRecord(SPP_UUID);
+            BluetoothSocket s = createSocket(device, strategy);
             ref.set(s);
             s.connect();
             return s;
@@ -146,6 +162,18 @@ public final class BtSppTransport implements ObdTransport {
                 try { s.close(); } catch (Exception ignored) {}
             }
             throw new java.net.SocketTimeoutException("bt connect timeout (" + CONNECT_TIMEOUT_MS + "ms)");
+        }
+    }
+
+    private static BluetoothSocket createSocket(BluetoothDevice device, int strategy) throws Exception {
+        switch (strategy) {
+            case 1:
+                return device.createInsecureRfcommSocketToServiceRecord(SPP_UUID);
+            case 2:
+                java.lang.reflect.Method m = device.getClass().getMethod("createRfcommSocket", int.class);
+                return (BluetoothSocket) m.invoke(device, 1);
+            default:
+                return device.createRfcommSocketToServiceRecord(SPP_UUID);
         }
     }
 
