@@ -1,7 +1,6 @@
 package com.car2hass;
 
 import android.app.AlertDialog;
-import android.app.ProgressDialog;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.content.ClipData;
@@ -864,7 +863,9 @@ public class MainActivity extends BaseLocalizedActivity {
         final String logPath = takeResearchPath();
         final String msg = message != null && !message.isEmpty()
                 ? message : buildLogIdentifier();
+        final String logTitle = getString(R.string.upload_log_title);
         LogBuffer.i("Main", "uploadLogToServer: path=" + logPath + " msg=" + msg);
+        TaskNotifier.progress(this, logTitle, getString(R.string.upload_in_progress), 0, 0);
         // Also push the DB log (the real, complete log) right away — the file queue
         // above is the legacy path and may be empty/stale.
         try {
@@ -887,13 +888,17 @@ public class MainActivity extends BaseLocalizedActivity {
                         if (entryId.equals(e.id)) { stillPending = true; break; }
                     }
                     LogBuffer.i("Main", "uploadLogToServer: stillPending=" + stillPending);
+                    TaskNotifier.done(this, logTitle, getString(stillPending
+                            ? R.string.upload_failed : R.string.log_server_ok));
                     Toast.makeText(this, stillPending
                             ? R.string.log_server_pending : R.string.log_server_ok, Toast.LENGTH_LONG).show();
                 });
             } catch (Exception e) {
                 LogBuffer.e("Main", "uploadLogToServer failed: " + e.getMessage());
-                handler.post(() -> Toast.makeText(this,
-                        R.string.log_server_error, Toast.LENGTH_LONG).show());
+                handler.post(() -> {
+                    TaskNotifier.done(this, logTitle, getString(R.string.upload_failed));
+                    Toast.makeText(this, R.string.log_server_error, Toast.LENGTH_LONG).show();
+                });
             }
         }, "log-upload").start();
     }
@@ -1080,10 +1085,21 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         maybeNotifyCloudSessionExpired();
         // Retry queued uploads in the background; ask the user only when the
-        // queue is explicitly flushed from the log-send dialog.
+        // queue is explicitly flushed from the log-send dialog. A non-blocking
+        // notification shows the upload status while it runs.
+        final boolean queuedUploads = !UploadQueue.load(this).isEmpty();
+        if (queuedUploads) {
+            TaskNotifier.progress(this, getString(R.string.upload_log_title),
+                    getString(R.string.upload_in_progress), 0, 0);
+        }
         new Thread(() -> {
             try {
                 UploadQueueWorker.flush(this, null);
+                if (queuedUploads) {
+                    boolean left = !UploadQueue.load(this).isEmpty();
+                    runOnUiThread(() -> TaskNotifier.done(this, getString(R.string.upload_log_title),
+                            getString(left ? R.string.upload_failed : R.string.log_server_ok)));
+                }
             } catch (Exception e) {
                 LogBuffer.d("Main", "background queue flush: " + e.getMessage());
             }
@@ -4563,10 +4579,15 @@ public class MainActivity extends BaseLocalizedActivity {
     /** Sends the report to the site when the user opted in (spec Section 5). */
     private void maybeUploadReport(String path) {
         if (path == null || !AppConfig.isProbeUploadEnabled(this)) return;
+        final String title = getString(R.string.upload_research_title);
+        TaskNotifier.progress(this, title, getString(R.string.upload_in_progress), 0, 0);
         new Thread(() -> {
             ProbeUploader.Result r = ProbeUploader.uploadResult(this, path);
             LogBuffer.i("MainActivity", "probe upload: ok=" + r.ok + " code=" + r.code);
             if (r.ok) AppConfig.setProbeLastUploadMs(this, System.currentTimeMillis());
+            final boolean ok = r.ok;
+            runOnUiThread(() -> TaskNotifier.done(this, title,
+                    getString(ok ? R.string.upload_research_ok : R.string.upload_failed)));
         }, "probe-upload").start();
     }
 
@@ -4982,37 +5003,34 @@ public class MainActivity extends BaseLocalizedActivity {
             LogBuffer.i("Main", "update: no already-downloaded file, starting download");
         }
 
-        android.app.ProgressDialog progress = new android.app.ProgressDialog(this);
-        progress.setProgressStyle(android.app.ProgressDialog.STYLE_HORIZONTAL);
-        progress.setTitle(getString(R.string.update_downloading, "0%"));
-        progress.setMax(100);
-        progress.setCancelable(false);
-        progress.show();
+        // Non-blocking progress notification instead of a modal dialog.
+        TaskNotifier.progress(this, getString(R.string.update_downloading, "0%"), "", 0, 100);
         new Thread(() -> {
             try {
                 File apk = UpdateDownloader.download(this, info, (done, total) ->
                         runOnUiThread(() -> {
                             int pct = total > 0 ? (int) (done * 100 / total) : 0;
-                            progress.setProgress(pct);
-                            progress.setTitle(getString(R.string.update_downloading,
-                                    total > 0 ? pct + "%" : "..."));
+                            TaskNotifier.progress(this, getString(R.string.update_downloading,
+                                    total > 0 ? pct + "%" : "..."), "", pct, 100);
                         }));
                 LogBuffer.i("Main", "update: download returned " + apk + " length="
                         + (apk == null ? -1 : apk.length()));
-                runOnUiThread(progress::dismiss);
                 if (!UpdateDownloader.installFile(this, apk, info.sha256)) {
                     LogBuffer.e("Main", "update: install refused/failed for " + apk
                             + " — showing update_install_failed toast");
-                    runOnUiThread(() -> Toast.makeText(this,
-                            R.string.update_install_failed, Toast.LENGTH_LONG).show());
+                    runOnUiThread(() -> {
+                        TaskNotifier.clear(this);
+                        Toast.makeText(this, R.string.update_install_failed, Toast.LENGTH_LONG).show();
+                    });
+                } else {
+                    runOnUiThread(() -> TaskNotifier.clear(this));
                 }
             } catch (Exception e) {
                 LogBuffer.e("Main", "update download failed: " + e.getClass().getSimpleName()
                         + ": " + e.getMessage() + " — showing update_download_failed toast");
                 runOnUiThread(() -> {
-                    progress.dismiss();
-                    Toast.makeText(this,
-                            R.string.update_download_failed, Toast.LENGTH_LONG).show();
+                    TaskNotifier.clear(this);
+                    Toast.makeText(this, R.string.update_download_failed, Toast.LENGTH_LONG).show();
                 });
             }
         }, "update-download").start();

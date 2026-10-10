@@ -43,6 +43,11 @@
     <string name="log_server_ok">Лог отправлен разработчику. Спасибо!</string>
     <string name="log_server_error">Не удалось отправить лог. Попробуйте позже.</string>
     <string name="log_server_pending">Лог не доставлен (пуст или в очереди). Сначала запустите «Исследование».</string>
+    <string name="upload_log_title">Отправка лога</string>
+    <string name="upload_research_title">Отправка исследования</string>
+    <string name="upload_in_progress">Отправка на сервер…</string>
+    <string name="upload_research_ok">Исследование отправлено разработчику</string>
+    <string name="upload_failed">Не отправлено — повторим позже</string>
     <string name="upload_queue_ask_title">Очередь отправки</string>
     <string name="upload_queue_ask_message">Не удалось отправить журналы/исследования разработчику (нет связи). Продолжать попытку отправки?</string>
     <string name="upload_queue_continue">Продолжить</string>
