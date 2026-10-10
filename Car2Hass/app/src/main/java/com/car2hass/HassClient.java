@@ -316,9 +316,15 @@ public class HassClient {
         }
 
         final String scheme = https ? "https" : "http";
-        if ("http".equals(scheme) && !NetSafety.isPrivateHost(host) && warnedCleartextHosts.add(host)) {
-            LogBuffer.w("HassClient", "Cleartext HTTP to a public host '" + host
-                    + "'. Anyone on the network can read your token. Use HTTPS for remote servers.");
+        // Refuse to send the HA long-lived token in cleartext to a public host.
+        // LAN/loopback HTTP stays allowed (HA on http://192.168.x.x:8123), but a
+        // public hostname/IP must use HTTPS — otherwise the token is exposed.
+        if ("http".equals(scheme) && !NetSafety.isPrivateHost(host)) {
+            SendHistory.recordAttempt(ctx, "insecure_http_blocked");
+            LogBuffer.w("HassClient", "Refusing cleartext HTTP to public host '" + host
+                    + "' — the HA token would be readable on the network. Enable HTTPS.");
+            if (callback != null) callback.onResult(false, "insecure_http_blocked");
+            return;
         }
         flushExecutor.submit(() -> {
             HttpURLConnection conn = null;

@@ -20,7 +20,17 @@ from homeassistant.util import dt as dt_util
 
 from . import core
 from .const import API_VERSION, DOMAIN, INTEGRATION_VERSION
+from .const import BINARY_SENSORS, ENUM_SENSORS, NATIVE_SENSORS, NUMERIC_SENSORS
 from .core import BatchValidationError, QueueFullError
+
+# Keys the integration can actually surface as entities. The persistent
+# "seen_signals" set is bounded to these so an authenticated caller cannot grow
+# it without limit (and force O(|seen|) registry lookups on every message).
+_KNOWN_SIGNAL_KEYS = (
+    frozenset(NATIVE_SENSORS) | frozenset(NUMERIC_SENSORS)
+    | frozenset(ENUM_SENSORS) | frozenset(BINARY_SENSORS)
+)
+_MAX_SEEN_SIGNALS = 1000
 
 PLATFORMS = [
     Platform.SENSOR,
@@ -411,7 +421,9 @@ class VehicleDataView(HomeAssistantView):
         # the HA "disabled" spoiler (entity_registry_enabled_default=False).
         old_seen = set(store["data"].get("seen_signals", set())) if store.get("data") else set()
         applied = {**routed["signals"], **routed["phone_signals"]}
-        seen = old_seen | set(applied.keys())
+        # Bounded to keys the integration can surface (registry-backed); unknown
+        # keys are ignored here so the set cannot grow without limit.
+        seen = (old_seen | set(applied.keys())) & _KNOWN_SIGNAL_KEYS
         disabled = set(agg.get("disabled_signals") or set())
 
         store["data"] = {

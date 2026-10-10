@@ -15,6 +15,11 @@ except ImportError:  # Direct module import (unit tests without Home Assistant)
 COMMAND_TIMEOUT = timedelta(minutes=1)
 DEFAULT_MAX_QUEUE = 50
 
+# Bounds on a single snapshot's signal map (defensive against oversized POSTs).
+MAX_SIGNAL_KEYS_PER_SNAPSHOT = 1000
+MAX_SIGNAL_KEY_LEN = 64
+MAX_SIGNAL_VALUE_LEN = 1024
+
 DEVICE_CLASS_CAR = "car"
 DEVICE_CLASS_PHONE = "phone"
 PHONE_SIGNAL_PREFIX = "phone_"
@@ -40,8 +45,19 @@ def validate_batch(batch: list) -> list:
     for snapshot in batch:
         if not isinstance(snapshot, dict):
             raise BatchValidationError("batch item must be an object")
-        if not isinstance(snapshot.get("s", {}), dict) or not isinstance(snapshot.get("g", {}), dict):
+        s_map = snapshot.get("s", {})
+        g_map = snapshot.get("g", {})
+        if not isinstance(s_map, dict) or not isinstance(g_map, dict):
             raise BatchValidationError("snapshot s and g must be objects")
+        # Bound per-snapshot size so a single POST cannot exhaust memory/CPU
+        # before aggregation (keys and string values are otherwise unbounded).
+        if len(s_map) > MAX_SIGNAL_KEYS_PER_SNAPSHOT:
+            raise BatchValidationError("snapshot has too many signals")
+        for key, value in s_map.items():
+            if not isinstance(key, str) or len(key) > MAX_SIGNAL_KEY_LEN:
+                raise BatchValidationError("snapshot signal key invalid")
+            if isinstance(value, str) and len(value) > MAX_SIGNAL_VALUE_LEN:
+                raise BatchValidationError("snapshot signal value too long")
         # t (epoch seconds) must sort numerically; tolerate a malformed string
         # instead of letting the sorted() below raise a raw TypeError.
         t = snapshot.get("t", 0)

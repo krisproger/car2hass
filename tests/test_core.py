@@ -56,6 +56,22 @@ def test_validate_batch_rejects_non_numeric_t():
         core.validate_batch([{"t": True, "s": {}, "g": {}}])
 
 
+def test_validate_batch_rejects_too_many_signal_keys():
+    big = {f"k{i}": 1 for i in range(core.MAX_SIGNAL_KEYS_PER_SNAPSHOT + 1)}
+    with pytest.raises(core.BatchValidationError):
+        core.validate_batch([{"t": 1, "s": big, "g": {}}])
+
+
+def test_validate_batch_rejects_overlong_signal_value():
+    with pytest.raises(core.BatchValidationError):
+        core.validate_batch([{"t": 1, "s": {"speed": "x" * (core.MAX_SIGNAL_VALUE_LEN + 1)}, "g": {}}])
+
+
+def test_validate_batch_accepts_within_limits():
+    out = core.validate_batch([{"t": 1, "s": {"speed": 42}, "g": {}}])
+    assert out[0]["s"]["speed"] == 42
+
+
 def test_aggregate_latest_value_wins_and_gps():
     batch = core.validate_batch([
         {"t": 1, "s": {"speed": 10}, "g": {"lat": 55.0, "lon": 37.0, "a": 5}},

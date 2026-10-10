@@ -95,24 +95,36 @@ public class SnapshotQueue {
         List<HassClient.Snapshot> result = new ArrayList<>();
         SQLiteDatabase db = getHelper(ctx).getReadableDatabase();
         Cursor cursor = db.rawQuery(
-            "SELECT id, ts, lat, lon, accuracy, fix_ts, signals FROM " + TABLE + " ORDER BY id ASC LIMIT ?",
+            "SELECT id, ts, lat, lon, accuracy, fix_ts, signals, disabled FROM " + TABLE
+                    + " ORDER BY id ASC LIMIT ?",
             new String[]{String.valueOf(limit)});
         try {
+            // Resolve columns by name so a SELECT/read index drift can never happen
+            // again (a previous build read index 7 while the SELECT listed 7 columns,
+            // throwing on every non-empty queue and permanently blocking offline sync).
+            int iId = cursor.getColumnIndexOrThrow(COL_ID);
+            int iTs = cursor.getColumnIndexOrThrow(COL_TS);
+            int iLat = cursor.getColumnIndexOrThrow(COL_LAT);
+            int iLon = cursor.getColumnIndexOrThrow(COL_LON);
+            int iAcc = cursor.getColumnIndexOrThrow(COL_ACCURACY);
+            int iFix = cursor.getColumnIndexOrThrow(COL_FIX_TS);
+            int iSig = cursor.getColumnIndexOrThrow(COL_SIGNALS);
+            int iDis = cursor.getColumnIndexOrThrow(COL_DISABLED);
             while (cursor.moveToNext()) {
-                double lat = cursor.isNull(2) ? Double.NaN : cursor.getDouble(2);
-                double lon = cursor.isNull(3) ? Double.NaN : cursor.getDouble(3);
-                float accuracy = cursor.isNull(4) ? 0 : cursor.getFloat(4);
-                long fixTimeSec = cursor.isNull(5) ? 0 : cursor.getLong(5);
+                double lat = cursor.isNull(iLat) ? Double.NaN : cursor.getDouble(iLat);
+                double lon = cursor.isNull(iLon) ? Double.NaN : cursor.getDouble(iLon);
+                float accuracy = cursor.isNull(iAcc) ? 0 : cursor.getFloat(iAcc);
+                long fixTimeSec = cursor.isNull(iFix) ? 0 : cursor.getLong(iFix);
                 HassClient.Snapshot snap = new HassClient.Snapshot(
-                    cursor.getLong(1),
+                    cursor.getLong(iTs),
                     lat,
                     lon,
                     accuracy,
                     fixTimeSec,
-                    cursor.getString(6),
-                    cursor.isNull(7) ? "" : cursor.getString(7)
+                    cursor.getString(iSig),
+                    cursor.isNull(iDis) ? "" : cursor.getString(iDis)
                 );
-                snap.queueId = cursor.getLong(0);
+                snap.queueId = cursor.getLong(iId);
                 result.add(snap);
             }
         } finally {

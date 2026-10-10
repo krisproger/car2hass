@@ -352,8 +352,9 @@ public final class CloudSyncClient {
         String base = AppConfig.getCloudBaseUrl(ctx);
         URL url = new URL(base + path);
         if ("http".equalsIgnoreCase(url.getProtocol()) && !NetSafety.isPrivateHost(url.getHost())) {
-            LogBuffer.w(TAG, "Cleartext HTTP to a public host '" + url.getHost()
-                    + "'. The account token can be read on the network.");
+            LogBuffer.w(TAG, "Refusing cleartext HTTP to public host '" + url.getHost()
+                    + "' — the account token would be exposed. Use HTTPS.");
+            throw new java.io.IOException("insecure_http_blocked");
         }
         HttpURLConnection conn = null;
         try {

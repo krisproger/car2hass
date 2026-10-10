@@ -220,7 +220,7 @@ public class TelemetryService extends Service {
         createNotificationChannel();
         // CRITICAL: startForeground must be the very first call and never be skipped.
         try {
-            startForeground(NOTIFICATION_ID, buildNotification());
+            startForegroundTyped();
             LogBuffer.i("TelemetryService", "startForeground called");
         } catch (Exception e) {
             LogBuffer.e("TelemetryService", "startForeground failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
@@ -261,7 +261,7 @@ public class TelemetryService extends Service {
                 + " intent=" + (intent != null ? intent.toString() : "null"));
         // Re-promote to foreground on every restart to satisfy Android 12+ requirements.
         try {
-            startForeground(NOTIFICATION_ID, buildNotification());
+            startForegroundTyped();
         } catch (Exception e) {
             LogBuffer.e("TelemetryService", "startForeground retry failed: " + e.getMessage());
         }
@@ -633,6 +633,29 @@ public class TelemetryService extends Service {
                 LogBuffer.e("TelemetryService", "Auto log flush error: " + e.getMessage());
             }
         }, "log-flush").start();
+    }
+
+    /**
+     * Promotes the service to the foreground with an explicit type set. The
+     * manifest declares {@code specialUse|location}; on API 34+ requesting the
+     * {@code location} type without the runtime permission throws
+     * SecurityException, which would leave the service non-foreground and get it
+     * killed. So location is only included when the permission is granted.
+     */
+    private void startForegroundTyped() {
+        if (Build.VERSION.SDK_INT >= 34) {
+            int type = android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE;
+            if (hasLocationPermission()) {
+                type |= android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION;
+            }
+            startForeground(NOTIFICATION_ID, buildNotification(), type);
+        } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            int type = hasLocationPermission()
+                    ? android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION : 0;
+            startForeground(NOTIFICATION_ID, buildNotification(), type);
+        } else {
+            startForeground(NOTIFICATION_ID, buildNotification());
+        }
     }
 
     private void createNotificationChannel() {
