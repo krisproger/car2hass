@@ -306,13 +306,9 @@
             android:layout_height="wrap_content" />
     </LinearLayout>
 
-    <Button
+    <com.car2hass.ProgressActionButton
         android:id="@+id/btnCheckUpdate"
         android:layout_width="match_parent"
         android:layout_height="44dp"
-        android:layout_marginTop="8dp"
-        android:background="@color/surfaceVariant"
-        android:textColor="@color/textPrimary"
-        android:textSize="14sp"
-        android:text="@string/update_check" />
+        android:layout_marginTop="8dp" />
 </LinearLayout>

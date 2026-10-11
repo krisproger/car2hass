@@ -1,5 +1,6 @@
 """CARTelemetry integration for Home Assistant."""
 
+import html
 import logging
 from datetime import timedelta
 from pathlib import Path
@@ -227,9 +228,9 @@ async def async_setup_entry(hass: HomeAssistant, entry):
             signals = store.get("data", {}).get("signals", {})
             total_signals += len(signals)
             info_lines.append(
-                f"<b>{store.get('car_name', 'unknown')}</b><br>"
-                f"VVIN: {store.get('vvn', '—')} | FW: {store.get('firmware', '—')}<br>"
-                f"Last seen: {store.get('last_seen', '—')} | Signals: {len(signals)}"
+                f"<b>{html.escape(str(store.get('car_name', 'unknown')))}</b><br>"
+                f"VVIN: {html.escape(str(store.get('vvn', '—')))} | FW: {html.escape(str(store.get('firmware', '—')))}<br>"
+                f"Last seen: {html.escape(str(store.get('last_seen', '—')))} | Signals: {len(signals)}"
             )
         message = "<br><br>".join(info_lines) if info_lines else "No vehicles registered."
         async_create(

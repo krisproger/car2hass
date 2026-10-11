@@ -153,15 +153,16 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
                 : (rowItem.rawData != null && !rowItem.rawData.isEmpty() ? rowItem.rawData : ""));
 
         if (systemKey) {
-            vh.valueText.setTextColor(0xFF4CAF50);
-            vh.nameText.setTextColor(0xFFFFFFFF);
+            vh.valueText.setTextColor(attrColor(com.car2hass.R.attr.carAccentGreen));
+            vh.nameText.setTextColor(attrColor(com.car2hass.R.attr.carTextPrimary));
         } else if (rowItem.grey) {
-            vh.valueText.setTextColor(0xFF808080);
-            vh.nameText.setTextColor(0xFF808080);
+            vh.valueText.setTextColor(attrColor(com.car2hass.R.attr.carTextTertiary));
+            vh.nameText.setTextColor(attrColor(com.car2hass.R.attr.carTextTertiary));
         } else {
             boolean fresh = (System.currentTimeMillis() - rowItem.lastUpdate) < 5000;
-            vh.valueText.setTextColor(fresh ? 0xFF4CAF50 : 0xFFB0B0B0);
-            vh.nameText.setTextColor(0xFFFFFFFF);
+            vh.valueText.setTextColor(attrColor(fresh
+                    ? com.car2hass.R.attr.carAccentGreen : com.car2hass.R.attr.carTextSecondary));
+            vh.nameText.setTextColor(attrColor(com.car2hass.R.attr.carTextPrimary));
         }
 
         vh.checkBox.setOnCheckedChangeListener(null);
@@ -181,6 +182,13 @@ public final class TelemetryExpandableAdapter extends BaseExpandableListAdapter 
             });
         }
         return v;
+    }
+
+    /** Resolves a per-car theme color attribute, falling back to white. */
+    private int attrColor(int attrRes) {
+        android.util.TypedValue tv = new android.util.TypedValue();
+        if (context.getTheme().resolveAttribute(attrRes, tv, true)) return tv.data;
+        return 0xFFFFFFFF;
     }
 
     private static boolean isSystemKey(String key) {

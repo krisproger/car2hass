@@ -604,6 +604,23 @@ public class AppConfig {
         prefs(ctx).edit().putString(KEY_UPDATE_CHANNEL, channel).apply();
     }
 
+    // Last published update the app saw (so a downloaded APK can be offered for
+    // install — and SHA-verified — without another network check).
+    public static String getPendingUpdateVersion(Context ctx) {
+        return prefs(ctx).getString("pending_update_version", "");
+    }
+
+    public static String getPendingUpdateSha(Context ctx) {
+        return prefs(ctx).getString("pending_update_sha", "");
+    }
+
+    public static void setPendingUpdate(Context ctx, String version, String sha) {
+        prefs(ctx).edit()
+                .putString("pending_update_version", version == null ? "" : version)
+                .putString("pending_update_sha", sha == null ? "" : sha)
+                .apply();
+    }
+
     // ---- Cloud sync (mytechnic.ru unified account) ----
 
     public static boolean isCloudSyncEnabled(Context ctx) {

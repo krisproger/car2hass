@@ -19,7 +19,7 @@
     <string name="column_parameter">Parameter</string>
     <string name="column_value">Value</string>
     <string name="column_unit">Unit</string>
-    <string name="column_updated">Обновлено</string>
+    <string name="column_updated">Updated</string>
     <string name="column_route">Route</string>
     <string name="vvin_prefix">VVIN: %1$s</string>
     <string name="fw_prefix">FW: %1$s</string>
@@ -990,4 +990,7 @@
     <string name="sensor_phone_light">Light</string>
     <string name="sensor_phone_proximity">Proximity</string>
     <string name="sensor_phone_pressure">Pressure</string>
+    <string name="tile_delete">Delete tile</string>
+    <string name="settings_research_show_report">Show report</string>
+    <string name="update_install">Install update</string>
 </resources>

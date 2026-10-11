@@ -511,12 +511,20 @@ def cmd_gen_spec(args):
             "vvn": "string (vehicle VIN, optional)",
             "firmware": "string (optional)",
             "app_version": "string",
-            "ts": "int, unix seconds",
+            "ts": "int, unix seconds (when this POST was sent)",
+            "dev": {
+                "class": "car|phone (optional, default car)",
+                "id": "string (optional)",
+                "name": "string (optional)",
+                "manufacturer": "string (optional)",
+                "model": "string (optional)",
+            },
             "batch": [
                 {
-                    "t": "int, unix seconds",
+                    "t": "int, unix seconds (snapshot time)",
                     "g": {"lat": "float", "lon": "float", "a": "float"},
                     "s": {"<sensor_key>": "<value>"},
+                    "d": ["<sensor_key> (signals the user disabled; optional)"],
                 }
             ],
         },

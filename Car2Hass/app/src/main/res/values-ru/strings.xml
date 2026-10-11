@@ -974,4 +974,16 @@
     <string name="sensor_phone_light">Освещённость</string>
     <string name="sensor_phone_proximity">Приближение</string>
     <string name="sensor_phone_pressure">Давление</string>
+    <string name="column_updated">Обновлено</string>
+    <string name="dashboard_config_display_type_title">Тип отображения</string>
+    <string name="settings_debug_compare">Отладочное сравнение</string>
+    <string name="settings_debug_compare_summary">Читать оба источника каждый такт и писать сравнение по сигналам (NativeCompare) для поиска ошибок карты.</string>
+    <string name="settings_telemetry_source">Источник телеметрии</string>
+    <string name="settings_telemetry_source_summary">Как читаются значения. DiPlus использует HTTP-API приложения DiPlus; Native читает сервис машины напрямую через ADB.</string>
+    <string name="settings_source_auto">Авто</string>
+    <string name="settings_source_diplus">DiPlus</string>
+    <string name="settings_source_native">Native (ADB)</string>
+    <string name="tile_delete">Удалить плитку</string>
+    <string name="settings_research_show_report">Показать отчёт</string>
+    <string name="update_install">Установить обновление</string>
 </resources>

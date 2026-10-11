@@ -123,16 +123,28 @@
             android:textSize="11sp"
             android:maxLines="1" />
 
-        <Button
-            android:id="@+id/btnSendLog"
+        <FrameLayout
             android:layout_width="wrap_content"
-            android:layout_height="28dp"
-            android:background="@color/primaryContainer"
-            android:text="@string/send_log"
-            android:textColor="@color/onPrimary"
-            android:textSize="11sp"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp" />
+            android:layout_height="28dp">
+
+            <Button
+                android:id="@+id/btnSendLog"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:background="@color/primaryContainer"
+                android:text="@string/send_log"
+                android:textColor="@color/onPrimary"
+                android:textSize="11sp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp" />
+
+            <ProgressBar
+                android:id="@+id/pbSendLog"
+                style="?android:attr/progressBarStyleHorizontal"
+                android:layout_width="90dp"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+        </FrameLayout>
     </LinearLayout>
 
     <!-- Content container -->

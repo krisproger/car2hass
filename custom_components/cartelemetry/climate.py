@@ -14,9 +14,23 @@ from . import SIGNAL_VEHICLE_DATA_UPDATED, async_enqueue_command
 from .const import DOMAIN
 
 from .const import CONF_CAR_NAME, BINARY_ON_MAP, INTEGRATION_VERSION
+from .commands import NUMBER_COMMANDS
 from .device_info import build_device_info
 
-_FAN_MODES = [str(i) for i in range(1, 10)]
+
+def _number_cmd(key: str):
+    for c in NUMBER_COMMANDS:
+        if c.key == key:
+            return c
+    return None
+
+
+# Ranges come from the command registry so the Climate entity and the matching
+# Number entities can never disagree (they control the same physical setting).
+_AC_TEMP = _number_cmd("ac_temp")
+_AC_FAN = _number_cmd("ac_fan")
+_FAN_MODES = ([str(i) for i in range(int(_AC_FAN.min_value), int(_AC_FAN.max_value) + 1)]
+              if _AC_FAN else [str(i) for i in range(1, 8)])
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -36,9 +50,9 @@ class CarTelemetryClimate(ClimateEntity, RestoreEntity):
 
     _attr_hvac_modes = [HVACMode.OFF, HVACMode.HEAT_COOL]
     _attr_fan_modes = _FAN_MODES
-    _attr_min_temp = 16
-    _attr_max_temp = 30
-    _attr_target_temperature_step = 0.5
+    _attr_min_temp = _AC_TEMP.min_value if _AC_TEMP else 17
+    _attr_max_temp = _AC_TEMP.max_value if _AC_TEMP else 30
+    _attr_target_temperature_step = _AC_TEMP.step if _AC_TEMP else 1
     _attr_temperature_unit = UnitOfTemperature.CELSIUS
     _attr_supported_features = (
         ClimateEntityFeature.TARGET_TEMPERATURE

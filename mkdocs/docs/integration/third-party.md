@@ -44,7 +44,7 @@ POST /api/cartelemetry
 
 ```
 GET /api/cartelemetry/commands?car_name=my_car
-POST /api/cartelemetry/commands   {"car_name": "my_car", "acked": [{"id": "ac_on", "success": true}]}
+POST /api/cartelemetry/commands   {"command_id": "ac_on_1712345678", "status": "ok", "message": ""}
 ```
 
 ## Что это даёт
@@ -57,5 +57,8 @@ POST /api/cartelemetry/commands   {"car_name": "my_car", "acked": [{"id": "ac_on
 ## Ограничения
 
 - `car_name` совпадает с именем, заданным при настройке интеграции (регистр важен).
-- Интеграция принимает данные только с локальной сети HA (без авторизации в HA — 401).
+- Все эндпоинты защищены авторизацией Home Assistant: запрос без валидного
+  Bearer long-lived token получает 401. Данные можно отправлять откуда угодно, где
+  доступен HA; при доступе из интернета используйте HTTPS и ограничьте сеть
+  (интеграция сама по себе не ограничивает источник по сети).
 - Рекомендуемая частота — снапшоты ~1 Гц, отправка раз в ~4 секунды.

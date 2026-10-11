@@ -104,6 +104,8 @@ public class MainActivity extends BaseLocalizedActivity {
     private Button obdButton;
     private boolean firstLaunchResearch = false;
     private Button btnSendLog;
+    private android.widget.ProgressBar pbSendLog;
+    private boolean logUploadInProgress;
     private CheckBox checkSelectAll;
     private CheckBox headerCheckAll;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -145,7 +147,8 @@ public class MainActivity extends BaseLocalizedActivity {
     // Settings sections (two-column layout)
     private int selectedSettingsSection = 0;
     private final View[] settingsSections = new View[8];
-    private Button btnRestartResearch;
+    private ProgressActionButton btnRestartResearch;
+    private ProgressActionButton btnCheckUpdate;
 
     private String pendingResearchPath = null;
     private final Map<String, TextView> channelStatusViews = new HashMap<>();
@@ -385,6 +388,7 @@ public class MainActivity extends BaseLocalizedActivity {
         locationText = findViewById(R.id.locationText);
         queueBar = findViewById(R.id.queueBar);
         btnSendLog = findViewById(R.id.btnSendLog);
+        pbSendLog = findViewById(R.id.pbSendLog);
     }
 
     private void initContentViews() {
@@ -865,6 +869,12 @@ public class MainActivity extends BaseLocalizedActivity {
                 ? message : buildLogIdentifier();
         final String logTitle = getString(R.string.upload_log_title);
         LogBuffer.i("Main", "uploadLogToServer: path=" + logPath + " msg=" + msg);
+        // The send button becomes an inline progress bar and cannot be pressed
+        // again until the current log finishes uploading.
+        if (logUploadInProgress) return;
+        logUploadInProgress = true;
+        if (btnSendLog != null) btnSendLog.setVisibility(View.GONE);
+        if (pbSendLog != null) { pbSendLog.setIndeterminate(true); pbSendLog.setVisibility(View.VISIBLE); }
         TaskNotifier.progress(this, logTitle, getString(R.string.upload_in_progress), 0, 0);
         // Also push the DB log (the real, complete log) right away — the file queue
         // above is the legacy path and may be empty/stale.
@@ -890,6 +900,7 @@ public class MainActivity extends BaseLocalizedActivity {
                     LogBuffer.i("Main", "uploadLogToServer: stillPending=" + stillPending);
                     TaskNotifier.done(this, logTitle, getString(stillPending
                             ? R.string.upload_failed : R.string.log_server_ok));
+                    restoreSendLogButton();
                     Toast.makeText(this, stillPending
                             ? R.string.log_server_pending : R.string.log_server_ok, Toast.LENGTH_LONG).show();
                 });
@@ -897,10 +908,18 @@ public class MainActivity extends BaseLocalizedActivity {
                 LogBuffer.e("Main", "uploadLogToServer failed: " + e.getMessage());
                 handler.post(() -> {
                     TaskNotifier.done(this, logTitle, getString(R.string.upload_failed));
+                    restoreSendLogButton();
                     Toast.makeText(this, R.string.log_server_error, Toast.LENGTH_LONG).show();
                 });
             }
         }, "log-upload").start();
+    }
+
+    /** Returns the send-log button to its idle state after an upload. */
+    private void restoreSendLogButton() {
+        logUploadInProgress = false;
+        if (pbSendLog != null) pbSendLog.setVisibility(View.GONE);
+        if (btnSendLog != null) btnSendLog.setVisibility(View.VISIBLE);
     }
 
     /** Sends queued logs/research; asks the user when retries run out. */
@@ -3761,7 +3780,8 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsView.findViewById(R.id.btnLocationTest).setOnClickListener(v -> showLocationTest());
         settingsView.findViewById(R.id.btnExportConfig).setOnClickListener(v -> exportConfig());
         settingsView.findViewById(R.id.btnImportConfig).setOnClickListener(v -> importConfig());
-        settingsView.findViewById(R.id.btnCheckUpdate).setOnClickListener(v -> checkForUpdate(true));
+        btnCheckUpdate = settingsView.findViewById(R.id.btnCheckUpdate);
+        refreshUpdateButton();
         setupUpdateChannelSpinner(settingsView);
         settingsView.findViewById(R.id.btnRequestPermissions).setOnClickListener(v -> {
             // Re-request even if previously denied: the cached denial is cleared.
@@ -3818,7 +3838,7 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsView.findViewById(R.id.navSettingsTech).setOnClickListener(v -> selectSettingsSection(4));
         settingsView.findViewById(R.id.navSettingsAbout).setOnClickListener(v -> showAboutDialog());
         btnRestartResearch = settingsView.findViewById(R.id.btnRestartResearch);
-        btnRestartResearch.setOnClickListener(v -> runVehicleResearch());
+        btnRestartResearch.setIdle(R.string.settings_research_restart, v -> runVehicleResearch());
         settingsView.findViewById(R.id.btnExportResearch).setOnClickListener(v -> exportResearchReport());
         Switch swProbeUpload = settingsView.findViewById(R.id.swProbeUpload);
         swProbeUpload.setChecked(AppConfig.isProbeUploadEnabled(this));
@@ -3964,7 +3984,7 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void runVehicleResearch() {
-        btnRestartResearch.setEnabled(false);
+        if (btnRestartResearch != null && btnRestartResearch.isBusy()) return;
         List<DataChannel> channels;
         try {
             channels = ChannelCatalog.createAll(RegistryStore.load(this));
@@ -3986,13 +4006,18 @@ public class MainActivity extends BaseLocalizedActivity {
         final int researchTotal = researchChannels.size() + researchSensorCount;
 
         final String researchTitle = getString(R.string.settings_vehicle_research);
+        btnRestartResearch.startBusy(R.string.settings_vehicle_research, researchTotal);
         TaskNotifier.progress(this, researchTitle,
                 getString(R.string.settings_vehicle_research_progress, 0, researchTotal), 0, researchTotal);
 
         new Thread(() -> {
-            VehicleResearch.ProgressListener listener = (done, total, name) -> runOnUiThread(() ->
-                    TaskNotifier.progress(MainActivity.this, researchTitle,
-                            getString(R.string.settings_vehicle_research_progress, done, total), done, total));
+            VehicleResearch.ProgressListener listener = (done, total, name) -> runOnUiThread(() -> {
+                btnRestartResearch.setProgress(done, total);
+                btnRestartResearch.setBusyLabel(
+                        getString(R.string.settings_vehicle_research_progress, done, total));
+                TaskNotifier.progress(MainActivity.this, researchTitle,
+                        getString(R.string.settings_vehicle_research_progress, done, total), done, total);
+            });
             VehicleResearch.ResearchOutcome outcome;
             try {
                 // When the user picked the profile manually the probe result
@@ -4022,7 +4047,12 @@ public class MainActivity extends BaseLocalizedActivity {
             runOnUiThread(() -> {
                 TaskNotifier.done(MainActivity.this, researchTitle,
                         getString(R.string.settings_vehicle_research_done));
-                btnRestartResearch.setEnabled(true);
+                // Research finished: the button becomes "Show report" instead of
+                // restarting, and the summary is shown only on tap.
+                final String summary = reportSummary;
+                final String reportPath = path;
+                btnRestartResearch.setAlt(R.string.settings_research_show_report,
+                        v -> showResearchSummaryDialog(summary, reportPath));
                 if (firstLaunchResearch) {
                     firstLaunchResearch = false;
                     List<String> added = new ArrayList<>();
@@ -4043,7 +4073,6 @@ public class MainActivity extends BaseLocalizedActivity {
                             getString(R.string.settings_research_recommend, cur, autoProfile),
                             Toast.LENGTH_LONG).show();
                 }
-                showResearchSummaryDialog(reportSummary, path);
             });
         }).start();
     }
@@ -4123,12 +4152,19 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void showResearchSummaryDialog(String message, String path) {
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
             .setTitle(R.string.settings_vehicle_research)
             .setMessage(message)
             .setPositiveButton(android.R.string.ok, null)
             .setNeutralButton(R.string.send_log, (d, w) -> sendResearchLog(path))
-            .show();
+            .create();
+        // Viewing the report returns the button to "Restart research".
+        dialog.setOnDismissListener(d -> {
+            if (btnRestartResearch != null && !btnRestartResearch.isBusy()) {
+                btnRestartResearch.setIdle(R.string.settings_research_restart, v -> runVehicleResearch());
+            }
+        });
+        dialog.show();
     }
 
     private void sendResearchLog(String path) {
@@ -4672,19 +4708,13 @@ public class MainActivity extends BaseLocalizedActivity {
     private void runUpdateCheck(boolean quiet, boolean toastUpToDate) {
         if (!quiet) {
             Toast.makeText(this, R.string.update_checking, Toast.LENGTH_SHORT).show();
+            if (btnCheckUpdate != null) btnCheckUpdate.startBusy(R.string.update_checking, 0);
         }
         new Thread(() -> {
             UpdateChecker.UpdateInfo info = null;
+            boolean failed = false;
             try {
-                UpdateChecker.UpdateInfo attempt = UpdateDownloader.check(this, AppConfig.getUpdateChannel(this));
-                if (attempt == null) {
-                    if (toastUpToDate) {
-                        runOnUiThread(() -> Toast.makeText(this,
-                                R.string.update_up_to_date, Toast.LENGTH_SHORT).show());
-                    }
-                    return;
-                }
-                info = attempt;
+                info = UpdateDownloader.check(this, AppConfig.getUpdateChannel(this));
             } catch (Exception first) {
                 // Device DNS/TLS to the site is flaky — retry once on failure.
                 LogBuffer.w("Main", "update check retry after: " + first.getMessage());
@@ -4693,20 +4723,52 @@ public class MainActivity extends BaseLocalizedActivity {
                     info = UpdateDownloader.check(this, AppConfig.getUpdateChannel(this));
                 } catch (Exception e) {
                     LogBuffer.w("Main", "update check: " + e.getMessage());
-                    if (!quiet) {
-                        runOnUiThread(() -> Toast.makeText(this,
-                                R.string.update_check_failed, Toast.LENGTH_LONG).show());
-                    }
-                    return;
+                    failed = true;
                 }
             }
             final UpdateChecker.UpdateInfo result = info;
+            final boolean didFail = failed;
             runOnUiThread(() -> {
                 if (result != null) {
-                    showUpdateDialog(result);
+                    // Remember the published version+sha so a downloaded APK can
+                    // later be offered for install (SHA-verified) without a re-check.
+                    AppConfig.setPendingUpdate(MainActivity.this, result.version, result.sha256);
+                    if (quiet) {
+                        showUpdateDialog(result);
+                    } else {
+                        downloadUpdate(result);
+                    }
+                    return;
+                }
+                if (!quiet) {
+                    refreshUpdateButton();
+                    Toast.makeText(MainActivity.this, didFail
+                            ? R.string.update_check_failed : R.string.update_up_to_date,
+                            Toast.LENGTH_SHORT).show();
+                } else if (toastUpToDate) {
+                    Toast.makeText(MainActivity.this, R.string.update_up_to_date, Toast.LENGTH_SHORT).show();
                 }
             });
         }, "update-check").start();
+    }
+
+    /**
+     * Puts the settings update button into its idle state: "Install update" when a
+     * verified APK is already downloaded, otherwise "Check for updates".
+     */
+    private void refreshUpdateButton() {
+        if (btnCheckUpdate == null) return;
+        String version = AppConfig.getPendingUpdateVersion(this);
+        String sha = AppConfig.getPendingUpdateSha(this);
+        if (!version.isEmpty()) {
+            File f = UpdateDownloader.findDownloadedFile(this, -1, version, sha);
+            if (f != null) {
+                btnCheckUpdate.setAlt(R.string.update_install,
+                        v -> UpdateDownloader.installFile(MainActivity.this, f, sha));
+                return;
+            }
+        }
+        btnCheckUpdate.setIdle(R.string.update_check, v -> checkForUpdate(true));
     }
 
     private void showUpdateDialog(UpdateChecker.UpdateInfo info) {
@@ -4987,49 +5049,56 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void downloadUpdate(UpdateChecker.UpdateInfo info) {
-        // Reuse an already-landed copy (e.g. install failed earlier) before
-        // downloading again.
+        // A verified copy already on disk: offer it for install instead of
+        // downloading again — the settings button becomes "Install update".
         File existing = UpdateDownloader.findDownloadedFile(this, -1, info.version, info.sha256);
         LogBuffer.i("Main", "update: version=" + info.version + " size=" + info.size
                 + " sha256=" + info.sha256 + " existing=" + existing
                 + (existing != null ? " length=" + existing.length() : ""));
         if (existing != null) {
-            if (UpdateDownloader.installFile(this, existing, info.sha256)) {
-                LogBuffer.i("Main", "update: installing already-downloaded " + existing);
-                return;
+            final File file = existing;
+            if (btnCheckUpdate != null) {
+                btnCheckUpdate.setAlt(R.string.update_install,
+                        v -> UpdateDownloader.installFile(MainActivity.this, file, info.sha256));
             }
-            LogBuffer.w("Main", "update: existing file not installable, re-downloading");
-        } else {
-            LogBuffer.i("Main", "update: no already-downloaded file, starting download");
+            return;
         }
 
-        // Non-blocking progress notification instead of a modal dialog.
+        // Button becomes the download indicator; a notification mirrors it.
+        if (btnCheckUpdate != null) btnCheckUpdate.startBusy(R.string.update_downloading, 100);
         TaskNotifier.progress(this, getString(R.string.update_downloading, "0%"), "", 0, 100);
         new Thread(() -> {
             try {
                 File apk = UpdateDownloader.download(this, info, (done, total) ->
                         runOnUiThread(() -> {
                             int pct = total > 0 ? (int) (done * 100 / total) : 0;
+                            if (btnCheckUpdate != null) {
+                                btnCheckUpdate.setProgress(pct, 100);
+                                btnCheckUpdate.setBusyLabel(getString(R.string.update_downloading,
+                                        total > 0 ? pct + "%" : "..."));
+                            }
                             TaskNotifier.progress(this, getString(R.string.update_downloading,
                                     total > 0 ? pct + "%" : "..."), "", pct, 100);
                         }));
                 LogBuffer.i("Main", "update: download returned " + apk + " length="
                         + (apk == null ? -1 : apk.length()));
-                if (!UpdateDownloader.installFile(this, apk, info.sha256)) {
-                    LogBuffer.e("Main", "update: install refused/failed for " + apk
-                            + " — showing update_install_failed toast");
-                    runOnUiThread(() -> {
-                        TaskNotifier.clear(this);
-                        Toast.makeText(this, R.string.update_install_failed, Toast.LENGTH_LONG).show();
-                    });
-                } else {
-                    runOnUiThread(() -> TaskNotifier.clear(this));
-                }
+                final File apkFile = apk;
+                runOnUiThread(() -> {
+                    TaskNotifier.clear(this);
+                    if (apkFile != null && btnCheckUpdate != null) {
+                        btnCheckUpdate.setAlt(R.string.update_install,
+                                v -> UpdateDownloader.installFile(MainActivity.this, apkFile, info.sha256));
+                    } else {
+                        refreshUpdateButton();
+                        Toast.makeText(this, R.string.update_download_failed, Toast.LENGTH_LONG).show();
+                    }
+                });
             } catch (Exception e) {
                 LogBuffer.e("Main", "update download failed: " + e.getClass().getSimpleName()
                         + ": " + e.getMessage() + " — showing update_download_failed toast");
                 runOnUiThread(() -> {
                     TaskNotifier.clear(this);
+                    refreshUpdateButton();
                     Toast.makeText(this, R.string.update_download_failed, Toast.LENGTH_LONG).show();
                 });
             }
