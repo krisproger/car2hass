@@ -81,6 +81,7 @@ public final class LogManager {
     public void flushNow() {
         try {
             buffer.flush();
+            LogBuffer.flush();
             maybeAutoUpload();
         } catch (Exception e) {
             LogBuffer.e("LogManager", "flush: " + e.getMessage());

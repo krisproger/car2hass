@@ -149,6 +149,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private final View[] settingsSections = new View[8];
     private ProgressActionButton btnRestartResearch;
     private ProgressActionButton btnCheckUpdate;
+    private UpdateController updateController;
 
     private String pendingResearchPath = null;
     private final Map<String, TextView> channelStatusViews = new HashMap<>();
@@ -352,7 +353,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
             // Quiet auto-update check on every open: dialog only when an
             // update is actually available (no "up to date" toast).
-            autoCheckUpdate();
+            if (updateController != null) updateController.autoCheck();
 
             safeCall("setupBottomNavigation", this::setupBottomNavigation);
             safeCall("setupDashboard", this::setupDashboard);
@@ -3787,8 +3788,9 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsView.findViewById(R.id.btnExportConfig).setOnClickListener(v -> exportConfig());
         settingsView.findViewById(R.id.btnImportConfig).setOnClickListener(v -> importConfig());
         btnCheckUpdate = settingsView.findViewById(R.id.btnCheckUpdate);
-        refreshUpdateButton();
-        setupUpdateChannelSpinner(settingsView);
+        updateController = new UpdateController(this, btnCheckUpdate, this::showUpdateDialog);
+        updateController.refreshButton();
+        updateController.setupChannelSpinner(settingsView);
         settingsView.findViewById(R.id.btnRequestPermissions).setOnClickListener(v -> {
             // Re-request even if previously denied: the cached denial is cleared.
             AppConfig.clearDeniedPermissions(this);
@@ -4677,106 +4679,6 @@ public class MainActivity extends BaseLocalizedActivity {
 
     private static final String ABOUT_PROJECT_URL = "https://mytechnic.ru/cartelemetry/";
     private static final String ABOUT_TELEGRAM_URL = "https://t.me/bydiplus2hass";
-
-    /** Site-based update check (BYDMate-style): dialog with notes and APK download. */
-    /** Quiet check on app open: shows the update dialog only when available. */
-    private void autoCheckUpdate() {
-        if (UpdateDownloader.checkedRecently(this)) return;
-        runUpdateCheck(true, false);
-    }
-
-    /** Site-based update check (BYDMate-style): dialog with notes and APK download. */
-    private void checkForUpdate(boolean force) {
-        if (!force && UpdateDownloader.checkedRecently(this)) return;
-        runUpdateCheck(false, true);
-    }
-
-    /** Wires the update-channel spinner (stable/beta) in the tech settings section. */
-    private void setupUpdateChannelSpinner(View settingsView) {
-        Spinner spinner = settingsView.findViewById(R.id.spUpdateChannel);
-        final String[] channelValues = {"stable", "beta"};
-        ArrayAdapter<CharSequence> adapter = new ArrayAdapter<>(this,
-                android.R.layout.simple_spinner_item,
-                new String[]{getString(R.string.settings_update_channel_stable),
-                        getString(R.string.settings_update_channel_beta)});
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-        spinner.setAdapter(adapter);
-        String current = AppConfig.getUpdateChannel(this);
-        spinner.setSelection("beta".equals(current) ? 1 : 0);
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-                AppConfig.setUpdateChannel(MainActivity.this, channelValues[pos]);
-            }
-            @Override public void onNothingSelected(AdapterView<?> parent) { }
-        });
-    }
-
-    private void runUpdateCheck(boolean quiet, boolean toastUpToDate) {
-        if (!quiet) {
-            Toast.makeText(this, R.string.update_checking, Toast.LENGTH_SHORT).show();
-            if (btnCheckUpdate != null) btnCheckUpdate.startBusy(R.string.update_checking, 0);
-        }
-        new Thread(() -> {
-            UpdateChecker.UpdateInfo info = null;
-            boolean failed = false;
-            try {
-                info = UpdateDownloader.check(this, AppConfig.getUpdateChannel(this));
-            } catch (Exception first) {
-                // Device DNS/TLS to the site is flaky — retry once on failure.
-                LogBuffer.w("Main", "update check retry after: " + first.getMessage());
-                try { Thread.sleep(2000); } catch (InterruptedException ie) { return; }
-                try {
-                    info = UpdateDownloader.check(this, AppConfig.getUpdateChannel(this));
-                } catch (Exception e) {
-                    LogBuffer.w("Main", "update check: " + e.getMessage());
-                    failed = true;
-                }
-            }
-            final UpdateChecker.UpdateInfo result = info;
-            final boolean didFail = failed;
-            runOnUiThread(() -> {
-                if (result != null) {
-                    // Remember the published version+sha so a downloaded APK can
-                    // later be offered for install (SHA-verified) without a re-check.
-                    AppConfig.setPendingUpdate(MainActivity.this, result.version, result.sha256);
-                    if (quiet) {
-                        showUpdateDialog(result);
-                    } else {
-                        downloadUpdate(result);
-                    }
-                    return;
-                }
-                if (!quiet) {
-                    refreshUpdateButton();
-                    Toast.makeText(MainActivity.this, didFail
-                            ? R.string.update_check_failed : R.string.update_up_to_date,
-                            Toast.LENGTH_SHORT).show();
-                } else if (toastUpToDate) {
-                    Toast.makeText(MainActivity.this, R.string.update_up_to_date, Toast.LENGTH_SHORT).show();
-                }
-            });
-        }, "update-check").start();
-    }
-
-    /**
-     * Puts the settings update button into its idle state: "Install update" when a
-     * verified APK is already downloaded, otherwise "Check for updates".
-     */
-    private void refreshUpdateButton() {
-        if (btnCheckUpdate == null) return;
-        String version = AppConfig.getPendingUpdateVersion(this);
-        String sha = AppConfig.getPendingUpdateSha(this);
-        if (!version.isEmpty()) {
-            File f = UpdateDownloader.findDownloadedFile(this, -1, version, sha);
-            if (f != null) {
-                btnCheckUpdate.setAlt(R.string.update_install,
-                        v -> UpdateDownloader.installFile(MainActivity.this, f, sha));
-                return;
-            }
-        }
-        btnCheckUpdate.setIdle(R.string.update_check, v -> checkForUpdate(true));
-    }
-
     private void showUpdateDialog(UpdateChecker.UpdateInfo info) {
         String notes = info.notes(UpdateDownloader.uiLanguage(this));
         String text = getString(R.string.update_available, info.version)
@@ -4805,7 +4707,7 @@ public class MainActivity extends BaseLocalizedActivity {
         content.addView(tvCaption);
 
         showScrollDialog(R.string.update_check, content,
-                R.string.update_download, (d, w) -> downloadUpdate(info),
+                R.string.update_download, (d, w) -> updateController.download(info),
                 android.R.string.cancel, null);
     }
 
@@ -5053,64 +4955,6 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         return 0xFFFFFFFF;
     }
-
-    private void downloadUpdate(UpdateChecker.UpdateInfo info) {
-        // A verified copy already on disk: offer it for install instead of
-        // downloading again — the settings button becomes "Install update".
-        File existing = UpdateDownloader.findDownloadedFile(this, -1, info.version, info.sha256);
-        LogBuffer.i("Main", "update: version=" + info.version + " size=" + info.size
-                + " sha256=" + info.sha256 + " existing=" + existing
-                + (existing != null ? " length=" + existing.length() : ""));
-        if (existing != null) {
-            final File file = existing;
-            if (btnCheckUpdate != null) {
-                btnCheckUpdate.setAlt(R.string.update_install,
-                        v -> UpdateDownloader.installFile(MainActivity.this, file, info.sha256));
-            }
-            return;
-        }
-
-        // Button becomes the download indicator; a notification mirrors it.
-        if (btnCheckUpdate != null) btnCheckUpdate.startBusy(R.string.update_downloading, 100);
-        TaskNotifier.progress(this, getString(R.string.update_downloading, "0%"), "", 0, 100);
-        new Thread(() -> {
-            try {
-                File apk = UpdateDownloader.download(this, info, (done, total) ->
-                        runOnUiThread(() -> {
-                            int pct = total > 0 ? (int) (done * 100 / total) : 0;
-                            if (btnCheckUpdate != null) {
-                                btnCheckUpdate.setProgress(pct, 100);
-                                btnCheckUpdate.setBusyLabel(getString(R.string.update_downloading,
-                                        total > 0 ? pct + "%" : "..."));
-                            }
-                            TaskNotifier.progress(this, getString(R.string.update_downloading,
-                                    total > 0 ? pct + "%" : "..."), "", pct, 100);
-                        }));
-                LogBuffer.i("Main", "update: download returned " + apk + " length="
-                        + (apk == null ? -1 : apk.length()));
-                final File apkFile = apk;
-                runOnUiThread(() -> {
-                    TaskNotifier.clear(this);
-                    if (apkFile != null && btnCheckUpdate != null) {
-                        btnCheckUpdate.setAlt(R.string.update_install,
-                                v -> UpdateDownloader.installFile(MainActivity.this, apkFile, info.sha256));
-                    } else {
-                        refreshUpdateButton();
-                        Toast.makeText(this, R.string.update_download_failed, Toast.LENGTH_LONG).show();
-                    }
-                });
-            } catch (Exception e) {
-                LogBuffer.e("Main", "update download failed: " + e.getClass().getSimpleName()
-                        + ": " + e.getMessage() + " — showing update_download_failed toast");
-                runOnUiThread(() -> {
-                    TaskNotifier.clear(this);
-                    refreshUpdateButton();
-                    Toast.makeText(this, R.string.update_download_failed, Toast.LENGTH_LONG).show();
-                });
-            }
-        }, "update-download").start();
-    }
-
     private void showAboutDialog() {
         View content = getLayoutInflater().inflate(R.layout.activity_about, null, false);
         try {

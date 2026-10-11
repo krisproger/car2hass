@@ -151,12 +151,43 @@ public class DashboardAdapter extends BaseAdapter {
             vh.gaugeArc = convertView.findViewById(R.id.tileGaugeArc);
             vh.gaugeNeedle = convertView.findViewById(R.id.tileGaugeNeedle);
             vh.graphCanvas = convertView.findViewById(R.id.tileGraphCanvas);
+            // Listeners are set once per recycled view; they read the current
+            // tile/position from the holder (updated below) instead of allocating
+            // a new listener on every bind.
+            convertView.setOnTouchListener((v, event) -> {
+                int action = event.getAction();
+                if (action == MotionEvent.ACTION_DOWN || action == MotionEvent.ACTION_UP) {
+                    vh.lastTouchX = event.getX();
+                    vh.lastTouchY = event.getY();
+                }
+                return false;
+            });
+            convertView.setOnClickListener(v -> {
+                if (clickListener != null && vh.tile != null) {
+                    clickListener.onTileClick(vh.tile, vh.position, v, vh.lastTouchX, vh.lastTouchY);
+                }
+            });
+            convertView.setOnLongClickListener(v -> {
+                if (longClickListener != null && vh.tile != null) {
+                    longClickListener.onTileLongClick(vh.tile);
+                }
+                return true;
+            });
+            if (vh.deleteBadge != null) {
+                vh.deleteBadge.setOnClickListener(v -> {
+                    if (deleteListener != null && vh.tile != null) {
+                        deleteListener.onTileDelete(vh.tile, vh.position);
+                    }
+                });
+            }
             convertView.setTag(vh);
         } else {
             vh = (ViewHolder) convertView.getTag();
         }
 
         DashboardTile tile = tiles.get(position);
+        vh.position = position;
+        vh.tile = tile;
         // Prefer a PNG icon (filesDir override -> bundled asset); fall back to emoji.
         Bitmap iconBitmap = tile.iconName != null && !tile.iconName.isEmpty()
                 ? PresetIconResolver.resolve(context, tile.iconName) : null;
@@ -228,38 +259,6 @@ public class DashboardAdapter extends BaseAdapter {
             vh.graphCanvas.setVisibility(View.GONE);
         }
 
-        convertView.setOnTouchListener((v, event) -> {
-            int action = event.getAction();
-            if (action == MotionEvent.ACTION_DOWN) {
-                vh.lastTouchX = event.getX();
-                vh.lastTouchY = event.getY();
-                // Do NOT requestDisallowInterceptTouchEvent here: the GridView must
-                // stay free to take over the gesture once it turns into a scroll
-                // (touch slop exceeded) — otherwise swipes starting on a tile never
-                // scroll the dashboard. Clicks/long-clicks still reach the tile
-                // because the grid only intercepts real scrolls.
-            } else if (action == MotionEvent.ACTION_UP) {
-                vh.lastTouchX = event.getX();
-                vh.lastTouchY = event.getY();
-            }
-            return false;
-        });
-        convertView.setOnClickListener(v -> {
-            if (clickListener != null) {
-                clickListener.onTileClick(tile, position, v, vh.lastTouchX, vh.lastTouchY);
-            }
-        });
-        convertView.setOnLongClickListener(v -> {
-            if (longClickListener != null) longClickListener.onTileLongClick(tile);
-            return true;
-        });
-
-        if (vh.deleteBadge != null) {
-            vh.deleteBadge.setOnClickListener(v -> {
-                if (deleteListener != null) deleteListener.onTileDelete(tile, position);
-            });
-        }
-
         return convertView;
     }
 
@@ -268,6 +267,8 @@ public class DashboardAdapter extends BaseAdapter {
         ImageView iconImage, zoneLeft, zoneRight;
         View gaugeArc, gaugeNeedle, graphCanvas;
         float lastTouchX, lastTouchY;
+        int position;
+        DashboardTile tile;
     }
 
     /** Parse a numeric value string to a 0-1 fraction for gauge needle rotation. */

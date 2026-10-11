@@ -274,14 +274,17 @@ class DiagnosticsSensor(SensorEntity, RestoreEntity):
             }
             if car_signals:
                 self._attr_available = True
-                attrs = {}
-                for key, value in car_signals.items():
-                    if key in NATIVE_SENSORS:
-                        continue
-                    attrs[key] = value
-                self._attr_extra_state_attributes = attrs
-                self._attr_native_value = len(car_signals)
-            self.async_write_ha_state()
+                attrs = {key: value for key, value in car_signals.items()
+                         if key not in NATIVE_SENSORS}
+                count = len(car_signals)
+                # Write only when something actually changed — otherwise a steady
+                # car would rewrite ~146 attributes (and churn the recorder) on
+                # every single telemetry message.
+                if (attrs != self._attr_extra_state_attributes
+                        or count != self._attr_native_value):
+                    self._attr_extra_state_attributes = attrs
+                    self._attr_native_value = count
+                    self.async_write_ha_state()
 
         self.async_on_remove(
             async_dispatcher_connect(self.hass, entry_signal(self._entry_id), update)

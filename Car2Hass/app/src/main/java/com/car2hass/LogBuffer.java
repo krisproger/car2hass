@@ -116,8 +116,21 @@ public class LogBuffer {
         }
     }
 
+    /** Pending file lines, flushed in batches instead of once per line. */
+    private static final StringBuilder pendingFile = new StringBuilder();
+    private static final int FILE_FLUSH_BYTES = 16 * 1024;
+
     private static void appendToFile(String line) {
         if (!fileEnabled || appContext == null) return;
+        pendingFile.append(line).append('\n');
+        if (pendingFile.length() >= FILE_FLUSH_BYTES) {
+            writePendingFile();
+        }
+    }
+
+    /** Writes buffered lines to the file (rotating first when oversized). */
+    private static void writePendingFile() {
+        if (!fileEnabled || appContext == null || pendingFile.length() == 0) return;
         try {
             File logFile = new File(appContext.getFilesDir(), LOG_FILE);
             if (logFile.exists() && logFile.length() > MAX_FILE_BYTES) {
@@ -126,9 +139,10 @@ public class LogBuffer {
             try (FileOutputStream fos = new FileOutputStream(logFile, true);
                  OutputStreamWriter osw = new OutputStreamWriter(fos, "UTF-8");
                  PrintWriter pw = new PrintWriter(osw)) {
-                pw.println(line);
+                pw.print(pendingFile);
                 pw.flush();
             }
+            pendingFile.setLength(0);
         } catch (Exception e) {
             // Do not recurse into logging; silently disable file output if it fails.
             android.util.Log.w("LogBuffer", "File write failed: " + e.getMessage());
@@ -153,6 +167,7 @@ public class LogBuffer {
      */
     public static synchronized String getFileLogText() {
         if (appContext == null) return "";
+        writePendingFile();
         StringBuilder sb = new StringBuilder();
         File old = new File(appContext.getFilesDir(), OLD_LOG_FILE);
         File current = new File(appContext.getFilesDir(), LOG_FILE);
@@ -176,9 +191,8 @@ public class LogBuffer {
     }
 
     public static synchronized void flush() {
-        // File is already flushed per-line; this method logs the current buffer size
-        // and can be called at lifecycle boundaries to ensure writers reopen cleanly.
-        android.util.Log.d("LogBuffer", "flush called, bytes=" + currentBytes);
+        // Persist any buffered lines (called at lifecycle boundaries / periodically).
+        writePendingFile();
     }
 
     public static synchronized List<String> getBuffer() {
