@@ -5,6 +5,7 @@ from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from . import SIGNAL_VEHICLE_DATA_UPDATED, entry_signal, async_enqueue_command
+from . import core
 from .commands import NUMBER_COMMANDS, NumberCommand
 from .const import DOMAIN
 
@@ -29,7 +30,7 @@ class CarTelemetryNumber(NumberEntity, RestoreEntity):
         self._cmd = cmd
         self._entry_id = config_entry.entry_id
         self._car_name = car_name
-        self._attr_name = f"{car_name} {cmd.name}"
+        self._attr_name = f"{car_name} {core.display_name(cmd.name, cmd.unit)}"
         self._attr_unique_id = f"{config_entry.entry_id}_number_{cmd.key}"
         self._attr_should_poll = False
         self._attr_native_min_value = cmd.min_value

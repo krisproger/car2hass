@@ -84,6 +84,18 @@ def _str_or_none(value):
     return text or None
 
 
+def display_name(name: str, unit: str | None) -> str:
+    """Entity name without a trailing unit parenthetical.
+
+    The registry names often carry the unit (e.g. "Speed (km/h)") while HA shows
+    the unit separately, producing "Speed (km/h) km/h". Strip the parenthetical
+    only when it equals the sensor's unit, so non-unit parentheses are kept.
+    """
+    if name and unit and name.endswith(f"({unit})"):
+        return name[: -(len(unit) + 2)].strip()
+    return name
+
+
 def parse_device(dev) -> dict:
     """Normalize the top-level ``dev`` descriptor carried by a telemetry POST.
 

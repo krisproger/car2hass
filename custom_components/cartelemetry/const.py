@@ -29,7 +29,7 @@ NATIVE_SENSORS = {'ac_set_temp', 'ac_state', 'app_version', 'battery_12v_voltage
 
 CONF_CAR_NAME = "car_name"
 
-INTEGRATION_VERSION = "3.5.3-beta.2"
+INTEGRATION_VERSION = "3.5.3-beta.3"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.
@@ -1363,6 +1363,9 @@ BINARY_SENSORS = {
 # Map from binary sensor key → list of "truthy" string values
 # Used by binary_sensor.py _value_to_bool()
 BINARY_ON_MAP: dict[str, list[str]] = {'power_state': ['on', 'driving'], 'driver_seatbelt': ['buckled'], 'remote_lock_state': ['locked'], 'charging_state': ['Ready', 'started', 'charging', 'full'], 'left_turn': ['on', 'open'], 'right_turn': ['on', 'open'], 'driver_door_lock': ['locked'], 'passenger_seatbelt_warning': ['alarm'], 'seatbelt_2nd_left': ['buckled'], 'seatbelt_2nd_right': ['buckled'], 'seatbelt_2nd_center': ['buckled'], 'ac_state': ['on', 'open'], 'ac_recirculation': ['recirculation', 'recirc'], 'driver_door': ['open', 'on'], 'passenger_door': ['open', 'on'], 'rear_left_door': ['open', 'on'], 'rear_right_door': ['open', 'on'], 'bonnet': ['open', 'on'], 'trunk': ['open', 'on'], 'fuel_charge_flap': ['open', 'on'], 'auto_hold': ['active'], 'rear_left_approach_warning': ['car approaching', 'alarm'], 'rear_right_approach_warning': ['car approaching', 'alarm'], 'lane_keep_state': ['active1', 'active2'], 'rear_left_door_lock': ['locked'], 'passenger_door_lock': ['locked'], 'rear_right_door_lock': ['locked'], 'trunk_lock': ['locked'], 'rear_left_child_lock': ['locked'], 'rear_right_child_lock': ['locked'], 'sidelights': ['on', 'open'], 'low_beam': ['on', 'open'], 'high_beam': ['on', 'open'], 'front_fog': ['on', 'open'], 'rear_fog': ['on', 'open'], 'footwell_light': ['on', 'open'], 'drl': ['on', 'open'], 'hazard': ['on', 'open'], 'passenger_seatbelt': ['buckled'], 'turn_signal': ['left', 'left2', 'right', 'right2', 'hazard', 'emergency', 'rear flash', 'flash'], 'surround_view_state': ['shown'], 'wifi_state': ['connected'], 'bluetooth_state': ['connected'], 'dashcam_state': ['running'], 'wireless_adb_switch': ['on'], 'online': ['on'], 'windows_all_state': ['open', 'on'], 'doors_all_state': ['open', 'on'], 'doors_all_lock': ['locked'], 'phone_is_charging': ['true'], 'phone_wifi_state': ['enabled'], 'phone_hotspot_state': ['true'], 'phone_doze': ['true'], 'phone_interactive': ['true'], 'phone_power_save': ['true'], 'phone_is_headphones': ['true'], 'phone_is_mic_muted': ['true'], 'phone_is_speakerphone_on': ['true'], 'phone_is_music_active': ['true']}
+
+# Universal core sensors (open contract) — enabled by default in HA.
+CORE_SENSORS = ['ac_state', 'bonnet', 'charging_state', 'device_battery', 'driver_door', 'driver_door_lock', 'engine_rpm', 'gear', 'location_accuracy', 'location_altitude', 'location_bearing', 'location_lat', 'location_lon', 'location_provider', 'location_speed', 'outside_temp', 'passenger_door', 'passenger_door_lock', 'power_state', 'range', 'rear_left_door', 'rear_left_door_lock', 'rear_right_door', 'rear_right_door_lock', 'remote_lock_state', 'soc', 'speed', 'sunroof', 'trunk', 'window_fl', 'window_fr', 'window_rl', 'window_rr']
 
 # Dynamic geofence virtual sensors sent by the Android app.
 # Keys look like "geo_<zoneId>" with values "inside"/"outside"; the optional

@@ -20,6 +20,7 @@ from .const import (
     GEOFENCE_NAME_SUFFIX,
     GEOFENCE_ON_VALUES,
     ONLINE_OFFLINE_SECONDS,
+    CORE_SENSORS,
 )
 from .device_info import build_device_info, build_phone_device_info
 from . import core
@@ -112,7 +113,8 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
         # disabled-by-default and are enabled on their first data. Phone
         # sensors only exist once phone mode is enabled, so they start enabled.
         self._attr_entity_registry_enabled_default = (
-            True if phone else signal_key.startswith(GEOFENCE_KEY_PREFIX)
+            True if phone
+            else signal_key.startswith(GEOFENCE_KEY_PREFIX) or signal_key in CORE_SENSORS
         )
         self._attr_is_on = None
         self._attr_available = False

@@ -108,7 +108,6 @@ class CarTelemetryClimate(ClimateEntity, RestoreEntity):
                 truthy = BINARY_ON_MAP.get("ac_state", ["on", "open"])
                 ac_on = str(ac_raw).lower() in truthy
                 self._attr_hvac_mode = HVACMode.HEAT_COOL if ac_on else HVACMode.OFF
-                self._attr_hvac_action = HVACAction.COOLING if ac_on else HVACAction.OFF
 
             cabin = signals.get("cabin_temp")
             if cabin is not None:
@@ -123,6 +122,17 @@ class CarTelemetryClimate(ClimateEntity, RestoreEntity):
                     self._attr_target_temperature = float(target)
                 except (ValueError, TypeError):
                     pass
+
+            # Derive the action from set vs current temperature (was hardcoded COOLING).
+            if self._attr_hvac_mode == HVACMode.OFF:
+                self._attr_hvac_action = HVACAction.OFF
+            else:
+                cur = self._attr_current_temperature
+                tgt = self._attr_target_temperature
+                if cur is not None and tgt is not None and abs(tgt - cur) > 0.5:
+                    self._attr_hvac_action = HVACAction.HEATING if tgt > cur else HVACAction.COOLING
+                else:
+                    self._attr_hvac_action = HVACAction.FAN
 
             fan = signals.get("fan_speed")
             if fan is not None:

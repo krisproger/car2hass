@@ -9,17 +9,14 @@ from homeassistant.util import dt as dt_util
 from .const import DOMAIN
 
 from .const import NUMERIC_SENSORS, ENUM_SENSORS, NATIVE_SENSORS, CONF_CAR_NAME, INTEGRATION_VERSION
+from .const import CORE_SENSORS
 from .device_info import build_device_info, build_phone_device_info
 from . import core
 from . import SIGNAL_VEHICLE_DATA_UPDATED, entry_signal, async_replay_state
 
-# Core signals are always present on any device and enabled from the start;
-# every other sensor starts disabled-by-default and is enabled on first data.
-_CORE_SIGNALS = {
-    "power_state", "app_version", "device_battery",
-    "location_lat", "location_lon", "location_speed", "location_bearing",
-    "location_altitude", "location_accuracy", "location_provider",
-}
+# Core signals (open contract) are enabled from the start; every other sensor
+# starts disabled-by-default and is enabled on first data.
+_CORE_SIGNALS = CORE_SENSORS
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -77,7 +74,7 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
         self._is_phone = phone
         self._is_numeric = signal_key in NUMERIC_SENSORS
         label = (device_name or "Phone") if phone else car_name
-        self._attr_name = f"{label} {config['name']}"
+        self._attr_name = f"{label} {core.display_name(config['name'], config.get('unit'))}"
         self._attr_unique_id = f"{config_entry.entry_id}_{signal_key}"
         self._attr_native_unit_of_measurement = config.get("unit") or None
         self._attr_device_class = config.get("device_class")

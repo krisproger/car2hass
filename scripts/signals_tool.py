@@ -256,7 +256,7 @@ def cmd_gen_java(args):
     print(f"Updated {SIGNAL_TRANSLATOR} value trans and enum labels")
 
 
-def _build_const_snippets(signals):
+def _build_const_snippets(signals, core_keys=None):
     numeric = {}
     enum = {}
     binary = {}
@@ -383,6 +383,9 @@ def _build_const_snippets(signals):
     lines.append('# Used by binary_sensor.py _value_to_bool()')
     lines.append("BINARY_ON_MAP: dict[str, list[str]] = " + repr(binary_on_map))
     lines.append("")
+    lines.append("# Universal core sensors (open contract) — enabled by default in HA.")
+    lines.append("CORE_SENSORS = " + repr(sorted(core_keys or [])))
+    lines.append("")
     lines.append("# Dynamic geofence virtual sensors sent by the Android app.")
     lines.append('# Keys look like "geo_<zoneId>" with values "inside"/"outside"; the optional')
     lines.append('# companion key "geo_<zoneId>_name" carries the user-defined zone name.')
@@ -412,7 +415,17 @@ def _integration_version():
 
 def cmd_gen_py(args):
     signals = _load_yaml()
-    snippet = _build_const_snippets(signals)
+    # Core keys come from the generated registry (the open contract).
+    core_keys = []
+    registry = ROOT / "Car2Hass" / "app" / "src" / "main" / "assets" / "sensors_registry.json"
+    if registry.exists():
+        try:
+            import json as _json
+            data = _json.loads(registry.read_text(encoding="utf-8"))
+            core_keys = [s.get("key") for s in data.get("sensors", []) if s.get("core") and s.get("key")]
+        except Exception:
+            core_keys = []
+    snippet = _build_const_snippets(signals, core_keys)
     if args.stdout:
         print(snippet)
         return

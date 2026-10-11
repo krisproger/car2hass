@@ -105,7 +105,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private boolean firstLaunchResearch = false;
     private Button btnSendLog;
     private android.widget.ProgressBar pbSendLog;
-    private boolean logUploadInProgress;
+    private LogSendController logSendController;
     private CheckBox checkSelectAll;
     private CheckBox headerCheckAll;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -390,6 +390,16 @@ public class MainActivity extends BaseLocalizedActivity {
         queueBar = findViewById(R.id.queueBar);
         btnSendLog = findViewById(R.id.btnSendLog);
         pbSendLog = findViewById(R.id.pbSendLog);
+        logSendController = new LogSendController(this, new LogSendController.Host() {
+            @Override public Button sendButton() { return btnSendLog; }
+            @Override public android.widget.ProgressBar sendProgress() { return pbSendLog; }
+            @Override public String takeResearchPath() { return MainActivity.this.takeResearchPath(); }
+            @Override public String buildIdentifier() { return buildLogIdentifier(); }
+            @Override public void flushQueue() { flushUploadQueue(); }
+            @Override public void post(Runnable r) { handler.post(r); }
+            @Override public void toast(int res) { Toast.makeText(MainActivity.this, res, Toast.LENGTH_LONG).show(); }
+            @Override public String str(int res) { return getString(res); }
+        });
     }
 
     private void initContentViews() {
@@ -837,7 +847,7 @@ public class MainActivity extends BaseLocalizedActivity {
             .setTitle(R.string.log_export_server)
             .setView(box)
             .setPositiveButton(android.R.string.ok, (d, w) ->
-                    uploadLogToServer(edit.getText().toString().trim()))
+                    logSendController.upload(edit.getText().toString().trim()))
             .setNegativeButton(android.R.string.cancel, null)
             .show();
     }
@@ -863,66 +873,6 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         return sb.toString();
     }
-
-    private void uploadLogToServer(String message) {
-        final String logPath = takeResearchPath();
-        final String msg = message != null && !message.isEmpty()
-                ? message : buildLogIdentifier();
-        final String logTitle = getString(R.string.upload_log_title);
-        LogBuffer.i("Main", "uploadLogToServer: path=" + logPath + " msg=" + msg);
-        // The send button becomes an inline progress bar and cannot be pressed
-        // again until the current log finishes uploading.
-        if (logUploadInProgress) return;
-        logUploadInProgress = true;
-        if (btnSendLog != null) btnSendLog.setVisibility(View.GONE);
-        if (pbSendLog != null) { pbSendLog.setIndeterminate(true); pbSendLog.setVisibility(View.VISIBLE); }
-        TaskNotifier.progress(this, logTitle, getString(R.string.upload_in_progress), 0, 0);
-        // Also push the DB log (the real, complete log) right away — the file queue
-        // above is the legacy path and may be empty/stale.
-        try {
-            com.car2hass.LogManager lm = com.car2hass.LogManager.get();
-            if (lm != null) lm.uploadNow();
-        } catch (Exception e) {
-            LogBuffer.e("Main", "uploadLogToServer: db upload trigger: " + e.getMessage());
-        }
-        new Thread(() -> {
-            try {
-                String anonId = com.car2hass.vehicle.DeviceAnon.fromContext(this);
-                final String entryId = UploadQueue.enqueue(this, UploadQueue.KIND_LOG,
-                        AppInfo.getVersionString(this), anonId, msg, logPath);
-                LogBuffer.i("Main", "uploadLogToServer: enqueued " + entryId);
-                flushUploadQueue();
-                LogBuffer.i("Main", "uploadLogToServer: flush done");
-                handler.post(() -> {
-                    boolean stillPending = false;
-                    for (UploadQueue.Entry e : UploadQueue.load(this)) {
-                        if (entryId.equals(e.id)) { stillPending = true; break; }
-                    }
-                    LogBuffer.i("Main", "uploadLogToServer: stillPending=" + stillPending);
-                    TaskNotifier.done(this, logTitle, getString(stillPending
-                            ? R.string.upload_failed : R.string.log_server_ok));
-                    restoreSendLogButton();
-                    Toast.makeText(this, stillPending
-                            ? R.string.log_server_pending : R.string.log_server_ok, Toast.LENGTH_LONG).show();
-                });
-            } catch (Exception e) {
-                LogBuffer.e("Main", "uploadLogToServer failed: " + e.getMessage());
-                handler.post(() -> {
-                    TaskNotifier.done(this, logTitle, getString(R.string.upload_failed));
-                    restoreSendLogButton();
-                    Toast.makeText(this, R.string.log_server_error, Toast.LENGTH_LONG).show();
-                });
-            }
-        }, "log-upload").start();
-    }
-
-    /** Returns the send-log button to its idle state after an upload. */
-    private void restoreSendLogButton() {
-        logUploadInProgress = false;
-        if (pbSendLog != null) pbSendLog.setVisibility(View.GONE);
-        if (btnSendLog != null) btnSendLog.setVisibility(View.VISIBLE);
-    }
-
     /** Sends queued logs/research; asks the user when retries run out. */
     private void flushUploadQueue() {
         try {

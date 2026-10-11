@@ -472,7 +472,6 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
   "$SRC/com/car2hass/vehicle/SourceManager.java" \
   "$SRC/com/car2hass/vehicle/SnapshotStore.java" \
   "$SRC/com/car2hass/vehicle/LocationSource.java" \
-  "$SRC/com/car2hass/vehicle/SnapshotQueue.java"
 
 echo "=== Compiling Phase-4 research UI model ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
@@ -507,7 +506,6 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
   "$TEST/com/car2hass/vehicle/SourceManagerTest.java" \
   "$TEST/com/car2hass/vehicle/SnapshotStoreTest.java" \
   "$TEST/com/car2hass/vehicle/LocationSourceTest.java" \
-  "$TEST/com/car2hass/vehicle/SnapshotQueueTest.java"
 
 echo "=== Compiling Phase-4 research UI model test ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
@@ -692,7 +690,6 @@ echo "=== Running Phase-3 source manager tests ==="
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.SourceManagerTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.SnapshotStoreTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.LocationSourceTest
-java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.SnapshotQueueTest
 
 echo "=== Running Phase-4 research UI model test ==="
 java -cp "$OUT:$JSON_JAR" com.car2hass.vehicle.ResearchUiModelTest
