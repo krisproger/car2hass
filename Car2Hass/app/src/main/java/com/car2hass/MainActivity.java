@@ -106,6 +106,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private Button btnSendLog;
     private android.widget.ProgressBar pbSendLog;
     private LogSendController logSendController;
+    private LogExportController logExportController;
     private CheckBox checkSelectAll;
     private CheckBox headerCheckAll;
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -148,6 +149,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private int selectedSettingsSection = 0;
     private final View[] settingsSections = new View[8];
     private ProgressActionButton btnRestartResearch;
+    private ResearchController researchController;
     private ProgressActionButton btnCheckUpdate;
     private UpdateController updateController;
 
@@ -394,7 +396,7 @@ public class MainActivity extends BaseLocalizedActivity {
             @Override public Button sendButton() { return btnSendLog; }
             @Override public android.widget.ProgressBar sendProgress() { return pbSendLog; }
             @Override public String takeResearchPath() { return MainActivity.this.takeResearchPath(); }
-            @Override public String buildIdentifier() { return buildLogIdentifier(); }
+            @Override public String buildIdentifier() { return LogExportController.buildIdentifier(MainActivity.this); }
             @Override public void flushQueue() { flushUploadQueue(); }
             @Override public void post(Runnable r) { handler.post(r); }
             @Override public void toast(int res) { Toast.makeText(MainActivity.this, res, Toast.LENGTH_LONG).show(); }
@@ -783,7 +785,16 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void initListeners() {
-        btnSendLog.setOnClickListener(v -> showLogExportDialog());
+        logExportController = new LogExportController(new LogExportController.Host() {
+            @Override public android.app.Activity activity() { return MainActivity.this; }
+            @Override public void post(Runnable r) { handler.post(r); }
+            @Override public LogSendController logSend() { return logSendController; }
+            @Override public void saveLog() { exportLogSave(); }
+            @Override public void toast(int res) { Toast.makeText(MainActivity.this, res, Toast.LENGTH_SHORT).show(); }
+            @Override public String str(int res) { return getString(res); }
+            @Override public String takeResearchPath() { return MainActivity.this.takeResearchPath(); }
+        });
+        btnSendLog.setOnClickListener(v -> logExportController.showDialog());
         vinText.setOnClickListener(v -> copyToClipboard("VVIN", CANDataReader.sVin));
         firmwareText.setOnClickListener(v -> copyToClipboard("FW", CANDataReader.sFirmware));
         appVersionText.setText(getString(R.string.app_version, AppInfo.getVersionString(this)));
@@ -800,78 +811,6 @@ public class MainActivity extends BaseLocalizedActivity {
         } catch (Exception e) {
             LogBuffer.e("Main", "copyToClipboard failed: " + e.getMessage());
         }
-    }
-
-    private void showLogExportDialog() {
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.log_export_title)
-            .setItems(new String[]{
-                    getString(R.string.log_export_share),
-                    getString(R.string.log_export_save),
-                    getString(R.string.log_export_server)}, (d, which) -> {
-                if (which == 0) exportLogShare();
-                else if (which == 1) exportLogSave();
-                else promptServerLogUpload();
-            })
-            .show();
-    }
-
-    /** Asks for an optional car/conditions note, then uploads the full log. */
-    private void promptServerLogUpload() {
-        LinearLayout box = new LinearLayout(this);
-        box.setOrientation(LinearLayout.VERTICAL);
-        box.setPadding(dp(20), dp(8), dp(20), 0);
-        TextView hint = new TextView(this);
-        hint.setText(R.string.log_server_hint);
-        hint.setTextSize(13);
-        hint.setTextColor(attrColor(R.attr.carTextTertiary));
-        box.addView(hint);
-        EditText edit = new EditText(this);
-        edit.setHint(R.string.log_server_hint);
-        edit.setSingleLine(false);
-        edit.setMinLines(3);
-        edit.setMaxLines(5);
-        // Auto-fill with the vehicle identifier so the developer can see who the
-        // log came from; the user can edit or keep it.
-        edit.setText(buildLogIdentifier());
-        box.addView(edit);
-
-        TextView autofill = new TextView(this);
-        autofill.setText(R.string.log_server_hint_autofill);
-        autofill.setTextSize(12);
-        autofill.setTextColor(attrColor(R.attr.carTextTertiary));
-        autofill.setPadding(0, dp(4), 0, 0);
-        box.addView(autofill);
-
-        new AlertDialog.Builder(this)
-            .setTitle(R.string.log_export_server)
-            .setView(box)
-            .setPositiveButton(android.R.string.ok, (d, w) ->
-                    logSendController.upload(edit.getText().toString().trim()))
-            .setNegativeButton(android.R.string.cancel, null)
-            .show();
-    }
-
-    /** Vehicle/device identifier auto-filled into the log comment for analysis. */
-    private String buildLogIdentifier() {
-        StringBuilder sb = new StringBuilder("Car2Hass " + AppInfo.getVersionString(this));
-        if (CANDataReader.sVin != null && !CANDataReader.sVin.isEmpty()
-                && !"---".equals(CANDataReader.sVin)) {
-            sb.append(" · VVIN ").append(CANDataReader.sVin);
-        }
-        if (CANDataReader.sFirmware != null && !CANDataReader.sFirmware.isEmpty()
-                && !"---".equals(CANDataReader.sFirmware)) {
-            sb.append(" · FW ").append(CANDataReader.sFirmware);
-        }
-        String carName = AppConfig.getCarName(this);
-        if (carName != null && !carName.isEmpty()) {
-            sb.append(" · ").append(carName);
-        }
-        String profile = AppConfig.getSelectedProfile(this);
-        if (profile != null && !profile.isEmpty()) {
-            sb.append(" · ").append(profile);
-        }
-        return sb.toString();
     }
     /** Sends queued logs/research; asks the user when retries run out. */
     private void flushUploadQueue() {
@@ -907,57 +846,6 @@ public class MainActivity extends BaseLocalizedActivity {
             LogBuffer.e("Main", "flushUploadQueue: " + e.getMessage());
         }
     }
-
-    private void exportLogShare() {
-        new Thread(() -> {
-            try {
-                final byte[] logBytes = LogExportHelper.buildLogBytes(this, takeResearchPath());
-                handler.post(() -> shareLog(logBytes));
-            } catch (Exception e) {
-                LogBuffer.e("Main", "exportLogShare failed: " + e.getMessage());
-            }
-        }).start();
-    }
-
-    // Binder transaction limit is ~1 MB; keep EXTRA_TEXT well below it.
-    private static final int MAX_SHARE_TEXT_LENGTH = 500_000;
-
-    private void shareLog(byte[] logBytes) {
-        // Preferred path: share the log file saved to Downloads so the full
-        // log never travels through a binder transaction.
-        Uri uri = null;
-        try {
-            uri = LogExportHelper.saveLogToDownloads(this, logBytes);
-        } catch (Exception e) {
-            LogBuffer.w("Main", "shareLog: save to Downloads failed: " + e.getMessage());
-        }
-        if (uri != null && "content".equals(uri.getScheme())) {
-            try {
-                Intent share = new Intent(Intent.ACTION_SEND);
-                share.setType("text/plain");
-                share.putExtra(Intent.EXTRA_STREAM, uri);
-                share.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                // ClipData is required for the grant to propagate through the chooser.
-                share.setClipData(ClipData.newUri(getContentResolver(), "log", uri));
-                startActivity(Intent.createChooser(share, getString(R.string.log_export_share)));
-                return;
-            } catch (Exception e) {
-                LogBuffer.w("Main", "shareLog: stream share failed, falling back to text: " + e.getMessage());
-            }
-        }
-        // Fallback (API 24-28 or MediaStore failure): share as truncated text.
-        // Decode only the tail bytes so a multi-MB log is never materialised as
-        // one giant String (OOM risk on head units).
-        int start = Math.max(0, logBytes.length - MAX_SHARE_TEXT_LENGTH);
-        String tail = new String(logBytes, start, logBytes.length - start,
-                java.nio.charset.StandardCharsets.UTF_8);
-        String text = start > 0 ? getString(R.string.log_share_truncated) + tail : tail;
-        Intent share = new Intent(Intent.ACTION_SEND);
-        share.setType("text/plain");
-        share.putExtra(Intent.EXTRA_TEXT, text);
-        startActivity(Intent.createChooser(share, getString(R.string.log_export_share)));
-    }
-
     private void exportLogSave() {
         pendingStorageAction = this::performLogSave;
         if (!ensureStoragePermission()) {
@@ -3796,7 +3684,25 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsView.findViewById(R.id.navSettingsTech).setOnClickListener(v -> selectSettingsSection(4));
         settingsView.findViewById(R.id.navSettingsAbout).setOnClickListener(v -> showAboutDialog());
         btnRestartResearch = settingsView.findViewById(R.id.btnRestartResearch);
-        btnRestartResearch.setIdle(R.string.settings_research_restart, v -> runVehicleResearch());
+        researchController = new ResearchController(new ResearchController.Host() {
+            @Override public android.app.Activity activity() { return MainActivity.this; }
+            @Override public ProgressActionButton button() { return btnRestartResearch; }
+            @Override public void onResearchFinished() {
+                if (firstLaunchResearch) {
+                    firstLaunchResearch = false;
+                    java.util.List<String> added = new java.util.ArrayList<>();
+                    for (String ch : AppConfig.getActiveChannels(MainActivity.this)) {
+                        if (!"system".equals(ch)) added.add(ch);
+                    }
+                    AppConfig.setAddedSources(MainActivity.this, added);
+                }
+                renderResearch();
+            }
+            @Override public void showReportDialog(String summary, String path) { showResearchSummaryDialog(summary, path); }
+            @Override public String str(int res) { return getString(res); }
+            @Override public String str(int res, Object... args) { return getString(res, args); }
+        });
+        btnRestartResearch.setIdle(R.string.settings_research_restart, v -> researchController.start());
         settingsView.findViewById(R.id.btnExportResearch).setOnClickListener(v -> exportResearchReport());
         Switch swProbeUpload = settingsView.findViewById(R.id.swProbeUpload);
         swProbeUpload.setChecked(AppConfig.isProbeUploadEnabled(this));
@@ -3938,177 +3844,8 @@ public class MainActivity extends BaseLocalizedActivity {
         if (AppConfig.isResearchDone(this)) return;
         AppConfig.setResearchDone(this, true);
         firstLaunchResearch = true;
-        runVehicleResearch();
+        researchController.start();
     }
-
-    private void runVehicleResearch() {
-        if (btnRestartResearch != null && btnRestartResearch.isBusy()) return;
-        List<DataChannel> channels;
-        try {
-            channels = ChannelCatalog.createAll(RegistryStore.load(this));
-        } catch (Exception e) {
-            LogBuffer.e("MainActivity", "ChannelCatalog: " + e.getMessage());
-            List<DataChannel> fallback = new ArrayList<>();
-            fallback.add(new DiPlusChannel());
-            fallback.add(new NativeChannel());
-            channels = fallback;
-        }
-        final List<DataChannel> researchChannels = channels;
-        VehicleProfile profile = AppConfig.getVehicleProfile(this);
-        int researchSensorCount;
-        try {
-            researchSensorCount = RegistryStore.load(this).sensorCount();
-        } catch (Exception e) {
-            researchSensorCount = 0;
-        }
-        final int researchTotal = researchChannels.size() + researchSensorCount;
-
-        final String researchTitle = getString(R.string.settings_vehicle_research);
-        btnRestartResearch.startBusy(R.string.settings_vehicle_research, researchTotal);
-        TaskNotifier.progress(this, researchTitle,
-                getString(R.string.settings_vehicle_research_progress, 0, researchTotal), 0, researchTotal);
-
-        new Thread(() -> {
-            VehicleResearch.ProgressListener listener = (done, total, name) -> runOnUiThread(() -> {
-                btnRestartResearch.setProgress(done, total);
-                btnRestartResearch.setBusyLabel(
-                        getString(R.string.settings_vehicle_research_progress, done, total));
-                TaskNotifier.progress(MainActivity.this, researchTitle,
-                        getString(R.string.settings_vehicle_research_progress, done, total), done, total);
-            });
-            VehicleResearch.ResearchOutcome outcome;
-            try {
-                // When the user picked the profile manually the probe result
-                // must not overwrite their choice.
-                outcome = VehicleResearch.runWithRegistry(
-                        this, RegistryStore.load(this), researchChannels, profile, listener,
-                        new SignalProber(),
-                        (ctx, p, a, rp) -> AppConfig.saveProbeResult(ctx,
-                                AppConfig.isUserOverridden(ctx)
-                                        ? AppConfig.getSelectedProfile(ctx) : p,
-                                com.car2hass.vehicle.ResearchUiModel.unionActive(
-                                        AppConfig.getActiveChannels(ctx), a),
-                                rp));
-            } catch (Exception e) {
-                LogBuffer.e("MainActivity", "runVehicleResearch: " + e.getMessage());
-                outcome = new VehicleResearch.ResearchOutcome(
-                        AppConfig.getSelectedProfile(this),
-                        AppConfig.getActiveChannels(this), null, null);
-            }
-            String path = outcome.reportPath;
-            List<ChannelResult> results = new ArrayList<>();
-            for (DataChannel ch : researchChannels) {
-                results.add(VehicleResearch.run(this, java.util.Collections.singletonList(ch), profile).get(0));
-            }
-            String reportSummary = buildResearchSummary(outcome);
-            final String autoProfile = outcome.selectedProfile;
-            runOnUiThread(() -> {
-                TaskNotifier.done(MainActivity.this, researchTitle,
-                        getString(R.string.settings_vehicle_research_done));
-                // Research finished: the button becomes "Show report" instead of
-                // restarting, and the summary is shown only on tap.
-                final String summary = reportSummary;
-                final String reportPath = path;
-                btnRestartResearch.setAlt(R.string.settings_research_show_report,
-                        v -> showResearchSummaryDialog(summary, reportPath));
-                if (firstLaunchResearch) {
-                    firstLaunchResearch = false;
-                    List<String> added = new ArrayList<>();
-                    for (String ch : AppConfig.getActiveChannels(MainActivity.this)) {
-                        if (!"system".equals(ch)) added.add(ch);
-                    }
-                    AppConfig.setAddedSources(MainActivity.this, added);
-                }
-                renderResearch();
-                maybeUploadReport(path);
-                // The user's manual profile choice is kept (never auto-changed);
-                // if auto-detection disagrees, recommend instead of overriding.
-                if (AppConfig.isUserOverridden(MainActivity.this)
-                        && autoProfile != null
-                        && !autoProfile.equals(AppConfig.getSelectedProfile(MainActivity.this))) {
-                    String cur = AppConfig.getSelectedProfile(MainActivity.this);
-                    Toast.makeText(MainActivity.this,
-                            getString(R.string.settings_research_recommend, cur, autoProfile),
-                            Toast.LENGTH_LONG).show();
-                }
-            });
-        }).start();
-    }
-
-    private String buildResearchSummary(VehicleResearch.ResearchOutcome outcome) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(getString(R.string.settings_vehicle_research_profile,
-                outcome.selectedProfile == null ? "—" : outcome.selectedProfile)).append('\n');
-        sb.append(getString(R.string.settings_vehicle_research_channels,
-                outcome.activeChannels.isEmpty() ? "—"
-                        : String.join(", ", outcome.activeChannels))).append('\n');
-        if (outcome.report != null) {
-            JSONObject sensors = outcome.report.optJSONObject("sensors");
-            sb.append(getString(R.string.settings_vehicle_research_signals,
-                    sensors == null ? 0 : sensors.length())).append('\n');
-            // Per-channel ok counts: makes it visible that e.g. voyah/obd were
-            // probed even when they returned no data.
-            Map<String, Integer> okPer = new java.util.LinkedHashMap<>();
-            if (sensors != null) {
-                JSONArray keys = sensors.names();
-                for (int i = 0; keys != null && i < keys.length(); i++) {
-                    JSONObject ch = sensors.optJSONObject(keys.optString(i));
-                    if (ch == null) continue;
-                    JSONArray chNames = ch.names();
-                    for (int j = 0; chNames != null && j < chNames.length(); j++) {
-                        String c = chNames.optString(j);
-                        if ("ok".equals(ch.optString(c))) okPer.merge(c, 1, Integer::sum);
-                    }
-                }
-            }
-            if (!okPer.isEmpty()) {
-                StringBuilder line = new StringBuilder();
-                for (Map.Entry<String, Integer> e : okPer.entrySet()) {
-                    if (line.length() > 0) line.append(", ");
-                    line.append(e.getKey()).append('=').append(e.getValue());
-                }
-                sb.append(getString(R.string.settings_vehicle_research_ok_by_channel,
-                        line)).append('\n');
-            }
-        }
-        // Phone-only case (no DiPlus/Voyah alive): guide the user to OBD2.
-        if (outcome.report != null) {
-            boolean hasDiplus = channelHasData(outcome.report, "diplus");
-            boolean hasVoyah = channelHasData(outcome.report, "voyah");
-            String addr = AppConfig.getObdBtAddress(this);
-            boolean obdSet = addr != null && !addr.isEmpty();
-            if (!hasDiplus && !hasVoyah && !obdSet) {
-                sb.append(getString(R.string.research_hint_obd2)).append('\n');
-            }
-        }
-        return sb.toString();
-    }
-
-    /** True when the channel is available OR reported at least one "ok" sensor.
-     *  DiPlus availability can flap transiently, so a single `available:false`
-     *  must not make the OBD2-only hint appear for a working DiPlus. */
-    private static boolean channelHasData(JSONObject report, String id) {
-        if (report == null) return false;
-        JSONArray chans = report.optJSONArray("channels");
-        if (chans != null) {
-            for (int i = 0; i < chans.length(); i++) {
-                JSONObject c = chans.optJSONObject(i);
-                if (c != null && id.equals(c.optString("id")) && c.optBoolean("available", false)) {
-                    return true;
-                }
-            }
-        }
-        JSONObject sensors = report.optJSONObject("sensors");
-        if (sensors != null) {
-            JSONArray keys = sensors.names();
-            for (int i = 0; keys != null && i < keys.length(); i++) {
-                JSONObject ch = sensors.optJSONObject(keys.optString(i));
-                if (ch != null && "ok".equals(ch.optString(id))) return true;
-            }
-        }
-        return false;
-    }
-
     private void showResearchSummaryDialog(String message, String path) {
         AlertDialog dialog = new AlertDialog.Builder(this)
             .setTitle(R.string.settings_vehicle_research)
@@ -4119,7 +3856,7 @@ public class MainActivity extends BaseLocalizedActivity {
         // Viewing the report returns the button to "Restart research".
         dialog.setOnDismissListener(d -> {
             if (btnRestartResearch != null && !btnRestartResearch.isBusy()) {
-                btnRestartResearch.setIdle(R.string.settings_research_restart, v -> runVehicleResearch());
+                btnRestartResearch.setIdle(R.string.settings_research_restart, v -> researchController.start());
             }
         });
         dialog.show();
@@ -4127,7 +3864,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
     private void sendResearchLog(String path) {
         pendingResearchPath = path;
-        showLogExportDialog();
+        logExportController.showDialog();
     }
 
     /** Rebuilds the research section: profile spinner, channel checkboxes, status. */
@@ -4569,22 +4306,6 @@ public class MainActivity extends BaseLocalizedActivity {
         sb.append(getString(R.string.settings_vehicle_research_profile, profLine.toString()));
         return sb.toString();
     }
-
-    /** Sends the report to the site when the user opted in (spec Section 5). */
-    private void maybeUploadReport(String path) {
-        if (path == null || !AppConfig.isProbeUploadEnabled(this)) return;
-        final String title = getString(R.string.upload_research_title);
-        TaskNotifier.progress(this, title, getString(R.string.upload_in_progress), 0, 0);
-        new Thread(() -> {
-            ProbeUploader.Result r = ProbeUploader.uploadResult(this, path);
-            LogBuffer.i("MainActivity", "probe upload: ok=" + r.ok + " code=" + r.code);
-            if (r.ok) AppConfig.setProbeLastUploadMs(this, System.currentTimeMillis());
-            final boolean ok = r.ok;
-            runOnUiThread(() -> TaskNotifier.done(this, title,
-                    getString(ok ? R.string.upload_research_ok : R.string.upload_failed)));
-        }, "probe-upload").start();
-    }
-
     private void exportResearchReport() {        String path = AppConfig.getProbeReportPath(this);
         if (path == null) {
             Toast.makeText(this, R.string.settings_research_no_report, Toast.LENGTH_SHORT).show();
