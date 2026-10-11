@@ -13,7 +13,7 @@ from .const import DOMAIN
 
 from .const import CONF_CAR_NAME, INTEGRATION_VERSION
 from .device_info import build_device_info
-from . import SIGNAL_VEHICLE_DATA_UPDATED, async_replay_state
+from . import SIGNAL_VEHICLE_DATA_UPDATED, entry_signal, async_replay_state
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -171,6 +171,6 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
                 self.async_write_ha_state()
 
         self.async_on_remove(
-            async_dispatcher_connect(self.hass, SIGNAL_VEHICLE_DATA_UPDATED, update)
+            async_dispatcher_connect(self.hass, entry_signal(self._entry_id), update)
         )
         await update()

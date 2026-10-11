@@ -50,6 +50,13 @@ SERVICE_DEVELOPER_INFO = "developer_info"
 SERVICE_SEND_COMMAND = "send_command"
 SIGNAL_VEHICLE_DATA_UPDATED = f"{DOMAIN}_updated"
 
+
+def entry_signal(entry_id: str) -> str:
+    """Per-entry dispatcher signal so one car's update does not wake every entity
+    of every other car (the global signal is kept for discovery listeners)."""
+    return f"{DOMAIN}_{entry_id}_updated"
+
+
 MAX_COMMAND_QUEUE = 50
 
 try:
@@ -408,6 +415,18 @@ class VehicleDataView(HomeAssistantView):
         agg = core.aggregate_batch(sorted_batch)
         latest_signals = agg["latest_signals"]
 
+        # Drop an out-of-order/replayed batch: if its newest snapshot is older
+        # than the state already applied, it must not regress live values.
+        prev_ts = store.get("data", {}).get("timestamp") if store.get("data") else None
+        agg_ts = agg.get("timestamp")
+        if prev_ts is not None and agg_ts is not None:
+            try:
+                if float(agg_ts) < float(prev_ts):
+                    _LOGGER.debug("Dropping out-of-order batch (%s < %s)", agg_ts, prev_ts)
+                    return self.json({"status": "ok", "dropped": "out_of_order"})
+            except (TypeError, ValueError):
+                pass
+
         # Expose app_version as a regular sensor in addition to device info.
         if app_version:
             latest_signals["app_version"] = app_version
@@ -453,6 +472,7 @@ class VehicleDataView(HomeAssistantView):
         store["last_seen"] = dt_util.utcnow().isoformat()
 
         async_dispatcher_send(hass, SIGNAL_VEHICLE_DATA_UPDATED)
+        async_dispatcher_send(hass, entry_signal(entry_id))
         newly = set(latest_signals.keys()) - old_seen
         if newly:
             await _async_enable_sensors(hass, entry_id, newly)

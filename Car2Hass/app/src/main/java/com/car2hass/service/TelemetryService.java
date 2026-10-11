@@ -101,6 +101,7 @@ public class TelemetryService extends Service {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private ExecutorService telemetryExecutor;
     private ExecutorService flushExecutor;
+    private ExecutorService snapshotExecutor;
     private final AtomicBoolean running = new AtomicBoolean(false);
     /** Throttle for repeated "HA flush failed" warnings (one per 5 min). */
     private volatile long lastHassFlushLogMs = 0L;
@@ -237,6 +238,7 @@ public class TelemetryService extends Service {
         shutdownExecutors();
         telemetryExecutor = Executors.newSingleThreadExecutor();
         flushExecutor = Executors.newSingleThreadExecutor();
+        snapshotExecutor = Executors.newSingleThreadExecutor();
         ruleEngine = new RuleEngine(getApplicationContext(), valueStore::get, valueStore::isRestored, valueStore::ageMs);
         // Event-driven rules: re-evaluate affected rules as soon as a channel
         // writes a changed value, instead of waiting for the 1s engine tick.
@@ -547,6 +549,14 @@ public class TelemetryService extends Service {
             }
         } catch (Exception e) {
             LogBuffer.e("TelemetryService", "shutdown flushExecutor failed: " + e.getMessage());
+        }
+        try {
+            if (snapshotExecutor != null) {
+                snapshotExecutor.shutdownNow();
+                snapshotExecutor = null;
+            }
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "shutdown snapshotExecutor failed: " + e.getMessage());
         }
     }
 
@@ -1159,17 +1169,25 @@ public class TelemetryService extends Service {
 
     /** 1 Hz snapshot ticker: keeps GPS/device at 1 Hz, batched via HassClient queue. */
     private void startSnapshotTicker() {
-        mainHandler.postDelayed(new Runnable() {
-            @Override
-            public void run() {
+        mainHandler.postDelayed(this::snapshotTick, SNAPSHOT_INTERVAL_MS);
+    }
+
+    /** Assembles a snapshot off the UI thread so a busy cycle cannot cause jank. */
+    private void snapshotTick() {
+        final ExecutorService exec = snapshotExecutor;
+        if (exec == null) return;
+        try {
+            exec.execute(() -> {
                 try {
                     buildAndEnqueueSnapshot();
                 } catch (Exception e) {
                     LogBuffer.e("TelemetryService", "snapshot ticker: " + e.getMessage());
                 }
-                mainHandler.postDelayed(this, SNAPSHOT_INTERVAL_MS);
-            }
-        }, SNAPSHOT_INTERVAL_MS);
+                if (running.get()) mainHandler.postDelayed(this::snapshotTick, SNAPSHOT_INTERVAL_MS);
+            });
+        } catch (Exception e) {
+            LogBuffer.e("TelemetryService", "snapshot tick schedule: " + e.getMessage());
+        }
     }
 
     /**

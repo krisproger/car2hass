@@ -55,12 +55,23 @@ public final class RegistryStore {
     }
 
     public JSONObject getSensor(String key) throws org.json.JSONException {
-        JSONArray a = sensorsRoot.optJSONArray("sensors");
-        for (int i = 0; i < a.length(); i++) {
-            JSONObject s = a.getJSONObject(i);
-            if (key.equals(s.optString("key"))) return s;
+        return sensorIndex().get(key);
+    }
+
+    /** key -> sensor JSONObject, built once (avoids an O(n) scan per lookup). */
+    private java.util.Map<String, JSONObject> sensorIndex;
+
+    private java.util.Map<String, JSONObject> sensorIndex() {
+        if (sensorIndex == null) {
+            java.util.Map<String, JSONObject> m = new java.util.HashMap<>();
+            JSONArray a = sensorsRoot.optJSONArray("sensors");
+            for (int i = 0; a != null && i < a.length(); i++) {
+                JSONObject s = a.optJSONObject(i);
+                if (s != null) m.put(s.optString("key"), s);
+            }
+            sensorIndex = m;
         }
-        return null;
+        return sensorIndex;
     }
 
     /** Category key for a signal, or "other" when absent. */

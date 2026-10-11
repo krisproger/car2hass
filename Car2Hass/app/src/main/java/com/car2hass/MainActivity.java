@@ -2051,6 +2051,7 @@ public class MainActivity extends BaseLocalizedActivity {
             for (CANDataItem item : items) {
                 if (item.key != null && !item.key.isEmpty()) {
                     byKey.put(item.key, item);
+                    NumericHistory.record(item.key, item.value);
                 }
             }
 
@@ -2696,6 +2697,11 @@ public class MainActivity extends BaseLocalizedActivity {
         List<String> needed = new ArrayList<>();
         needed.add(android.Manifest.permission.ACCESS_FINE_LOCATION);
         needed.add(android.Manifest.permission.ACCESS_COARSE_LOCATION);
+        // Android 13+: the foreground-service and progress notifications need an
+        // explicit grant (a denied/unsupported ROM is filtered by `denied` below).
+        if (Build.VERSION.SDK_INT >= 33) {
+            needed.add(android.Manifest.permission.POST_NOTIFICATIONS);
+        }
         // Android 10-12: required to list config files in Downloads that were
         // contributed by other apps (MediaStore hides foreign files otherwise).
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q

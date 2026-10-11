@@ -10,7 +10,7 @@ from homeassistant.components.alarm_control_panel.const import (
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from . import SIGNAL_VEHICLE_DATA_UPDATED, async_enqueue_command
+from . import SIGNAL_VEHICLE_DATA_UPDATED, entry_signal, async_enqueue_command
 from .const import DOMAIN
 
 from .const import CONF_CAR_NAME, INTEGRATION_VERSION
@@ -76,7 +76,7 @@ class CarTelemetryAlarmPanel(AlarmControlPanelEntity, RestoreEntity):
             self.async_write_ha_state()
 
         self.async_on_remove(
-            async_dispatcher_connect(self.hass, SIGNAL_VEHICLE_DATA_UPDATED, update)
+            async_dispatcher_connect(self.hass, entry_signal(self._entry_id), update)
         )
         await update()
 

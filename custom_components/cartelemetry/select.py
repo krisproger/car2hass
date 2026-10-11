@@ -4,7 +4,7 @@ from homeassistant.components.select import SelectEntity
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from . import SIGNAL_VEHICLE_DATA_UPDATED, async_enqueue_command
+from . import SIGNAL_VEHICLE_DATA_UPDATED, entry_signal, async_enqueue_command
 from .commands import SELECT_COMMANDS, SelectCommand
 from .const import DOMAIN
 
@@ -73,7 +73,7 @@ class CarTelemetrySelect(SelectEntity, RestoreEntity):
             self.async_write_ha_state()
 
         self.async_on_remove(
-            async_dispatcher_connect(self.hass, SIGNAL_VEHICLE_DATA_UPDATED, update)
+            async_dispatcher_connect(self.hass, entry_signal(self._entry_id), update)
         )
         await update()
 

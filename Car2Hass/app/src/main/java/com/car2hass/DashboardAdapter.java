@@ -284,9 +284,8 @@ public class DashboardAdapter extends BaseAdapter {
 
     /** Draw a simple sparkline on the graph canvas view. */
     private static void drawSparkline(View canvas, DashboardTile tile) {
-        // Use a simple approach: set a background drawable with a sparkline.
-        // For now, just show the current value — a full sparkline would need
-        // a custom View with onDraw().
-        // TODO: Replace with a custom SparklineView in a future iteration.
+        if (canvas instanceof SparklineView) {
+            ((SparklineView) canvas).setValues(NumericHistory.series(tile.key));
+        }
     }
 }

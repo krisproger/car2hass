@@ -23,7 +23,7 @@ from .const import (
 )
 from .device_info import build_device_info, build_phone_device_info
 from . import core
-from . import SIGNAL_VEHICLE_DATA_UPDATED, async_replay_state
+from . import SIGNAL_VEHICLE_DATA_UPDATED, entry_signal, async_replay_state
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -126,6 +126,23 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
             signal_key.startswith(GEOFENCE_KEY_PREFIX)
             and not signal_key.endswith(GEOFENCE_NAME_SUFFIX)
         )
+
+    @property
+    def available(self):
+        # Honest liveness for regular state sensors; the "online" indicator must
+        # stay available so it can report "off" when telemetry stops.
+        if not self._attr_available:
+            return False
+        if self._signal_key == "online":
+            return True
+        store = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {}) if self.hass else {}
+        last_seen_raw = store.get("last_seen")
+        if not last_seen_raw:
+            return True
+        last_seen = dt_util.parse_datetime(last_seen_raw)
+        if last_seen is None:
+            return True
+        return (utcnow() - last_seen).total_seconds() < core.SIGNAL_STALE_SECONDS
 
     @property
     def device_info(self):
@@ -234,7 +251,7 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
                 self.async_write_ha_state()
 
         self.async_on_remove(
-            async_dispatcher_connect(self.hass, SIGNAL_VEHICLE_DATA_UPDATED, update)
+            async_dispatcher_connect(self.hass, entry_signal(self._entry_id), update)
         )
         await update()
 

@@ -15,6 +15,10 @@ except ImportError:  # Direct module import (unit tests without Home Assistant)
 COMMAND_TIMEOUT = timedelta(minutes=1)
 DEFAULT_MAX_QUEUE = 50
 
+# A sensor stays "available" only while telemetry keeps arriving; after this
+# many seconds without a batch it is reported unavailable (honest liveness).
+SIGNAL_STALE_SECONDS = 180
+
 # Bounds on a single snapshot's signal map (defensive against oversized POSTs).
 MAX_SIGNAL_KEYS_PER_SNAPSHOT = 1000
 MAX_SIGNAL_KEY_LEN = 64
