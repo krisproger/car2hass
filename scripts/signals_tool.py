@@ -256,7 +256,7 @@ def cmd_gen_java(args):
     print(f"Updated {SIGNAL_TRANSLATOR} value trans and enum labels")
 
 
-def _build_const_snippets(signals, core_keys=None):
+def _build_const_snippets(signals, core_keys=None, name_ru=None):
     numeric = {}
     enum = {}
     binary = {}
@@ -386,6 +386,9 @@ def _build_const_snippets(signals, core_keys=None):
     lines.append("# Universal core sensors (open contract) — enabled by default in HA.")
     lines.append("CORE_SENSORS = " + repr(sorted(core_keys or [])))
     lines.append("")
+    lines.append("# Russian entity names (key -> label_ru) for HA language selection.")
+    lines.append("NAME_RU = " + repr(dict(sorted((name_ru or {}).items()))))
+    lines.append("")
     lines.append("# Dynamic geofence virtual sensors sent by the Android app.")
     lines.append('# Keys look like "geo_<zoneId>" with values "inside"/"outside"; the optional')
     lines.append('# companion key "geo_<zoneId>_name" carries the user-defined zone name.')
@@ -417,15 +420,25 @@ def cmd_gen_py(args):
     signals = _load_yaml()
     # Core keys come from the generated registry (the open contract).
     core_keys = []
+    name_ru = {}
     registry = ROOT / "Car2Hass" / "app" / "src" / "main" / "assets" / "sensors_registry.json"
     if registry.exists():
         try:
             import json as _json
             data = _json.loads(registry.read_text(encoding="utf-8"))
-            core_keys = [s.get("key") for s in data.get("sensors", []) if s.get("core") and s.get("key")]
+            for s in data.get("sensors", []):
+                k = s.get("key")
+                if not k:
+                    continue
+                if s.get("core"):
+                    core_keys.append(k)
+                ru = s.get("label_ru")
+                if ru:
+                    name_ru[k] = ru
         except Exception:
             core_keys = []
-    snippet = _build_const_snippets(signals, core_keys)
+            name_ru = {}
+    snippet = _build_const_snippets(signals, core_keys, name_ru)
     if args.stdout:
         print(snippet)
         return

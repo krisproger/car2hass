@@ -9,7 +9,7 @@ from homeassistant.util import dt as dt_util
 from .const import DOMAIN
 
 from .const import NUMERIC_SENSORS, ENUM_SENSORS, NATIVE_SENSORS, CONF_CAR_NAME, INTEGRATION_VERSION
-from .const import CORE_SENSORS
+from .const import CORE_SENSORS, NAME_RU
 from .device_info import build_device_info, build_phone_device_info
 from . import core
 from . import SIGNAL_VEHICLE_DATA_UPDATED, entry_signal, async_replay_state
@@ -28,13 +28,14 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     phone device does not exist in Home Assistant.
     """
     car_name = config_entry.data.get(CONF_CAR_NAME, "byd_car")
+    lang = (hass.config.language or "") if hasattr(hass, "config") else ""
     sensors = [DiagnosticsSensor(config_entry, car_name)]
     phone_configs = []
     for signal_key, cfg in {**NUMERIC_SENSORS, **ENUM_SENSORS}.items():
         if core.is_phone_signal(signal_key):
             phone_configs.append((signal_key, cfg))
         else:
-            sensors.append(CarTelemetrySensor(signal_key, cfg, config_entry, car_name))
+            sensors.append(CarTelemetrySensor(signal_key, cfg, config_entry, car_name, lang=lang))
 
     async_add_entities(sensors)
 
@@ -50,7 +51,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         phone_added["done"] = True
         phone_entities = [
             CarTelemetrySensor(signal_key, cfg, config_entry, car_name, phone=True,
-                               device_name=store.get("device_name"))
+                               device_name=store.get("device_name"), lang=lang)
             for signal_key, cfg in phone_configs
         ]
         if phone_entities:
@@ -66,7 +67,7 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
     """Represents a numeric vehicle signal."""
 
     def __init__(self, signal_key, config, config_entry, car_name, phone=False,
-                 device_name=None):
+                 device_name=None, lang=""):
         self._signal_key = signal_key
         self._config = config
         self._entry_id = config_entry.entry_id
@@ -74,7 +75,10 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
         self._is_phone = phone
         self._is_numeric = signal_key in NUMERIC_SENSORS
         label = (device_name or "Phone") if phone else car_name
-        self._attr_name = f"{label} {core.display_name(config['name'], config.get('unit'))}"
+        name = config['name']
+        if lang and str(lang).lower().startswith("ru"):
+            name = NAME_RU.get(signal_key, name)
+        self._attr_name = f"{label} {core.display_name(name, config.get('unit'))}"
         self._attr_unique_id = f"{config_entry.entry_id}_{signal_key}"
         self._attr_native_unit_of_measurement = config.get("unit") or None
         self._attr_device_class = config.get("device_class")

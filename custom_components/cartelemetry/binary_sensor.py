@@ -21,6 +21,7 @@ from .const import (
     GEOFENCE_ON_VALUES,
     ONLINE_OFFLINE_SECONDS,
     CORE_SENSORS,
+    NAME_RU,
 )
 from .device_info import build_device_info, build_phone_device_info
 from . import core
@@ -35,13 +36,14 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
     phone-mode payload (see the sensor platform).
     """
     car_name = config_entry.data.get(CONF_CAR_NAME, "BYD Vehicle")
+    lang = (hass.config.language or "") if hasattr(hass, "config") else ""
     sensors = []
     phone_configs = []
     for signal_key, cfg in BINARY_SENSORS.items():
         if core.is_phone_signal(signal_key):
             phone_configs.append((signal_key, cfg))
         else:
-            sensors.append(CarTelemetryBinarySensor(signal_key, cfg, config_entry, car_name))
+            sensors.append(CarTelemetryBinarySensor(signal_key, cfg, config_entry, car_name, lang=lang))
     async_add_entities(sensors)
 
     phone_added = {"done": False}
@@ -55,7 +57,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         phone_added["done"] = True
         phone_entities = [
             CarTelemetryBinarySensor(signal_key, cfg, config_entry, car_name, phone=True,
-                                     device_name=store.get("device_name"))
+                                     device_name=store.get("device_name"), lang=lang)
             for signal_key, cfg in phone_configs
         ]
         if phone_entities:
@@ -97,14 +99,17 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
     """Represents a binary vehicle signal (door, seatbelt, light, etc)."""
 
     def __init__(self, signal_key, config, config_entry, car_name, phone=False,
-                 device_name=None):
+                 device_name=None, lang=""):
         self._signal_key = signal_key
         self._config = config
         self._entry_id = config_entry.entry_id
         self._car_name = car_name
         self._is_phone = phone
         label = (device_name or "Phone") if phone else car_name
-        self._attr_name = f"{label} {config['name']}"
+        name = config['name']
+        if lang and str(lang).lower().startswith("ru"):
+            name = NAME_RU.get(signal_key, name)
+        self._attr_name = f"{label} {name}"
         self._attr_unique_id = f"{config_entry.entry_id}_{signal_key}"
         self._attr_device_class = config.get("device_class")
         self._attr_should_poll = False
