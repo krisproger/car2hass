@@ -203,13 +203,8 @@ public class MainActivity extends BaseLocalizedActivity {
     private TextView tvPresetVersion;
 
     // Cloud sync UI
-    private Switch switchCloudSync;
-    private EditText editCloudEmail, editCloudCode, editCloudCarName, editCloudBaseUrl;
-    private TextView tvCloudStatus;
-    private Switch switchCloudSettings, switchCloudStoreSecret;
-    private Button btnCloudSyncNow, btnCloudClone;
-    private android.widget.Button btnCloudLogin;
-    private boolean updatingCloudToggle = false;
+    private CloudSettingsController cloudSettingsController;
+    private GeofenceSettingsController geofenceSettingsController;
 
     // Phone sensor UI (sensitive opt-in switches in the phone channel block)
     private boolean updatingPhoneToggle = false;
@@ -938,8 +933,8 @@ public class MainActivity extends BaseLocalizedActivity {
             checkSelectAll.setOnCheckedChangeListener(sendToHaListener);
         }
         setupRules();
-        if (selectedSettingsSection == 3) {
-            renderGeofences();
+        if (selectedSettingsSection == 3 && geofenceSettingsController != null) {
+            geofenceSettingsController.render();
         }
         maybeNotifyCloudSessionExpired();
         // Retry queued uploads in the background; ask the user only when the
@@ -2531,7 +2526,7 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void updateSmarthomeStats() {
-        updateCloudStatus();
+        if (cloudSettingsController != null) cloudSettingsController.updateStatus();
         if (tvQueueBytes == null || tvLastSend == null || tvLastAttempt == null) return;
         tvQueueBytes.setText(getString(R.string.settings_queue_bytes,
                 SendHistory.formatBytes(SendHistory.getPendingBytes(this))));
@@ -2540,81 +2535,6 @@ public class MainActivity extends BaseLocalizedActivity {
         tvLastAttempt.setText(getString(R.string.settings_last_attempt,
                 SendHistory.getLastAttemptLabel(this)));
     }
-
-    private void setupCloudSettings() {
-        switchCloudSync = settingsView.findViewById(R.id.switchCloudSync);
-        editCloudEmail = settingsView.findViewById(R.id.editCloudEmail);
-        editCloudCode = settingsView.findViewById(R.id.editCloudCode);
-        editCloudCarName = settingsView.findViewById(R.id.editCloudCarName);
-        editCloudBaseUrl = settingsView.findViewById(R.id.editCloudBaseUrl);
-        tvCloudStatus = settingsView.findViewById(R.id.tvCloudStatus);
-        if (switchCloudSync == null) return;
-
-        editCloudEmail.setText(AppConfig.getCloudEmail(this));
-        editCloudCarName.setText(AppConfig.getCloudCarName(this));
-        editCloudBaseUrl.setText(AppConfig.getCloudBaseUrl(this));
-
-        switchCloudSync.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            if (updatingCloudToggle) return;
-            AppConfig.setCloudSyncEnabled(this, isChecked);
-            if (isChecked && AppConfig.getCloudAccessToken(this).isEmpty()) {
-                Toast.makeText(this, R.string.settings_cloud_login_required, Toast.LENGTH_SHORT).show();
-            }
-            updateCloudStatus();
-        });
-        editCloudEmail.addTextChangedListener(cloudWatcher(
-                () -> AppConfig.setCloudEmail(this, editCloudEmail.getText().toString())));
-        editCloudCarName.addTextChangedListener(cloudWatcher(
-                () -> AppConfig.setCloudCarName(this, editCloudCarName.getText().toString())));
-        editCloudBaseUrl.addTextChangedListener(cloudWatcher(
-                () -> AppConfig.setCloudBaseUrl(this, editCloudBaseUrl.getText().toString())));
-
-        switchCloudSettings = settingsView.findViewById(R.id.switchCloudSettings);
-        switchCloudStoreSecret = settingsView.findViewById(R.id.switchCloudStoreSecret);
-        btnCloudSyncNow = settingsView.findViewById(R.id.btnCloudSyncNow);
-        btnCloudClone = settingsView.findViewById(R.id.btnCloudClone);
-        if (switchCloudSettings != null) {
-            switchCloudSettings.setChecked(AppConfig.isCloudSettingsEnabled(this));
-            switchCloudSettings.setOnCheckedChangeListener((b, checked) -> {
-                if (checked) {
-                    if (AppConfig.getCloudAccessToken(this).isEmpty()) {
-                        switchCloudSettings.setChecked(false);
-                        Toast.makeText(this, R.string.settings_cloud_login_needed, Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    CloudSettingsSync.onEnabled(this);
-                } else {
-                    AppConfig.setCloudSettingsEnabled(this, false);
-                }
-                updateCloudStatus();
-            });
-        }
-        if (switchCloudStoreSecret != null) {
-            switchCloudStoreSecret.setChecked(AppConfig.isCloudStoreSecret(this));
-            switchCloudStoreSecret.setOnCheckedChangeListener((b, checked) -> {
-                AppConfig.setCloudStoreSecret(this, checked);
-                CloudSettingsSync.syncAsync(this, "store_secret");
-            });
-        }
-        if (btnCloudSyncNow != null) {
-            btnCloudSyncNow.setOnClickListener(v -> CloudSettingsSync.syncNow(this, (ok, message) ->
-                    runOnUiThread(() -> Toast.makeText(this, ok
-                            ? getString(R.string.settings_cloud_sync_ok)
-                            : getString(R.string.settings_cloud_sync_failed, message),
-                            Toast.LENGTH_LONG).show())));
-        }
-        if (btnCloudClone != null) {
-            btnCloudClone.setOnClickListener(v -> showCloneDialog());
-        }
-
-        btnCloudLogin = settingsView.findViewById(R.id.btnCloudLogin);
-        btnCloudLogin.setOnClickListener(v -> {
-            if (!AppConfig.getCloudAccessToken(this).isEmpty()) cloudDisconnect();
-            else cloudLogin();
-        });
-        updateCloudStatus();
-    }
-
     private void onPhoneSensorToggled(String key, CompoundButton sw, boolean checked) {
         if (updatingPhoneToggle) return;
         if (checked) {
@@ -2675,109 +2595,6 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         return pretty;
     }
-
-    private TextWatcher cloudWatcher(Runnable action) {
-        return new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
-            @Override public void onTextChanged(CharSequence s, int start, int before, int count) {}
-            @Override public void afterTextChanged(Editable s) { action.run(); }
-        };
-    }
-
-    private void cloudLogin() {
-        final String email = editCloudEmail.getText().toString().trim();
-        final String code = editCloudCode.getText().toString().trim();
-        if (email.isEmpty() || code.isEmpty()) {
-            Toast.makeText(this, R.string.settings_cloud_enter_email_code, Toast.LENGTH_SHORT).show();
-            return;
-        }
-        tvCloudStatus.setText(R.string.settings_cloud_signing_in);
-        final Context app = getApplicationContext();
-        new Thread(() -> {
-            final String result = CloudSyncClient.login(app, email, code);
-            if (result.isEmpty()) {
-                CloudSyncClient.ensureCarBound(app);
-            }
-            runOnUiThread(() -> {
-                if (result.isEmpty()) {
-                    editCloudCode.setText("");
-                    AppConfig.setCloudSyncEnabled(MainActivity.this, true);
-                    Toast.makeText(MainActivity.this, R.string.settings_cloud_login_ok, Toast.LENGTH_SHORT).show();
-                } else {
-                    Toast.makeText(MainActivity.this, cloudErrorText(result), Toast.LENGTH_LONG).show();
-                }
-                updateCloudStatus();
-            });
-        }, "cloud-login").start();
-    }
-
-    private String cloudErrorText(String code) {
-        switch (code) {
-            case "bad_credentials": return getString(R.string.settings_cloud_err_bad_credentials);
-            case "rate_limited": return getString(R.string.settings_cloud_err_rate_limited);
-            case "totp_not_set": return getString(R.string.settings_cloud_err_totp_not_set);
-            case "bad_input": return getString(R.string.settings_cloud_err_bad_input);
-            default: return getString(R.string.settings_cloud_err_failed, code);
-        }
-    }
-
-    private void cloudDisconnect() {
-        AppConfig.clearCloudTokens(this);
-        AppConfig.setCloudSyncEnabled(this, false);
-        Toast.makeText(this, R.string.settings_cloud_disconnected, Toast.LENGTH_SHORT).show();
-        updateCloudStatus();
-    }
-
-    private String cloudStatusText(String status) {
-        if (status.startsWith("http_") || status.startsWith("bind_http_")) {
-            return getString(R.string.settings_cloud_status_sync_error);
-        }
-        switch (status) {
-            case "logged_out": return getString(R.string.settings_cloud_status_logged_out);
-            case "session_expired": return getString(R.string.settings_cloud_status_session_expired);
-            case "session_unavailable": return getString(R.string.settings_cloud_status_session_unavailable);
-            case "car_not_bound": return getString(R.string.settings_cloud_status_car_not_bound);
-            case "no_car_name": return getString(R.string.settings_cloud_status_no_car_name);
-            default: return status;
-        }
-    }
-
-    private void updateCloudStatus() {
-        if (tvCloudStatus == null || switchCloudSync == null) return;
-        boolean enabled = AppConfig.isCloudSyncEnabled(this);
-        boolean loggedIn = !AppConfig.getCloudAccessToken(this).isEmpty();
-        String last = AppConfig.getCloudLastSyncMs(this) > 0
-                ? DateFormat.getDateTimeInstance().format(new Date(AppConfig.getCloudLastSyncMs(this)))
-                : getString(R.string.settings_cloud_never);
-        StringBuilder sb = new StringBuilder();
-        sb.append(loggedIn ? getString(R.string.settings_cloud_logged_in) : getString(R.string.settings_cloud_logged_out));
-        sb.append(" · ").append(getString(R.string.settings_cloud_last_sync, last));
-        if (!enabled) sb.append(" · ").append(getString(R.string.settings_cloud_disabled));
-        String status = AppConfig.getCloudLastStatus(this);
-        if (!status.isEmpty() && !"ok".equals(status)) {
-            sb.append(" · ").append(cloudStatusText(status));
-        }
-        tvCloudStatus.setText(sb.toString());
-        tvCloudStatus.setBackgroundResource(0);
-        boolean expired = "session_expired".equals(status) || "session_unavailable".equals(status);
-        tvCloudStatus.setTextColor(expired
-                ? getResources().getColor(R.color.accentRed)
-                : (loggedIn ? getResources().getColor(R.color.accentGreen)
-                            : getResources().getColor(R.color.textTertiary)));
-        int authVis = loggedIn ? View.GONE : View.VISIBLE;
-        editCloudEmail.setVisibility(authVis);
-        editCloudCode.setVisibility(authVis);
-        if (btnCloudLogin != null) {
-            btnCloudLogin.setText(loggedIn
-                    ? R.string.settings_cloud_disconnect : R.string.settings_cloud_login);
-        }
-        if (switchCloudSync.isChecked() != enabled) {
-            updatingCloudToggle = true;
-            switchCloudSync.setChecked(enabled);
-            updatingCloudToggle = false;
-        }
-    }
-
     private void showCloneDialog() {
         if (AppConfig.getCloudAccessToken(this).isEmpty()) {
             Toast.makeText(this, R.string.settings_cloud_login_needed, Toast.LENGTH_SHORT).show();
@@ -3475,7 +3292,18 @@ public class MainActivity extends BaseLocalizedActivity {
         attachAutoSaveListeners(tvHttpWarning);
 
         refreshIntegrationUpdateHint();
-        setupCloudSettings();
+        cloudSettingsController = new CloudSettingsController(new CloudSettingsController.Host() {
+            @Override public android.app.Activity activity() { return MainActivity.this; }
+            @Override public void post(Runnable r) { runOnUiThread(r); }
+            @Override public void toast(int res) { Toast.makeText(MainActivity.this, res, Toast.LENGTH_SHORT).show(); }
+            @Override public void toast(CharSequence text) { Toast.makeText(MainActivity.this, text, Toast.LENGTH_LONG).show(); }
+            @Override public void showCloneDialog() { MainActivity.this.showCloneDialog(); }
+        });
+        cloudSettingsController.setup(settingsView);
+        geofenceSettingsController = new GeofenceSettingsController(new GeofenceSettingsController.Host() {
+            @Override public android.app.Activity activity() { return MainActivity.this; }
+            @Override public android.view.View settingsView() { return settingsView; }
+        });
         AppConfig.migratePhoneChannel(this);
 
         settingsView.findViewById(R.id.btnTest).setOnClickListener(v -> testConnection());
@@ -3594,8 +3422,8 @@ public class MainActivity extends BaseLocalizedActivity {
             View item = settingsView.findViewById(navIds[i]);
             item.setSelected(selected[i]);
         }
-        if (index == 3) {
-            renderGeofences();
+        if (index == 3 && geofenceSettingsController != null) {
+            geofenceSettingsController.render();
         }
         if (index == 2) {
             updateSmarthomeStats();
@@ -3605,63 +3433,6 @@ public class MainActivity extends BaseLocalizedActivity {
             maybeRunFirstLaunchResearch();
         }
     }
-
-    private void renderGeofences() {
-        LinearLayout container = settingsView.findViewById(R.id.geofenceRowsContainer);
-        TextView emptyText = settingsView.findViewById(R.id.geofenceEmptyText);
-        List<GeofenceZone> zones = AppConfig.loadGeofences(this);
-        if (zones.isEmpty()) {
-            container.removeAllViews();
-            emptyText.setVisibility(View.VISIBLE);
-            return;
-        }
-        emptyText.setVisibility(View.GONE);
-        container.removeAllViews();
-        for (GeofenceZone zone : zones) {
-            TextView row = new TextView(this);
-            row.setText(GeofenceRowText.buildRow(zone.name, zone.radius,
-                    getString(R.string.geofence_last_visited,
-                            GeofenceRowText.formatLastVisited(zone.lastVisitedAtMs,
-                                    getString(R.string.geofence_last_visited_never),
-                                    getString(R.string.geofence_last_visited_today),
-                                    getString(R.string.geofence_last_visited_yesterday),
-                                    java.util.Calendar.getInstance()))));
-            row.setTextColor(getResources().getColor(R.color.textPrimary));
-            row.setTextSize(14f);
-            row.setPadding(dp(12), dp(10), dp(12), dp(10));
-            row.setBackgroundResource(R.drawable.bg_row);
-            row.setOnClickListener(v -> {
-                Intent intent = new Intent(this, GeofenceEditActivity.class);
-                intent.putExtra("zone_id", zone.id);
-                startActivity(intent);
-            });
-            row.setOnLongClickListener(v -> {
-                confirmDeleteGeofence(zone);
-                return true;
-            });
-            container.addView(row);
-        }
-    }
-
-    private void confirmDeleteGeofence(GeofenceZone zone) {
-        new AlertDialog.Builder(this)
-                .setTitle(zone.name)
-                .setMessage(getString(R.string.geofence_delete_confirm, zone.name))
-                .setPositiveButton(R.string.geofence_delete, (d, w) -> {
-                    List<GeofenceZone> zones = AppConfig.loadGeofences(this);
-                    for (int i = 0; i < zones.size(); i++) {
-                        if (zones.get(i).id.equals(zone.id)) {
-                            zones.remove(i);
-                            break;
-                        }
-                    }
-                    AppConfig.saveGeofences(this, zones);
-                    renderGeofences();
-                })
-                .setNegativeButton(R.string.menu_cancel, null)
-                .show();
-    }
-
     private void setupVehicleCard() {
         Spinner spinnerProducer = settingsView.findViewById(R.id.spinnerVehicleProducer);
         ArrayAdapter<CharSequence> producerAdapter = ArrayAdapter.createFromResource(this,
