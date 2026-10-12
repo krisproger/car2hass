@@ -706,6 +706,11 @@ public class AppConfig {
         getSecureStorage(ctx).clearCloudTokens();
     }
 
+    /** True when a stored cloud secret could not be decrypted (Keystore key lost). */
+    public static boolean hadCloudDecryptFailure(Context ctx) {
+        return getSecureStorage(ctx).hadDecryptFailure();
+    }
+
     /** True when the car name was already bound on the cloud account. */
     public static boolean isCloudCarBound(Context ctx, String carName) {
         if (carName == null || carName.isEmpty()) return false;

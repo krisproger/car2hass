@@ -117,6 +117,13 @@ public final class UpdateController {
         if (button == null) return;
         String version = AppConfig.getPendingUpdateVersion(activity);
         String sha = AppConfig.getPendingUpdateSha(activity);
+        if (!version.isEmpty() && !UpdateChecker.isNewer(version, AppInfo.getVersionName(activity))) {
+            // The pending version is already installed (or older): drop the
+            // leftover APK and forget it, so it is not offered again forever.
+            UpdateDownloader.cleanupDownloaded(activity);
+            AppConfig.setPendingUpdate(activity, "", "");
+            version = "";
+        }
         if (!version.isEmpty()) {
             File f = UpdateDownloader.findDownloadedFile(activity, -1, version, sha);
             if (f != null) {

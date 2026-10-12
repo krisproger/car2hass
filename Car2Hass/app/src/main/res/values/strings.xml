@@ -993,4 +993,5 @@
     <string name="tile_delete">Delete tile</string>
     <string name="settings_research_show_report">Show report</string>
     <string name="update_install">Install update</string>
+    <string name="settings_cloud_status_session_unavailable">Cloud session unavailable — sign in again</string>
 </resources>

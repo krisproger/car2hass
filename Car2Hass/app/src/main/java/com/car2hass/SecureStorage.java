@@ -42,6 +42,8 @@ public class SecureStorage {
     private final SharedPreferences securePrefs;
     private final SharedPreferences legacyPrefs;
     private volatile boolean keyAvailable = false;
+    /** Set when a stored secret could not be decrypted (e.g. the Keystore key was lost). */
+    private volatile boolean decryptFailed = false;
 
     public SecureStorage(Context ctx) {
         this.securePrefs = ctx.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
@@ -191,9 +193,15 @@ public class SecureStorage {
             byte[] decrypted = cipher.doFinal(Base64.decode(encB64, Base64.NO_WRAP));
             return new String(decrypted, "UTF-8");
         } catch (Exception e) {
+            decryptFailed = true;
             LogBuffer.e("SecureStorage", "Secret decryption failed: " + e.getMessage());
             return "";
         }
+    }
+
+    /** True when the last read of a stored secret failed to decrypt (vs. being absent). */
+    public boolean hadDecryptFailure() {
+        return decryptFailed;
     }
 
     private void clearSecret(String tokenKey, String ivKey, String fallbackKey) {

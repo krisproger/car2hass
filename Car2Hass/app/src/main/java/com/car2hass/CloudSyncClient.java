@@ -91,6 +91,14 @@ public final class CloudSyncClient {
     public static boolean refreshToken(Context ctx) {
         String refresh = AppConfig.getCloudRefreshToken(ctx);
         if (refresh == null || refresh.isEmpty()) {
+            if (AppConfig.hadCloudDecryptFailure(ctx)) {
+                // The token exists but cannot be decrypted (the Keystore key was
+                // lost, e.g. after an app update) — do NOT silently disable cloud
+                // sync / mark logged_out; the user must sign in again.
+                AppConfig.setCloudLastStatus(ctx, "session_unavailable");
+                LogBuffer.w(TAG, "Cloud token unreadable (decrypt failed) — re-login required");
+                return false;
+            }
             invalidateTokens(ctx, "logged_out");
             return false;
         }

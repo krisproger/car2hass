@@ -969,9 +969,14 @@ public class MainActivity extends BaseLocalizedActivity {
     /** One-time heads-up that the cloud session expired and needs a re-login. */
     private void maybeNotifyCloudSessionExpired() {
         if (cloudExpiryNotified) return;
-        if ("session_expired".equals(AppConfig.getCloudLastStatus(this))) {
+        String status = AppConfig.getCloudLastStatus(this);
+        if ("session_expired".equals(status) || "session_unavailable".equals(status)) {
             cloudExpiryNotified = true;
-            Toast.makeText(this, R.string.settings_cloud_status_session_expired, Toast.LENGTH_LONG).show();
+            Toast.makeText(this,
+                    "session_unavailable".equals(status)
+                            ? R.string.settings_cloud_status_session_unavailable
+                            : R.string.settings_cloud_status_session_expired,
+                    Toast.LENGTH_LONG).show();
         }
     }
 
@@ -1959,13 +1964,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private String lastDashboardFingerprint = "";
 
     private String dashboardFingerprint() {
-        StringBuilder sb = new StringBuilder(256);
-        for (DashboardTile t : dashboardTiles) {
-            sb.append(t.value).append('\u0001').append(t.unit).append('\u0001')
-                    .append(t.sub).append('\u0001').append(t.alert)
-                    .append(t.tapRightZone).append('\u0002');
-        }
-        return sb.toString();
+        return DashboardTileRenderer.fingerprint(dashboardTiles);
     }
 
     private void updatePresetTile(DashboardTile tile, DashboardPresetRegistry.DashboardPreset preset,
@@ -1984,156 +1983,7 @@ public class MainActivity extends BaseLocalizedActivity {
             return;
         }
 
-        switch (preset.state.source) {
-            case "single_numeric": {
-                CANDataItem item = byKey.get(preset.state.primarySensor);
-                if (item != null && !"---".equals(item.value)) {
-                    tile.setValue(SignalTranslator.translateValue(item.value), item.unit != null ? item.unit : "");
-                    tile.setSub("");
-                    tile.setAlert(false);
-                } else {
-                    tile.setValue("—", "");
-                    tile.setSub("");
-                    tile.setAlert(false);
-                }
-                break;
-            }
-            case "primary_numeric": {
-                CANDataItem item = byKey.get(preset.state.primarySensor);
-                if (item != null && !"---".equals(item.value)) {
-                    double val = parseDoubleSafe(item.value);
-                    tile.setValue(SignalTranslator.translateValue(item.value), "%");
-                    boolean thresholdAlert = preset.state.thresholdOpValue > 0 && val < preset.state.thresholdOpValue;
-                    tile.setAlert(thresholdAlert);
-                } else {
-                    tile.setValue("—", "");
-                    tile.setAlert(false);
-                }
-                break;
-            }
-            case "numeric_list": {
-                // Display all numeric values from the sensor list.
-                StringBuilder sb = new StringBuilder();
-                boolean anyValid = false;
-                double minVal = Double.MAX_VALUE;
-                for (String sk : preset.sensors) {
-                    CANDataItem item = byKey.get(sk);
-                    if (item != null && !"---".equals(item.value)) {
-                        anyValid = true;
-                        if (sb.length() > 0) sb.append(" / ");
-                        sb.append(item.value);
-                        double v = parseDoubleSafe(item.value);
-                        if (v < minVal) minVal = v;
-                    }
-                }
-                if (anyValid) {
-                    tile.setValue(sb.toString(), "");
-                    tile.setSub("");
-                    boolean thresholdAlert = preset.state.thresholdOpValue > 0 && minVal < preset.state.thresholdOpValue;
-                    tile.setAlert(thresholdAlert);
-                } else {
-                    tile.setValue("—", "");
-                    tile.setAlert(false);
-                }
-                break;
-            }
-            case "binary_any":
-            case "binary_all": {
-                boolean any = "binary_any".equals(preset.state.source);
-                List<String> openNames = new ArrayList<>();
-                boolean triggered = false;
-                for (String sk : preset.sensors) {
-                    CANDataItem item = byKey.get(sk);
-                    if (item == null || "---".equals(item.value)) continue;
-                    String translated = SignalTranslator.translateEnumValue(sk, item.value);
-                    boolean isTruthy = false;
-                    if ("numeric_gt_0".equals(preset.state.truthyMode)) {
-                        double v = parseDoubleSafe(item.value);
-                        isTruthy = v > 0;
-                    } else if ("numeric_eq_0".equals(preset.state.truthyMode)) {
-                        double v = parseDoubleSafe(item.value);
-                        isTruthy = v == 0;
-                    } else {
-                        for (String t : preset.state.truthy) {
-                            if (t.equalsIgnoreCase(translated)) { isTruthy = true; break; }
-                        }
-                    }
-                    if (isTruthy) {
-                        triggered = true;
-                        openNames.add(item.name);
-                    } else if (!any) {
-                        triggered = false;
-                        break;
-                    }
-                }
-                boolean isAlert = triggered;
-                String label, sub;
-                if (triggered) {
-                    int openN = openNames.size();
-                    int total = preset.sensors.size();
-                    label = DashboardPresetRegistry.pick(this, preset.state.display.alertLabel, preset.state.display.alertLabelRu)
-                            .replace("{open_n}", String.valueOf(openN))
-                            .replace("{total}", String.valueOf(total))
-                            .replace("{open_list}", joinStrings(openNames, ", "));
-                    String alertSub = DashboardPresetRegistry.pick(this, preset.state.display.alertSub, preset.state.display.alertSubRu);
-                    sub = alertSub != null
-                            ? alertSub
-                                    .replace("{open_n}", String.valueOf(openN))
-                                    .replace("{total}", String.valueOf(total))
-                                    .replace("{open_list}", joinStrings(openNames, ", "))
-                            : "";
-                    isAlert = preset.state.display.alertAlert;
-                } else {
-                    label = DashboardPresetRegistry.pick(this, preset.state.display.okLabel, preset.state.display.okLabelRu);
-                    String okSub = DashboardPresetRegistry.pick(this, preset.state.display.okSub, preset.state.display.okSubRu);
-                    sub = okSub != null ? okSub : "";
-                    isAlert = preset.state.display.okAlert;
-                }
-                if (!label.isEmpty()) tile.setValue(label, "");
-                else tile.setValue(triggered ? getString(R.string.dash_open) : getString(R.string.dash_all_closed), "");
-                tile.setSub(sub);
-                tile.setAlert(isAlert);
-                break;
-            }
-            case "ha_status": {
-                boolean enabled = AppConfig.isHassEnabled(this);
-                tile.setValue(enabled ? "ON" : "OFF");
-                tile.setAlert(!enabled);
-                break;
-            }
-            default: {
-                // Fallback: toggle behavior display based on primary sensor.
-                if (preset.state.primarySensor != null && !preset.sensors.isEmpty()) {
-                    CANDataItem item = byKey.get(preset.state.primarySensor);
-                    if (item != null && !"---".equals(item.value)) {
-                        String translated = SignalTranslator.translateEnumValue(preset.state.primarySensor, item.value);
-                        boolean isOn = isPresetStateTruthy(translated, preset);
-                        String label = isOn ? preset.state.display.onLabel : preset.state.display.offLabel;
-                        String sub = isOn ? preset.state.display.onSub : preset.state.display.offSub;
-                        boolean alert = isOn ? preset.state.display.onAlert : preset.state.display.offAlert;
-                        if (!label.isEmpty()) tile.setValue(label, "");
-                        else tile.setValue(translated, "");
-                        tile.setSub(sub != null ? sub : "");
-                        tile.setAlert(alert);
-                    } else {
-                        CANDataItem first = byKey.get(preset.sensors.get(0));
-                        if (first != null && !"---".equals(first.value)) {
-                            tile.setValue(SignalTranslator.translateValue(first.value), first.unit != null ? first.unit : "");
-                        } else {
-                            tile.setValue("—", "");
-                        }
-                        tile.setSub("");
-                        tile.setAlert(false);
-                    }
-                } else {
-                    // No sensors — command-only tile, show preset label.
-                    tile.setValue("", "");
-                    tile.setSub("");
-                    tile.setAlert(false);
-                }
-                break;
-            }
-        }
+        DashboardTileRenderer.renderState(this, tile, preset, byKey);
     }
 
     /** Render toggle / dual_action_toggle presets: formatted value or on/off labels. */
@@ -2879,6 +2729,7 @@ public class MainActivity extends BaseLocalizedActivity {
         switch (status) {
             case "logged_out": return getString(R.string.settings_cloud_status_logged_out);
             case "session_expired": return getString(R.string.settings_cloud_status_session_expired);
+            case "session_unavailable": return getString(R.string.settings_cloud_status_session_unavailable);
             case "car_not_bound": return getString(R.string.settings_cloud_status_car_not_bound);
             case "no_car_name": return getString(R.string.settings_cloud_status_no_car_name);
             default: return status;
@@ -2902,7 +2753,7 @@ public class MainActivity extends BaseLocalizedActivity {
         }
         tvCloudStatus.setText(sb.toString());
         tvCloudStatus.setBackgroundResource(0);
-        boolean expired = "session_expired".equals(status);
+        boolean expired = "session_expired".equals(status) || "session_unavailable".equals(status);
         tvCloudStatus.setTextColor(expired
                 ? getResources().getColor(R.color.accentRed)
                 : (loggedIn ? getResources().getColor(R.color.accentGreen)

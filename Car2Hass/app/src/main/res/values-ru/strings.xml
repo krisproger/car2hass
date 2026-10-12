@@ -986,4 +986,5 @@
     <string name="tile_delete">Удалить плитку</string>
     <string name="settings_research_show_report">Показать отчёт</string>
     <string name="update_install">Установить обновление</string>
+    <string name="settings_cloud_status_session_unavailable">Сессия облака недоступна — войдите заново</string>
 </resources>
