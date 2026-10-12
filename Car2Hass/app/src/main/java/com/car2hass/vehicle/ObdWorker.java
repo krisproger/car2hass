@@ -99,24 +99,40 @@ public final class ObdWorker implements ChannelWorker {
             try {
                 if (session == null) {
                     AppConfig.setObdStatus(ctx, "connecting");
-                    AppConfig.setObdPhase(ctx, "open");
                     ObdTransport t = ObdTransportFactory.create(ctx);
-                    // Plain open() avoids adapter.isDiscovering() (BLUETOOTH_SCAN
-                    // on Android 12+). After repeated connect failures, try the
-                    // heavier forced open (cancel discovery + re-bind), falling
-                    // back to plain open when it is not permitted.
-                    if (openFailures >= 3) {
+                    // A cheap ELM327 clone may accept the SPP link only
+                    // intermittently ("read failed ... read ret: -1"), so try the
+                    // full open+warmUp a few times within the cycle before paying
+                    // the long backoff. Plain open() avoids adapter.isDiscovering()
+                    // (BLUETOOTH_SCAN on Android 12+); after repeated connect
+                    // failures the heavier forced open is used.
+                    final int maxAttempts = 3;
+                    for (int attempt = 1; attempt <= maxAttempts; attempt++) {
+                        AppConfig.setObdPhase(ctx, "open");
                         try {
-                            session = t.openForced();
-                        } catch (Exception forcedEx) {
-                            session = t.open();
+                            if (openFailures >= 3) {
+                                try {
+                                    session = t.openForced();
+                                } catch (Exception forcedEx) {
+                                    session = t.open();
+                                }
+                            } else {
+                                session = t.open();
+                            }
+                            phase = "warmUp";
+                            AppConfig.setObdPhase(ctx, "warmUp");
+                            if (session.initWarmUp() != null) break;
+                        } catch (Exception ex) {
+                            if (attempt >= maxAttempts) throw ex;
                         }
-                    } else {
-                        session = t.open();
+                        close(session);
+                        session = null;
+                        if (attempt < maxAttempts) {
+                            LogBuffer.d("ObdWorker", "open/warmUp attempt " + attempt + " failed, retrying");
+                            sleep(1000);
+                        }
                     }
-                    phase = "warmUp";
-                    AppConfig.setObdPhase(ctx, "warmUp");
-                    if (session.initWarmUp() == null) {
+                    if (session == null) {
                         String code = ObdError.INIT_FAILED;
                         AppConfig.setObdStatus(ctx, "disconnected");
                         AppConfig.setObdLastError(ctx, code);
@@ -128,8 +144,6 @@ public final class ObdWorker implements ChannelWorker {
                         LogBuffer.w("ObdWorker", "warmUp failed after "
                                 + (System.currentTimeMillis() - cycleT0) + "ms — retry in "
                                 + retryBackoffMs + " ms");
-                        close(session);
-                        session = null;
                         AppConfig.setObdErrorCount(ctx, (int) errorCount);
                         AppConfig.setObdBackoffMs(ctx, retryBackoffMs);
                         cycleCount++;
