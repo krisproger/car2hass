@@ -15,6 +15,12 @@ except ImportError:  # Direct module import (unit tests without Home Assistant)
 COMMAND_TIMEOUT = timedelta(minutes=1)
 DEFAULT_MAX_QUEUE = 50
 
+# Yield to the HA event loop every this many history replays, sleeping this long,
+# so a large offline batch writes its FULL history without blocking the loop (no
+# dropped points and no track jitter). A 500-point backlog thus spreads over ~0.6 s.
+HISTORY_REPLAY_CHUNK = 25
+HISTORY_REPLAY_YIELD_SEC = 0.03
+
 # A sensor stays "available" only while telemetry keeps arriving; after this
 # many seconds without a batch it is reported unavailable (honest liveness).
 SIGNAL_STALE_SECONDS = 180

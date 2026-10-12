@@ -8,11 +8,13 @@ except ImportError:
 from homeassistant.const import Platform
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
+import asyncio
 
 from .const import DOMAIN
 
 from .const import CONF_CAR_NAME, INTEGRATION_VERSION
 from .device_info import build_device_info
+from . import core
 from . import SIGNAL_VEHICLE_DATA_UPDATED, entry_signal, async_replay_state
 
 
@@ -116,6 +118,7 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
                         points.append(
                             (snapshot.get("t", 0), lat, lon, gps.get("a", 0))
                         )
+            replayed = 0
             for t, lat, lon, acc in points:
                 self._latitude = float(lat)
                 self._longitude = float(lon)
@@ -125,6 +128,9 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
                     self._accuracy = 0
                 self._attr_available = True
                 async_replay_state(self, t)
+                replayed += 1
+                if replayed % core.HISTORY_REPLAY_CHUNK == 0:
+                    await asyncio.sleep(core.HISTORY_REPLAY_YIELD_SEC)
                 written = True
 
             # History points above were written at their (past) fix times.

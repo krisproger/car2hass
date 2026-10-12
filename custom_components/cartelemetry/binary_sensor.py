@@ -4,6 +4,7 @@ from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import Platform
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
+import asyncio
 from datetime import timedelta
 
 from homeassistant.helpers.event import async_track_point_in_utc_time
@@ -142,7 +143,10 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
             return False
         if self._signal_key == "online":
             return True
-        store = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {}) if self.hass else {}
+        hass = getattr(self, "hass", None)
+        if hass is None:
+            return True
+        store = hass.data.get(DOMAIN, {}).get(self._entry_id, {})
         last_seen_raw = store.get("last_seen")
         if not last_seen_raw:
             return True
@@ -226,6 +230,7 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
                     )
                 else:
                     values = ((0, fallback_signals.get(self._signal_key)),)
+                replayed = 0
                 for t, raw in values:
                     if raw is not None:
                         raw_lower = str(raw).lower()
@@ -245,6 +250,9 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
                             self._attr_is_on = new_state
                             async_replay_state(self, t)
                             written = True
+                            replayed += 1
+                            if replayed % core.HISTORY_REPLAY_CHUNK == 0:
+                                await asyncio.sleep(core.HISTORY_REPLAY_YIELD_SEC)
 
             av = store.get("app_version", "")
             if av:

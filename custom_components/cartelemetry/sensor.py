@@ -4,6 +4,7 @@ from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import Platform
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
+import asyncio
 from homeassistant.util import dt as dt_util
 
 from .const import DOMAIN
@@ -104,7 +105,10 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
         # instead of showing a stale value forever.
         if not self._attr_available:
             return False
-        store = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {}) if self.hass else {}
+        hass = getattr(self, "hass", None)
+        if hass is None:
+            return True
+        store = hass.data.get(DOMAIN, {}).get(self._entry_id, {})
         last_seen_raw = store.get("last_seen")
         if not last_seen_raw:
             return True
@@ -204,6 +208,7 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
                     (snapshot.get("t", 0), snapshot.get("s", {}).get(self._signal_key))
                     for snapshot in batch
                 )
+            replayed = 0
             for t, raw in values:
                 if raw is not None:
                     self._attr_available = True
@@ -212,6 +217,11 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
                         self._attr_native_value = new_value
                         async_replay_state(self, t)
                         written = True
+                        replayed += 1
+                        # Yield every chunk so a large offline batch writes its
+                        # full history without blocking the HA event loop.
+                        if replayed % core.HISTORY_REPLAY_CHUNK == 0:
+                            await asyncio.sleep(core.HISTORY_REPLAY_YIELD_SEC)
 
             # Fallback for non-batch updates (compatibility / empty batch).
             if not batch:

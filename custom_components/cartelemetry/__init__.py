@@ -78,7 +78,7 @@ def async_replay_state(entity, timestamp):
     the batch into the current time. Older versions fall back to the plain
     ``async_write_ha_state`` (current time), preserving the old behavior.
     """
-    if _SUPPORTS_ASYNC_SET_TIMESTAMP:
+    if _SUPPORTS_ASYNC_SET_TIMESTAMP and timestamp and timestamp > 0:
         calc = entity._async_calculate_state()
         entity.hass.states.async_set(
             entity.entity_id,
@@ -88,6 +88,7 @@ def async_replay_state(entity, timestamp):
             timestamp=timestamp,
         )
     else:
+        # A missing/zero timestamp must not write history at 1970.
         entity.async_write_ha_state()
 
 
