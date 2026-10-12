@@ -18,6 +18,8 @@ public final class UpdateController {
     public interface Listener {
         /** Called when a quiet (on-open) check finds an update, to show the notes dialog. */
         void onUpdateAvailable(UpdateChecker.UpdateInfo info);
+        /** Called when an install/download starts, so the host can reveal the progress indicator. */
+        void onDownloadStarted();
     }
 
     private final Activity activity;
@@ -137,6 +139,9 @@ public final class UpdateController {
 
     /** Downloads (or offers to install an already-downloaded) update. */
     public void download(UpdateChecker.UpdateInfo info) {
+        // Reveal the settings update section so the inline progress is visible
+        // even when the user tapped "Install/Update" in the on-open dialog.
+        if (listener != null) listener.onDownloadStarted();
         File existing = UpdateDownloader.findDownloadedFile(activity, -1, info.version, info.sha256);
         LogBuffer.i("Main", "update: version=" + info.version + " size=" + info.size
                 + " sha256=" + info.sha256 + " existing=" + existing

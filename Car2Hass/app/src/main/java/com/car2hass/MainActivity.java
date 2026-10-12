@@ -1037,6 +1037,12 @@ public class MainActivity extends BaseLocalizedActivity {
         navSettings.setOnClickListener(v -> selectTab(3));
     }
 
+    /** Reveals the tech settings section (where the update button shows progress). */
+    private void showUpdateSection() {
+        selectTab(3);
+        selectSettingsSection(4);
+    }
+
     private void selectTab(int index) {
         int SETTINGS_INDEX = 3;
         // Leaving the settings tab: flush any pending autosave immediately so a
@@ -3477,7 +3483,10 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsView.findViewById(R.id.btnExportConfig).setOnClickListener(v -> exportConfig());
         settingsView.findViewById(R.id.btnImportConfig).setOnClickListener(v -> importConfig());
         btnCheckUpdate = settingsView.findViewById(R.id.btnCheckUpdate);
-        updateController = new UpdateController(this, btnCheckUpdate, this::showUpdateDialog);
+        updateController = new UpdateController(this, btnCheckUpdate, new UpdateController.Listener() {
+            @Override public void onUpdateAvailable(UpdateChecker.UpdateInfo info) { showUpdateDialog(info); }
+            @Override public void onDownloadStarted() { showUpdateSection(); }
+        });
         updateController.refreshButton();
         updateController.setupChannelSpinner(settingsView);
         settingsView.findViewById(R.id.btnRequestPermissions).setOnClickListener(v -> {
