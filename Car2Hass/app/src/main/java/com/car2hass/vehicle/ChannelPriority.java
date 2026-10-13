@@ -23,8 +23,11 @@ public final class ChannelPriority {
     /** Rank returned for channels absent from {@link #ORDER}. */
     public static final int UNKNOWN_RANK = ORDER.size();
 
-    /** A held value older than this (relative to the incoming timestamp) is stale. */
-    public static final long STALE_MS = 10_000L;
+    /** A held value older than this (relative to the incoming timestamp) is stale
+     *  enough to hand the key to a lower-rank channel. Kept well above the period
+     *  of the fast sources (adb/dumpsys) so an intermittent slow source (diplus)
+     *  cannot take the key over every cycle and make the value flicker. */
+    public static final long STALE_SWITCH_MS = 60_000L;
 
     public static int rank(String channel) {
         // Voyah occupies the same slot as DiPlus (mutually exclusive per car).
@@ -37,8 +40,10 @@ public final class ChannelPriority {
     public static boolean shouldAccept(int currentRank, long currentAtMs,
                                        int incomingRank, long incomingAtMs) {
         // A fresh value from any channel replaces a stale higher-rank value, so an
-        // intermittent high-priority source cannot pin a dead value forever.
-        if (incomingAtMs - currentAtMs > STALE_MS) return true;
+        // intermittent high-priority source cannot pin a dead value forever. The
+        // threshold is deliberately long (60 s): a slow lower-rank channel must not
+        // steal the key on every cycle from a fast higher-rank one.
+        if (incomingAtMs - currentAtMs > STALE_SWITCH_MS) return true;
         if (incomingRank < currentRank) return true;
         if (incomingRank > currentRank) return false;
         return incomingAtMs >= currentAtMs;

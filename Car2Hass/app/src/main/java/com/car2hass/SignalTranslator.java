@@ -190,6 +190,53 @@ public class SignalTranslator {
         // AUTO-GENERATED ENUM LABELS END
     }
 
+    // ─── Per-key label reconciliation (hand-written) ───
+    // diplus may return the same state either as a numeric index (mapped through
+    // ENUM_LABELS) or as Chinese text (mapped through the global VALUE_TRANS).
+    // Those two vocabularies disagree for a few keys, so one state appeared as two
+    // different labels ("recirc"/"recirculation", "stop"/"stopped", ...) and the
+    // entity looked like it was flickering. These per-key aliases fold the generic
+    // wording back into the key's canonical ENUM_LABELS vocabulary.
+    private static final HashMap<String, HashMap<String, String>> ENUM_ALIASES = new HashMap<>();
+    static {
+        alias("ac_recirculation", "external", "fresh");
+        alias("ac_recirculation", "recirculation", "recirc");
+        alias("powertrain_mode", "stopped", "stop");
+        alias("dashcam_state", "stopped", "stop");
+        for (String k : new String[]{"sidelights", "low_beam", "high_beam",
+                "front_fog", "rear_fog", "footwell_light", "hazard"}) {
+            alias(k, "on", "open");
+        }
+        alias("drl", "未定义", "undefined");
+        alias("drl", "undefined", "undefined");
+        for (String k : new String[]{"driver_seatbelt", "passenger_seatbelt",
+                "seatbelt_2nd_left", "seatbelt_2nd_right", "seatbelt_2nd_center",
+                "charging_state"}) {
+            alias(k, "undefined", "invalid");
+        }
+        alias("passenger_seatbelt_warning", "no alert", "no warning");
+        alias("passenger_seatbelt_warning", "no alarm", "no warning");
+        alias("rear_left_approach_warning", "no alarm", "no warning");
+        alias("rear_right_approach_warning", "no alarm", "no warning");
+        alias("surround_view_state", "not shown", "hidden");
+        alias("online", "online", "on");
+        alias("online", "offline", "off");
+        alias("charge_port_flap", "on", "open");
+        alias("charge_port_flap", "off", "closed");
+    }
+
+    private static void alias(String key, String from, String to) {
+        ENUM_ALIASES.computeIfAbsent(key, k -> new HashMap<>()).put(from, to);
+    }
+
+    /** Fold a translated label into the canonical per-key enum vocabulary. */
+    private static String canonicalizeEnum(String key, String value) {
+        HashMap<String, String> m = ENUM_ALIASES.get(key);
+        if (m == null || value == null) return value;
+        String canonical = m.get(value);
+        return canonical != null ? canonical : value;
+    }
+
     // Keys whose values are free-form identifiers / firmware strings and should
     // not produce "untranslated" warnings.
     private static final Set<String> FREE_TEXT_KEYS = new HashSet<>(Arrays.asList(
@@ -276,7 +323,7 @@ public class SignalTranslator {
                     String[] kv = part.split(":", 2);
                     if (kv.length != 2) continue;
                     if (Integer.parseInt(kv[0].trim()) == idx) {
-                        return kv[1].trim();
+                        return canonicalizeEnum(key, kv[1].trim());
                     }
                 }
             } catch (NumberFormatException ignored) {
@@ -291,7 +338,7 @@ public class SignalTranslator {
                     if (kv.length != 2) continue;
                     String label = kv[1].trim();
                     if (label.equalsIgnoreCase(trimmed)) {
-                        return label;
+                        return canonicalizeEnum(key, label);
                     }
                 }
             }
@@ -299,6 +346,9 @@ public class SignalTranslator {
 
         // Try key-aware Chinese text translation (e.g. doors -> closed/open).
         String text = translateValueForKey(key, rawValue);
+        // Reconcile generic wording with this key's canonical enum labels so the
+        // same state never shows up under two labels (numeric vs Chinese input).
+        text = canonicalizeEnum(key, text);
         if (!text.equals(rawValue)) {
             return text;
         }

@@ -31,6 +31,19 @@ public final class ValueStore {
     /** Last logged priority-drop tag per key, to avoid repeating the same message. */
     private final ConcurrentHashMap<String, String> lastIgnored = new ConcurrentHashMap<>();
 
+    /** Cross-channel flip bursts per key, to surface real flicker without flooding. */
+    private final ConcurrentHashMap<String, FlipTracker> flips = new ConcurrentHashMap<>();
+
+    /** A key flipping at least this many times inside {@link #FLIP_WARN_WINDOW_MS}
+     *  is reported once at WARN so field logs expose genuine flicker. */
+    private static final int FLIP_WARN_THRESHOLD = 4;
+    private static final long FLIP_WARN_WINDOW_MS = 60_000L;
+
+    private static final class FlipTracker {
+        long windowStart;
+        int count;
+    }
+
     /** The live store instance, set by TelemetryService so static code (command
      *  verification) can reach the translated values + listeners. */
     private static volatile ValueStore main;
@@ -72,6 +85,11 @@ public final class ValueStore {
                 && !prevValue.equals(value)) {
             LogBuffer.d("ValueStore", "flip " + key + ": " + prevValue + "(" + prevSource
                     + ") -> " + value + "(" + channel + ")");
+            // The startup burst of "restored -> live" transitions is expected and
+            // must not look like flicker; only count real cross-channel flips.
+            if (!SOURCE_RESTORED.equals(prevSource)) {
+                noteFlip(key, now, prevValue, prevSource, value, channel);
+            }
         }
         if (!listeners.isEmpty()) {
             for (Listener l : listeners) l.onValueChanged(key, value, channel);
@@ -80,6 +98,27 @@ public final class ValueStore {
 
     public void addListener(Listener l) { listeners.addIfAbsent(l); }
     public void removeListener(Listener l) { listeners.remove(l); }
+
+    /** Rate-limit the flip WARN: at most one per key per window. */
+    private void noteFlip(String key, long now, String fromValue, String fromChannel,
+                          String toValue, String toChannel) {
+        boolean[] warn = new boolean[1];
+        flips.compute(key, (k, t) -> {
+            if (t == null) t = new FlipTracker();
+            if (now - t.windowStart > FLIP_WARN_WINDOW_MS) {
+                t.windowStart = now;
+                t.count = 0;
+            }
+            t.count++;
+            warn[0] = t.count == FLIP_WARN_THRESHOLD;
+            return t;
+        });
+        if (warn[0]) {
+            LogBuffer.w("ValueStore", "frequent flip " + key + " (" + FLIP_WARN_THRESHOLD
+                    + "/min): " + fromValue + "(" + fromChannel + ") <-> "
+                    + toValue + "(" + toChannel + ")");
+        }
+    }
 
     public String get(String key) {
         return values.get(key);

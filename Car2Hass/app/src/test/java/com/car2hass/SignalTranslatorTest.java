@@ -19,6 +19,7 @@ public class SignalTranslatorTest {
         failures += testOffStateDetection();
         failures += testNewlyAddedTranslations();
         failures += testLocationProviderFreeText();
+        failures += testEnumLabelReconciliation();
 
         if (failures > 0) {
             System.err.println("FAILURES: " + failures);
@@ -105,6 +106,32 @@ public class SignalTranslatorTest {
                 "location_provider must be a free-text key (no untranslated warning)");
         assertEquals("gps", SignalTranslator.translateEnumValue("location_provider", "gps"),
                 "location_provider 'gps' must pass through unchanged");
+        return 0;
+    }
+
+    private static int testEnumLabelReconciliation() {
+        // Numeric and Chinese inputs for one state must yield the SAME label.
+        assertEquals("fresh", SignalTranslator.translateEnumValue("ac_recirculation", "0"), "ac_recirculation 0 -> fresh");
+        assertEquals("fresh", SignalTranslator.translateEnumValue("ac_recirculation", "外循环"), "外循环 -> fresh");
+        assertEquals("fresh", SignalTranslator.translateEnumValue("ac_recirculation", "external"), "external -> fresh");
+        assertEquals("recirc", SignalTranslator.translateEnumValue("ac_recirculation", "1"), "ac_recirculation 1 -> recirc");
+        assertEquals("recirc", SignalTranslator.translateEnumValue("ac_recirculation", "内循环"), "内循环 -> recirc");
+        assertEquals("recirc", SignalTranslator.translateEnumValue("ac_recirculation", "recirculation"), "recirculation -> recirc");
+
+        assertEquals("stop", SignalTranslator.translateEnumValue("powertrain_mode", "0"), "powertrain_mode 0 -> stop");
+        assertEquals("stop", SignalTranslator.translateEnumValue("powertrain_mode", "停止"), "停止 -> stop");
+        assertEquals("stop", SignalTranslator.translateEnumValue("dashcam_state", "停止"), "dashcam 停止 -> stop");
+
+        assertEquals("open", SignalTranslator.translateEnumValue("low_beam", "1"), "low_beam 1 -> open");
+        assertEquals("open", SignalTranslator.translateEnumValue("low_beam", "打开"), "打开 -> open for lights");
+        assertEquals("open", SignalTranslator.translateEnumValue("low_beam", "on"), "on -> open for lights");
+
+        assertEquals("on", SignalTranslator.translateEnumValue("online", "1"), "online 1 -> on");
+        assertEquals("on", SignalTranslator.translateEnumValue("online", "在线"), "在线 -> on");
+        assertEquals("on", SignalTranslator.translateEnumValue("online", "online"), "online string -> on");
+
+        assertEquals("hidden", SignalTranslator.translateEnumValue("surround_view_state", "未显示"), "未显示 -> hidden");
+        assertEquals("invalid", SignalTranslator.translateEnumValue("driver_seatbelt", "未定义"), "未定义 seatbelt -> invalid");
         return 0;
     }
 

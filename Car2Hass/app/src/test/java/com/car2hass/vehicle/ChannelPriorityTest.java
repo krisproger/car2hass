@@ -38,13 +38,23 @@ public class ChannelPriorityTest {
 
         // Freshness: a fresh value from any channel beats a stale higher-priority value.
         long now = 1_000_000L;
-        long stale = now - ChannelPriority.STALE_MS - 1;
+        long stale = now - ChannelPriority.STALE_SWITCH_MS - 1;
         if (!ChannelPriority.shouldAccept(ChannelPriority.rank("adb"), stale,
                 ChannelPriority.rank("diplus"), now))
             throw new AssertionError("fresh lower-priority value must replace a stale higher-priority one");
         if (!ChannelPriority.shouldAccept(ChannelPriority.rank("diplus"), now,
                 ChannelPriority.rank("adb"), now))
             throw new AssertionError("fresh adb must still win");
+
+        // Anti-flicker: a slow lower-rank channel must not steal the key from a
+        // fast higher-rank one before the long stale threshold elapses.
+        long adbAt = now;
+        if (ChannelPriority.shouldAccept(ChannelPriority.rank("adb"), adbAt,
+                ChannelPriority.rank("diplus"), adbAt + 30_000L))
+            throw new AssertionError("lower priority must not steal before the stale threshold");
+        if (!ChannelPriority.shouldAccept(ChannelPriority.rank("adb"), adbAt,
+                ChannelPriority.rank("diplus"), adbAt + ChannelPriority.STALE_SWITCH_MS + 1))
+            throw new AssertionError("lower priority must take over after the stale threshold");
 
         System.out.println("All ChannelPriority tests passed.");
     }
