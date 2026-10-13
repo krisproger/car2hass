@@ -1063,12 +1063,18 @@ public class MainActivity extends BaseLocalizedActivity {
         for (int i = 0; i < navItems.length; i++) {
             boolean selected = i == index;
             navItems[i].setSelected(selected);
-            TextView icon = (TextView) navItems[i].getChildAt(0);
-            TextView label = (TextView) navItems[i].getChildAt(1);
             int color = selected ? getResources().getColor(R.color.primary)
                     : getResources().getColor(R.color.textSecondary);
-            icon.setTextColor(color);
-            label.setTextColor(color);
+            View icon = navItems[i].getChildAt(0);
+            if (icon instanceof ImageView) {
+                ((ImageView) icon).setColorFilter(color, android.graphics.PorterDuff.Mode.SRC_IN);
+            } else if (icon instanceof TextView) {
+                ((TextView) icon).setTextColor(color);
+            }
+            View label = navItems[i].getChildAt(1);
+            if (label instanceof TextView) {
+                ((TextView) label).setTextColor(color);
+            }
         }
         if (index == 2) {
             refreshCommandJournal();
