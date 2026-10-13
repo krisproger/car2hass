@@ -10,7 +10,7 @@ from homeassistant.util import dt as dt_util
 from .const import DOMAIN
 
 from .const import NUMERIC_SENSORS, ENUM_SENSORS, NATIVE_SENSORS, CONF_CAR_NAME, INTEGRATION_VERSION
-from .const import CORE_SENSORS, NAME_RU
+from .const import CORE_SENSORS, NAME_RU, BINARY_SENSORS, ENUM_LABELS
 from .device_info import build_device_info, build_phone_device_info
 from . import core
 from . import SIGNAL_VEHICLE_DATA_UPDATED, entry_signal, async_replay_state
@@ -18,6 +18,11 @@ from . import SIGNAL_VEHICLE_DATA_UPDATED, entry_signal, async_replay_state
 # Core signals (open contract) are enabled from the start; every other sensor
 # starts disabled-by-default and is enabled on first data.
 _CORE_SIGNALS = CORE_SENSORS
+
+# Keys that already have their own entity; the diagnostics sensor must not
+# duplicate them as attributes.
+_ENTITY_KEYS = (frozenset(NUMERIC_SENSORS) | frozenset(ENUM_SENSORS)
+                | frozenset(BINARY_SENSORS) | frozenset(NATIVE_SENSORS))
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
@@ -213,6 +218,9 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
                 if raw is not None:
                     self._attr_available = True
                     new_value = self._coerce_value(raw)
+                    # Map a numeric enum index to its label (mirrors the app).
+                    if self._signal_key in ENUM_SENSORS and new_value is not None:
+                        new_value = ENUM_LABELS.get(self._signal_key, {}).get(str(new_value).strip(), new_value)
                     if new_value != self._attr_native_value:
                         self._attr_native_value = new_value
                         async_replay_state(self, t)
@@ -286,7 +294,7 @@ class DiagnosticsSensor(SensorEntity, RestoreEntity):
             if car_signals:
                 self._attr_available = True
                 attrs = {key: value for key, value in car_signals.items()
-                         if key not in NATIVE_SENSORS}
+                         if key not in _ENTITY_KEYS}
                 count = len(car_signals)
                 # Write only when something actually changed — otherwise a steady
                 # car would rewrite ~146 attributes (and churn the recorder) on

@@ -197,12 +197,11 @@
             android:clickable="true"
             android:focusable="true">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⊞"
-                android:textColor="@color/primary"
-                android:textSize="22sp" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_nav_dashboard" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -223,12 +222,11 @@
             android:clickable="true"
             android:focusable="true">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="☰"
-                android:textColor="@color/textSecondary"
-                android:textSize="22sp" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_nav_telemetry" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -249,12 +247,11 @@
             android:clickable="true"
             android:focusable="true">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⚡"
-                android:textColor="@color/textSecondary"
-                android:textSize="22sp" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_nav_rules" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -275,12 +272,11 @@
             android:clickable="true"
             android:focusable="true">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="⚙"
-                android:textColor="@color/textSecondary"
-                android:textSize="22sp" />
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:importantForAccessibility="no"
+                android:src="@drawable/ic_nav_settings" />
 
             <TextView
                 android:layout_width="wrap_content"

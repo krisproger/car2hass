@@ -175,7 +175,18 @@ public final class CloudSyncClient {
             }
             if (s.length() == 0) return;
 
-            buffer.add(CloudBatchBuffer.buildSnapshot(System.currentTimeMillis() / 1000, s, lat, lon));
+            // Pre-queue dedup: skip a snapshot that repeats the previous one
+            // while the car barely moved (stationary → no redundant load).
+            double clat = lat == null ? Double.NaN : lat;
+            double clon = lon == null ? Double.NaN : lon;
+            String sig = s.toString();
+            long tsSec = System.currentTimeMillis() / 1000;
+            if (SnapshotDedup.isDuplicate(SnapshotDedup.Channel.CLOUD, clat, clon, sig)) {
+                LogBuffer.d(TAG, "snapshot skipped (stationary, unchanged)");
+                return;
+            }
+            SnapshotDedup.keep(SnapshotDedup.Channel.CLOUD, clat, clon, tsSec, sig);
+            buffer.add(CloudBatchBuffer.buildSnapshot(tsSec, s, lat, lon));
             long now = System.currentTimeMillis();
             if (buffer.size() >= FLUSH_THRESHOLD || now - lastFlushAttemptMs >= FLUSH_INTERVAL_MS) {
                 flushAsync(ctx.getApplicationContext());

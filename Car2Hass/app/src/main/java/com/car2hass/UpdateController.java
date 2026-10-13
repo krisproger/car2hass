@@ -92,11 +92,10 @@ public final class UpdateController {
                     // Remember the published version+sha so a downloaded APK can
                     // later be offered for install (SHA-verified) without a re-check.
                     AppConfig.setPendingUpdate(activity, result.version, result.sha256);
-                    if (quiet) {
-                        if (listener != null) listener.onUpdateAvailable(result);
-                    } else {
-                        download(result);
-                    }
+                    // Always show the "what's new" dialog and let the user confirm
+                    // the download (manual and on-open checks alike).
+                    if (!quiet) refreshButton();
+                    if (listener != null) listener.onUpdateAvailable(result);
                     return;
                 }
                 if (!quiet) {

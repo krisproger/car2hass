@@ -383,6 +383,16 @@ def _build_const_snippets(signals, core_keys=None, name_ru=None):
     lines.append('# Used by binary_sensor.py _value_to_bool()')
     lines.append("BINARY_ON_MAP: dict[str, list[str]] = " + repr(binary_on_map))
     lines.append("")
+    enum_labels = {}
+    for sig in signals:
+        if sig.get("type") == "enum" and sig.get("labels"):
+            try:
+                enum_labels[sig["key"]] = {int(k): str(v) for k, v in sig["labels"].items()}
+            except (TypeError, ValueError):
+                pass
+    lines.append("# Enum index -> shared label (HA mirrors the app's labels).")
+    lines.append("ENUM_LABELS = " + _dict_repr(enum_labels))
+    lines.append("")
     lines.append("# Universal core sensors (open contract) — enabled by default in HA.")
     lines.append("CORE_SENSORS = " + repr(sorted(core_keys or [])))
     lines.append("")

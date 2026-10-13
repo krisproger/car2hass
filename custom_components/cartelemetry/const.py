@@ -29,7 +29,7 @@ NATIVE_SENSORS = {'ac_set_temp', 'ac_state', 'app_version', 'battery_12v_voltage
 
 CONF_CAR_NAME = "car_name"
 
-INTEGRATION_VERSION = "3.5.4-beta.1"
+INTEGRATION_VERSION = "3.5.4-beta.2"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.
@@ -1363,6 +1363,299 @@ BINARY_SENSORS = {
 # Map from binary sensor key → list of "truthy" string values
 # Used by binary_sensor.py _value_to_bool()
 BINARY_ON_MAP: dict[str, list[str]] = {'power_state': ['on', 'driving'], 'driver_seatbelt': ['buckled'], 'remote_lock_state': ['locked'], 'charging_state': ['Ready', 'started', 'charging', 'full'], 'left_turn': ['on', 'open'], 'right_turn': ['on', 'open'], 'driver_door_lock': ['locked'], 'passenger_seatbelt_warning': ['alarm'], 'seatbelt_2nd_left': ['buckled'], 'seatbelt_2nd_right': ['buckled'], 'seatbelt_2nd_center': ['buckled'], 'ac_state': ['on', 'open'], 'ac_recirculation': ['recirculation', 'recirc'], 'driver_door': ['open', 'on'], 'passenger_door': ['open', 'on'], 'rear_left_door': ['open', 'on'], 'rear_right_door': ['open', 'on'], 'bonnet': ['open', 'on'], 'trunk': ['open', 'on'], 'fuel_charge_flap': ['open', 'on'], 'auto_hold': ['active'], 'rear_left_approach_warning': ['car approaching', 'alarm'], 'rear_right_approach_warning': ['car approaching', 'alarm'], 'lane_keep_state': ['active1', 'active2'], 'rear_left_door_lock': ['locked'], 'passenger_door_lock': ['locked'], 'rear_right_door_lock': ['locked'], 'trunk_lock': ['locked'], 'rear_left_child_lock': ['locked'], 'rear_right_child_lock': ['locked'], 'sidelights': ['on', 'open'], 'low_beam': ['on', 'open'], 'high_beam': ['on', 'open'], 'front_fog': ['on', 'open'], 'rear_fog': ['on', 'open'], 'footwell_light': ['on', 'open'], 'drl': ['on', 'open'], 'hazard': ['on', 'open'], 'passenger_seatbelt': ['buckled'], 'turn_signal': ['left', 'left2', 'right', 'right2', 'hazard', 'emergency', 'rear flash', 'flash'], 'surround_view_state': ['shown'], 'wifi_state': ['connected'], 'bluetooth_state': ['connected'], 'dashcam_state': ['running'], 'wireless_adb_switch': ['on'], 'online': ['on'], 'windows_all_state': ['open', 'on'], 'doors_all_state': ['open', 'on'], 'doors_all_lock': ['locked'], 'phone_is_charging': ['true'], 'phone_wifi_state': ['enabled'], 'phone_hotspot_state': ['true'], 'phone_doze': ['true'], 'phone_interactive': ['true'], 'phone_power_save': ['true'], 'phone_is_headphones': ['true'], 'phone_is_mic_muted': ['true'], 'phone_is_speakerphone_on': ['true'], 'phone_is_music_active': ['true']}
+
+# Enum index -> shared label (HA mirrors the app's labels).
+ENUM_LABELS = {
+    "power_state": {
+        "0": "off",
+        "1": "on",
+        "2": "driving",
+    },
+    "gear": {
+        "0": "—",
+        "1": "P",
+        "2": "R",
+        "3": "N",
+        "4": "D",
+        "5": "M",
+        "6": "S",
+    },
+    "charge_gun_state": {
+        "0": "—",
+        "1": "disconnected",
+        "2": "AC gun",
+        "3": "DC gun",
+        "4": "adapter gun",
+        "5": "discharge gun",
+    },
+    "weather": {
+        "0": "clear",
+        "1": "rain",
+        "2": "sunny",
+        "3": "cloudy",
+        "4": "overcast",
+        "5": "snow",
+        "6": "fog",
+        "7": "thunderstorm",
+    },
+    "driver_seatbelt": {
+        "0": "unbuckled",
+        "1": "buckled",
+        "2": "invalid",
+    },
+    "remote_lock_state": {
+        "0": "unlocked",
+        "1": "locked",
+    },
+    "temp_unit": {
+        "0": "°F",
+        "1": "°C",
+    },
+    "charging_state": {
+        "0": "invalid",
+        "1": "Ready",
+        "2": "started",
+        "3": "done",
+        "4": "aborted",
+    },
+    "left_turn": {
+        "0": "off",
+        "1": "on",
+    },
+    "right_turn": {
+        "0": "off",
+        "1": "on",
+    },
+    "driver_door_lock": {
+        "0": "—",
+        "1": "unlocked",
+        "2": "locked",
+    },
+    "powertrain_mode": {
+        "0": "stop",
+        "1": "EV",
+        "2": "forced EV",
+        "3": "HEV",
+    },
+    "drive_mode": {
+        "0": "NORMAL",
+        "1": "ECO",
+        "2": "SPORT",
+    },
+    "passenger_seatbelt_warning": {
+        "0": "—",
+        "1": "alarm",
+        "2": "normal",
+    },
+    "seatbelt_2nd_left": {
+        "0": "unbuckled",
+        "1": "buckled",
+        "2": "invalid",
+    },
+    "seatbelt_2nd_right": {
+        "0": "unbuckled",
+        "1": "buckled",
+        "2": "invalid",
+    },
+    "seatbelt_2nd_center": {
+        "0": "unbuckled",
+        "1": "buckled",
+        "2": "invalid",
+    },
+    "ac_state": {
+        "0": "off",
+        "1": "on",
+    },
+    "ac_recirculation": {
+        "0": "fresh",
+        "1": "recirc",
+    },
+    "ac_airflow_mode": {
+        "0": "—",
+        "1": "face",
+        "2": "face+feet",
+        "3": "feet",
+        "4": "feet+defrost",
+        "5": "defrost",
+        "6": "face+feet+defrost",
+        "7": "face+defrost",
+    },
+    "driver_door": {
+        "0": "closed",
+        "1": "open",
+    },
+    "passenger_door": {
+        "0": "closed",
+        "1": "open",
+    },
+    "rear_left_door": {
+        "0": "closed",
+        "1": "open",
+    },
+    "rear_right_door": {
+        "0": "closed",
+        "1": "open",
+    },
+    "bonnet": {
+        "0": "closed",
+        "1": "open",
+    },
+    "trunk": {
+        "0": "closed",
+        "1": "open",
+    },
+    "fuel_charge_flap": {
+        "0": "closed",
+        "1": "open",
+    },
+    "auto_hold": {
+        "0": "disabled",
+        "1": "pending",
+        "2": "active",
+        "3": "state3",
+    },
+    "acc_cruise_state": {
+        "0": "disabled",
+        "1": "cancelled",
+        "2": "pending",
+        "3": "active",
+        "4": "state4",
+        "5": "auto-start",
+    },
+    "rear_left_approach_warning": {
+        "0": "no warning",
+        "1": "car approaching",
+        "2": "alarm",
+    },
+    "rear_right_approach_warning": {
+        "0": "no warning",
+        "1": "car approaching",
+        "2": "alarm",
+    },
+    "lane_keep_state": {
+        "0": "off",
+        "1": "inactive",
+        "2": "active1",
+        "3": "active2",
+        "4": "error",
+    },
+    "rear_left_door_lock": {
+        "0": "invalid",
+        "1": "unlocked",
+        "2": "locked",
+    },
+    "passenger_door_lock": {
+        "0": "invalid",
+        "1": "unlocked",
+        "2": "locked",
+    },
+    "rear_right_door_lock": {
+        "0": "invalid",
+        "1": "unlocked",
+        "2": "locked",
+    },
+    "trunk_lock": {
+        "0": "invalid",
+        "1": "unlocked",
+        "2": "locked",
+    },
+    "rear_left_child_lock": {
+        "0": "invalid",
+        "1": "unlocked",
+        "2": "locked",
+    },
+    "rear_right_child_lock": {
+        "0": "invalid",
+        "1": "unlocked",
+        "2": "locked",
+    },
+    "sidelights": {
+        "0": "off",
+        "1": "open",
+    },
+    "low_beam": {
+        "0": "off",
+        "1": "open",
+    },
+    "high_beam": {
+        "0": "off",
+        "1": "open",
+    },
+    "front_fog": {
+        "0": "off",
+        "1": "open",
+    },
+    "rear_fog": {
+        "0": "off",
+        "1": "open",
+    },
+    "footwell_light": {
+        "0": "off",
+        "1": "open",
+    },
+    "drl": {
+        "0": "invalid",
+        "1": "open",
+        "2": "off",
+        "3": "未定义",
+    },
+    "hazard": {
+        "0": "invalid",
+        "1": "off",
+        "2": "open",
+    },
+    "passenger_seatbelt": {
+        "0": "unbuckled",
+        "1": "buckled",
+        "2": "invalid",
+    },
+    "turn_signal": {
+        "0": "off",
+        "1": "off",
+        "2": "left",
+        "3": "left2",
+        "4": "right",
+        "5": "right2",
+        "6": "hazard",
+        "7": "emergency",
+        "8": "rear flash",
+        "9": "flash",
+    },
+    "surround_view_state": {
+        "0": "hidden",
+        "1": "shown",
+    },
+    "ui_config_version": {
+        "0": "UI3",
+        "1": "UI4",
+    },
+    "wifi_state": {
+        "0": "disconnected",
+        "1": "connected",
+    },
+    "bluetooth_state": {
+        "0": "disconnected",
+        "1": "connected",
+    },
+    "dashcam_state": {
+        "0": "stop",
+        "1": "starting",
+        "2": "running",
+        "3": "storage error",
+    },
+    "wireless_adb_switch": {
+        "0": "off",
+        "1": "on",
+    },
+    "online": {
+        "0": "off",
+        "1": "on",
+    },
+    "charge_port_flap": {
+        "0": "closed",
+        "1": "open",
+    },
+}
 
 # Universal core sensors (open contract) — enabled by default in HA.
 CORE_SENSORS = ['ac_state', 'bonnet', 'charging_state', 'device_battery', 'driver_door', 'driver_door_lock', 'engine_rpm', 'gear', 'location_accuracy', 'location_altitude', 'location_bearing', 'location_lat', 'location_lon', 'location_provider', 'location_speed', 'outside_temp', 'passenger_door', 'passenger_door_lock', 'power_state', 'range', 'rear_left_door', 'rear_left_door_lock', 'rear_right_door', 'rear_right_door_lock', 'remote_lock_state', 'soc', 'speed', 'sunroof', 'trunk', 'window_fl', 'window_fr', 'window_rl', 'window_rr']

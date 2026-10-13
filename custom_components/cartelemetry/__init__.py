@@ -405,15 +405,27 @@ class VehicleDataView(HomeAssistantView):
         # keeping the latest value per signal and the most recent valid GPS
         # position. Sorting is chronological so later snapshots override
         # earlier ones regardless of batch order.
+        if len(batch) >= 200:
+            _LOGGER.warning("Large telemetry batch (%d snapshots) for %s", len(batch), car_name)
+
+        # The aggregation is CPU-heavy; run it off the event loop so a large
+        # offline batch cannot stall Home Assistant.
+        def _compute():
+            sb = core.validate_batch(batch)
+            agg = core.aggregate_batch(sb)
+            latest = agg["latest_signals"]
+            if app_version:
+                latest["app_version"] = app_version
+            routed = core.route_device_signals(sb, latest, device["class"])
+            return sb, agg, routed, core.build_gps_track(sb)
+
         try:
-            sorted_batch = core.validate_batch(batch)
+            sorted_batch, agg, routed, gps_track = await hass.async_add_executor_job(_compute)
         except BatchValidationError as err:
             return self.json(
                 {"status": "error", "message": str(err)},
                 status_code=400,
             )
-
-        agg = core.aggregate_batch(sorted_batch)
         latest_signals = agg["latest_signals"]
 
         # Drop an out-of-order/replayed batch: if its newest snapshot is older
@@ -427,15 +439,6 @@ class VehicleDataView(HomeAssistantView):
                     return self.json({"status": "ok", "dropped": "out_of_order"})
             except (TypeError, ValueError):
                 pass
-
-        # Expose app_version as a regular sensor in addition to device info.
-        if app_version:
-            latest_signals["app_version"] = app_version
-
-        # Select per-device signal maps for this payload. Car maps never carry
-        # phone_* keys; phone maps carry them only in phone mode. A phone_* key
-        # sent by a car payload is dropped (not applied to the car).
-        routed = core.route_device_signals(sorted_batch, latest_signals, device["class"])
 
         # Variant 1 sensor availability: remember every signal ever received so
         # its sensor can be enabled once and never lost; unseen ones stay under
@@ -468,7 +471,7 @@ class VehicleDataView(HomeAssistantView):
             "batch": sorted_batch,
             # Pre-grouped per-signal values / GPS points: entities do O(1)
             # lookups instead of scanning the whole batch.
-            "gps_track": core.build_gps_track(sorted_batch),
+            "gps_track": gps_track,
         }
         store["last_seen"] = dt_util.utcnow().isoformat()
 

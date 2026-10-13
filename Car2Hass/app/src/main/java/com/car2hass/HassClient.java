@@ -142,7 +142,15 @@ public class HassClient {
                 for (String k : disabled) arr.put(k);
                 disabledJson = arr.toString();
             }
-            Snapshot snap = new Snapshot(System.currentTimeMillis() / 1000, lat, lon,
+            // Pre-queue dedup: skip a snapshot that repeats the previous one
+            // while the car barely moved (stationary → no redundant load).
+            long tsSec = System.currentTimeMillis() / 1000;
+            if (SnapshotDedup.isDuplicate(SnapshotDedup.Channel.HA, lat, lon, signalJson)) {
+                LogBuffer.d("HassClient", "snapshot skipped (stationary, unchanged)");
+                return;
+            }
+            SnapshotDedup.keep(SnapshotDedup.Channel.HA, lat, lon, tsSec, signalJson);
+            Snapshot snap = new Snapshot(tsSec, lat, lon,
                     accuracy, fixTimeSec, signalJson, disabledJson);
             synchronized (bufferLock) {
                 buffer.add(snap);
