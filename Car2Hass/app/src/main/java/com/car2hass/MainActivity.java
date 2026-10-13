@@ -3358,14 +3358,14 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsSections[6] = settingsView.findViewById(R.id.settings_section_commands);
         settingsSections[7] = settingsView.findViewById(R.id.settings_section_cloud);
 
-        configureNavItem(R.id.navSettingsCar, "◈", R.string.settings_section_car);
-        configureNavItem(R.id.navSettingsProtocols, "⇄", R.string.settings_section_protocols);
-        configureNavItem(R.id.navSettingsSmarthome, "⌂", R.string.settings_section_smarthome);
-        configureNavItem(R.id.navSettingsCloud, "☁", R.string.settings_section_cloud);
-        configureNavItem(R.id.navSettingsGeofences, "◎", R.string.nav_geofences);
-        configureNavItem(R.id.navSettingsCommands, "⌘", R.string.settings_section_commands);
-        configureNavItem(R.id.navSettingsTech, "⚙", R.string.settings_section_tech);
-        configureNavItem(R.id.navSettingsAbout, "ⓘ", R.string.settings_section_about);
+        configureNavItem(R.id.navSettingsCar, R.drawable.ic_nav_car, R.string.settings_section_car);
+        configureNavItem(R.id.navSettingsProtocols, R.drawable.ic_nav_protocols, R.string.settings_section_protocols);
+        configureNavItem(R.id.navSettingsSmarthome, R.drawable.ic_nav_smarthome, R.string.settings_section_smarthome);
+        configureNavItem(R.id.navSettingsCloud, R.drawable.ic_nav_cloud, R.string.settings_section_cloud);
+        configureNavItem(R.id.navSettingsGeofences, R.drawable.ic_nav_geofences, R.string.nav_geofences);
+        configureNavItem(R.id.navSettingsCommands, R.drawable.ic_nav_commands, R.string.settings_section_commands);
+        configureNavItem(R.id.navSettingsTech, R.drawable.ic_nav_tech, R.string.settings_section_tech);
+        configureNavItem(R.id.navSettingsAbout, R.drawable.ic_nav_about, R.string.settings_section_about);
 
         settingsView.findViewById(R.id.navSettingsCar).setOnClickListener(v -> selectSettingsSection(0));
         settingsView.findViewById(R.id.navSettingsProtocols).setOnClickListener(v -> selectSettingsSection(1));
@@ -3405,13 +3405,13 @@ public class MainActivity extends BaseLocalizedActivity {
         selectSettingsSection(0);
     }
 
-    private void configureNavItem(int navId, String icon, int labelRes) {
+    private void configureNavItem(int navId, int iconRes, int labelRes) {
         LinearLayout item = settingsView.findViewById(navId);
         if (item == null) return;
         TextView label = item.findViewById(R.id.nav_item_label);
-        TextView iconView = item.findViewById(R.id.nav_item_icon);
+        ImageView iconView = item.findViewById(R.id.nav_item_icon);
         if (label != null) label.setText(labelRes);
-        if (iconView != null) iconView.setText(icon);
+        if (iconView != null) iconView.setImageResource(iconRes);
     }
 
     private void selectSettingsSection(int index) {

@@ -10,12 +10,12 @@
     android:clickable="true"
     android:focusable="true">
 
-    <TextView
+    <ImageView
         android:id="@+id/nav_item_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/textSecondary"
-        android:textSize="16sp" />
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:importantForAccessibility="no"
+        android:tint="@color/textSecondary" />
 
     <TextView
         android:id="@+id/nav_item_label"
