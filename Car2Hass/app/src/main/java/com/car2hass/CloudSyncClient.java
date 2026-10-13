@@ -48,6 +48,12 @@ public final class CloudSyncClient {
     private static volatile long lastFlushAttemptMs = 0;
     private static volatile long currentFlushBackoffMs = MIN_FLUSH_BACKOFF_MS;
 
+    /** Serializes refresh-token rotation. The server revokes the old refresh
+     *  token on every refresh, so two concurrent refreshes would make the second
+     *  one present a revoked token and sign the user out — the "cloud keeps
+     *  disconnecting" symptom. */
+    private static final Object TOKEN_LOCK = new Object();
+
     private CloudSyncClient() {}
 
     /**
@@ -87,8 +93,20 @@ public final class CloudSyncClient {
         }
     }
 
-    /** True when a valid refresh token exists and can be used. */
+    /** True when a valid refresh token exists and can be used. Serialized so two
+     *  concurrent refreshes cannot both rotate (and invalidate) the same token. */
     public static boolean refreshToken(Context ctx) {
+        synchronized (TOKEN_LOCK) {
+            // Another thread may have renewed the token while we waited for the lock.
+            if (!AppConfig.getCloudAccessToken(ctx).isEmpty()
+                    && System.currentTimeMillis() < AppConfig.getCloudTokenExpiryMs(ctx) - EXPIRY_SKEW_MS) {
+                return true;
+            }
+            return refreshTokenLocked(ctx);
+        }
+    }
+
+    private static boolean refreshTokenLocked(Context ctx) {
         String refresh = AppConfig.getCloudRefreshToken(ctx);
         if (refresh == null || refresh.isEmpty()) {
             if (AppConfig.hadCloudDecryptFailure(ctx)) {
