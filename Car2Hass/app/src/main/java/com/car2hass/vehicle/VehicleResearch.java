@@ -129,6 +129,25 @@ public final class VehicleResearch {
                   List<String> activeChannels, String reportPath);
     }
 
+    /**
+     * Optional environment diagnostics (production wires the Android
+     * {@link ResearchEnvironment}); kept as an interface so the plain-Java test
+     * harness can compile this class without the Android dependency chain.
+     */
+    public interface EnvDiag {
+        void snapshot(android.content.Context ctx, String phase);
+        String focus(android.content.Context ctx);
+        org.json.JSONObject toJson(android.content.Context ctx);
+    }
+
+    /** Set by production (see {@link ResearchEnvironment}); null in tests. */
+    public static volatile EnvDiag envDiag;
+
+    /** True when the foreground focus belongs to another app (not Car2Hass). */
+    private static boolean foregroundIsOther(String focus) {
+        return focus != null && !focus.isEmpty() && !focus.contains("com.car2hass");
+    }
+
     /** Result of a full registry-based research run. */
     public static final class ResearchOutcome {
         public final String selectedProfile;
@@ -218,11 +237,21 @@ public final class VehicleResearch {
         Map<String, Boolean> channelAvailability = new java.util.LinkedHashMap<>();
         List<ChannelResult> channelResults = new ArrayList<>();
         int chIdx = 0;
+        if (envDiag != null) envDiag.snapshot(ctx, "research start");
         for (DataChannel ch : channels) {
+            String focusBefore = envDiag == null ? null : envDiag.focus(ctx);
+            long tCh = System.currentTimeMillis();
             ChannelResult r = probeWithTimeout(ch, ctx);
             channelResults.add(r);
             channelAvailability.put(ch.id(), r.isAlive());
             chIdx++;
+            LogBuffer.i("VehicleResearch", "channel '" + ch.id() + "' probed in "
+                    + (System.currentTimeMillis() - tCh) + " ms: " + r.summary());
+            String focusAfter = envDiag == null ? null : envDiag.focus(ctx);
+            if (foregroundIsOther(focusAfter)) {
+                LogBuffer.w("VehicleResearch", "foreground switched during channel '"
+                        + ch.id() + "': " + focusBefore + " -> " + focusAfter);
+            }
             if (listener != null) listener.onChannelDone(chIdx, total, ch.id());
         }
         List<String> brandProfiles = BrandSelector.detect(reg, channelAvailability);
@@ -246,6 +275,13 @@ public final class VehicleResearch {
                 LogBuffer.w("VehicleResearch", "research deadline reached at " + done
                         + "/" + sensorKeys.size() + " sensors — stopping probe");
                 break;
+            }
+            if (done % 25 == 0 && envDiag != null) {
+                String f = envDiag.focus(ctx);
+                if (foregroundIsOther(f)) {
+                    LogBuffer.w("VehicleResearch", "foreground switched during research at sensor "
+                            + done + ": " + f);
+                }
             }
             Map<String, ProbeResult> perCh = new java.util.LinkedHashMap<>();
             for (String ch : probePriority) {
@@ -430,6 +466,7 @@ public final class VehicleResearch {
                     diag.put("loc_provider", prov);
                 } catch (Exception ignored) {}
                 report.put("diagnostics", diag);
+                if (envDiag != null) report.put("environment", envDiag.toJson(ctx));
                 report = ReportPrivacyFilter.sanitize(report);
             }
             if (ctx != null) reportPath = ProbeReport.writeFile(ctx, report);

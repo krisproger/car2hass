@@ -56,10 +56,12 @@ public class LogExportHelper {
         fullLog.append("--- Logcat (Car2Hass) ---\n");
         try {
             Process p = Runtime.getRuntime().exec(
-                    new String[]{"logcat", "-d", "-t", "300", "-s",
+                    new String[]{"logcat", "-d", "-t", "500", "-s",
                             "Car2Hass", "CANReader", "Main", "TelemetryService",
                             "BootReceiver", "BootActivity", "HassSettings", "HassClient",
-                            "CloudSyncClient", "RuleEngine"});
+                            "CloudSyncClient", "RuleEngine", "ResearchEnv",
+                            "ActivityManager", "ActivityTaskManager", "WindowManager",
+                            "AndroidRuntime", "LowMemoryKiller", "libc"});
             BufferedReader br = new BufferedReader(new InputStreamReader(p.getInputStream()));
             // Bound the read: logcat can block without EOF on some ROMs, which
             // would hang the log send forever (the toast never appears).

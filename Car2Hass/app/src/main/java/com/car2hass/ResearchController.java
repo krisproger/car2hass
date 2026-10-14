@@ -42,8 +42,15 @@ public final class ResearchController {
     private static final java.util.concurrent.atomic.AtomicBoolean RUNNING =
             new java.util.concurrent.atomic.AtomicBoolean(false);
 
+    /** Current research phase label (channel id / sensor key) for lifecycle logs. */
+    private static volatile String phase = "";
+
     public static boolean isRunning() {
         return RUNNING.get();
+    }
+
+    public static String currentPhase() {
+        return phase;
     }
 
     public ResearchController(Host host) {
@@ -91,6 +98,7 @@ public final class ResearchController {
             final java.util.concurrent.atomic.AtomicLong lastUiMs =
                     new java.util.concurrent.atomic.AtomicLong(0);
             VehicleResearch.ProgressListener listener = (done, total, name) -> {
+                phase = name;
                 long nowMs = System.currentTimeMillis();
                 if (done < total && nowMs - lastUiMs.get() < 300L) return;
                 lastUiMs.set(nowMs);
@@ -126,7 +134,8 @@ public final class ResearchController {
             String reportSummary = buildSummary(outcome);
             LogBuffer.i("ResearchController", "research finished in "
                     + (System.currentTimeMillis() - t0) + " ms, profile="
-                    + outcome.selectedProfile + ", active=" + outcome.activeChannels);
+                    + outcome.selectedProfile + ", active=" + outcome.activeChannels
+                    + ", focus=" + com.car2hass.vehicle.ResearchEnvironment.foregroundFocus(a));
             final String autoProfile = outcome.selectedProfile;
             a.runOnUiThread(() -> {
                 TaskNotifier.done(a, researchTitle, host.str(R.string.settings_vehicle_research_done));

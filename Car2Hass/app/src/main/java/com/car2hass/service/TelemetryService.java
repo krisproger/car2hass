@@ -344,6 +344,9 @@ public class TelemetryService extends Service {
     private void maybeRunProbe() {
         new Thread(() -> {
             try {
+                // Ensure the environment diagnostics are wired (static init) even
+                // when the manual research button was never used this session.
+                com.car2hass.vehicle.ResearchEnvironment.memoryMb();
                 int runs = AppConfig.incRunsCount(this);
                 boolean hasReport = AppConfig.getProbeReportPath(this) != null;
                 boolean full = !hasReport || (runs % 3 == 0);

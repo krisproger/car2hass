@@ -919,10 +919,32 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     @Override
+    protected void onPause() {
+        super.onPause();
+        if (ResearchController.isRunning()) {
+            LogBuffer.w("Main", "onPause while research is running (phase="
+                    + ResearchController.currentPhase() + ")");
+        }
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if (ResearchController.isRunning()) {
+            LogBuffer.i("Main", "window focus " + hasFocus + " during research (phase="
+                    + ResearchController.currentPhase() + ")");
+        }
+    }
+
+    @Override
     protected void onResume() {
         super.onResume();
         instance = this;
         LogBuffer.d("Main", "onResume");
+        if (ResearchController.isRunning()) {
+            LogBuffer.i("Main", "onResume while research is running (phase="
+                    + ResearchController.currentPhase() + ")");
+        }
         LogBuffer.i("DashDiag", "onResume bound=" + serviceBound + " uiAlive=" + uiAlive);
         ensureStoreSubscription();
         SensorCommandRegistry.getInstance(this).checkForUpdates();
@@ -985,7 +1007,9 @@ public class MainActivity extends BaseLocalizedActivity {
         LogBuffer.d("Main", "onStop");
         // A "minimize during research" report: make the lifecycle event explicit.
         if (ResearchController.isRunning()) {
-            LogBuffer.w("Main", "onStop while research is running (possible minimize)");
+            LogBuffer.w("Main", "onStop while research is running (possible minimize, phase="
+                    + ResearchController.currentPhase() + ", focus="
+                    + com.car2hass.vehicle.ResearchEnvironment.foregroundFocus(this) + ")");
         }
         LogBuffer.i("DashDiag", "onStop bound=" + serviceBound);
         if (serviceBound) {
