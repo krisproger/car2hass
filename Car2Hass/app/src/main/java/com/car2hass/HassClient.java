@@ -172,7 +172,10 @@ public class HassClient {
             }
 
             long now = System.currentTimeMillis();
-            if (now - lastFlushAttemptMs < currentFlushBackoffMs && SnapshotQueue.getCount(ctx) == 0 && isBufferEmpty()) {
+            // Back off after failures regardless of queue depth. A non-empty queue
+            // used to disable backoff, which turned an unreachable HA into a 4s
+            // re-dequeue/encode/log loop that never drained (main Voyah lag source).
+            if (now - lastFlushAttemptMs < currentFlushBackoffMs) {
                 LogBuffer.d("HassClient", "flush backed off (" + currentFlushBackoffMs + " ms)");
                 if (callback != null) callback.onResult(false, "backed off");
                 return;
@@ -238,6 +241,7 @@ public class HassClient {
                 try {
                     flushInProgress.set(false);
                     if (success) {
+                        currentFlushBackoffMs = MIN_FLUSH_BACKOFF_MS;
                         // Remove only rows confirmed sent. In-memory snapshots have
                         // queueId < 0 and are never touched.
                         long maxQueuedId = -1;
@@ -254,6 +258,9 @@ public class HassClient {
                         }
                         SendHistory.record(ctx, bytes, batch.size());
                     } else {
+                        // Grow the backoff so an unreachable/misconfigured HA is
+                        // retried with increasing spacing instead of every cycle.
+                        currentFlushBackoffMs = Math.min(currentFlushBackoffMs * 2, MAX_FLUSH_BACKOFF_MS);
                         // Re-enqueue only in-memory snapshots; queued rows were never
                         // deleted, so re-inserting them would duplicate telemetry.
                         List<Snapshot> toRequeue = new ArrayList<>();
@@ -291,6 +298,10 @@ public class HassClient {
     // ─── Network restore ───
 
     public static void onNetworkAvailable(final Context ctx) {
+        // A network change is a fresh start: drop any failure backoff so the
+        // queued telemetry is retried immediately.
+        currentFlushBackoffMs = MIN_FLUSH_BACKOFF_MS;
+        lastFlushAttemptMs = 0L;
         if (flushInProgress.get()) {
             LogBuffer.d("HassClient", "Network restored, but flush already in progress — retry in " + NETWORK_RETRY_DELAY_MS + " ms");
             mainHandler.removeCallbacksAndMessages(null);

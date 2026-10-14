@@ -148,6 +148,9 @@ public final class VehicleResearch {
     private static final List<String> CHANNEL_PRIORITY_FALLBACK = Arrays.asList(
             "diplus", "adb", "dumpsys", "system", "obd", "diplus_push", "byd_cloud");
 
+    /** Hard cap on a full research run so a dead/slow channel cannot hang it. */
+    private static final long RESEARCH_DEADLINE_MS = 120_000L;
+
     /** Channel priority from the registry, legacy constant as fallback. */
     private static String safeKeyChannel(RegistryStore reg, String profileId) {
         try {
@@ -227,11 +230,25 @@ public final class VehicleResearch {
         Map<String, Map<String, ProbeResult>> sensorResults = new java.util.LinkedHashMap<>();
         Map<String, Set<String>> okByChannel = new java.util.HashMap<>();
         List<String> priority = channelPriority(reg);
+        // Only probe channels that answered at the channel level. A dead channel
+        // (no ADB daemon, no DiPlus) would otherwise be re-probed once per sensor
+        // — on a Voyah head unit that is minutes of wasted, blocking work.
+        List<String> probePriority = new ArrayList<>();
+        for (String ch : priority) {
+            if (Boolean.TRUE.equals(channelAvailability.get(ch))) probePriority.add(ch);
+        }
+        if (probePriority.isEmpty()) probePriority = priority;
+        final long deadlineMs = System.currentTimeMillis() + RESEARCH_DEADLINE_MS;
         int done = 0;
         Map<String, ProbeResult> obdResults = probe.obdBatch(ctx, reg, sensorKeys);
         for (String key : sensorKeys) {
+            if (System.currentTimeMillis() > deadlineMs) {
+                LogBuffer.w("VehicleResearch", "research deadline reached at " + done
+                        + "/" + sensorKeys.size() + " sensors — stopping probe");
+                break;
+            }
             Map<String, ProbeResult> perCh = new java.util.LinkedHashMap<>();
-            for (String ch : priority) {
+            for (String ch : probePriority) {
                 ProbeResult r;
                 if ("obd".equals(ch)) {
                     if (obdResults != null && obdResults.containsKey(key)) {
@@ -278,7 +295,7 @@ public final class VehicleResearch {
                 List<String> heavyList = new ArrayList<>(heavyKeys);
                 Map<String, ProbeResult> obdHeavy = probe.obdBatch(ctx, reg, heavyList);
                 for (String key : heavyKeys) {
-                    for (String ch : priority) {
+                    for (String ch : probePriority) {
                         ProbeResult r;
                         if ("obd".equals(ch)) {
                             if (obdHeavy != null && obdHeavy.containsKey(key)) {

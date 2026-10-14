@@ -51,6 +51,8 @@ public class LogExportHelper {
         appendLines(fullLog, LogDedup.dedupeLines(LogBuffer.getFileLogText(), memoryLines));
         fullLog.append("\n");
 
+        appendCrashLogs(context, fullLog);
+
         fullLog.append("--- Logcat (Car2Hass) ---\n");
         try {
             Process p = Runtime.getRuntime().exec(
@@ -106,6 +108,35 @@ public class LogExportHelper {
     private static void appendLines(StringBuilder sb, java.util.List<String> lines) {
         for (String line : lines) {
             sb.append(line).append('\n');
+        }
+    }
+
+    /**
+     * Append any crash logs written by {@link CrashLogger} (timestamped files and
+     * the private fallback). A "вылет" that never reaches LogBuffer still leaves a
+     * crash file on disk — it must be part of the exported log for diagnosis.
+     */
+    private static void appendCrashLogs(Context context, StringBuilder sb) {
+        if (context == null) return;
+        try {
+            File dir = context.getFilesDir();
+            File[] files = dir == null ? null : dir.listFiles((d, name) ->
+                    name.startsWith("Car2Hass_crash_") || name.equals("crash_log.txt"));
+            if (files == null || files.length == 0) return;
+            sb.append("--- Crash Logs ---\n");
+            for (File f : files) {
+                if (!f.isFile()) continue;
+                sb.append("### ").append(f.getName()).append('\n');
+                try (FileInputStream in = new FileInputStream(f)) {
+                    byte[] buf = new byte[8192];
+                    int n;
+                    while ((n = in.read(buf)) > 0) sb.append(new String(buf, 0, n, StandardCharsets.UTF_8));
+                } catch (Exception ignored) {}
+                sb.append('\n');
+            }
+            sb.append("\n");
+        } catch (Exception e) {
+            LogBuffer.w("LogExportHelper", "crash attach fail: " + e.getMessage());
         }
     }
 

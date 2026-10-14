@@ -983,6 +983,10 @@ public class MainActivity extends BaseLocalizedActivity {
     protected void onStop() {
         super.onStop();
         LogBuffer.d("Main", "onStop");
+        // A "minimize during research" report: make the lifecycle event explicit.
+        if (ResearchController.isRunning()) {
+            LogBuffer.w("Main", "onStop while research is running (possible minimize)");
+        }
         LogBuffer.i("DashDiag", "onStop bound=" + serviceBound);
         if (serviceBound) {
             try {

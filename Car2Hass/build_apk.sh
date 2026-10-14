@@ -278,14 +278,15 @@ stage_site_release() {
     fi
     echo "=== Staging release into site folder ==="
 
-    # APK under its published name; drop the previous release file
+    # APK under its published name. Only the same-version file is replaced;
+    # older versions are kept and pruned by scripts/prune_versions.sh (2/channel).
     local apk_name="car2hass-v$VERSION_NAME.apk"
-    rm -f "$SITE_DIR"/car2hass-v*.apk
+    rm -f "$SITE_DIR/$apk_name"
     cp "$OUTPUT_DIR/Car2Hass_v$VERSION_NAME.apk" "$SITE_DIR/$apk_name"
 
     # Integration zip from custom_components (no caches inside)
     local zip_name="cartelemetry-v$VERSION_NAME.zip"
-    rm -f "$SITE_DIR"/cartelemetry-v*.zip
+    rm -f "$SITE_DIR/$zip_name"
     (cd "$PROJECT/../custom_components" && \
         zip -qr "$SITE_DIR/$zip_name" cartelemetry -x "*/__pycache__/*" "*/.*")
 

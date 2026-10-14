@@ -48,8 +48,8 @@ public class AdbShellExecutor {
     // When the ADB daemon is down (OBD-only / plain phone), every poll fails with
     // "Connection refused". Back off connects briefly and throttle the log so the
     // device log is not flooded.
-    private static final long REFUSED_BACKOFF_MS = 20_000L;
-    private static final long REFUSED_LOG_INTERVAL_MS = 60_000L;
+    private static final long REFUSED_BACKOFF_MS = 60_000L;
+    private static final long REFUSED_LOG_INTERVAL_MS = 300_000L;
     private static volatile long lastRefusedMs = 0L;
     private static volatile long lastRefusedLogMs = 0L;
 
@@ -159,7 +159,6 @@ public class AdbShellExecutor {
                     "ADB daemon unavailable at " + trimmedHost + ":" + port));
             return;
         }
-
         LogBuffer.i(TAG, "Scheduling ADB shell execution to " + trimmedHost + ":" + port);
         final String finalCommand = command;
         executor.execute(() -> runShell(trimmedHost, port, finalCommand, callback));

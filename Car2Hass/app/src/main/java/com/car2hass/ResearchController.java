@@ -38,6 +38,14 @@ public final class ResearchController {
 
     private final Host host;
 
+    /** True while a research run is in progress (for lifecycle diagnostics). */
+    private static final java.util.concurrent.atomic.AtomicBoolean RUNNING =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    public static boolean isRunning() {
+        return RUNNING.get();
+    }
+
     public ResearchController(Host host) {
         this.host = host;
     }
@@ -73,15 +81,28 @@ public final class ResearchController {
         TaskNotifier.progress(a, researchTitle,
                 host.str(R.string.settings_vehicle_research_progress, 0, researchTotal), 0, researchTotal);
 
+        LogBuffer.i("ResearchController", "research start: " + researchChannels.size()
+                + " channels, " + researchSensorCount + " sensors");
+        RUNNING.set(true);
         new Thread(() -> {
-            VehicleResearch.ProgressListener listener = (done, total, name) -> a.runOnUiThread(() -> {
-                if (button != null) {
-                    button.setProgress(done, total);
-                    button.setBusyLabel(host.str(R.string.settings_vehicle_research_progress, done, total));
-                }
-                TaskNotifier.progress(a, researchTitle,
-                        host.str(R.string.settings_vehicle_research_progress, done, total), done, total);
-            });
+            final long t0 = System.currentTimeMillis();
+            // Throttle progress to the UI/notification: one update per 300 ms (and
+            // always the final one). Per-sensor posts flooded the UI on slow runs.
+            final java.util.concurrent.atomic.AtomicLong lastUiMs =
+                    new java.util.concurrent.atomic.AtomicLong(0);
+            VehicleResearch.ProgressListener listener = (done, total, name) -> {
+                long nowMs = System.currentTimeMillis();
+                if (done < total && nowMs - lastUiMs.get() < 300L) return;
+                lastUiMs.set(nowMs);
+                a.runOnUiThread(() -> {
+                    if (button != null) {
+                        button.setProgress(done, total);
+                        button.setBusyLabel(host.str(R.string.settings_vehicle_research_progress, done, total));
+                    }
+                    TaskNotifier.progress(a, researchTitle,
+                            host.str(R.string.settings_vehicle_research_progress, done, total), done, total);
+                });
+            };
             VehicleResearch.ResearchOutcome outcome;
             try {
                 // When the user picked the profile manually the probe result
@@ -102,10 +123,10 @@ public final class ResearchController {
                         AppConfig.getActiveChannels(a), null, null);
             }
             String path = outcome.reportPath;
-            for (DataChannel ch : researchChannels) {
-                VehicleResearch.run(a, java.util.Collections.singletonList(ch), profile);
-            }
             String reportSummary = buildSummary(outcome);
+            LogBuffer.i("ResearchController", "research finished in "
+                    + (System.currentTimeMillis() - t0) + " ms, profile="
+                    + outcome.selectedProfile + ", active=" + outcome.activeChannels);
             final String autoProfile = outcome.selectedProfile;
             a.runOnUiThread(() -> {
                 TaskNotifier.done(a, researchTitle, host.str(R.string.settings_vehicle_research_done));
@@ -118,6 +139,7 @@ public final class ResearchController {
                             v -> host.showReportDialog(summary, reportPath));
                 }
                 host.onResearchFinished();
+                RUNNING.set(false);
                 uploadReport(path);
                 if (AppConfig.isUserOverridden(a)
                         && autoProfile != null

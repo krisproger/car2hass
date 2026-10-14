@@ -106,6 +106,9 @@ public class TelemetryService extends Service {
     /** Throttle for repeated "HA flush failed" warnings (one per 5 min). */
     private volatile long lastHassFlushLogMs = 0L;
 
+    /** Throttle for the periodic memory diagnostic line (one per minute). */
+    private volatile long lastMemLogMs = 0L;
+
     private List<CANDataItem> knownItems;
     private LocationListener locationListener;
     private ConnectivityManager.NetworkCallback networkCallback;
@@ -801,6 +804,18 @@ public class TelemetryService extends Service {
                     } catch (Exception e) {
                         LogBuffer.w("TelemetryService", "value history flush failed: " + e.getMessage());
                     }
+                }
+                // Periodic memory diagnostic (OOM/"вылет" investigations): one line
+                // per minute with heap use and the pending snapshot-queue depth.
+                long memNow = System.currentTimeMillis();
+                if (memNow - lastMemLogMs > 60_000L) {
+                    lastMemLogMs = memNow;
+                    Runtime rt = Runtime.getRuntime();
+                    LogBuffer.i("TelemetryService", "memory: heap "
+                            + (rt.totalMemory() - rt.freeMemory()) / 1048576 + "MB / max "
+                            + rt.maxMemory() / 1048576 + "MB, HA queue "
+                            + com.car2hass.SnapshotQueue.getCount(this)
+                            + ", buffer " + com.car2hass.HassClient.getBufferSize());
                 }
                 // Persist last-known values periodically (not only on exit) so a
                 // kill/restart can still restore the previous session immediately.
