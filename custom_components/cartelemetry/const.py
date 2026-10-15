@@ -29,7 +29,25 @@ NATIVE_SENSORS = {'ac_set_temp', 'ac_state', 'app_version', 'battery_12v_voltage
 
 CONF_CAR_NAME = "car_name"
 
-INTEGRATION_VERSION = "3.5.4-beta.7"
+# Telemetry history replay: write every intermediate batch value into HA
+# history (True) or only the latest value per signal (False).
+CONF_HISTORY_REPLAY = "history_replay"
+DEFAULT_HISTORY_REPLAY = True
+# Aggregate history-replay write rate per car (state writes/second).
+CONF_REPLAY_RATE = "replay_rate"
+DEFAULT_REPLAY_RATE = 500
+# Adaptive backlog: when enabled, a batch larger than the threshold
+# is replayed according to CONF_BACKLOG_REPLAY instead of point by point.
+CONF_ADAPTIVE_BACKLOG = "adaptive_backlog"
+DEFAULT_ADAPTIVE_BACKLOG = True
+CONF_BACKLOG_THRESHOLD = "backlog_threshold"
+DEFAULT_BACKLOG_THRESHOLD = 30
+# Backlog replay mode: "throttled" (full history, rate-bounded) or
+# "latest" (only the latest value per signal).
+CONF_BACKLOG_REPLAY = "backlog_replay"
+DEFAULT_BACKLOG_REPLAY = "throttled"
+
+INTEGRATION_VERSION = "3.5.4-beta.8"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.

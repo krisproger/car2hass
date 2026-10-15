@@ -47,6 +47,7 @@ class CarTelemetryLock(LockEntity, RestoreEntity):
             store = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {})
             signals = store.get("data", {}).get("signals", {})
             av = store.get("app_version", "")
+            before = (self._attr_available, self._attr_is_locked, self._sw_version)
             if av:
                 self._sw_version = av
             raw = signals.get("remote_lock_state")
@@ -54,7 +55,8 @@ class CarTelemetryLock(LockEntity, RestoreEntity):
                 self._attr_available = True
                 truthy = BINARY_ON_MAP.get("remote_lock_state", ["locked"])
                 self._attr_is_locked = str(raw).lower() in truthy
-            self.async_write_ha_state()
+            if before != (self._attr_available, self._attr_is_locked, self._sw_version):
+                self.async_write_ha_state()
 
         self.async_on_remove(
             async_dispatcher_connect(self.hass, entry_signal(self._entry_id), update)

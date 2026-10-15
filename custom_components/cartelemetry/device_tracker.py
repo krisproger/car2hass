@@ -99,6 +99,8 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
             data = store.get("data", {})
             batch = data.get("batch", [])
             written = False
+            throttle = store.get("replay")
+            mode = core.select_replay_mode(store.get("options", {}), len(batch))
 
             # Replay the chronological batch so the map shows the actual path
             # with each point at its collection time instead of jumping straight
@@ -118,6 +120,9 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
                         points.append(
                             (snapshot.get("t", 0), lat, lon, gps.get("a", 0))
                         )
+            if mode == "latest" and points:
+                # History replay collapsed: keep only the last point.
+                points = [points[-1]]
             replayed = 0
             for t, lat, lon, acc in points:
                 self._latitude = float(lat)
@@ -127,10 +132,14 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
                 except (ValueError, TypeError):
                     self._accuracy = 0
                 self._attr_available = True
+                # Bound the car-wide write rate via the shared token bucket.
+                if throttle is not None:
+                    await throttle.acquire()
+                else:
+                    replayed += 1
+                    if replayed % core.HISTORY_REPLAY_CHUNK == 0:
+                        await asyncio.sleep(core.HISTORY_REPLAY_YIELD_SEC)
                 async_replay_state(self, t)
-                replayed += 1
-                if replayed % core.HISTORY_REPLAY_CHUNK == 0:
-                    await asyncio.sleep(core.HISTORY_REPLAY_YIELD_SEC)
                 written = True
 
             # History points above were written at their (past) fix times.

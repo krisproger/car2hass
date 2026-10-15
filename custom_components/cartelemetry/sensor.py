@@ -101,26 +101,20 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
         self._attr_native_value = None
         self._attr_extra_state_attributes = {}
         self._attr_available = False
+        self._last_seen_dt = None
         self._sw_version = INTEGRATION_VERSION
 
     @property
     def available(self):
         # Honest liveness: report available only while telemetry keeps arriving.
         # After SIGNAL_STALE_SECONDS without a batch the sensor goes unavailable
-        # instead of showing a stale value forever.
+        # instead of showing a stale value forever. The parsed last_seen is
+        # cached (set in update()) so this hot property does no parsing.
         if not self._attr_available:
             return False
-        hass = getattr(self, "hass", None)
-        if hass is None:
+        if self._last_seen_dt is None:
             return True
-        store = hass.data.get(DOMAIN, {}).get(self._entry_id, {})
-        last_seen_raw = store.get("last_seen")
-        if not last_seen_raw:
-            return True
-        last_seen = dt_util.parse_datetime(last_seen_raw)
-        if last_seen is None:
-            return True
-        return (dt_util.utcnow() - last_seen).total_seconds() < core.SIGNAL_STALE_SECONDS
+        return (dt_util.utcnow() - self._last_seen_dt).total_seconds() < core.SIGNAL_STALE_SECONDS
 
     def _coerce_value(self, raw):
         """Convert a raw string for state storage.
@@ -194,6 +188,8 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
             data = store.get("data", {})
             batch = data.get("batch", [])
             written = False
+            throttle = store.get("replay")
+            mode = core.select_replay_mode(store.get("options", {}), len(batch))
 
             # Replay the chronological batch so intermediate values are recorded
             # in HA history at their collection time instead of being collapsed
@@ -213,6 +209,14 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
                     (snapshot.get("t", 0), snapshot.get("s", {}).get(self._signal_key))
                     for snapshot in batch
                 )
+            if mode == "latest":
+                # History replay collapsed: keep only the latest value so a large
+                # offline batch writes a single state instead of thousands.
+                last = None
+                for item in values:
+                    if item[1] is not None:
+                        last = item
+                values = () if last is None else (last,)
             replayed = 0
             for t, raw in values:
                 if raw is not None:
@@ -223,13 +227,17 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
                         new_value = ENUM_LABELS.get(self._signal_key, {}).get(str(new_value).strip(), new_value)
                     if new_value != self._attr_native_value:
                         self._attr_native_value = new_value
+                        # Bound the aggregate write rate of the whole car via a
+                        # shared token bucket; fall back to chunked yields if no
+                        # throttle was wired in.
+                        if throttle is not None:
+                            await throttle.acquire()
+                        else:
+                            replayed += 1
+                            if replayed % core.HISTORY_REPLAY_CHUNK == 0:
+                                await asyncio.sleep(core.HISTORY_REPLAY_YIELD_SEC)
                         async_replay_state(self, t)
                         written = True
-                        replayed += 1
-                        # Yield every chunk so a large offline batch writes its
-                        # full history without blocking the HA event loop.
-                        if replayed % core.HISTORY_REPLAY_CHUNK == 0:
-                            await asyncio.sleep(core.HISTORY_REPLAY_YIELD_SEC)
 
             # Fallback for non-batch updates (compatibility / empty batch).
             if not batch:
@@ -242,6 +250,7 @@ class CarTelemetrySensor(SensorEntity, RestoreEntity):
             if av:
                 self._sw_version = av
             last_seen = store.get("last_seen")
+            self._last_seen_dt = dt_util.parse_datetime(last_seen) if last_seen else None
             if last_seen:
                 self._attr_extra_state_attributes = {
                     **self._attr_extra_state_attributes,

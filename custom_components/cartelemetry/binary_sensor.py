@@ -125,6 +125,7 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
         self._attr_is_on = None
         self._attr_available = False
         self._attr_extra_state_attributes = {}
+        self._last_seen_dt = None
         self._sw_version = INTEGRATION_VERSION
         self._unsub_timer = None
         # Zone name for dynamic geofence entities; re-checked on each update so a
@@ -138,22 +139,15 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
     @property
     def available(self):
         # Honest liveness for regular state sensors; the "online" indicator must
-        # stay available so it can report "off" when telemetry stops.
+        # stay available so it can report "off" when telemetry stops. The parsed
+        # last_seen is cached (set in update()) so this hot property does no parsing.
         if not self._attr_available:
             return False
         if self._signal_key == "online":
             return True
-        hass = getattr(self, "hass", None)
-        if hass is None:
+        if self._last_seen_dt is None:
             return True
-        store = hass.data.get(DOMAIN, {}).get(self._entry_id, {})
-        last_seen_raw = store.get("last_seen")
-        if not last_seen_raw:
-            return True
-        last_seen = dt_util.parse_datetime(last_seen_raw)
-        if last_seen is None:
-            return True
-        return (utcnow() - last_seen).total_seconds() < core.SIGNAL_STALE_SECONDS
+        return (utcnow() - self._last_seen_dt).total_seconds() < core.SIGNAL_STALE_SECONDS
 
     @property
     def device_info(self):
@@ -183,6 +177,8 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
             data = store.get("data", {})
             batch = data.get("batch", [])
             written = False
+            throttle = store.get("replay")
+            mode = core.select_replay_mode(store.get("options", {}), len(batch))
 
             # Dynamic geofence entities: keep the friendly name in sync when the
             # zone is renamed in the app — geo_<id>_name changes arrive live in
@@ -230,6 +226,13 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
                     )
                 else:
                     values = ((0, fallback_signals.get(self._signal_key)),)
+                if mode == "latest":
+                    # History replay collapsed: write only the latest value.
+                    last = None
+                    for item in values:
+                        if item[1] is not None:
+                            last = item
+                    values = () if last is None else (last,)
                 replayed = 0
                 for t, raw in values:
                     if raw is not None:
@@ -248,16 +251,21 @@ class CarTelemetryBinarySensor(BinarySensorEntity, RestoreEntity):
                         new_state = self._value_to_bool(raw_lower)
                         if new_state != self._attr_is_on:
                             self._attr_is_on = new_state
+                            # Bound the car-wide write rate via the shared bucket.
+                            if throttle is not None:
+                                await throttle.acquire()
+                            else:
+                                replayed += 1
+                                if replayed % core.HISTORY_REPLAY_CHUNK == 0:
+                                    await asyncio.sleep(core.HISTORY_REPLAY_YIELD_SEC)
                             async_replay_state(self, t)
                             written = True
-                            replayed += 1
-                            if replayed % core.HISTORY_REPLAY_CHUNK == 0:
-                                await asyncio.sleep(core.HISTORY_REPLAY_YIELD_SEC)
 
             av = store.get("app_version", "")
             if av:
                 self._sw_version = av
             last_seen = store.get("last_seen")
+            self._last_seen_dt = dt_util.parse_datetime(last_seen) if last_seen else None
             if last_seen:
                 extra = dict(getattr(self, "_attr_extra_state_attributes", {}))
                 extra["last_seen"] = last_seen

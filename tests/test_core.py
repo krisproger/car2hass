@@ -381,3 +381,108 @@ def test_supports_timestamp_for_2024_6_and_newer():
 def test_supports_timestamp_false_before_2024_6():
     assert core.supports_async_set_timestamp(2024, 5) is False
     assert core.supports_async_set_timestamp(2023, 12) is False
+
+
+# --- ReplayThrottle (car-wide history-replay write limiter) ---
+
+def test_replay_throttle_default_rate():
+    t = core.ReplayThrottle()
+    assert t._rate == core.REPLAY_MAX_WRITES_PER_SEC
+    assert core.REPLAY_MAX_WRITES_PER_SEC > 0
+
+
+def test_replay_throttle_clamps_nonpositive_rate():
+    assert core.ReplayThrottle(0)._rate == 1
+    assert core.ReplayThrottle(-5)._rate == 1
+
+
+def test_replay_throttle_allows_initial_burst():
+    """A full bucket lets `rate` writes through without pacing."""
+    import asyncio
+    import time
+
+    async def _run():
+        t = core.ReplayThrottle(200)
+        start = time.monotonic()
+        for _ in range(200):
+            await t.acquire()
+        return time.monotonic() - start
+
+    assert asyncio.run(_run()) < 1.0
+
+
+def test_replay_throttle_paces_above_rate():
+    """Writes beyond the bucket refill are spaced by ~1/rate seconds."""
+    import asyncio
+    import time
+
+    async def _run():
+        t = core.ReplayThrottle(50)
+        start = time.monotonic()
+        for _ in range(60):
+            await t.acquire()
+        return time.monotonic() - start
+
+    assert asyncio.run(_run()) >= 0.1
+
+
+# --- availability_signature / drop_rate_limit ---
+
+def test_availability_signature_is_order_independent():
+    a = core.availability_signature({"speed", "soc"}, {"x"})
+    b = core.availability_signature(["soc", "speed", "speed"], ["x"])
+    assert a == b
+    assert core.availability_signature({"speed"}, set()) != a
+
+
+def test_drop_rate_limit_removes_bucket():
+    buckets = {"car1": [1.0], "car2": [2.0]}
+    core.drop_rate_limit(buckets, "car1")
+    assert "car1" not in buckets
+    assert buckets["car2"] == [2.0]
+    core.drop_rate_limit(buckets, "missing")  # must not raise
+
+
+def test_dispatch_debounce_constant_positive():
+    assert core.DISPATCH_DEBOUNCE_SEC > 0
+
+
+# --- select_replay_mode (adaptive backlog) ---
+
+_ALL_FULL = {
+    "history_replay": True,
+    "adaptive_backlog": True,
+    "backlog_threshold": 30,
+    "backlog_replay": "throttled",
+}
+
+
+def test_replay_mode_defaults_to_full_for_large_batches():
+    """Default backlog_replay=throttled keeps full history even for a big batch."""
+    assert core.select_replay_mode(_ALL_FULL, 500) == "full"
+
+
+def test_replay_mode_latest_for_large_backlog():
+    opts = dict(_ALL_FULL, backlog_replay="latest")
+    assert core.select_replay_mode(opts, 500) == "latest"
+    # Small batches stay full even with `latest`.
+    assert core.select_replay_mode(opts, 4) == "full"
+
+
+def test_replay_mode_threshold_boundary():
+    opts = dict(_ALL_FULL, backlog_replay="latest", backlog_threshold=30)
+    assert core.select_replay_mode(opts, 30) == "full"
+    assert core.select_replay_mode(opts, 31) == "latest"
+
+
+def test_replay_mode_history_replay_off_is_latest():
+    assert core.select_replay_mode({"history_replay": False}, 4) == "latest"
+
+
+def test_replay_mode_adaptive_off_keeps_full():
+    opts = dict(_ALL_FULL, adaptive_backlog=False, backlog_replay="latest")
+    assert core.select_replay_mode(opts, 500) == "full"
+
+
+def test_replay_mode_tolerates_empty_options():
+    assert core.select_replay_mode({}, 500) == "full"

@@ -57,6 +57,49 @@ During setup the integration asks only for the **car name**. This name must matc
 
 After the config entry is created, the integration exposes the REST endpoint `/api/byd_diplus` and creates sensors, binary sensors and a device tracker automatically as soon as the first batch arrives.
 
+## Performance options
+
+Each vehicle has performance options under **Settings → Devices & services →
+CARTelemetry → Configure**:
+
+- **Write full telemetry history** (`history_replay`) — on by default. When the
+  car reconnects after being offline, the integration replays every buffered
+  value into HA history at its original time. Turning it off records only the
+  latest value per signal (much lower load, but history/tracks have gaps).
+- **History write rate** (`replay_rate`, default 500) — upper bound of telemetry
+  state writes per second for this car. The integration shares one token bucket
+  across all entities of a car, so this bounds the load regardless of how many
+  sensors are enabled.
+- **Adaptive backlog handling** (`adaptive_backlog`, on by default) — batches
+  larger than the threshold are treated as an offline backlog.
+- **Backlog threshold** (`backlog_threshold`, default 30 snapshots) — the size
+  above which the backlog mode applies.
+- **Backlog replay mode** (`backlog_replay`, default `throttled`):
+  - `throttled` — keep full history, rate-limited by `replay_rate` (default);
+  - `latest` — keep only the latest value per signal (lightest on the recorder
+    database; offline-period history is a single snapshot instead of a curve).
+
+## Recorder (database) load
+
+The integration cannot force the HA recorder to skip entities; that is controlled
+globally in `configuration.yaml`. High-frequency signals (speed, GPS, RPM, power)
+generate the most rows. To keep the database small while keeping history at a
+reasonable resolution, exclude the fastest entities from the recorder:
+
+```yaml
+recorder:
+  exclude:
+    entity_globs:
+      - sensor.<car_name>_speed
+      - sensor.<car_name>_engine_rpm
+      - sensor.<car_name>_location_speed
+      - device_tracker.<car_name>_location
+```
+
+Replace `<car_name>` with the configured car name and, if needed, tune the list
+to the signals you do not need in history (Live/current values keep updating in
+the UI even when excluded from the recorder).
+
 ## How data flows
 
 ```

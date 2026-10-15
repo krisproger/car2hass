@@ -4,13 +4,34 @@ Everything in this module is stdlib-only so it can be unit-tested without
 installing Home Assistant. `__init__.py` delegates to these functions.
 """
 
+import asyncio
 from datetime import datetime, timedelta
 import uuid
 
 try:  # Package import (Home Assistant runtime)
     from .const import GEOFENCE_KEY_PREFIX, GEOFENCE_NAME_SUFFIX
+    from .const import (
+        CONF_HISTORY_REPLAY,
+        DEFAULT_HISTORY_REPLAY,
+        CONF_ADAPTIVE_BACKLOG,
+        DEFAULT_ADAPTIVE_BACKLOG,
+        CONF_BACKLOG_THRESHOLD,
+        DEFAULT_BACKLOG_THRESHOLD,
+        CONF_BACKLOG_REPLAY,
+        DEFAULT_BACKLOG_REPLAY,
+    )
 except ImportError:  # Direct module import (unit tests without Home Assistant)
     from const import GEOFENCE_KEY_PREFIX, GEOFENCE_NAME_SUFFIX
+    from const import (
+        CONF_HISTORY_REPLAY,
+        DEFAULT_HISTORY_REPLAY,
+        CONF_ADAPTIVE_BACKLOG,
+        DEFAULT_ADAPTIVE_BACKLOG,
+        CONF_BACKLOG_THRESHOLD,
+        DEFAULT_BACKLOG_THRESHOLD,
+        CONF_BACKLOG_REPLAY,
+        DEFAULT_BACKLOG_REPLAY,
+    )
 
 COMMAND_TIMEOUT = timedelta(minutes=1)
 DEFAULT_MAX_QUEUE = 50
@@ -18,8 +39,56 @@ DEFAULT_MAX_QUEUE = 50
 # Yield to the HA event loop every this many history replays, sleeping this long,
 # so a large offline batch writes its FULL history without blocking the loop (no
 # dropped points and no track jitter). A 500-point backlog thus spreads over ~0.6 s.
+# Legacy fallback used only when no ReplayThrottle is wired into the store.
 HISTORY_REPLAY_CHUNK = 25
 HISTORY_REPLAY_YIELD_SEC = 0.03
+
+# Aggregate history-replay write rate per car (state writes/second). A shared
+# token bucket bounds the total load one car puts on the HA event loop/recorder,
+# regardless of how many entity listeners are awake. The initial bucket is full,
+# so the first ~rate live writes are immediate; only a backlog is paced.
+REPLAY_MAX_WRITES_PER_SEC = 500
+
+# Coalesce rapid telemetry POSTs (retries/backlog) into one entity fan-out per
+# this window. store["data"] already holds the latest values, so intermediate
+# batches do not need their own fan-out.
+DISPATCH_DEBOUNCE_SEC = 0.25
+
+
+class ReplayThrottle:
+    """Cooperative token bucket shared by all entities of one car.
+
+    ``acquire()`` must be awaited before every history-replay state write. The
+    bucket refills at ``max_per_sec`` and is serialized by a lock, so the
+    aggregate write rate of one car cannot exceed the configured rate even when
+    hundreds of entity listeners are replayed concurrently.
+    """
+
+    def __init__(self, max_per_sec: int = REPLAY_MAX_WRITES_PER_SEC):
+        self._rate = max(1, int(max_per_sec))
+        self._allowance = float(self._rate)
+        self._last = None
+        self._lock = asyncio.Lock()
+
+    async def acquire(self) -> None:
+        async with self._lock:
+            loop = asyncio.get_running_loop()
+            now = loop.time()
+            if self._last is None:
+                self._last = now
+            self._allowance = min(
+                float(self._rate), self._allowance + (now - self._last) * self._rate
+            )
+            self._last = now
+            if self._allowance < 1.0:
+                await asyncio.sleep((1.0 - self._allowance) / self._rate)
+                now = loop.time()
+                self._allowance = min(
+                    float(self._rate),
+                    self._allowance + (now - self._last) * self._rate,
+                )
+                self._last = now
+            self._allowance -= 1.0
 
 # A sensor stays "available" only while telemetry keeps arriving; after this
 # many seconds without a batch it is reported unavailable (honest liveness).
@@ -283,6 +352,38 @@ def enqueue_command(commands: list, command: str, params, now: datetime, max_que
     return entry, True
 
 
+def availability_signature(seen, disabled):
+    """Immutable signature of the availability set for change detection.
+
+    The registry-backed availability sync only needs to run when the set of
+    seen/disabled signals changes; comparing signatures lets the caller skip
+    the O(|seen|) registry scan on every telemetry message.
+    """
+    return (frozenset(seen), frozenset(disabled))
+
+
+def select_replay_mode(options: dict, batch_points: int) -> str:
+    """Return how to replay a batch's history: "full" or "latest".
+
+    - history_replay off -> "latest"
+    - adaptive_backlog on and the batch exceeds the threshold -> the configured
+      backlog mode ("throttled" keeps full history at a bounded rate, "latest"
+      keeps only the latest value per signal)
+    - otherwise "full" (replay every intermediate value)
+    """
+    options = options or {}
+    if not options.get(CONF_HISTORY_REPLAY, DEFAULT_HISTORY_REPLAY):
+        return "latest"
+    if (
+        options.get(CONF_ADAPTIVE_BACKLOG, DEFAULT_ADAPTIVE_BACKLOG)
+        and batch_points
+        > int(options.get(CONF_BACKLOG_THRESHOLD, DEFAULT_BACKLOG_THRESHOLD))
+    ):
+        if options.get(CONF_BACKLOG_REPLAY, DEFAULT_BACKLOG_REPLAY) == "latest":
+            return "latest"
+    return "full"
+
+
 def check_rate_limit(buckets: dict, key: str, now: float, window: float, max_requests: int) -> bool:
     """Sliding-window rate limiter.
 
@@ -297,6 +398,11 @@ def check_rate_limit(buckets: dict, key: str, now: float, window: float, max_req
         return False
     bucket.append(now)
     return True
+
+
+def drop_rate_limit(buckets: dict, key: str) -> None:
+    """Forget the rate-limit history of a car (e.g. when its entry unloads)."""
+    buckets.pop(key, None)
 
 
 # The ``timestamp`` argument of ``hass.states.async_set`` was introduced in

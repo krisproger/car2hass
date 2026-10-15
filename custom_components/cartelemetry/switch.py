@@ -55,6 +55,7 @@ class CarTelemetrySwitch(SwitchEntity, RestoreEntity):
             store = self.hass.data.get(DOMAIN, {}).get(self._entry_id, {})
             signals = store.get("data", {}).get("signals", {})
             av = store.get("app_version", "")
+            before = (self._attr_available, self._attr_is_on, self._attr_icon, self._sw_version)
             if av:
                 self._sw_version = av
 
@@ -69,7 +70,8 @@ class CarTelemetrySwitch(SwitchEntity, RestoreEntity):
                 if signals:
                     self._attr_available = True
 
-            self.async_write_ha_state()
+            if before != (self._attr_available, self._attr_is_on, self._attr_icon, self._sw_version):
+                self.async_write_ha_state()
 
         self.async_on_remove(
             async_dispatcher_connect(self.hass, entry_signal(self._entry_id), update)

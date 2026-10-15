@@ -1,6 +1,7 @@
 """CARTelemetry integration for Home Assistant."""
 
 import html
+import json
 import logging
 from datetime import timedelta
 from pathlib import Path
@@ -22,6 +23,18 @@ from homeassistant.util import dt as dt_util
 from . import core
 from .const import API_VERSION, DOMAIN, INTEGRATION_VERSION
 from .const import BINARY_SENSORS, ENUM_SENSORS, NATIVE_SENSORS, NUMERIC_SENSORS
+from .const import (
+    CONF_HISTORY_REPLAY,
+    CONF_REPLAY_RATE,
+    DEFAULT_HISTORY_REPLAY,
+    DEFAULT_REPLAY_RATE,
+    CONF_ADAPTIVE_BACKLOG,
+    DEFAULT_ADAPTIVE_BACKLOG,
+    CONF_BACKLOG_THRESHOLD,
+    DEFAULT_BACKLOG_THRESHOLD,
+    CONF_BACKLOG_REPLAY,
+    DEFAULT_BACKLOG_REPLAY,
+)
 from .core import BatchValidationError, QueueFullError
 
 # Keys the integration can actually surface as entities. The persistent
@@ -55,6 +68,31 @@ def entry_signal(entry_id: str) -> str:
     """Per-entry dispatcher signal so one car's update does not wake every entity
     of every other car (the global signal is kept for discovery listeners)."""
     return f"{DOMAIN}_{entry_id}_updated"
+
+
+def _schedule_data_dispatch(hass: HomeAssistant, entry_id: str) -> None:
+    """Coalesce rapid telemetry POSTs into a single entity fan-out.
+
+    A burst of POSTs overwrites store["data"] with the latest values, so one
+    fan-out per debounce window is enough; intermediate batches do not need to
+    re-run every entity update. The window is not extended by later POSTs, so
+    latency stays bounded by DISPATCH_DEBOUNCE_SEC.
+    """
+    store = hass.data.get(DOMAIN, {}).get(entry_id)
+    if not isinstance(store, dict) or store.get("_dispatch_scheduled"):
+        return
+    store["_dispatch_scheduled"] = True
+
+    def _fire():
+        store["_dispatch_scheduled"] = False
+        store["_dispatch_cancel"] = None
+        if DOMAIN in hass.data and entry_id in hass.data[DOMAIN]:
+            async_dispatcher_send(hass, SIGNAL_VEHICLE_DATA_UPDATED)
+            async_dispatcher_send(hass, entry_signal(entry_id))
+
+    store["_dispatch_cancel"] = hass.loop.call_later(
+        core.DISPATCH_DEBOUNCE_SEC, _fire
+    )
 
 
 MAX_COMMAND_QUEUE = 50
@@ -157,6 +195,11 @@ _BATCH_SCHEMA = vol.Schema(
     extra=vol.ALLOW_EXTRA,
 )
 
+def _parse_payload(body: bytes):
+    """Parse and validate a telemetry JSON body (runs in an executor)."""
+    return _BATCH_SCHEMA(json.loads(body))
+
+
 _COMMAND_SCHEMA = vol.Schema(
     {
         vol.Required("car_name"): cv.string,
@@ -202,6 +245,32 @@ async def async_setup_entry(hass: HomeAssistant, entry):
         "firmware": "",
         "last_seen": None,
         "commands": [],
+        # Effective performance options (config entry options with defaults).
+        "options": {
+            CONF_HISTORY_REPLAY: entry.options.get(
+                CONF_HISTORY_REPLAY, DEFAULT_HISTORY_REPLAY
+            ),
+            CONF_REPLAY_RATE: entry.options.get(CONF_REPLAY_RATE, DEFAULT_REPLAY_RATE),
+            CONF_ADAPTIVE_BACKLOG: entry.options.get(
+                CONF_ADAPTIVE_BACKLOG, DEFAULT_ADAPTIVE_BACKLOG
+            ),
+            CONF_BACKLOG_THRESHOLD: entry.options.get(
+                CONF_BACKLOG_THRESHOLD, DEFAULT_BACKLOG_THRESHOLD
+            ),
+            CONF_BACKLOG_REPLAY: entry.options.get(
+                CONF_BACKLOG_REPLAY, DEFAULT_BACKLOG_REPLAY
+            ),
+        },
+        # Bounds the aggregate history-replay write rate of this car.
+        "replay": core.ReplayThrottle(
+            entry.options.get(CONF_REPLAY_RATE, DEFAULT_REPLAY_RATE)
+        ),
+        # Cache of the last (seen, disabled) signature so the registry-backed
+        # availability sync is skipped when nothing changed.
+        "_avail_cache": None,
+        # Debounced dispatch state (see _schedule_data_dispatch).
+        "_dispatch_scheduled": False,
+        "_dispatch_cancel": None,
         # Device descriptor from the payload's top-level `dev` block. Absent
         # (car) payloads leave the last known phone descriptor intact so the
         # phone device's identity stays stable across car payloads.
@@ -290,7 +359,14 @@ async def async_unload_entry(hass: HomeAssistant, entry):
     await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     if DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
-        hass.data[DOMAIN].pop(entry.entry_id)
+        store = hass.data[DOMAIN].pop(entry.entry_id)
+        # Cancel a pending debounced dispatch so it cannot fire after unload.
+        cancel = store.get("_dispatch_cancel") if isinstance(store, dict) else None
+        if cancel is not None:
+            cancel()
+        rate_limits = hass.data[DOMAIN].get("_rate_limits")
+        if isinstance(rate_limits, dict):
+            core.drop_rate_limit(rate_limits, entry.entry_id)
 
     # Only remove shared resources when no entries remain.
     # _VIEW_REGISTERED is intentionally kept; HA has no public API to unregister
@@ -326,8 +402,10 @@ class VehicleDataView(HomeAssistantView):
 
     async def _handle_post(self, hass, request):
         try:
-            raw = await request.json()
-            data = _BATCH_SCHEMA(raw)
+            # Read the raw body first, then parse + validate off the event loop
+            # so a 1000-snapshot batch cannot stall Home Assistant.
+            body = await request.read()
+            data = await hass.async_add_executor_job(_parse_payload, body)
         except vol.Invalid as err:
             return self.json(
                 {"status": "error", "message": f"invalid payload: {err}"},
@@ -475,12 +553,14 @@ class VehicleDataView(HomeAssistantView):
         }
         store["last_seen"] = dt_util.utcnow().isoformat()
 
-        async_dispatcher_send(hass, SIGNAL_VEHICLE_DATA_UPDATED)
-        async_dispatcher_send(hass, entry_signal(entry_id))
+        _schedule_data_dispatch(hass, entry_id)
         newly = set(latest_signals.keys()) - old_seen
         if newly:
             await _async_enable_sensors(hass, entry_id, newly)
-        await _async_sync_entity_availability(hass, entry_id, seen, disabled)
+        avail_sig = core.availability_signature(seen, disabled)
+        if avail_sig != store.get("_avail_cache"):
+            store["_avail_cache"] = avail_sig
+            await _async_sync_entity_availability(hass, entry_id, seen, disabled)
 
         return self.json({
             "status": "ok",

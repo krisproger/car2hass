@@ -9,6 +9,18 @@ from homeassistant.core import callback
 from homeassistant.helpers import config_validation as cv
 
 from .const import DOMAIN, CONF_CAR_NAME
+from .const import (
+    CONF_HISTORY_REPLAY,
+    CONF_REPLAY_RATE,
+    DEFAULT_HISTORY_REPLAY,
+    DEFAULT_REPLAY_RATE,
+    CONF_ADAPTIVE_BACKLOG,
+    DEFAULT_ADAPTIVE_BACKLOG,
+    CONF_BACKLOG_THRESHOLD,
+    DEFAULT_BACKLOG_THRESHOLD,
+    CONF_BACKLOG_REPLAY,
+    DEFAULT_BACKLOG_REPLAY,
+)
 
 # The car name is the shared identifier between the Android app and this
 # integration (the app signs every payload with it). Keep it identifier-like:
@@ -77,25 +89,81 @@ class OptionsFlow(config_entries.OptionsFlow):
             if car_name is None:
                 errors[CONF_CAR_NAME] = "invalid_car_name"
             else:
-                if car_name != self.config_entry.data.get(CONF_CAR_NAME):
+                options = {
+                    CONF_HISTORY_REPLAY: bool(
+                        user_input.get(CONF_HISTORY_REPLAY, DEFAULT_HISTORY_REPLAY)
+                    ),
+                    CONF_REPLAY_RATE: int(
+                        user_input.get(CONF_REPLAY_RATE, DEFAULT_REPLAY_RATE)
+                    ),
+                    CONF_ADAPTIVE_BACKLOG: bool(
+                        user_input.get(
+                            CONF_ADAPTIVE_BACKLOG, DEFAULT_ADAPTIVE_BACKLOG
+                        )
+                    ),
+                    CONF_BACKLOG_THRESHOLD: int(
+                        user_input.get(
+                            CONF_BACKLOG_THRESHOLD, DEFAULT_BACKLOG_THRESHOLD
+                        )
+                    ),
+                    CONF_BACKLOG_REPLAY: str(
+                        user_input.get(CONF_BACKLOG_REPLAY, DEFAULT_BACKLOG_REPLAY)
+                    ),
+                }
+                name_changed = car_name != self.config_entry.data.get(CONF_CAR_NAME)
+                if name_changed:
                     self.hass.config_entries.async_update_entry(
                         self.config_entry,
                         title=car_name,
                         data={CONF_CAR_NAME: car_name},
                     )
-                    # The car name is the payload identifier: entities and the
-                    # HTTP endpoint resolve through it, so reload to rebind.
+                if name_changed or options != dict(self.config_entry.options):
+                    self.hass.config_entries.async_update_entry(
+                        self.config_entry, options=options
+                    )
+                    # Reload so the replay throttle and entity mode pick up the
+                    # new options / identifier.
                     await self.hass.config_entries.async_reload(self.config_entry.entry_id)
-                return self.async_create_entry(title="", data={})
+                return self.async_create_entry(title="", data=options)
 
         return self.async_show_form(
             step_id="init",
             data_schema=vol.Schema(
                 {
-                    vol.Optional(
+                    vol.Required(
                         CONF_CAR_NAME,
                         default=self.config_entry.data.get(CONF_CAR_NAME, "byd_car"),
                     ): cv.string,
+                    vol.Optional(
+                        CONF_HISTORY_REPLAY,
+                        default=self.config_entry.options.get(
+                            CONF_HISTORY_REPLAY, DEFAULT_HISTORY_REPLAY
+                        ),
+                    ): cv.boolean,
+                    vol.Optional(
+                        CONF_REPLAY_RATE,
+                        default=self.config_entry.options.get(
+                            CONF_REPLAY_RATE, DEFAULT_REPLAY_RATE
+                        ),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=50, max=5000)),
+                    vol.Optional(
+                        CONF_ADAPTIVE_BACKLOG,
+                        default=self.config_entry.options.get(
+                            CONF_ADAPTIVE_BACKLOG, DEFAULT_ADAPTIVE_BACKLOG
+                        ),
+                    ): cv.boolean,
+                    vol.Optional(
+                        CONF_BACKLOG_THRESHOLD,
+                        default=self.config_entry.options.get(
+                            CONF_BACKLOG_THRESHOLD, DEFAULT_BACKLOG_THRESHOLD
+                        ),
+                    ): vol.All(vol.Coerce(int), vol.Range(min=1, max=1000)),
+                    vol.Optional(
+                        CONF_BACKLOG_REPLAY,
+                        default=self.config_entry.options.get(
+                            CONF_BACKLOG_REPLAY, DEFAULT_BACKLOG_REPLAY
+                        ),
+                    ): vol.In(["throttled", "latest"]),
                 }
             ),
             errors=errors,

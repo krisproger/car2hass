@@ -23,9 +23,21 @@
     "step": {
       "init": {
         "title": "CARTelemetry options",
-        "description": "Rename the vehicle. The integration will reload; do not forget to update the car name in the Android app too.",
+        "description": "Rename the vehicle and tune how much telemetry history is written. Changing any option reloads the integration; do not forget to update the car name in the Android app too.",
         "data": {
-          "car_name": "Car name"
+          "car_name": "Car name",
+          "history_replay": "Write full telemetry history",
+          "replay_rate": "History write rate (per second)",
+          "adaptive_backlog": "Adaptive backlog handling",
+          "backlog_threshold": "Backlog threshold (snapshots)",
+          "backlog_replay": "Backlog replay mode"
+        },
+        "data_description": {
+          "history_replay": "On: record every value from an offline batch (full history, higher load). Off: record only the latest value per signal (lower load, gaps in history).",
+          "replay_rate": "Upper bound of telemetry state writes per second for this car (50-5000). Lower values are gentler on Home Assistant and its database.",
+          "adaptive_backlog": "When on, batches larger than the threshold use the backlog replay mode instead of replaying every point.",
+          "backlog_threshold": "Batches with more snapshots than this are treated as an offline backlog (1-1000).",
+          "backlog_replay": "Throttled: keep full history, rate-limited (default). Latest: keep only the latest value per signal (lightest on the database, less history detail)."
         }
       }
     },
