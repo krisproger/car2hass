@@ -238,6 +238,42 @@ def route_device_signals(sorted_batch: list, latest_signals: dict, device_class:
     }
 
 
+def extract_delta(snapshot: dict) -> tuple[bool, dict]:
+    """Return (is_delta, channels) for a snapshot's optional delta fields.
+
+    ``channels`` maps a channel name to the signal keys it changed, or ``{}``
+    for a plain full snapshot.
+    """
+    ch = snapshot.get("ch")
+    channels = {}
+    if isinstance(ch, dict):
+        for name, keys in ch.items():
+            channels[str(name)] = list(keys) if isinstance(keys, (list, tuple)) else []
+    return (bool(snapshot.get("delta")), channels)
+
+
+def merge_signals(previous: dict, delta: dict) -> dict:
+    """Overlay a delta signal map on the previous full state (returns a new dict).
+
+    A key with a ``None`` value removes the signal from the state.
+    """
+    out = dict(previous or {})
+    for key, value in (delta or {}).items():
+        if value is None:
+            out.pop(key, None)
+        else:
+            out[key] = value
+    return out
+
+
+def update_channel_last_seen(prev: dict, ch: dict, now_iso: str) -> dict:
+    """Return a copy of prev with only the channels present in ``ch`` refreshed."""
+    out = dict(prev or {})
+    for channel in (ch or {}):
+        out[str(channel)] = now_iso
+    return out
+
+
 def aggregate_batch(sorted_batch: list) -> dict:
     """Aggregate a chronologically sorted batch.
 

@@ -50,6 +50,13 @@ public class HassClient {
     private static volatile long currentFlushBackoffMs = MIN_FLUSH_BACKOFF_MS;
     private static volatile long lastFlushAttemptMs = 0;
 
+    // Delta snapshots (#91): last sent full reference + resync triggers. Guarded by
+    // the single-threaded snapshot executor; forceFullNext also set from other threads.
+    private static final long FULL_RESYNC_INTERVAL_MS = 3600_000; // periodic safety full
+    private static volatile java.util.Map<String, String> lastSentHA = new java.util.LinkedHashMap<>();
+    private static volatile boolean forceFullNext = true;
+    private static volatile long lastFullSendMs = 0;
+
     public static class Snapshot {
         public final long timestamp;
         public final double lat;
@@ -62,9 +69,19 @@ public class HassClient {
         public final String disabledJson;
         /** Database row id when this snapshot came from the queue (-1 for in-memory). */
         public long queueId = -1;
+        /** True when signalJson holds only changed signals (delta, #91). */
+        public boolean delta = false;
+        /** channel → changed keys JSON ("" when not a delta). */
+        public String chJson = "";
 
         public Snapshot(long timestamp, double lat, double lon, float accuracy,
                         long fixTimeSec, String signalJson, String disabledJson) {
+            this(timestamp, lat, lon, accuracy, fixTimeSec, signalJson, disabledJson, false, "");
+        }
+
+        public Snapshot(long timestamp, double lat, double lon, float accuracy,
+                        long fixTimeSec, String signalJson, String disabledJson,
+                        boolean delta, String chJson) {
             this.timestamp = timestamp;
             this.lat = lat;
             this.lon = lon;
@@ -72,6 +89,8 @@ public class HassClient {
             this.fixTimeSec = fixTimeSec;
             this.signalJson = signalJson;
             this.disabledJson = disabledJson;
+            this.delta = delta;
+            this.chJson = chJson == null ? "" : chJson;
         }
 
         public JSONObject toJson() throws Exception {
@@ -95,6 +114,12 @@ public class HassClient {
             if (disabledJson != null && !disabledJson.isEmpty()) {
                 obj.put("d", new JSONArray(disabledJson));
             }
+            if (delta) {
+                obj.put("delta", true);
+                if (chJson != null && !chJson.isEmpty()) {
+                    obj.put("ch", new JSONObject(chJson));
+                }
+            }
             return obj;
         }
 
@@ -110,6 +135,7 @@ public class HassClient {
                 accuracy = (float) gps.optDouble("a", 0);
                 fixTimeSec = gps.optLong("t", 0);
             }
+            JSONObject ch = obj.optJSONObject("ch");
             return new Snapshot(
                 obj.getLong("t"),
                 lat,
@@ -117,7 +143,9 @@ public class HassClient {
                 accuracy,
                 fixTimeSec,
                 obj.getJSONObject("s").toString(),
-                obj.has("d") ? obj.getJSONArray("d").toString() : ""
+                obj.has("d") ? obj.getJSONArray("d").toString() : "",
+                obj.optBoolean("delta", false),
+                ch == null ? "" : ch.toString()
             );
         }
     }
@@ -129,6 +157,7 @@ public class HassClient {
     public static synchronized void init(Context ctx) {
         if (initialized) return;
         initialized = true;
+        forceFullNext = true; // first snapshot after start is always full (resync)
         LogBuffer.i("HassClient", "Initialized, queued snapshots: " + SnapshotQueue.getCount(ctx));
     }
 
@@ -150,8 +179,59 @@ public class HassClient {
                 return;
             }
             SnapshotDedup.keep(SnapshotDedup.Channel.HA, lat, lon, tsSec, signalJson);
+
+            // Delta (#91): send only changed signals when the integration supports
+            // it (API >= 4). Dedup above still used the FULL signalJson.
+            String sendJson = signalJson;
+            boolean delta = false;
+            String chJson = "";
+            try {
+                org.json.JSONObject fullObj = new org.json.JSONObject(signalJson);
+                java.util.Map<String, String> full = new java.util.LinkedHashMap<>();
+                java.util.Iterator<String> it = fullObj.keys();
+                com.car2hass.vehicle.ValueStore vs = com.car2hass.vehicle.ValueStore.main();
+                java.util.Map<String, String> keyChannel = new java.util.HashMap<>();
+                while (it.hasNext()) {
+                    String k = it.next();
+                    full.put(k, String.valueOf(fullObj.opt(k)));
+                    if (vs != null) {
+                        String c = vs.sourceOf(k);
+                        if (c != null) keyChannel.put(k, c);
+                    }
+                }
+                long nowMs = System.currentTimeMillis();
+                boolean forceFull = forceFullNext
+                        || !IntegrationInfo.supportsDelta()
+                        || (nowMs - lastFullSendMs) > FULL_RESYNC_INTERVAL_MS;
+                DeltaSnapshotBuilder.Result res =
+                        DeltaSnapshotBuilder.build(full, lastSentHA, keyChannel, forceFull);
+                lastSentHA = res.lastSent;
+                forceFullNext = false;
+                if (!res.delta) {
+                    lastFullSendMs = nowMs;
+                }
+                delta = res.delta;
+                sendJson = new org.json.JSONObject(res.signals).toString();
+                if (res.delta && !res.channels.isEmpty()) {
+                    org.json.JSONObject ch = new org.json.JSONObject();
+                    for (java.util.Map.Entry<String, java.util.List<String>> e : res.channels.entrySet()) {
+                        org.json.JSONArray arr = new org.json.JSONArray();
+                        for (String k : e.getValue()) {
+                            arr.put(k);
+                        }
+                        ch.put(e.getKey(), arr);
+                    }
+                    chJson = ch.toString();
+                }
+            } catch (Exception e) {
+                // Any delta failure falls back to the full snapshot (safe).
+                delta = false;
+                sendJson = signalJson;
+                chJson = "";
+            }
+
             Snapshot snap = new Snapshot(tsSec, lat, lon,
-                    accuracy, fixTimeSec, signalJson, disabledJson);
+                    accuracy, fixTimeSec, sendJson, disabledJson, delta, chJson);
             synchronized (bufferLock) {
                 buffer.add(snap);
                 if (buffer.size() > MAX_BUFFER) {
@@ -261,6 +341,8 @@ public class HassClient {
                         // Grow the backoff so an unreachable/misconfigured HA is
                         // retried with increasing spacing instead of every cycle.
                         currentFlushBackoffMs = Math.min(currentFlushBackoffMs * 2, MAX_FLUSH_BACKOFF_MS);
+                        // Next snapshot after recovery must be full (delta resync).
+                        forceFullNext = true;
                         // Re-enqueue only in-memory snapshots; queued rows were never
                         // deleted, so re-inserting them would duplicate telemetry.
                         List<Snapshot> toRequeue = new ArrayList<>();
@@ -298,6 +380,7 @@ public class HassClient {
     // ─── Network restore ───
 
     public static void onNetworkAvailable(final Context ctx) {
+        forceFullNext = true; // network recovered → full resync
         // A network change is a fresh start: drop any failure backoff so the
         // queued telemetry is retried immediately.
         currentFlushBackoffMs = MIN_FLUSH_BACKOFF_MS;

@@ -2,6 +2,7 @@
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import Platform
+from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 import asyncio
@@ -49,6 +50,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     phone_added = {"done": False}
 
+    @callback
     def discover_phone():
         if phone_added["done"]:
             return

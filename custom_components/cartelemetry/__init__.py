@@ -268,6 +268,9 @@ async def async_setup_entry(hass: HomeAssistant, entry):
         # Cache of the last (seen, disabled) signature so the registry-backed
         # availability sync is skipped when nothing changed.
         "_avail_cache": None,
+        # Per-channel last_seen (delta snapshots #91): only channels that sent
+        # changes refresh their entry; exposed by the diagnostics sensor.
+        "channel_last_seen": {},
         # Debounced dispatch state (see _schedule_data_dispatch).
         "_dispatch_scheduled": False,
         "_dispatch_cancel": None,
@@ -528,6 +531,29 @@ class VehicleDataView(HomeAssistantView):
         seen = (old_seen | set(applied.keys())) & _KNOWN_SIGNAL_KEYS
         disabled = set(agg.get("disabled_signals") or set())
 
+        # Delta snapshots (#91): the app may send only changed signals. Merge them
+        # into the previous full state instead of replacing it; only the channels
+        # that produced changes refresh their per-channel last_seen.
+        any_delta = False
+        changed_channels: dict = {}
+        for snap in sorted_batch:
+            is_delta, chans = core.extract_delta(snap)
+            if is_delta:
+                any_delta = True
+                for channel, keys in chans.items():
+                    changed_channels.setdefault(channel, []).extend(keys)
+        if any_delta:
+            prev_data = store.get("data") or {}
+            routed = {
+                **routed,
+                "signals": core.merge_signals(
+                    prev_data.get("signals", {}), routed["signals"]
+                ),
+                "phone_signals": core.merge_signals(
+                    prev_data.get("phone_signals", {}), routed["phone_signals"]
+                ),
+            }
+
         store["data"] = {
             "timestamp": agg["timestamp"],
             "ts": ts if ts is not None else agg["timestamp"],
@@ -552,6 +578,10 @@ class VehicleDataView(HomeAssistantView):
             "gps_track": gps_track,
         }
         store["last_seen"] = dt_util.utcnow().isoformat()
+        if changed_channels:
+            store["channel_last_seen"] = core.update_channel_last_seen(
+                store.get("channel_last_seen", {}), changed_channels, store["last_seen"]
+            )
 
         _schedule_data_dispatch(hass, entry_id)
         newly = set(latest_signals.keys()) - old_seen

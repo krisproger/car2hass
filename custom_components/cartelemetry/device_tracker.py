@@ -50,7 +50,9 @@ class VehicleTracker(TrackerEntity, RestoreEntity):
         try:
             from homeassistant.helpers import device_registry
             dev_reg = device_registry.async_get(self.hass)
-            main = dev_reg.async_get_device({(DOMAIN, self._entry_id)})
+            main = dev_reg.async_get_device_by_identifier(
+                (DOMAIN, self._entry_id), self._entry_id
+            )
             if main is not None:
                 via = main.id
         except Exception:  # noqa: BLE001

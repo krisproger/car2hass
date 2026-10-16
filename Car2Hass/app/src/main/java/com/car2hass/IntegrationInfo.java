@@ -21,6 +21,17 @@ public class IntegrationInfo {
     /** Minimum wire API version this app build is compatible with. */
     public static final int MIN_API_VERSION = 3;
 
+    /** Wire API version at which the integration accepts delta snapshots. */
+    public static final int DELTA_API_VERSION = 4;
+
+    /** Last api_version successfully reported by the integration (0 = unknown). */
+    private static volatile int reportedApiVersion = 0;
+
+    /** True when the integration supports delta snapshots (api_version >= 4). */
+    public static boolean supportsDelta() {
+        return reportedApiVersion >= DELTA_API_VERSION;
+    }
+
     public final String integrationVersion;
     public final int apiVersion;
     public final boolean commandsSupported;
@@ -68,6 +79,9 @@ public class IntegrationInfo {
             JSONObject obj = new JSONObject(sb.toString());
             String version = obj.optString("integration_version", "");
             int api = obj.optInt("api_version", -1);
+            if (api >= 0) {
+                reportedApiVersion = api;
+            }
             JSONObject caps = obj.optJSONObject("capabilities");
             boolean commands = caps == null || caps.optBoolean("commands", true);
             return new IntegrationInfo(version, api, commands);

@@ -2,6 +2,7 @@
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import Platform
+from homeassistant.core import callback
 from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.restore_state import RestoreEntity
 import asyncio
@@ -47,6 +48,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     phone_added = {"done": False}
 
+    @callback
     def discover_phone():
         """Create the phone-device sensors once phone-mode data arrives."""
         if phone_added["done"]:
@@ -304,6 +306,11 @@ class DiagnosticsSensor(SensorEntity, RestoreEntity):
                 self._attr_available = True
                 attrs = {key: value for key, value in car_signals.items()
                          if key not in _ENTITY_KEYS}
+                # Per-channel last_seen (delta snapshots #91), surfaced as an
+                # attribute so channels that stop sending changes are visible.
+                chan = store.get("channel_last_seen") or {}
+                if chan:
+                    attrs["channel_last_seen"] = chan
                 count = len(car_signals)
                 # Write only when something actually changed — otherwise a steady
                 # car would rewrite ~146 attributes (and churn the recorder) on

@@ -381,7 +381,7 @@ def _build_const_snippets(signals, core_keys=None, name_ru=None):
     lines.append("")
     lines.append("# Wire protocol version reported by /api/cartelemetry/info. Bump only on")
     lines.append("# breaking changes; the Android app compares it against MIN_API_VERSION.")
-    lines.append("API_VERSION = 3")
+    lines.append("API_VERSION = 4")
     lines.append("")
     lines.append("# Sensor considered offline after this many seconds without updates.")
     lines.append("ONLINE_OFFLINE_SECONDS = 60")
@@ -579,6 +579,8 @@ def cmd_gen_spec(args):
                     "g": {"lat": "float", "lon": "float", "a": "float"},
                     "s": {"<sensor_key>": "<value>"},
                     "d": ["<sensor_key> (signals the user disabled; optional)"],
+                    "delta": "bool (optional; true = s holds only changed signals)",
+                    "ch": {"<channel>": ["<sensor_key> (channel that changed it)"]},
                 }
             ],
         },

@@ -486,3 +486,42 @@ def test_replay_mode_adaptive_off_keeps_full():
 
 def test_replay_mode_tolerates_empty_options():
     assert core.select_replay_mode({}, 500) == "full"
+
+
+# --- delta snapshots (issue #91) ---
+
+def test_extract_delta_reads_flag_and_channels():
+    is_d, ch = core.extract_delta(
+        {"t": 1, "s": {"speed": 5}, "delta": True, "ch": {"adb": ["speed"]}}
+    )
+    assert is_d is True
+    assert ch == {"adb": ["speed"]}
+    is_d2, ch2 = core.extract_delta({"t": 1, "s": {}})
+    assert is_d2 is False
+    assert ch2 == {}
+
+
+def test_extract_delta_tolerates_bad_channel_shape():
+    is_d, ch = core.extract_delta({"t": 1, "delta": True, "ch": "oops"})
+    assert is_d is True and ch == {}
+    _, ch2 = core.extract_delta({"t": 1, "ch": {"adb": "not-a-list"}})
+    assert ch2 == {"adb": []}
+
+
+def test_merge_signals_overlays_delta_keeps_previous():
+    prev = {"speed": "10", "soc": "50"}
+    got = core.merge_signals(prev, {"speed": "20"})
+    assert got == {"speed": "20", "soc": "50"}
+    assert prev == {"speed": "10", "soc": "50"}  # input not mutated
+
+
+def test_merge_signals_none_removes_key():
+    assert core.merge_signals({"a": "1", "b": "2"}, {"a": None}) == {"b": "2"}
+
+
+def test_update_channel_last_seen_only_touched_channels():
+    prev = {"adb": "T0", "diplus": "T0"}
+    got = core.update_channel_last_seen(prev, {"diplus": ["soc"]}, "T1")
+    assert got == {"adb": "T0", "diplus": "T1"}
+    assert prev == {"adb": "T0", "diplus": "T0"}
+    assert core.update_channel_last_seen(None, {}, "T1") == {}

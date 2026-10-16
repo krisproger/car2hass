@@ -719,3 +719,12 @@ java -cp "$OUT" com.car2hass.vehicle.obd.ObdIoTest
 java -cp "$OUT" com.car2hass.vehicle.Elm327SessionTest
 java -cp "$OUT" com.car2hass.vehicle.Elm327IoTest
 java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.UpdateCheckerTest
+
+echo "=== Compiling DeltaSnapshotBuilder (pure) ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/DeltaSnapshotBuilder.java"
+
+echo "=== Compiling DeltaSnapshotBuilderTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/DeltaSnapshotBuilderTest.java"
+
+echo "=== Running DeltaSnapshotBuilderTest ==="
+java -cp "$OUT" com.car2hass.DeltaSnapshotBuilderTest

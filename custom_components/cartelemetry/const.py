@@ -47,11 +47,11 @@ DEFAULT_BACKLOG_THRESHOLD = 30
 CONF_BACKLOG_REPLAY = "backlog_replay"
 DEFAULT_BACKLOG_REPLAY = "throttled"
 
-INTEGRATION_VERSION = "3.5.4-beta.8"
+INTEGRATION_VERSION = "3.5.4-beta.9"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.
-API_VERSION = 3
+API_VERSION = 4
 
 # Sensor considered offline after this many seconds without updates.
 ONLINE_OFFLINE_SECONDS = 60
