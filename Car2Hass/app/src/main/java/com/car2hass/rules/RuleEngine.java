@@ -74,9 +74,18 @@ public class RuleEngine {
         edgeLogic.reset();
         triggerLogic.reset();
         loadPreviousConditions();
+        try {
+            // Build the sensor→rules index up front so signalChanged() reacts
+            // immediately (before the first safety tick).
+            buildIndex(RuleRegistry.load(appContext));
+        } catch (Exception e) {
+            LogBuffer.w("RuleEngine", "index build error: " + e.getMessage());
+        }
         executor = Executors.newSingleThreadScheduledExecutor();
-        executor.scheduleAtFixedRate(this::tick, 0, 1, TimeUnit.SECONDS);
-        LogBuffer.i("RuleEngine", "Engine started, 1s evaluation loop");
+        // Value changes are handled immediately by signalChanged(); this periodic
+        // pass is only a safety net for time-based conditions (hold/cooldown).
+        executor.scheduleAtFixedRate(this::tick, 0, 5, TimeUnit.SECONDS);
+        LogBuffer.i("RuleEngine", "Engine started, event-driven + 5s safety tick");
         logLoadedRules();
     }
 
@@ -117,7 +126,9 @@ public class RuleEngine {
         // a rule does not cause it to re-fire as a false rising edge.
         try {
             Set<String> ids = new HashSet<>();
-            for (Rule r : RuleRegistry.load(appContext)) ids.add(r.id);
+            List<Rule> rules = RuleRegistry.load(appContext);
+            for (Rule r : rules) ids.add(r.id);
+            buildIndex(rules);
             edgeLogic.retainRules(ids);
             triggerLogic.retainRules(ids);
             savePreviousConditions();

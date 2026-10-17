@@ -21,6 +21,7 @@ public final class ProbeReport {
     private ProbeReport() {}
 
     public static JSONObject build(RegistryStore reg, Map<String, Boolean> channelAvailability,
+            Map<String, String> channelReasons,
             Map<String, Map<String, ProbeResult>> sensorResults,
             Map<String, List<String>> commandCallable,
             Map<String, Integer> scores, String selected,
@@ -36,6 +37,10 @@ public final class ProbeReport {
                 JSONObject c = new JSONObject();
                 c.put("id", e.getKey());
                 c.put("available", e.getValue());
+                String reason = channelReasons == null ? null : channelReasons.get(e.getKey());
+                // Why the channel is unavailable (empty when available): helps the
+                // MCP availability stats distinguish real failures from "not present".
+                c.put("available_reason", reason == null ? "" : reason);
                 chArr.put(c);
             }
         }

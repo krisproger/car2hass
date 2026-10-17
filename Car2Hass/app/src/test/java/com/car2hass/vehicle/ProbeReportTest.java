@@ -25,13 +25,17 @@ public class ProbeReportTest {
         channels.put("diplus", true);
         channels.put("adb", false);
 
+        Map<String, String> reasons = new HashMap<>();
+        reasons.put("diplus", "");
+        reasons.put("adb", "недоступен: нет демона");
+
         Map<String, List<String>> cmd = new HashMap<>();
         cmd.put("ac_on", Arrays.asList("diplus"));
 
         Map<String, Integer> scores = new HashMap<>();
         scores.put("byd_generic", 1);
 
-        JSONObject j = ProbeReport.build(rs, channels, sr, cmd, scores, "byd_generic", "2.3.1", "anon");
+        JSONObject j = ProbeReport.build(rs, channels, reasons, sr, cmd, scores, "byd_generic", "2.3.1", "anon");
         if (!"byd_generic".equals(j.optString("selected_profile")))
             throw new AssertionError("selected_profile missing");
         if (!"2.3.1".equals(j.optString("app_version"))) throw new AssertionError("app_version");
@@ -39,6 +43,16 @@ public class ProbeReportTest {
         if (!"1".equals(j.getJSONObject("profiles").optJSONObject("byd_generic").optString("score")))
             throw new AssertionError("profile score missing");
         if (j.getJSONArray("channels").length() != 2) throw new AssertionError("channels count");
+        // available_reason: empty for the live channel, set for the dead one.
+        boolean sawReason = false;
+        for (int i = 0; i < j.getJSONArray("channels").length(); i++) {
+            JSONObject c = j.getJSONArray("channels").getJSONObject(i);
+            if ("adb".equals(c.optString("id"))
+                    && c.optString("available_reason").contains("нет демона")) {
+                sawReason = true;
+            }
+        }
+        if (!sawReason) throw new AssertionError("available_reason missing for dead channel");
 
         System.out.println("All ProbeReport tests passed.");
     }

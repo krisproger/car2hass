@@ -235,6 +235,7 @@ public final class VehicleResearch {
         int channelCount = channels.size();
         int total = channelCount + sensorKeys.size();
         Map<String, Boolean> channelAvailability = new java.util.LinkedHashMap<>();
+        Map<String, String> channelReasons = new java.util.LinkedHashMap<>();
         List<ChannelResult> channelResults = new ArrayList<>();
         int chIdx = 0;
         if (envDiag != null) envDiag.snapshot(ctx, "research start");
@@ -244,6 +245,7 @@ public final class VehicleResearch {
             ChannelResult r = probeWithTimeout(ch, ctx);
             channelResults.add(r);
             channelAvailability.put(ch.id(), r.isAlive());
+            channelReasons.put(ch.id(), r.isAlive() ? "" : r.summary());
             chIdx++;
             LogBuffer.i("VehicleResearch", "channel '" + ch.id() + "' probed in "
                     + (System.currentTimeMillis() - tCh) + " ms: " + r.summary());
@@ -402,7 +404,7 @@ public final class VehicleResearch {
         JSONObject report = null;
         String reportPath = null;
         try {
-            report = ProbeReport.build(reg, channelAvailability, sensorResults,
+            report = ProbeReport.build(reg, channelAvailability, channelReasons, sensorResults,
                     cmdCallable, scores, selected, version, deviceAnon);
             if (ctx != null && report != null) {
                 // Per-report link diagnostics: why an OBD/Voyah channel may be down.
