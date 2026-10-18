@@ -262,6 +262,9 @@
     <string name="settings_auto_start_byd">Автозапуск (BYD)</string>
     <string name="settings_background_work">Фоновая работа</string>
     <string name="settings_test_connection">Тест подключения</string>
+    <string name="settings_flush_now">Отправить очередь сейчас</string>
+    <string name="settings_flush_done">Очередь отправлена</string>
+    <string name="settings_flush_failed">Отправка не удалась</string>
 
     <!-- Cloud sync (mytechnic.ru) -->
     <string name="settings_cloud_title">Облачная синхронизация (mytechnic.ru)</string>

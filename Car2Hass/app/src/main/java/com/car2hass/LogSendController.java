@@ -54,42 +54,27 @@ public final class LogSendController {
         if (progress != null) { progress.setIndeterminate(true); progress.setVisibility(View.VISIBLE); }
         TaskNotifier.progress(activity, logTitle, host.str(R.string.upload_in_progress), 0, 0);
 
-        // Also push the DB log (the real, complete log) right away — the file
-        // queue above is the legacy path and may be empty/stale.
-        try {
-            LogManager lm = LogManager.get();
-            if (lm != null) lm.uploadNow();
-        } catch (Exception e) {
-            LogBuffer.e("Main", "uploadLogToServer: db upload trigger: " + e.getMessage());
-        }
-
+        // The DB log is the real, complete log; drain it incrementally (only unsent
+        // records). The legacy file-queue path re-sent the whole journal, so it is
+        // no longer fed here.
         new Thread(() -> {
+            boolean sent = false;
             try {
-                String anonId = com.car2hass.vehicle.DeviceAnon.fromContext(activity);
-                final String entryId = UploadQueue.enqueue(activity, UploadQueue.KIND_LOG,
-                        AppInfo.getVersionString(activity), anonId, msg, logPath);
-                LogBuffer.i("Main", "uploadLogToServer: enqueued " + entryId);
-                host.flushQueue();
-                LogBuffer.i("Main", "uploadLogToServer: flush done");
-                host.post(() -> {
-                    boolean stillPending = false;
-                    for (UploadQueue.Entry e : UploadQueue.load(activity)) {
-                        if (entryId.equals(e.id)) { stillPending = true; break; }
-                    }
-                    LogBuffer.i("Main", "uploadLogToServer: stillPending=" + stillPending);
-                    TaskNotifier.done(activity, logTitle, host.str(stillPending
-                            ? R.string.upload_failed : R.string.log_server_ok));
-                    restore();
-                    host.toast(stillPending ? R.string.log_server_pending : R.string.log_server_ok);
-                });
+                LogManager lm = LogManager.get();
+                if (lm != null) {
+                    lm.uploadNowBlocking();
+                    sent = lm.unsentLogCount() + lm.unsentCrashCount() == 0;
+                }
             } catch (Exception e) {
                 LogBuffer.e("Main", "uploadLogToServer failed: " + e.getMessage());
-                host.post(() -> {
-                    TaskNotifier.done(activity, logTitle, host.str(R.string.upload_failed));
-                    restore();
-                    host.toast(R.string.log_server_error);
-                });
             }
+            final boolean ok = sent;
+            host.post(() -> {
+                TaskNotifier.done(activity, logTitle,
+                        host.str(ok ? R.string.log_server_ok : R.string.upload_failed));
+                restore();
+                host.toast(ok ? R.string.log_server_ok : R.string.log_server_error);
+            });
         }, "log-upload").start();
     }
 

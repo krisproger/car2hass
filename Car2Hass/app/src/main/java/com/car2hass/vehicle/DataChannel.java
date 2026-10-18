@@ -10,6 +10,10 @@ public interface DataChannel {
     String id();
     String displayName();
     boolean supportsCommands();
+
+    /** True when this channel can deliver car-control commands. Default false. */
+    default boolean canControl() { return false; }
+
     ChannelResult probe(Context ctx);
     List<CANDataItem> read(Context ctx, List<CANDataItem> knownItems);
 

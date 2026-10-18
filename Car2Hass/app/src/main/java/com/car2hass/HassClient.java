@@ -365,6 +365,18 @@ public class HassClient {
         }
     }
 
+    /** Clears the failure backoff so the next flush runs immediately. */
+    public static void resetFlushBackoff() {
+        currentFlushBackoffMs = MIN_FLUSH_BACKOFF_MS;
+        lastFlushAttemptMs = 0;
+    }
+
+    /** Resets backoff and flushes the queue now (user-triggered / after a good test). */
+    public static void requestFlushNow(Context ctx, FlushCallback callback) {
+        resetFlushBackoff();
+        flush(ctx, callback);
+    }
+
     private static boolean isBufferEmpty() {
         synchronized (bufferLock) {
             return buffer.isEmpty();

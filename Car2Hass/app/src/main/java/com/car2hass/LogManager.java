@@ -26,6 +26,7 @@ public final class LogManager {
     private static final long FLUSH_INTERVAL_MS = 5000L;
     private static final int BLOCK_SIZE = 20;
     private static final int BATCH_LIMIT = 500;
+    private static final int MAX_DRAIN_BATCHES = 20;
 
     private static volatile LogManager instance;
 
@@ -94,11 +95,36 @@ public final class LogManager {
         executor.execute(() -> {
             try {
                 buffer.flush();
-                runUpload();
+                uploadDrainBlocking(MAX_DRAIN_BATCHES);
             } catch (Exception e) {
                 LogBuffer.e("LogManager", "uploadNow: " + e.getMessage());
             }
         });
+    }
+
+    /** Blocking variant of {@link #uploadNow()} for the user send action. */
+    public int uploadNowBlocking() {
+        try {
+            buffer.flush();
+        } catch (Exception e) {
+            LogBuffer.e("LogManager", "uploadNowBlocking flush: " + e.getMessage());
+        }
+        return uploadDrainBlocking(MAX_DRAIN_BATCHES);
+    }
+
+    /** Drains up to {@code maxBatches} batches on the caller thread; returns records attempted. */
+    public int uploadDrainBlocking(int maxBatches) {
+        int attempted = 0;
+        try {
+            for (int i = 0; i < maxBatches; i++) {
+                int n = runUpload();
+                attempted += n;
+                if (n <= 0) break;
+            }
+        } catch (Exception e) {
+            LogBuffer.e("LogManager", "uploadDrainBlocking: " + e.getMessage());
+        }
+        return attempted;
     }
 
     public long unsentLogCount() {

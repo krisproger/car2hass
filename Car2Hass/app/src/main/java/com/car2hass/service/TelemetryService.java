@@ -773,7 +773,23 @@ public class TelemetryService extends Service {
         });
     }
 
+    private final java.util.concurrent.atomic.AtomicBoolean integrationInfoQueried =
+            new java.util.concurrent.atomic.AtomicBoolean(false);
+
+    /** Queries the integration api_version once per process when HA is configured. */
+    private void ensureIntegrationInfoOnce() {
+        if (!integrationInfoQueried.compareAndSet(false, true)) return;
+        if (!AppConfig.isHassEnabled(this) || !AppConfig.isHassConfigured(this)) return;
+        final String base = (AppConfig.isHassHttps(this) ? "https" : "http") + "://"
+                + AppConfig.getHassHost(this) + ":" + AppConfig.getHassPort(this);
+        final String token = AppConfig.getHassToken(this);
+        new Thread(() -> com.car2hass.IntegrationInfo.query(this, base, token),
+                "integration-info").start();
+    }
+
     private void startFlushLoop() {
+        com.car2hass.IntegrationInfo.load(this);
+        ensureIntegrationInfoOnce();
         flushExecutor.execute(() -> {
             while (running.get()) {
                 try {

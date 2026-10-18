@@ -181,4 +181,14 @@
         android:text="@string/settings_test_connection"
         android:layout_marginTop="10dp" />
 
+    <Button
+        android:id="@+id/btnFlushQueue"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:background="@color/surfaceVariant"
+        android:textColor="@color/accentGreen"
+        android:textSize="14sp"
+        android:text="@string/settings_flush_now"
+        android:layout_marginTop="6dp" />
+
 </LinearLayout>

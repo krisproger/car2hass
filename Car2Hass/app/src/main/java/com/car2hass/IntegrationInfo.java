@@ -1,5 +1,6 @@
 package com.car2hass;
 
+import android.content.Context;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -26,6 +27,11 @@ public class IntegrationInfo {
 
     /** Last api_version successfully reported by the integration (0 = unknown). */
     private static volatile int reportedApiVersion = 0;
+
+    /** Loads the last persisted api_version (call once at app/telemetry start). */
+    public static void load(Context ctx) {
+        reportedApiVersion = AppConfig.getIntegrationApiVersion(ctx);
+    }
 
     /** True when the integration supports delta snapshots (api_version >= 4). */
     public static boolean supportsDelta() {
@@ -92,5 +98,14 @@ public class IntegrationInfo {
                 conn.disconnect();
             }
         }
+    }
+
+    /** Like {@link #query(String, String)} but persists the reported api_version. */
+    public static IntegrationInfo query(Context ctx, String baseUrl, String token) {
+        IntegrationInfo info = query(baseUrl, token);
+        if (info != null && info.apiVersion >= 0) {
+            AppConfig.setIntegrationApiVersion(ctx, info.apiVersion);
+        }
+        return info;
     }
 }

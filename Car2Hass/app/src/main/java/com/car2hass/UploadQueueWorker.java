@@ -72,12 +72,12 @@ public final class UploadQueueWorker {
     private static boolean send(Context ctx, UploadQueue.Entry e) {
         try {
             if (UploadQueue.KIND_LOG.equals(e.kind)) {
-                // Full app journal (LogBuffer + logcat) with the research report
-                // appended when available; delivered in 500 KiB chunks. Bytes are
-                // passed straight to the uploader to avoid a second full-size
-                // String copy (OOM risk on head units with multi-MB logs).
-                byte[] bytes = LogExportHelper.buildLogBytes(ctx, e.path);
-                return LogUploader.uploadBytes(ctx, e.message, bytes, e.id);
+                // Legacy entry: the real log lives in the DB. Drain it incrementally
+                // instead of rebuilding and re-sending the whole journal.
+                LogManager lm = LogManager.get();
+                if (lm == null) return false;
+                lm.uploadNowBlocking();
+                return lm.unsentLogCount() + lm.unsentCrashCount() == 0;
             }
             ProbeUploader.Result r = ProbeUploader.uploadResult(ctx, e.path);
             if (r.ok) return true;

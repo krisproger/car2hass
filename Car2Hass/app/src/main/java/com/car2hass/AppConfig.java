@@ -1251,6 +1251,17 @@ public class AppConfig {
 
     private static final String KEY_PROBE_CHANNEL_AVAIL = "probe_channel_avail";
 
+    private static final String KEY_INTEGRATION_API_VERSION = "integration_api_version";
+
+    /** Last api_version reported by the HA integration (0 = unknown). */
+    public static int getIntegrationApiVersion(Context ctx) {
+        return prefs(ctx).getInt(KEY_INTEGRATION_API_VERSION, 0);
+    }
+
+    public static void setIntegrationApiVersion(Context ctx, int version) {
+        prefs(ctx).edit().putInt(KEY_INTEGRATION_API_VERSION, version).apply();
+    }
+
     /** Merges the per-channel liveness from the latest probe into prefs. */
     public static void saveChannelAvailability(Context ctx, java.util.Map<String, Boolean> availability) {
         if (availability == null || availability.isEmpty()) return;

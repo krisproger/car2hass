@@ -74,6 +74,7 @@ public final class LogUploader {
             byte[] gz = payload.gzipBytes == null ? new byte[0] : payload.gzipBytes;
             final int MAX_CHUNK = 500 * 1024; // 500 KiB per chunk (server cap 4 MiB)
             int total = Math.max(1, (gz.length + MAX_CHUNK - 1) / MAX_CHUNK);
+            final java.util.List<String> bodies = new java.util.ArrayList<>();
             for (int i = 0; i < total; i++) {
                 int from = i * MAX_CHUNK;
                 int len = Math.min(MAX_CHUNK, gz.length - from);
@@ -89,9 +90,9 @@ public final class LogUploader {
                 body.put("compression", "gzip");
                 body.put("payload", b64);
                 body.put("record_count", payload.recordCount);
-                if (!post(body.toString())) return false;
+                bodies.add(body.toString());
             }
-            return true;
+            return postAllParallel(bodies);
         } catch (Exception e) {
             LogBuffer.e("LogUploader", "uploadPayload: " + e.getMessage());
             return false;
@@ -118,6 +119,25 @@ public final class LogUploader {
         }
     }
 
+    private static final int MAX_PARALLEL_CHUNKS = 3;
+
+    private static boolean postAllParallel(java.util.List<String> bodies) {
+        java.util.concurrent.ExecutorService pool =
+                java.util.concurrent.Executors.newFixedThreadPool(MAX_PARALLEL_CHUNKS);
+        try {
+            java.util.List<java.util.concurrent.Future<Boolean>> futures = new java.util.ArrayList<>();
+            for (String b : bodies) futures.add(pool.submit(() -> post(b)));
+            boolean all = true;
+            for (java.util.concurrent.Future<Boolean> f : futures) {
+                try { all = Boolean.TRUE.equals(f.get()) && all; }
+                catch (Exception e) { all = false; }
+            }
+            return all;
+        } finally {
+            pool.shutdown();
+        }
+    }
+
     private static boolean post(String jsonBody) {
         HttpURLConnection conn = null;
         try {
@@ -128,8 +148,8 @@ public final class LogUploader {
             }
             conn = (HttpURLConnection) u.openConnection();
             conn.setRequestMethod("POST");
-            conn.setConnectTimeout(30000);
-            conn.setReadTimeout(60000);
+            conn.setConnectTimeout(10000);
+            conn.setReadTimeout(30000);
             conn.setDoOutput(true);
             conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             conn.setRequestProperty("X-Cartelemetry-Token", AppApi.TOKEN);

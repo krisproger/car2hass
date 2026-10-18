@@ -3341,6 +3341,14 @@ public class MainActivity extends BaseLocalizedActivity {
         AppConfig.migratePhoneChannel(this);
 
         settingsView.findViewById(R.id.btnTest).setOnClickListener(v -> testConnection());
+        settingsView.findViewById(R.id.btnFlushQueue).setOnClickListener(v -> {
+            HassClient.requestFlushNow(this, (success, msg) -> runOnUiThread(() -> {
+                android.widget.Toast.makeText(this,
+                        getString(success ? R.string.settings_flush_done : R.string.settings_flush_failed),
+                        android.widget.Toast.LENGTH_SHORT).show();
+                updateQueueBar();
+            }));
+        });
         settingsView.findViewById(R.id.btnLocationTest).setOnClickListener(v -> showLocationTest());
         settingsView.findViewById(R.id.btnExportConfig).setOnClickListener(v -> exportConfig());
         settingsView.findViewById(R.id.btnImportConfig).setOnClickListener(v -> importConfig());
@@ -3482,12 +3490,12 @@ public class MainActivity extends BaseLocalizedActivity {
         return false;
     }
 
-    /** Channels that can execute car commands, per the channel catalog. */
+    /** Candidate ids that might carry car control; filtered by canControl(). */
     private java.util.List<String> commandChannels() {
         java.util.List<String> out = new java.util.ArrayList<>();
-        for (String id : new String[]{"diplus", "adb"}) {
+        for (String id : new String[]{"diplus", "voyah"}) {
             com.car2hass.vehicle.DataChannel ch = com.car2hass.vehicle.ChannelCatalog.create(id);
-            if (ch != null && ch.supportsCommands()) out.add(id);
+            if (ch != null && ch.canControl()) out.add(id);
         }
         return out;
     }
@@ -4843,6 +4851,7 @@ public class MainActivity extends BaseLocalizedActivity {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentGreen));
                         tvTestResult.setText(getString(R.string.settings_test_ok, code));
                         testVehicleEndpoint(finalBaseUrl, token);
+                        HassClient.requestFlushNow(MainActivity.this, null);
                     } else if (code >= 300 && code < 400) {
                         tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
                         String where = location != null && !location.isEmpty() ? " → " + location : "";
