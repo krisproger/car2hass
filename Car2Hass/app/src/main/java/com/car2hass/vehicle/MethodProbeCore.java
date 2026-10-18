@@ -29,7 +29,12 @@ public final class MethodProbeCore {
         root.put("sensors", new JSONObject());
         root.put("commands", new JSONObject());
         root.put("report_type", "method_probe");
+        root.put("methods", methods(methods, invoker));
+        return ReportPrivacyFilter.sanitize(root);
+    }
 
+    public static JSONArray methods(List<MethodRegistry.ChannelMethod> methods,
+                                    CanaryInvoker invoker) throws org.json.JSONException {
         JSONArray out = new JSONArray();
         for (MethodRegistry.ChannelMethod m : methods) {
             JSONObject mo = new JSONObject();
@@ -55,7 +60,6 @@ public final class MethodProbeCore {
             mo.put("canaries", results);
             out.put(mo);
         }
-        root.put("methods", out);
-        return ReportPrivacyFilter.sanitize(root);
+        return out;
     }
 }

@@ -1,23 +1,29 @@
 package com.car2hass.vehicle;
 
-import org.json.JSONObject;
+import org.json.JSONArray;
 
-import java.io.File;
-import java.io.FileWriter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-/** Wires MethodProbeCore to the Voyah channel primitives and stores the report. */
+/** Runs declared channel-method canaries against the Voyah primitives. */
 public final class MethodProber {
     private MethodProber() {}
 
-    public static JSONObject run(RegistryStore reg, List<String> availableChannels)
+    /**
+     * Canary results for the given probe availability. Fail-open: a channel with
+     * no availability entry (or true) keeps its methods; only an explicit false
+     * drops them.
+     */
+    public static JSONArray methodsFor(RegistryStore reg, Map<String, Boolean> availability)
             throws org.json.JSONException {
-        List<MethodRegistry.ChannelMethod> all = MethodRegistry.from(reg);
-        List<MethodRegistry.ChannelMethod> keep = new java.util.ArrayList<>();
-        for (MethodRegistry.ChannelMethod m : all) {
-            if (availableChannels == null || availableChannels.contains(m.channel)) keep.add(m);
+        List<MethodRegistry.ChannelMethod> keep = new ArrayList<>();
+        for (MethodRegistry.ChannelMethod m : MethodRegistry.from(reg)) {
+            Boolean avail = availability == null ? null : availability.get(m.channel);
+            if (avail != null && !avail) continue;
+            keep.add(m);
         }
-        return MethodProbeCore.build(keep, MethodProber::invoke);
+        return MethodProbeCore.methods(keep, MethodProber::invoke);
     }
 
     private static ProbeResult invoke(String kind, String param) {
@@ -28,21 +34,6 @@ public final class MethodProber {
             case "icarsignal_getter": return VoyahChannel.readSignalParam(param);
             case "raw_tx": return VoyahChannel.readRawTxParam(param);
             default: return ProbeResult.unsupported();
-        }
-    }
-
-    public static String writeFile(android.content.Context ctx, JSONObject report) {
-        try {
-            File dir = ctx.getExternalFilesDir(null);
-            if (dir == null) dir = ctx.getFilesDir();
-            dir.mkdirs();
-            File f = new File(dir, "method_probe_report.json");
-            try (FileWriter w = new FileWriter(f)) {
-                w.write(ReportPrivacyFilter.sanitize(report).toString(2));
-            }
-            return f.getAbsolutePath();
-        } catch (Exception e) {
-            return null;
         }
     }
 }

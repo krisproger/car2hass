@@ -921,6 +921,7 @@
     <string name="settings_phone_name">Имя телефона</string>
     <string name="settings_phone_privacy">Чувствительные датчики включаются только вручную и могут требовать разрешения.</string>
     <string name="settings_phone_sensitive_mark">· чувствительный</string>
+    <string name="settings_phone_details">Детали датчиков телефона</string>
     <string name="settings_phone_permission_denied">Разрешение не выдано — датчик останется выключенным.</string>
 
     <string name="sensor_phone_battery_level">Заряд батареи</string>

@@ -937,6 +937,7 @@
     <string name="settings_phone_name">Phone name</string>
     <string name="settings_phone_privacy">Sensitive sensors are opt-in and may require permission.</string>
     <string name="settings_phone_sensitive_mark">· sensitive</string>
+    <string name="settings_phone_details">Phone sensor details</string>
     <string name="settings_phone_permission_denied">Permission denied — the sensor stays off.</string>
 
     <string name="sensor_phone_battery_level">Battery level</string>

@@ -27,6 +27,13 @@ public class MethodProbeCoreTest {
                 .getJSONArray("canaries").getJSONObject(0);
         if (!"error".equals(c2.getString("status"))) throw new AssertionError("error status");
 
+        org.json.JSONArray arr = MethodProbeCore.methods(
+                java.util.Collections.singletonList(m), ok);
+        if (arr.length() != 1) throw new AssertionError("methods array length");
+        if (!"engine_rpm".equals(arr.getJSONObject(0)
+                .getJSONArray("canaries").getJSONObject(0).getString("sensor")))
+            throw new AssertionError("methods array content");
+
         System.out.println("All MethodProbeCore tests passed.");
     }
 }

@@ -130,7 +130,21 @@ public final class ResearchController {
                         AppConfig.getSelectedProfile(a),
                         AppConfig.getActiveChannels(a), null, null);
             }
-            String path = outcome.reportPath;
+            String path0 = outcome.reportPath;
+            if (outcome.report != null) {
+                try {
+                    java.util.Map<String, Boolean> avail =
+                            com.car2hass.vehicle.ChannelAvailability.fromReport(outcome.report);
+                    outcome.report.put("methods",
+                            com.car2hass.vehicle.MethodProber.methodsFor(
+                                    RegistryStore.load(a), avail));
+                    String p2 = com.car2hass.vehicle.ProbeReport.writeFile(a, outcome.report);
+                    if (p2 != null) path0 = p2;
+                } catch (Exception e) {
+                    LogBuffer.e("ResearchController", "method canaries: " + e.getMessage());
+                }
+            }
+            final String path = path0;
             String reportSummary = buildSummary(outcome);
             LogBuffer.i("ResearchController", "research finished in "
                     + (System.currentTimeMillis() - t0) + " ms, profile="
@@ -160,38 +174,6 @@ public final class ResearchController {
                 }
             });
         }).start();
-    }
-
-    /** Runs the channel-method deep probe and uploads the report. */
-    public void startDeepProbe() {
-        final Activity a = host.activity();
-        final ProgressActionButton button = host.button();
-        if (button != null && button.isBusy()) return;
-        final String title = host.str(R.string.settings_vehicle_deep_probe);
-        if (button != null) button.startBusy(R.string.settings_vehicle_deep_probe, 0);
-        TaskNotifier.progress(a, title, title, 0, 0);
-        new Thread(() -> {
-            String path = null;
-            try {
-                java.util.List<String> avail = new java.util.ArrayList<>();
-                for (java.util.Map.Entry<String, Boolean> e
-                        : AppConfig.getChannelAvailability(a).entrySet()) {
-                    if (Boolean.TRUE.equals(e.getValue())) avail.add(e.getKey());
-                }
-                org.json.JSONObject report = com.car2hass.vehicle.MethodProber.run(
-                        RegistryStore.load(a), avail);
-                path = com.car2hass.vehicle.MethodProber.writeFile(a, report);
-            } catch (Exception e) {
-                LogBuffer.e("ResearchController", "deep probe: " + e.getMessage());
-            }
-            final String p = path;
-            a.runOnUiThread(() -> {
-                TaskNotifier.done(a, title, host.str(R.string.settings_vehicle_deep_probe_done));
-                if (button != null) button.setAlt(R.string.settings_research_show_report,
-                        v -> host.showReportDialog(title, p));
-                if (p != null) uploadReport(p);
-            });
-        }, "deep-probe").start();
     }
 
     private String buildSummary(VehicleResearch.ResearchOutcome outcome) {

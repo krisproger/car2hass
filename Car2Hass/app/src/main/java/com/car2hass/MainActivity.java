@@ -3419,6 +3419,7 @@ public class MainActivity extends BaseLocalizedActivity {
                     AppConfig.setAddedSources(MainActivity.this, added);
                 }
                 renderResearch();
+                refreshCommandVisibility();
             }
             @Override public void showReportDialog(String summary, String path) { showResearchSummaryDialog(summary, path); }
             @Override public String str(int res) { return getString(res); }
@@ -3426,11 +3427,11 @@ public class MainActivity extends BaseLocalizedActivity {
         });
         btnRestartResearch.setIdle(R.string.settings_research_restart, v -> researchController.start());
         settingsView.findViewById(R.id.btnExportResearch).setOnClickListener(v -> exportResearchReport());
-        settingsView.findViewById(R.id.btnDeepProbe).setOnClickListener(v -> researchController.startDeepProbe());
         Switch swProbeUpload = settingsView.findViewById(R.id.swProbeUpload);
         swProbeUpload.setChecked(AppConfig.isProbeUploadEnabled(this));
         swProbeUpload.setOnCheckedChangeListener((b, checked) ->
                 AppConfig.setProbeUploadEnabled(this, checked));
+        refreshCommandVisibility();
         selectSettingsSection(0);
     }
 
@@ -3445,14 +3446,19 @@ public class MainActivity extends BaseLocalizedActivity {
 
     private void selectSettingsSection(int index) {
         selectedSettingsSection = index;
-        // Research card is shown together with the data-sources section (index 1).
+        boolean researchVisible = index == 1 && hasAddedSources();
+        boolean commandVisible = com.car2hass.vehicle.CommandVisibility.shouldShow(
+                AppConfig.getChannelAvailability(this), commandChannels());
         for (int i = 0; i < settingsSections.length; i++) {
-            boolean visible = i == index || (index == 1 && i == 5);
+            boolean visible = i == index || (i == 5 && researchVisible);
+            if (i == 6) visible = visible && commandVisible;
             settingsSections[i].setVisibility(visible ? View.VISIBLE : View.GONE);
         }
         int[] navIds = {R.id.navSettingsCar, R.id.navSettingsProtocols, R.id.navSettingsSmarthome,
-                        R.id.navSettingsGeofences, R.id.navSettingsTech, R.id.navSettingsCommands};
-        boolean[] selected = {index == 0, index == 1, index == 2, index == 3, index == 4, index == 6};
+                        R.id.navSettingsGeofences, R.id.navSettingsTech, R.id.navSettingsCommands,
+                        R.id.navSettingsCloud};
+        boolean[] selected = {index == 0, index == 1, index == 2, index == 3, index == 4,
+                              index == 6, index == 7};
         for (int i = 0; i < navIds.length; i++) {
             View item = settingsView.findViewById(navIds[i]);
             item.setSelected(selected[i]);
@@ -3468,6 +3474,33 @@ public class MainActivity extends BaseLocalizedActivity {
             maybeRunFirstLaunchResearch();
         }
     }
+    /** True when the user added a data source other than the always-on system. */
+    private boolean hasAddedSources() {
+        for (String id : AppConfig.getAddedSources(this)) {
+            if (id != null && !id.isEmpty() && !"system".equals(id)) return true;
+        }
+        return false;
+    }
+
+    /** Channels that can execute car commands, per the channel catalog. */
+    private java.util.List<String> commandChannels() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (String id : new String[]{"diplus", "adb"}) {
+            com.car2hass.vehicle.DataChannel ch = com.car2hass.vehicle.ChannelCatalog.create(id);
+            if (ch != null && ch.supportsCommands()) out.add(id);
+        }
+        return out;
+    }
+
+    /** Shows the control section only when a command-capable channel is alive. */
+    private void refreshCommandVisibility() {
+        boolean show = com.car2hass.vehicle.CommandVisibility.shouldShow(
+                AppConfig.getChannelAvailability(this), commandChannels());
+        View nav = settingsView.findViewById(R.id.navSettingsCommands);
+        if (nav != null) nav.setVisibility(show ? View.VISIBLE : View.GONE);
+        if (!show && selectedSettingsSection == 6) selectSettingsSection(0);
+    }
+
     private void setupVehicleCard() {
         Spinner spinnerProducer = settingsView.findViewById(R.id.spinnerVehicleProducer);
         ArrayAdapter<CharSequence> producerAdapter = ArrayAdapter.createFromResource(this,
@@ -3705,11 +3738,23 @@ public class MainActivity extends BaseLocalizedActivity {
                         AppConfig.getPhoneName(this), "",
                         v -> AppConfig.setPhoneName(this, v)));
 
+                TextView detailsTitle = new TextView(this);
+                detailsTitle.setText(R.string.settings_phone_details);
+                detailsTitle.setTextColor(getResources().getColor(R.color.textPrimary));
+                detailsTitle.setTextSize(14);
+                detailsTitle.setCompoundDrawablesWithIntrinsicBounds(0, 0,
+                        R.drawable.ic_expand, 0);
+                channelContainer.addView(detailsTitle);
+
+                LinearLayout details = new LinearLayout(this);
+                details.setOrientation(LinearLayout.VERTICAL);
+                details.setVisibility(View.GONE);
+
                 TextView hint = new TextView(this);
                 hint.setText(R.string.settings_phone_privacy);
                 hint.setTextColor(getResources().getColor(R.color.textTertiary));
                 hint.setTextSize(12);
-                channelContainer.addView(hint);
+                details.addView(hint);
 
                 Set<String> opted = AppConfig.getPhoneEnabledKeys(this);
                 for (String key : PhoneSensors.SENSITIVE_KEYS) {
@@ -3719,8 +3764,12 @@ public class MainActivity extends BaseLocalizedActivity {
                     sw.setTextColor(getResources().getColor(R.color.textPrimary));
                     sw.setChecked(opted.contains(key));
                     sw.setOnCheckedChangeListener((b, checked) -> onPhoneSensorToggled(key, sw, checked));
-                    channelContainer.addView(sw);
+                    details.addView(sw);
                 }
+                channelContainer.addView(details);
+
+                detailsTitle.setOnClickListener(v -> details.setVisibility(
+                        details.getVisibility() == View.VISIBLE ? View.GONE : View.VISIBLE));
             }
         }
 
