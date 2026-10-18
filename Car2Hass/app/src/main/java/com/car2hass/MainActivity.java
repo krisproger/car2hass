@@ -3426,6 +3426,7 @@ public class MainActivity extends BaseLocalizedActivity {
         });
         btnRestartResearch.setIdle(R.string.settings_research_restart, v -> researchController.start());
         settingsView.findViewById(R.id.btnExportResearch).setOnClickListener(v -> exportResearchReport());
+        settingsView.findViewById(R.id.btnDeepProbe).setOnClickListener(v -> researchController.startDeepProbe());
         Switch swProbeUpload = settingsView.findViewById(R.id.swProbeUpload);
         swProbeUpload.setChecked(AppConfig.isProbeUploadEnabled(this));
         swProbeUpload.setOnCheckedChangeListener((b, checked) ->

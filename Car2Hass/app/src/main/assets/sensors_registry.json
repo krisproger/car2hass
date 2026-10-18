@@ -11,6 +11,161 @@
     "byd_cloud",
     "phone"
   ],
+  "methods": [
+    {
+      "id": "voyah:voyah_state:GW_ESC_VEHSPD",
+      "channel": "voyah",
+      "kind": "voyah_state",
+      "param": "GW_ESC_VEHSPD",
+      "canaries": [
+        "speed"
+      ]
+    },
+    {
+      "id": "voyah:voyah_state:TGS_LEVER",
+      "channel": "voyah",
+      "kind": "voyah_state",
+      "param": "TGS_LEVER",
+      "canaries": [
+        "gear"
+      ]
+    },
+    {
+      "id": "voyah:icanbus_getter:getEngineSpeed",
+      "channel": "voyah",
+      "kind": "icanbus_getter",
+      "param": "getEngineSpeed",
+      "canaries": [
+        "engine_rpm"
+      ]
+    },
+    {
+      "id": "voyah:icanbus_getter:getInstantFuelConsumption",
+      "channel": "voyah",
+      "kind": "icanbus_getter",
+      "param": "getInstantFuelConsumption",
+      "canaries": [
+        "fuel_rate"
+      ]
+    },
+    {
+      "id": "voyah:icanbus_getter:getAmbientTemperature",
+      "channel": "voyah",
+      "kind": "icanbus_getter",
+      "param": "getAmbientTemperature",
+      "canaries": [
+        "outside_temp"
+      ]
+    },
+    {
+      "id": "voyah:icanbus_getter:getRainfallLevel",
+      "channel": "voyah",
+      "kind": "icanbus_getter",
+      "param": "getRainfallLevel",
+      "canaries": [
+        "rain_amount"
+      ]
+    },
+    {
+      "id": "voyah:icanbus_getter:getBatteryRemainingCapacity",
+      "channel": "voyah",
+      "kind": "icanbus_getter",
+      "param": "getBatteryRemainingCapacity",
+      "canaries": [
+        "battery_capacity"
+      ]
+    },
+    {
+      "id": "voyah:icarsignal_getter:getVoltageState",
+      "channel": "voyah",
+      "kind": "icarsignal_getter",
+      "param": "getVoltageState",
+      "canaries": [
+        "battery_12v_voltage"
+      ]
+    },
+    {
+      "id": "voyah:icarsignal_getter:getBatteryLevel",
+      "channel": "voyah",
+      "kind": "icarsignal_getter",
+      "param": "getBatteryLevel",
+      "canaries": [
+        "soc"
+      ]
+    },
+    {
+      "id": "voyah:icarsignal_getter:getHeadLampStatus",
+      "channel": "voyah",
+      "kind": "icarsignal_getter",
+      "param": "getHeadLampStatus",
+      "canaries": [
+        "low_beam"
+      ]
+    },
+    {
+      "id": "voyah:icarsignal_getter:getVehicleSpeed",
+      "channel": "voyah",
+      "kind": "icarsignal_getter",
+      "param": "getVehicleSpeed",
+      "canaries": [
+        "speed"
+      ]
+    },
+    {
+      "id": "voyah:icarsignal_getter:getLightSensorLevel",
+      "channel": "voyah",
+      "kind": "icarsignal_getter",
+      "param": "getLightSensorLevel",
+      "canaries": [
+        "ambient_light_brightness"
+      ]
+    },
+    {
+      "id": "voyah:aircondition_getter:getAirTempInCar",
+      "channel": "voyah",
+      "kind": "aircondition_getter",
+      "param": "getAirTempInCar",
+      "canaries": [
+        "cabin_temp"
+      ]
+    },
+    {
+      "id": "voyah:aircondition_getter:getAirTempOutCar",
+      "channel": "voyah",
+      "kind": "aircondition_getter",
+      "param": "getAirTempOutCar",
+      "canaries": [
+        "outside_temp"
+      ]
+    },
+    {
+      "id": "voyah:aircondition_getter:getAirWindSpeed",
+      "channel": "voyah",
+      "kind": "aircondition_getter",
+      "param": "getAirWindSpeed",
+      "canaries": [
+        "fan_speed"
+      ]
+    },
+    {
+      "id": "voyah:aircondition_getter:getAirPMStatus",
+      "channel": "voyah",
+      "kind": "aircondition_getter",
+      "param": "getAirPMStatus",
+      "canaries": [
+        "pm25"
+      ]
+    },
+    {
+      "id": "voyah:raw_tx:15:int",
+      "channel": "voyah",
+      "kind": "raw_tx",
+      "param": "15:int",
+      "canaries": [
+        "fuel_rate"
+      ]
+    }
+  ],
   "sensors": [
     {
       "key": "power_state",

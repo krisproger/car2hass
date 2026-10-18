@@ -124,6 +124,21 @@ def test_charge_port_flap_has_labels():
     assert flap["channels"]["voyah"] == {"vs": "CHRG_PORT_CAP_STS"}
 
 
+def test_voyah_methods_block_present():
+    reg = json.load(open(os.path.join(ASSETS, "sensors_registry.json"), encoding="utf-8"))
+    methods = reg.get("methods")
+    assert methods, "methods block missing from sensors_registry.json"
+    kinds = {m["kind"] for m in methods}
+    assert {"voyah_state", "icanbus_getter", "icarsignal_getter",
+            "aircondition_getter", "raw_tx"} <= kinds, kinds
+    keys = {s["key"] for s in reg["sensors"]}
+    for m in methods:
+        assert m["channel"] == "voyah"
+        assert 1 <= len(m["canaries"]) <= 5, m
+        for c in m["canaries"]:
+            assert c in keys, f"unknown canary {c} in {m['id']}"
+
+
 def test_obd_pids_match_codec_catalog():
     reg = json.load(open(os.path.join(ASSETS, "sensors_registry.json"), encoding="utf-8"))
     java = open(os.path.join(REPO, "Car2Hass", "app", "src", "main", "java",

@@ -48,6 +48,10 @@ public final class SignalProber implements VehicleResearch.SensorProbe {
                 if (!method.isEmpty()) return VoyahChannel.readMethodParam(method);
                 String ac = ch.optString("ac");
                 if (!ac.isEmpty()) return VoyahChannel.readAirConditionParam(ac);
+                String signal = ch.optString("signal");
+                if (!signal.isEmpty()) return VoyahChannel.readSignalParam(signal);
+                String tx = ch.optString("tx");
+                if (!tx.isEmpty()) return VoyahChannel.readRawTxParam(tx);
                 return ProbeResult.unsupported();
             }
             // dumpsys / diplus_push / byd_cloud have no per-sensor descriptors

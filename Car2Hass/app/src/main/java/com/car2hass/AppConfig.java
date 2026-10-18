@@ -1249,6 +1249,39 @@ public class AppConfig {
                 .apply();
     }
 
+    private static final String KEY_PROBE_CHANNEL_AVAIL = "probe_channel_avail";
+
+    /** Merges the per-channel liveness from the latest probe into prefs. */
+    public static void saveChannelAvailability(Context ctx, java.util.Map<String, Boolean> availability) {
+        if (availability == null || availability.isEmpty()) return;
+        try {
+            String s = prefs(ctx).getString(KEY_PROBE_CHANNEL_AVAIL, null);
+            org.json.JSONObject o = s == null ? new org.json.JSONObject() : new org.json.JSONObject(s);
+            for (java.util.Map.Entry<String, Boolean> e : availability.entrySet()) {
+                if (e.getKey() != null) o.put(e.getKey(), Boolean.TRUE.equals(e.getValue()));
+            }
+            prefs(ctx).edit().putString(KEY_PROBE_CHANNEL_AVAIL, o.toString()).apply();
+        } catch (Exception ignored) {
+        }
+    }
+
+    /** Last known per-channel liveness; empty when never probed (fail-open). */
+    public static java.util.Map<String, Boolean> getChannelAvailability(Context ctx) {
+        java.util.Map<String, Boolean> out = new java.util.LinkedHashMap<>();
+        String s = prefs(ctx).getString(KEY_PROBE_CHANNEL_AVAIL, null);
+        if (s == null) return out;
+        try {
+            org.json.JSONObject o = new org.json.JSONObject(s);
+            java.util.Iterator<String> it = o.keys();
+            while (it.hasNext()) {
+                String k = it.next();
+                out.put(k, o.optBoolean(k, false));
+            }
+        } catch (Exception ignored) {
+        }
+        return out;
+    }
+
     private static final String KEY_APP_INSTANCE_ID = "app_instance_id";
 
     /** Stable anonymous per-install UUID sent to the site for user counting. */

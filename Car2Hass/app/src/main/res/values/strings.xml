@@ -182,6 +182,8 @@
     <string name="settings_research_recommend">The selected data source (%1$s) does not fit this car — recommended: %2$s</string>
     <string name="settings_research_restart">Restart research</string>
     <string name="settings_research_export">Export report</string>
+    <string name="settings_vehicle_deep_probe">Deep channel probe</string>
+    <string name="settings_vehicle_deep_probe_done">Deep probe complete</string>
     <string name="settings_research_no_report">No research report yet</string>
     <string name="settings_research_upload">Send anonymous reports</string>
     <string name="settings_research_upload_hint">Shares an anonymized channel/signal availability report after research. No VIN, serials or location. Off by default.</string>

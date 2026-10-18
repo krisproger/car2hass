@@ -465,6 +465,30 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 \
   "$SRC/com/car2hass/vehicle/DeviceAnon.java" \
   "$SRC/com/car2hass/vehicle/VehicleResearch.java"
 
+echo "=== Compiling ChannelGate (pure) ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/vehicle/ChannelGate.java"
+
+echo "=== Compiling ChannelGateTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ChannelGateTest.java"
+
+echo "=== Compiling ChannelAvailability (org.json) ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/ChannelAvailability.java"
+
+echo "=== Compiling ChannelAvailabilityTest ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ChannelAvailabilityTest.java"
+
+echo "=== Compiling MethodRegistry (org.json) ==="
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/MethodRegistry.java"
+
+echo "=== Compiling MethodRegistryTest ==="
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/MethodRegistryTest.java"
+
+echo "=== Compiling MethodProbeCore (org.json) ==="
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/MethodProbeCore.java"
+
+echo "=== Compiling MethodProbeCoreTest ==="
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/MethodProbeCoreTest.java"
+
 echo "=== Compiling Phase-3 source manager (pure classes) ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 \
   "$SRC/com/car2hass/CANDataItem.java" \
@@ -665,6 +689,18 @@ java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.VehicleResearchTest
 
 echo "=== Running ValueStoreTest ==="
 java -cp "$OUT" com.car2hass.vehicle.ValueStoreTest
+
+echo "=== Running ChannelGateTest ==="
+java -cp "$OUT" com.car2hass.vehicle.ChannelGateTest
+
+echo "=== Running ChannelAvailabilityTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.vehicle.ChannelAvailabilityTest
+
+echo "=== Running MethodRegistryTest ==="
+java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.MethodRegistryTest
+
+echo "=== Running MethodProbeCoreTest ==="
+java -cp "$OUT:$JSON_JAR:$ANDROID_JAR" com.car2hass.vehicle.MethodProbeCoreTest
 
 echo "=== Running ChannelPriorityTest ==="
 java -cp "$OUT" com.car2hass.vehicle.ChannelPriorityTest

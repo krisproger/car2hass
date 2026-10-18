@@ -3,8 +3,10 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 # Local dev uses the project venv; CI installs mkdocs into the runner PATH.
-if [ -x ../.venv/bin/mkdocs ]; then
-    ../.venv/bin/mkdocs build "$@"
+# Invoke via the venv python (the console-script shebang pins an absolute
+# path that breaks if the project folder moves).
+if [ -x ../.venv/bin/python ]; then
+    ../.venv/bin/python -m mkdocs build "$@"
 else
     mkdocs build "$@"
 fi

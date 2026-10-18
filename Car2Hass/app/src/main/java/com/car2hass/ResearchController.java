@@ -162,6 +162,38 @@ public final class ResearchController {
         }).start();
     }
 
+    /** Runs the channel-method deep probe and uploads the report. */
+    public void startDeepProbe() {
+        final Activity a = host.activity();
+        final ProgressActionButton button = host.button();
+        if (button != null && button.isBusy()) return;
+        final String title = host.str(R.string.settings_vehicle_deep_probe);
+        if (button != null) button.startBusy(R.string.settings_vehicle_deep_probe, 0);
+        TaskNotifier.progress(a, title, title, 0, 0);
+        new Thread(() -> {
+            String path = null;
+            try {
+                java.util.List<String> avail = new java.util.ArrayList<>();
+                for (java.util.Map.Entry<String, Boolean> e
+                        : AppConfig.getChannelAvailability(a).entrySet()) {
+                    if (Boolean.TRUE.equals(e.getValue())) avail.add(e.getKey());
+                }
+                org.json.JSONObject report = com.car2hass.vehicle.MethodProber.run(
+                        RegistryStore.load(a), avail);
+                path = com.car2hass.vehicle.MethodProber.writeFile(a, report);
+            } catch (Exception e) {
+                LogBuffer.e("ResearchController", "deep probe: " + e.getMessage());
+            }
+            final String p = path;
+            a.runOnUiThread(() -> {
+                TaskNotifier.done(a, title, host.str(R.string.settings_vehicle_deep_probe_done));
+                if (button != null) button.setAlt(R.string.settings_research_show_report,
+                        v -> host.showReportDialog(title, p));
+                if (p != null) uploadReport(p);
+            });
+        }, "deep-probe").start();
+    }
+
     private String buildSummary(VehicleResearch.ResearchOutcome outcome) {
         StringBuilder sb = new StringBuilder();
         sb.append(host.str(R.string.settings_vehicle_research_profile,

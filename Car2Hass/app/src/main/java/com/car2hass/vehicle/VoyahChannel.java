@@ -39,6 +39,12 @@ public class VoyahChannel implements DataChannel {
     static final String DESCRIPTOR = "com.qinggan.canbus.ICanBusService";
     private static final String IFACE_CLASS = "com.qinggan.canbus.ICanBusService";
     private static final String STATE_CLASS = "com.qinggan.canbus.VehicleState";
+    private static final String SIGNAL_IFACE_CLASS = "com.qinggan.carsignal.ICarSignalService";
+    private static final String SIGNAL_DESCRIPTOR = "com.qinggan.carsignal.ICarSignalService";
+    /** Direct ServiceManager names for the signal service. */
+    private static final String[] SIGNAL_SERVICE_CANDIDATES = {
+            "carsignal", "qg.carsignal", "com.qinggan.carsignal.ICarSignalService"
+    };
 
     /** registry key -> VehicleState constant name. Sync with gen_registry.py. */
     public static final Map<String, String> VOYAH_PARAMS;
@@ -800,6 +806,64 @@ public class VoyahChannel implements DataChannel {
         }
     }
 
+    /** Probes a no-arg ICarSignalService getter (e.g. getVoltageState). Read-only. */
+    public static ProbeResult readSignalParam(String getter) {
+        try {
+            Class<?> iface = loadDeviceClass(SIGNAL_IFACE_CLASS);
+            if (iface == null) return ProbeResult.unsupported();
+            Object asInterface = stubAsInterface(iface, findBinderByDescriptor(
+                    SIGNAL_DESCRIPTOR, SIGNAL_SERVICE_CANDIDATES));
+            if (asInterface == null) return ProbeResult.unsupported();
+            String v = invokeGetter(iface, asInterface, getter);
+            if (v == null) return ProbeResult.unsupported();
+            return ProbeResult.fromRaw(v, false);
+        } catch (Exception e) {
+            return ProbeResult.error(e.getMessage());
+        }
+    }
+
+    /** Probes a raw read transaction passed as "code:type" (type = int|float). */
+    public static ProbeResult readRawTxParam(String spec) {
+        try {
+            String[] parts = spec.split(":");
+            if (parts.length == 0) return ProbeResult.unsupported();
+            int code = Integer.parseInt(parts[0].trim());
+            boolean isFloat = parts.length > 1 && "float".equals(parts[1].trim());
+            IBinder b = findBinder();
+            if (b == null) return ProbeResult.unsupported();
+            String raw = transactOnBinder(b, code, isFloat);
+            if (raw == null) return ProbeResult.unsupported();
+            return ProbeResult.fromRaw(raw, false);
+        } catch (Exception e) {
+            return ProbeResult.error(e.getMessage());
+        }
+    }
+
+    /** Read-only transaction on an explicit binder; returns the value or null. */
+    private static String transactOnBinder(IBinder b, int code, boolean isFloat) {
+        android.os.Parcel req = android.os.Parcel.obtain();
+        android.os.Parcel reply = android.os.Parcel.obtain();
+        try {
+            req.writeInterfaceToken(DESCRIPTOR);
+            b.transact(code, req, reply, 0);
+            reply.readException();
+            if (isFloat) {
+                float v = reply.readFloat();
+                if (Float.isNaN(v) || v == Float.MIN_VALUE) return null;
+                return String.valueOf(Math.round(v));
+            }
+            int v = reply.readInt();
+            if (v == Integer.MIN_VALUE || v == -9999) return null;
+            return String.valueOf(v);
+        } catch (Exception e) {
+            LogBuffer.d("VoyahChannel", "transactOn(" + code + "): " + e.getMessage());
+            return null;
+        } finally {
+            req.recycle();
+            reply.recycle();
+        }
+    }
+
     private static Object queryStateStatic(Object ifaceObj, Class<?> iface, String paramName) {
         try {
             Object constant = stateConstant(paramName);
@@ -883,6 +947,11 @@ public class VoyahChannel implements DataChannel {
 
     /** Finds the system service whose binder descriptor matches ICanBusService. */
     private static IBinder findBinder() {
+        return findBinderByDescriptor(DESCRIPTOR, SERVICE_CANDIDATES);
+    }
+
+    /** Finds a system service by binder descriptor, then by known service names. */
+    private static IBinder findBinderByDescriptor(String descriptor, String[] candidates) {
         try {
             Class<?> sm = Class.forName("android.os.ServiceManager");
             Method getService = sm.getMethod("getService", String.class);
@@ -891,12 +960,12 @@ public class VoyahChannel implements DataChannel {
                 for (String name : (String[]) names) {
                     try {
                         IBinder b = (IBinder) getService.invoke(null, name);
-                        if (b != null && DESCRIPTOR.equals(b.getInterfaceDescriptor())) return b;
+                        if (b != null && descriptor.equals(b.getInterfaceDescriptor())) return b;
                     } catch (Throwable ignored) {}
                 }
             }
             // listServices() can be restricted on some heads; probe known names directly.
-            for (String name : SERVICE_CANDIDATES) {
+            for (String name : candidates) {
                 try {
                     IBinder b = (IBinder) getService.invoke(null, name);
                     if (b != null) return b;

@@ -362,6 +362,8 @@ public class TelemetryService extends Service {
                                     com.car2hass.vehicle.ResearchUiModel.unionActive(
                                             AppConfig.getActiveChannels(ctx), a), rp));
                     registerDiscoveredChannels(outcome.report);
+                    AppConfig.saveChannelAvailability(this,
+                            com.car2hass.vehicle.ChannelAvailability.fromReport(outcome.report));
                     maybeUploadReport(outcome.reportPath);
                 } else {
                     LogBuffer.i("TelemetryService", "Probe: light channel check (runs=" + runs + ")");
@@ -413,6 +415,9 @@ public class TelemetryService extends Service {
         AppConfig.updateActiveChannels(this,
                 com.car2hass.vehicle.ResearchUiModel.unionActive(
                         AppConfig.getActiveChannels(this), alive));
+        java.util.Map<String, Boolean> avail = new java.util.LinkedHashMap<>();
+        for (DataChannel ch : channels) avail.put(ch.id(), alive.contains(ch.id()));
+        AppConfig.saveChannelAvailability(this, avail);
         // A live channel becomes visible in the settings source list so the user
         // can enable it; it is never auto-enabled.
         registerDiscoveredChannels(java.util.Collections.emptyList(), alive);
@@ -420,7 +425,7 @@ public class TelemetryService extends Service {
 
     /** Channels probed automatically: the user-enabled set (system always on). */
     private List<DataChannel> buildEnabledResearchChannels() {
-        List<DataChannel> channels = com.car2hass.vehicle.ChannelCatalog.createFor(enabledChannelIds());
+        List<DataChannel> channels = com.car2hass.vehicle.ChannelCatalog.createFor(userEnabledChannelIds());
         if (channels.isEmpty()) channels.add(new com.car2hass.vehicle.DiPlusChannel());
         return channels;
     }
@@ -926,15 +931,33 @@ public class TelemetryService extends Service {
     }
 
     /**
-     * Channel ids whose worker must run. System is always on; every other channel
-     * follows the settings checkboxes (an unchecked channel is never polled).
+     * Raw user-enabled channel ids (settings checkboxes), system always on.
+     * Used for probing so a temporarily-dead channel can be re-detected.
      */
-    private List<String> enabledChannelIds() {
+    private List<String> userEnabledChannelIds() {
         List<String> out = new ArrayList<>();
         out.add("system");
         for (String id : AppConfig.getActiveChannels(this)) {
             if (id == null || id.isEmpty() || "system".equals(id)) continue;
             if ("obd".equals(id) && !AppConfig.isObdEnabled(this)) continue;
+            String normalized = com.car2hass.vehicle.ChannelWorkerFactory.normalize(id);
+            if (!out.contains(normalized)) out.add(normalized);
+        }
+        return out;
+    }
+
+    /**
+     * Channel ids whose worker must run: user-enabled intersected with the last
+     * probe's liveness. A channel with no probe entry is kept (fail-open); a
+     * channel marked dead is not polled until a later probe says otherwise.
+     */
+    private List<String> enabledChannelIds() {
+        List<String> gated = com.car2hass.vehicle.ChannelGate.resolve(
+                userEnabledChannelIds(),
+                AppConfig.getChannelAvailability(this),
+                AppConfig.isObdEnabled(this));
+        List<String> out = new ArrayList<>();
+        for (String id : gated) {
             String normalized = com.car2hass.vehicle.ChannelWorkerFactory.normalize(id);
             if (!out.contains(normalized)) out.add(normalized);
         }

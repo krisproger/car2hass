@@ -90,6 +90,11 @@ public final class RegistryStore {
         return channels.optJSONObject(channel);
     }
 
+    /** Declarative channel-method entries (deep-probe canaries), or null. */
+    public JSONArray methods() {
+        return sensorsRoot.optJSONArray("methods");
+    }
+
     /** Canonical channel order used when sorting the per-sensor key union. */
     private static final List<String> CANONICAL_CHANNEL_ORDER = java.util.Arrays.asList(
             "diplus", "adb", "dumpsys", "system", "obd", "diplus_push", "byd_cloud", "voyah", "phone");

@@ -172,6 +172,8 @@
     <string name="settings_research_recommend">Выбранный источник данных (%1$s) не подходит для этого автомобиля — рекомендуем: %2$s</string>
     <string name="settings_research_restart">Перезапустить исследование</string>
     <string name="settings_research_export">Экспорт отчёта</string>
+    <string name="settings_vehicle_deep_probe">Глубокая проба каналов</string>
+    <string name="settings_vehicle_deep_probe_done">Глубокая проба завершена</string>
     <string name="settings_research_no_report">Отчёт исследования ещё не готов</string>
     <string name="settings_research_upload">Отправлять анонимные отчёты</string>
     <string name="settings_research_upload_hint">После исследования отправляет обезличенный отчёт о доступности каналов и сигналов. Без VIN, серийников и геолокации. По умолчанию выключено.</string>

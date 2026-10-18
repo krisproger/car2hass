@@ -315,6 +315,28 @@ VOYAH_AC_PARAMS = {
     "cabin_temp": "getAirTempInCar",
 }
 
+# Deep-probe canaries: one entry per (kind, param) with 1..5 sample sensor keys.
+# `kind` matches the runtime method dispatcher (VoyahChannel primitives).
+VOYAH_METHOD_CANARIES = [
+    ("voyah_state", "GW_ESC_VEHSPD", ["speed"]),
+    ("voyah_state", "TGS_LEVER", ["gear"]),
+    ("icanbus_getter", "getEngineSpeed", ["engine_rpm"]),
+    ("icanbus_getter", "getInstantFuelConsumption", ["fuel_rate"]),
+    ("icanbus_getter", "getAmbientTemperature", ["outside_temp"]),
+    ("icanbus_getter", "getRainfallLevel", ["rain_amount"]),
+    ("icanbus_getter", "getBatteryRemainingCapacity", ["battery_capacity"]),
+    ("icarsignal_getter", "getVoltageState", ["battery_12v_voltage"]),
+    ("icarsignal_getter", "getBatteryLevel", ["soc"]),
+    ("icarsignal_getter", "getHeadLampStatus", ["low_beam"]),
+    ("icarsignal_getter", "getVehicleSpeed", ["speed"]),
+    ("icarsignal_getter", "getLightSensorLevel", ["ambient_light_brightness"]),
+    ("aircondition_getter", "getAirTempInCar", ["cabin_temp"]),
+    ("aircondition_getter", "getAirTempOutCar", ["outside_temp"]),
+    ("aircondition_getter", "getAirWindSpeed", ["fan_speed"]),
+    ("aircondition_getter", "getAirPMStatus", ["pm25"]),
+    ("raw_tx", "15:int", ["fuel_rate"]),
+]
+
 def parse_signal_registry():
     text = open(os.path.join(JAVA, "CANDataReader.java"), encoding="utf-8").read()
     block = re.search(r"SIGNAL_REGISTRY\s*=\s*\{(.*?)\};", text, re.S).group(1)
@@ -470,6 +492,17 @@ def build_sensors():
         })
     return sensors
 
+def build_methods():
+    out = []
+    for kind, param, canaries in VOYAH_METHOD_CANARIES:
+        out.append({
+            "id": "voyah:%s:%s" % (kind, param),
+            "channel": "voyah", "kind": kind, "param": param,
+            "canaries": canaries,
+        })
+    return out
+
+
 def build_profiles(sensor_keys):
     voyah_keys = sorted(set(VOYAH_PARAMS) | set(VOYAH_METHOD_PARAMS) | set(VOYAH_AC_PARAMS))
     return [
@@ -531,7 +564,8 @@ def build_commands():
 def main():
     sensors = build_sensors()
     keys = [s["key"] for s in sensors]
-    out_s = {"version": 1, "channels_priority": CHANNELS_PRIORITY, "sensors": sensors}
+    out_s = {"version": 1, "channels_priority": CHANNELS_PRIORITY,
+             "methods": build_methods(), "sensors": sensors}
     out_p = {"version": 2, "generic_sensors": GENERIC_SENSORS, "profiles": build_profiles(keys)}
     out_c = {"version": 1, "commands": build_commands()}
     with open(os.path.join(ASSETS, "sensors_registry.json"), "w", encoding="utf-8") as f:

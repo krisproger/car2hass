@@ -82,4 +82,14 @@
         android:textColor="@color/accentGreen"
         android:textSize="14sp"
         android:text="@string/settings_research_export" />
+
+    <Button
+        android:id="@+id/btnDeepProbe"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:layout_marginTop="8dp"
+        android:background="@color/surfaceVariant"
+        android:textColor="@color/accentGreen"
+        android:textSize="14sp"
+        android:text="@string/settings_vehicle_deep_probe" />
 </LinearLayout>
