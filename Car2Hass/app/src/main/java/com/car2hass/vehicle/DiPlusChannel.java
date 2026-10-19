@@ -19,9 +19,6 @@ public class DiPlusChannel implements DataChannel {
     public boolean supportsCommands() { return true; }
 
     @Override
-    public boolean canControl() { return true; }
-
-    @Override
     public ChannelResult probe(Context ctx) {
         // Attempt a real read rather than gating on the ping: the ping can fail
         // while the DiPlus API works.

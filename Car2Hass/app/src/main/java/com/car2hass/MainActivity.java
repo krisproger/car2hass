@@ -3456,7 +3456,7 @@ public class MainActivity extends BaseLocalizedActivity {
         selectedSettingsSection = index;
         boolean researchVisible = index == 1 && hasAddedSources();
         boolean commandVisible = com.car2hass.vehicle.CommandVisibility.shouldShow(
-                AppConfig.getChannelAvailability(this), commandChannels());
+                AppConfig.getChannelAvailability(this), commandChannels(), producerAllowsCommands());
         for (int i = 0; i < settingsSections.length; i++) {
             boolean visible = i == index || (i == 5 && researchVisible);
             if (i == 6) visible = visible && commandVisible;
@@ -3490,20 +3490,25 @@ public class MainActivity extends BaseLocalizedActivity {
         return false;
     }
 
-    /** Candidate ids that might carry car control; filtered by canControl(). */
+    /** Channels that can execute car commands (diplus/adb). */
     private java.util.List<String> commandChannels() {
         java.util.List<String> out = new java.util.ArrayList<>();
-        for (String id : new String[]{"diplus", "voyah"}) {
+        for (String id : new String[]{"diplus", "adb"}) {
             com.car2hass.vehicle.DataChannel ch = com.car2hass.vehicle.ChannelCatalog.create(id);
-            if (ch != null && ch.canControl()) out.add(id);
+            if (ch != null && ch.supportsCommands()) out.add(id);
         }
         return out;
     }
 
-    /** Shows the control section only when a command-capable channel is alive. */
+    /** Commands are disabled for the universal (collector) producer. */
+    private boolean producerAllowsCommands() {
+        return !"UNIVERSAL".equals(AppConfig.getVehicleProducer(this));
+    }
+
+    /** Shows the control section only when a command channel is live and allowed. */
     private void refreshCommandVisibility() {
         boolean show = com.car2hass.vehicle.CommandVisibility.shouldShow(
-                AppConfig.getChannelAvailability(this), commandChannels());
+                AppConfig.getChannelAvailability(this), commandChannels(), producerAllowsCommands());
         View nav = settingsView.findViewById(R.id.navSettingsCommands);
         if (nav != null) nav.setVisibility(show ? View.VISIBLE : View.GONE);
         if (!show && selectedSettingsSection == 6) selectSettingsSection(0);

@@ -24,6 +24,14 @@ public class CommandVisibilityTest {
 
         if (CommandVisibility.shouldShow(aliveAdb, null)) throw new AssertionError("null channels");
 
+        // commandsAllowed gate.
+        if (CommandVisibility.shouldShow(aliveAdb, cmd, false))
+            throw new AssertionError("commands disabled -> hidden");
+        if (!CommandVisibility.shouldShow(aliveAdb, cmd, true))
+            throw new AssertionError("commands allowed + live -> shown");
+        if (CommandVisibility.shouldShow(dead, cmd, true))
+            throw new AssertionError("commands allowed but dead -> hidden");
+
         System.out.println("All CommandVisibility tests passed.");
     }
 }

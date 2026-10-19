@@ -18,4 +18,14 @@ public final class CommandVisibility {
         }
         return false;
     }
+
+    /**
+     * Like {@link #shouldShow(Map, List)} but also requires that commands are
+     * allowed for this vehicle (e.g. the producer is not UNIVERSAL).
+     */
+    public static boolean shouldShow(Map<String, Boolean> availability,
+                                     List<String> commandChannels,
+                                     boolean commandsAllowed) {
+        return commandsAllowed && shouldShow(availability, commandChannels);
+    }
 }
