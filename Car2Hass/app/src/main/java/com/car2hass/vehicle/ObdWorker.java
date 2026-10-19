@@ -34,6 +34,11 @@ public final class ObdWorker implements ChannelWorker {
             new WorkerRetryPolicy(POLL_INTERVAL_MS, MAX_RETRY_BACKOFF_MS);
     private static final long POLL_INTERVAL_MS = 2000;
     private static final long MAX_RETRY_BACKOFF_MS = 30_000;
+    /** Consecutive empty cycles before forcing a reconnect (adapter may be wedged). */
+    private static final int MAX_EMPTY_CYCLES = 3;
+    private static final long EMPTY_LOG_INTERVAL_MS = 30_000;
+    private int emptyCycles = 0;
+    private long lastEmptyLogMs = 0;
 
     public ObdWorker(Context ctx, ValueStore store) {
         this.ctx = ctx;
@@ -201,12 +206,30 @@ public final class ObdWorker implements ChannelWorker {
                 AppConfig.setObdStatus(ctx, ok > 0 ? "connected" : "disconnected");
                 AppConfig.setObdLastError(ctx, ok > 0 ? "" : ObdError.NO_DATA);
                 AppConfig.setObdPhase(ctx, "done");
-                retryBackoffMs = policy.onSuccess(); // healthy cycle — reset backoff
                 lastResult = ok > 0 ? ChannelWorkerStatus.Result.OK : ChannelWorkerStatus.Result.EMPTY;
                 lastError = ok > 0 ? "" : ObdError.NO_DATA;
-                if (ok == 0) {
-                    LogBuffer.d("ObdWorker", "cycle ok=0 pids (read phase took "
-                            + (System.currentTimeMillis() - cycleT0) + "ms)");
+                if (ok > 0) {
+                    emptyCycles = 0;
+                    retryBackoffMs = policy.onSuccess();
+                } else {
+                    // Connected but no PID data: do not spin at 2 s forever. Force a
+                    // reconnect after a few empty cycles and back off like an error.
+                    emptyCycles++;
+                    if (emptyCycles >= MAX_EMPTY_CYCLES) {
+                        LogBuffer.w("ObdWorker", "no PID data for " + emptyCycles
+                                + " cycles — reconnecting");
+                        close(session);
+                        session = null;
+                        vinRead = false;
+                        emptyCycles = 0;
+                    }
+                    retryBackoffMs = policy.onFailure();
+                    long nowLog = System.currentTimeMillis();
+                    if (nowLog - lastEmptyLogMs > EMPTY_LOG_INTERVAL_MS) {
+                        lastEmptyLogMs = nowLog;
+                        LogBuffer.d("ObdWorker", "cycle ok=0 pids (read phase took "
+                                + (nowLog - cycleT0) + "ms), backoff " + retryBackoffMs + " ms");
+                    }
                 }
             } catch (Exception ex) {
                 String code = ObdError.classify(phase, ex);

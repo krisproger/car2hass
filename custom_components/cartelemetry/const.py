@@ -47,7 +47,7 @@ DEFAULT_BACKLOG_THRESHOLD = 30
 CONF_BACKLOG_REPLAY = "backlog_replay"
 DEFAULT_BACKLOG_REPLAY = "throttled"
 
-INTEGRATION_VERSION = "3.5.5-beta.5"
+INTEGRATION_VERSION = "3.5.5-beta.6"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.
