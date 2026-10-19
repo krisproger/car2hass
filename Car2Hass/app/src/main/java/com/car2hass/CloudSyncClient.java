@@ -40,6 +40,8 @@ public final class CloudSyncClient {
 
     private static final long MIN_FLUSH_BACKOFF_MS = 12000;
     private static final long MAX_FLUSH_BACKOFF_MS = 300000;
+    /** Keep cloud request bodies below the default nginx 1 MB limit. */
+    private static final long MAX_CLOUD_BATCH_BYTES = 900 * 1024;
     private static final long NETWORK_RETRY_DELAY_MS = 12000;
 
     private static final CloudBatchBuffer buffer = new CloudBatchBuffer();
@@ -244,18 +246,37 @@ public final class CloudSyncClient {
 
                 List<JSONObject> batchList = new ArrayList<>();
                 long maxQueuedId = -1;
+                long bytes = 0;
                 for (CloudSnapshotQueue.Snapshot q : queued) {
-                    batchList.add(CloudBatchBuffer.buildSnapshot(q.ts, new JSONObject(q.signalJson), q.lat, q.lon));
+                    JSONObject o = CloudBatchBuffer.buildSnapshot(q.ts, new JSONObject(q.signalJson), q.lat, q.lon);
+                    long sz = o.toString().length();
+                    // Keep the request body under the server/proxy limit so nginx
+                    // cannot reject it with 413 (default client_max_body_size 1m).
+                    if (!batchList.isEmpty() && bytes + sz > MAX_CLOUD_BATCH_BYTES) break;
+                    batchList.add(o);
+                    bytes += sz;
                     if (q.queueId > maxQueuedId) maxQueuedId = q.queueId;
                 }
+                JSONArray ramRest = new JSONArray();
                 for (int i = 0; i < ram.length(); i++) {
                     JSONObject o = ram.optJSONObject(i);
-                    if (o != null) batchList.add(o);
+                    if (o == null) continue;
+                    long sz = o.toString().length();
+                    if (batchList.size() >= CloudSnapshotQueue.DEQUEUE_CHUNK_SIZE
+                            || (!batchList.isEmpty() && bytes + sz > MAX_CLOUD_BATCH_BYTES)) {
+                        ramRest.put(o);
+                        continue;
+                    }
+                    batchList.add(o);
+                    bytes += sz;
                 }
                 batchList.sort(Comparator.comparingLong(o -> o.optLong("t", 0)));
                 JSONArray batch = new JSONArray();
                 for (JSONObject o : batchList) batch.put(o);
-                if (batch.length() == 0) return;
+                if (batch.length() == 0) {
+                    persist(ctx, ramRest);
+                    return;
+                }
 
                 if (!isNetworkAvailable(ctx)) {
                     persist(ctx, ram);
@@ -279,6 +300,7 @@ public final class CloudSyncClient {
                         CloudBatchBuffer.buildPayload(carName, batch));
                 if (r != null && r.code == 200) {
                     if (maxQueuedId >= 0) CloudSnapshotQueue.deleteUpTo(ctx, maxQueuedId);
+                    persist(ctx, ramRest);
                     AppConfig.setCloudLastSyncMs(ctx, System.currentTimeMillis());
                     AppConfig.setCloudLastStatus(ctx, "ok");
                     currentFlushBackoffMs = MIN_FLUSH_BACKOFF_MS;
@@ -289,6 +311,8 @@ public final class CloudSyncClient {
                     AppConfig.setCloudLastStatus(ctx, "http_" + code);
                     currentFlushBackoffMs = Math.min(currentFlushBackoffMs * 2, MAX_FLUSH_BACKOFF_MS);
                     LogBuffer.w(TAG, "Cloud sync failed: HTTP " + code
+                            + (r != null && r.body != null && !r.body.isEmpty()
+                                    ? " body=" + ProbeUploader.truncate(r.body) : "")
                             + " — retry in " + currentFlushBackoffMs + " ms");
                 }
             } catch (Exception e) {
