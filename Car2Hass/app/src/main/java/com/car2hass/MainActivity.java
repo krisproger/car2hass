@@ -348,14 +348,15 @@ public class MainActivity extends BaseLocalizedActivity {
             HassClient.init(this);
             ConfigLoader.applyBundledPresets(this);
 
-            // Quiet auto-update check on every open: dialog only when an
-            // update is actually available (no "up to date" toast).
-            if (updateController != null) updateController.autoCheck();
-
             safeCall("setupBottomNavigation", this::setupBottomNavigation);
             safeCall("setupDashboard", this::setupDashboard);
             safeCall("setupCommands", this::setupCommands);
             safeCall("setupSettings", this::setupSettings);
+
+            // Quiet auto-update check on every open: dialog only when an update
+            // is actually available (no "up to date" toast). Must run AFTER
+            // setupSettings(), which creates updateController.
+            if (updateController != null) updateController.autoCheck();
 
             // Start telemetry service only after all UI is wired up.
             TelemetryService.start(this);
