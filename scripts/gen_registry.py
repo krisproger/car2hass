@@ -164,6 +164,7 @@ VOYAH_ONLY_SENSORS = [
     ("passenger_seat_massage", "Passenger seat massage", "enum", None),
     ("rear_left_seat_massage", "Rear-left seat massage", "enum", None),
     ("rear_right_seat_massage", "Rear-right seat massage", "enum", None),
+    ("odometer", "Odometer", "num", "km"),
 ]
 
 # Sensors supplied outside the CAN SIGNAL_REGISTRY: app metadata injected by
@@ -305,6 +306,7 @@ VOYAH_PARAMS = {
 VOYAH_METHOD_PARAMS = {
     "outside_temp": "getAmbientTemperature",   # int, °C
     "ambient_temp": "getAmbientTemperature",   # int, °C
+    "odometer": "getSecondaryOdometer",        # long, total mileage
 }
 
 # Voyah climate values reachable only through the separate AirCondition model
@@ -313,6 +315,12 @@ VOYAH_METHOD_PARAMS = {
 # Sync with VoyahChannel.VOYAH_AC_METHODS.
 VOYAH_AC_PARAMS = {
     "cabin_temp": "getAirTempInCar",
+}
+
+# Voyah keys reachable through the separate ICarSignalService getters.
+# Sync with VoyahChannel.VOYAH_SIGNAL_METHODS.
+VOYAH_SIGNAL_PARAMS = {
+    "driver_door": "getLFDoorState",
 }
 
 # Deep-probe canaries: one entry per (kind, param) with 1..5 sample sensor keys.
@@ -405,6 +413,9 @@ def voyah_descriptor(key):
     method = VOYAH_METHOD_PARAMS.get(key)
     if method:
         return {"method": method}
+    signal = VOYAH_SIGNAL_PARAMS.get(key)
+    if signal:
+        return {"signal": signal}
     ac = VOYAH_AC_PARAMS.get(key)
     if ac:
         return {"ac": ac}
@@ -504,7 +515,8 @@ def build_methods():
 
 
 def build_profiles(sensor_keys):
-    voyah_keys = sorted(set(VOYAH_PARAMS) | set(VOYAH_METHOD_PARAMS) | set(VOYAH_AC_PARAMS))
+    voyah_keys = sorted(set(VOYAH_PARAMS) | set(VOYAH_METHOD_PARAMS)
+                        | set(VOYAH_AC_PARAMS) | set(VOYAH_SIGNAL_PARAMS))
     return [
         {"id": "byd_generic", "label": "BYD (generic)", "key_channel": "diplus",
          "expected_sensors": list(sensor_keys), "base_channels": ["diplus", "adb"]},

@@ -60,6 +60,7 @@ public final class CloudSnapshotQueue {
             return;
         }
         evictByAge(ctx, AppConfig.getCloudQueueMaxDays(ctx));
+        compact(ctx, 2 * 3600, 60);
         evictBySize(ctx, AppConfig.getCloudQueueMaxMb(ctx));
 
         SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
@@ -150,6 +151,34 @@ public final class CloudSnapshotQueue {
         int deleted = db.delete(TABLE, COL_CREATED + " < ?", new String[]{String.valueOf(cutoff)});
         if (deleted > 0) {
             LogBuffer.i("CloudSnapshotQueue", "Evicted " + deleted + " old snapshots (age > " + maxDays + " days)");
+        }
+    }
+
+    private static volatile long lastCompactMs = 0;
+
+    /**
+     * Offline backlog compaction: full resolution for the last {@code fullWindowSec},
+     * then at most one snapshot per {@code bucketSec} (latest per bucket). Keeps a
+     * long offline trip bounded without deleting the whole backlog. At most 5 min.
+     */
+    public static void compact(Context ctx, long fullWindowSec, long bucketSec) {
+        long now = System.currentTimeMillis();
+        if (now - lastCompactMs < 300_000L) return;
+        lastCompactMs = now;
+        long cutoff = now / 1000L - fullWindowSec;
+        try {
+            SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
+            int deleted = db.delete(TABLE,
+                    COL_TS + " < ? AND " + COL_ID + " NOT IN (SELECT MAX(" + COL_ID + ") FROM "
+                            + TABLE + " WHERE " + COL_TS + " < ? GROUP BY (" + COL_TS + " / ?))",
+                    new String[]{String.valueOf(cutoff), String.valueOf(cutoff),
+                            String.valueOf(bucketSec)});
+            if (deleted > 0) {
+                LogBuffer.i("CloudSnapshotQueue", "Compacted " + deleted + " old snapshots (1/"
+                        + bucketSec + "s beyond " + fullWindowSec + "s)");
+            }
+        } catch (Exception e) {
+            LogBuffer.w("CloudSnapshotQueue", "compact: " + e.getMessage());
         }
     }
 

@@ -2179,6 +2179,19 @@ signals:
   icon: mdi:map-marker-distance
   device_class: distance
   state_class: measurement
+- id: 9210
+  name: Odometer
+  description: Total odometer
+  type: num
+  synthetic: true
+  key: odometer
+  category: drive
+  labels: {}
+  ha_type: sensor
+  unit: km
+  icon: mdi:counter
+  device_class: distance
+  state_class: total_increasing
 - id: 9133
   name: PM2.5
   description: Cabin PM2.5 particulate level

@@ -68,6 +68,22 @@
         android:textSize="11sp"
         android:layout_marginBottom="10dp" />
 
+    <Switch
+        android:id="@+id/swProbeRaw"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_research_raw"
+        android:textColor="@color/textPrimary"
+        android:textSize="13sp" />
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/settings_research_raw_hint"
+        android:textColor="@color/textTertiary"
+        android:textSize="11sp"
+        android:layout_marginBottom="10dp" />
+
     <com.car2hass.ProgressActionButton
         android:id="@+id/btnRestartResearch"
         android:layout_width="match_parent"

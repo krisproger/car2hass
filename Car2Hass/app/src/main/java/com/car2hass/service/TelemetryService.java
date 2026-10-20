@@ -352,7 +352,19 @@ public class TelemetryService extends Service {
                 boolean full = !hasReport || (runs % 3 == 0);
                 // Automatic research is scoped to the channels the user enabled;
                 // other channels are only probed from the manual research button.
-                List<DataChannel> channels = buildEnabledResearchChannels();
+                // A FULL scan, however, probes every channel: its report replaces
+                // probe_report.json, and a partial (enabled-only) scan would drop
+                // diplus/dumpsys from the sources screen.
+                List<DataChannel> channels;
+                if (full) {
+                    try {
+                        channels = com.car2hass.vehicle.ChannelCatalog.createAll(RegistryStore.load(this));
+                    } catch (Exception e) {
+                        channels = buildEnabledResearchChannels();
+                    }
+                } else {
+                    channels = buildEnabledResearchChannels();
+                }
                 VehicleProfile profile = AppConfig.getVehicleProfile(this);
                 if (full) {
                     LogBuffer.i("TelemetryService", "Probe: full research (runs=" + runs + ")");

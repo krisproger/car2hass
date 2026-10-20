@@ -143,6 +143,7 @@ public class VoyahChannel implements DataChannel {
         Map<String, String> m = new HashMap<>();
         m.put("outside_temp", "getAmbientTemperature");  // int, °C
         m.put("ambient_temp", "getAmbientTemperature");  // int, °C
+        m.put("odometer", "getSecondaryOdometer");       // long, total mileage
         VOYAH_METHODS = java.util.Collections.unmodifiableMap(m);
     }
 
@@ -159,6 +160,14 @@ public class VoyahChannel implements DataChannel {
         Map<String, String> m = new HashMap<>();
         m.put("cabin_temp", "getAirTempInCar");
         VOYAH_AC_METHODS = java.util.Collections.unmodifiableMap(m);
+    }
+
+    /** registry key -> ICarSignalService getter. Sync with gen_registry.py. */
+    public static final Map<String, String> VOYAH_SIGNAL_METHODS;
+    static {
+        Map<String, String> m = new HashMap<>();
+        m.put("driver_door", "getLFDoorState");
+        VOYAH_SIGNAL_METHODS = java.util.Collections.unmodifiableMap(m);
     }
 
     // ---- raw-transact fallback (per tsrman/voyah-telemetry-demo: the firmware
@@ -578,6 +587,10 @@ public class VoyahChannel implements DataChannel {
                 if (method != null) value = accept(key, invokeGetter(cachedIfaceClass, iface, method));
             }
             if (value == null) {
+                String signal = VOYAH_SIGNAL_METHODS.get(key);
+                if (signal != null) value = accept(key, readSignalValue(signal));
+            }
+            if (value == null) {
                 String ac = VOYAH_AC_METHODS.get(key);
                 if (ac != null) value = accept(key, readAirConditionValue(cachedIfaceClass, iface, ac));
             }
@@ -803,6 +816,20 @@ public class VoyahChannel implements DataChannel {
             return ProbeResult.fromRaw(v, false);
         } catch (Exception e) {
             return ProbeResult.error(e.getMessage());
+        }
+    }
+
+    /** Reads an ICarSignalService getter for the worker path; raw value or null. */
+    private static String readSignalValue(String getter) {
+        try {
+            Class<?> iface = loadDeviceClass(SIGNAL_IFACE_CLASS);
+            if (iface == null) return null;
+            Object asInterface = stubAsInterface(iface, findBinderByDescriptor(
+                    SIGNAL_DESCRIPTOR, SIGNAL_SERVICE_CANDIDATES));
+            if (asInterface == null) return null;
+            return invokeGetter(iface, asInterface, getter);
+        } catch (Exception e) {
+            return null;
         }
     }
 

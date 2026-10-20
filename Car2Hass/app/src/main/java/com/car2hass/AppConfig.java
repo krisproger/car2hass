@@ -1253,6 +1253,17 @@ public class AppConfig {
 
     private static final String KEY_INTEGRATION_API_VERSION = "integration_api_version";
 
+    private static final String KEY_PROBE_RAW = "probe_raw_enabled";
+
+    /** Opt-in verbose raw probe diagnostics (default off). */
+    public static boolean isProbeRawEnabled(Context ctx) {
+        return prefs(ctx).getBoolean(KEY_PROBE_RAW, false);
+    }
+
+    public static void setProbeRawEnabled(Context ctx, boolean enabled) {
+        prefs(ctx).edit().putBoolean(KEY_PROBE_RAW, enabled).apply();
+    }
+
     /** Last api_version reported by the HA integration (0 = unknown). */
     public static int getIntegrationApiVersion(Context ctx) {
         return prefs(ctx).getInt(KEY_INTEGRATION_API_VERSION, 0);

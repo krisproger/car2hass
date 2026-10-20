@@ -151,6 +151,9 @@ public final class UpdateController {
                 button.setAlt(R.string.update_install,
                         v -> UpdateDownloader.installFile(activity, file, info.sha256));
             }
+            // The file is already downloaded — the user asked to download+install,
+            // so launch the installer immediately (button stays as a fallback).
+            UpdateDownloader.installFile(activity, file, info.sha256);
             return;
         }
 
@@ -178,6 +181,8 @@ public final class UpdateController {
                     if (apkFile != null && button != null) {
                         button.setAlt(R.string.update_install,
                                 v -> UpdateDownloader.installFile(activity, apkFile, info.sha256));
+                        // Download complete: start installation right away.
+                        UpdateDownloader.installFile(activity, apkFile, info.sha256);
                     } else {
                         refreshButton();
                         Toast.makeText(activity, R.string.update_download_failed, Toast.LENGTH_LONG).show();

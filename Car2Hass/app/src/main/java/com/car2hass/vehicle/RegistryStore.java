@@ -95,6 +95,19 @@ public final class RegistryStore {
         return sensorsRoot.optJSONArray("methods");
     }
 
+    /** How many registry sensors declare a descriptor for this channel. */
+    public int channelCapabilityCount(String channel) {
+        JSONArray a = sensorsRoot.optJSONArray("sensors");
+        int n = 0;
+        for (int i = 0; a != null && i < a.length(); i++) {
+            JSONObject s = a.optJSONObject(i);
+            if (s == null) continue;
+            JSONObject ch = s.optJSONObject("channels");
+            if (ch != null && ch.optJSONObject(channel) != null) n++;
+        }
+        return n;
+    }
+
     /** Canonical channel order used when sorting the per-sensor key union. */
     private static final List<String> CANONICAL_CHANNEL_ORDER = java.util.Arrays.asList(
             "diplus", "adb", "dumpsys", "system", "obd", "diplus_push", "byd_cloud", "voyah", "phone");

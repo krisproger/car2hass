@@ -3440,6 +3440,10 @@ public class MainActivity extends BaseLocalizedActivity {
         swProbeUpload.setChecked(AppConfig.isProbeUploadEnabled(this));
         swProbeUpload.setOnCheckedChangeListener((b, checked) ->
                 AppConfig.setProbeUploadEnabled(this, checked));
+        Switch swProbeRaw = settingsView.findViewById(R.id.swProbeRaw);
+        swProbeRaw.setChecked(AppConfig.isProbeRawEnabled(this));
+        swProbeRaw.setOnCheckedChangeListener((b, checked) ->
+                AppConfig.setProbeRawEnabled(this, checked));
         refreshCommandVisibility();
         selectSettingsSection(0);
     }
@@ -3921,17 +3925,28 @@ public class MainActivity extends BaseLocalizedActivity {
 
     /** Expected sensor count for a channel from the last probe report. */
     private int channelSensorCount(String channel) {
-        JSONObject report = loadProbeReportJson();
-        if (report == null) return 0;
-        JSONObject sensors = report.optJSONObject("sensors");
-        if (sensors == null) return 0;
-        int n = 0;
-        JSONArray keys = sensors.names();
-        for (int i = 0; keys != null && i < keys.length(); i++) {
-            JSONObject ch = sensors.optJSONObject(keys.optString(i));
-            if (ch != null && "ok".equals(ch.optString(channel))) n++;
+        int capability = 0;
+        int okReport = 0;
+        try {
+            capability = RegistryStore.load(this).channelCapabilityCount(channel);
+        } catch (Exception ignored) {
         }
-        return n;
+        JSONObject report = loadProbeReportJson();
+        JSONObject sensors = report != null ? report.optJSONObject("sensors") : null;
+        if (sensors != null) {
+            JSONArray keys = sensors.names();
+            for (int i = 0; keys != null && i < keys.length(); i++) {
+                JSONObject ch = sensors.optJSONObject(keys.optString(i));
+                if (ch != null && "ok".equals(ch.optString(channel))) okReport++;
+            }
+        }
+        if ("dumpsys".equals(channel)) {
+            // vvin + firmware are read via getprop but are not registry sensors.
+            capability += 2;
+        }
+        LogBuffer.d("ChannelCounts", channel + ": capability=" + capability
+                + " okInReport=" + okReport);
+        return capability > 0 ? capability : okReport;
     }
 
     /** Inline labelled EditText that persists on every text change. */

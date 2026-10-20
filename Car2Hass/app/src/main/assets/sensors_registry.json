@@ -2317,10 +2317,14 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
-        "phone": null
+        "phone": null,
+        "voyah": {
+          "signal": "getLFDoorState"
+        }
       },
       "expected_on": [
-        "byd_generic"
+        "byd_generic",
+        "voyah_generic"
       ]
     },
     {
@@ -5281,6 +5285,31 @@
         "phone": null,
         "voyah": {
           "vs": "REAR_SEAT_MASS_SWITCH_RIGHT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "odometer",
+      "label_en": "Odometer",
+      "label_ru": "Odometer",
+      "type": "num",
+      "unit": "km",
+      "core": false,
+      "category": "drive",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "method": "getSecondaryOdometer"
         }
       },
       "expected_on": [

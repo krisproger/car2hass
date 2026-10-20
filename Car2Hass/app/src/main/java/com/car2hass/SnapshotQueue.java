@@ -57,6 +57,7 @@ public class SnapshotQueue {
             LogBuffer.i("SnapshotQueue", "Queue disabled, discarding " + snapshots.size() + " snapshots");
             return;
         }
+        compact(ctx, 2 * 3600, 60);
         evictByAge(ctx, AppConfig.getQueueMaxDays(ctx));
         evictBySize(ctx, AppConfig.getQueueMaxMb(ctx));
 
@@ -172,6 +173,35 @@ public class SnapshotQueue {
             cursor.close();
         }
         return 0;
+    }
+
+    private static volatile long lastCompactMs = 0;
+
+    /**
+     * Offline backlog compaction: keep full resolution for the last
+     * {@code fullWindowSec}, but beyond that keep at most one snapshot per
+     * {@code bucketSec} (latest per bucket). Bounds a 24 h outage to ~8.5k rows
+     * instead of 86k without losing the GPS track. Runs at most every 5 min.
+     */
+    public static void compact(Context ctx, long fullWindowSec, long bucketSec) {
+        long now = System.currentTimeMillis();
+        if (now - lastCompactMs < 300_000L) return;
+        lastCompactMs = now;
+        long cutoff = now / 1000L - fullWindowSec;
+        try {
+            SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
+            int deleted = db.delete(TABLE,
+                    COL_TS + " < ? AND " + COL_ID + " NOT IN (SELECT MAX(" + COL_ID + ") FROM "
+                            + TABLE + " WHERE " + COL_TS + " < ? GROUP BY (" + COL_TS + " / ?))",
+                    new String[]{String.valueOf(cutoff), String.valueOf(cutoff),
+                            String.valueOf(bucketSec)});
+            if (deleted > 0) {
+                LogBuffer.i("SnapshotQueue", "Compacted " + deleted + " old snapshots (1/"
+                        + bucketSec + "s beyond " + fullWindowSec + "s)");
+            }
+        } catch (Exception e) {
+            LogBuffer.w("SnapshotQueue", "compact: " + e.getMessage());
+        }
     }
 
     public static void evictByAge(Context ctx, int maxDays) {
