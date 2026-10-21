@@ -215,9 +215,10 @@ public final class ResearchController {
         if (outcome.report != null) {
             boolean hasDiplus = channelHasData(outcome.report, "diplus");
             boolean hasVoyah = channelHasData(outcome.report, "voyah");
+            boolean hasAdb = channelHasData(outcome.report, "adb");
             String addr = AppConfig.getObdBtAddress(host.activity());
             boolean obdSet = addr != null && !addr.isEmpty();
-            if (!hasDiplus && !hasVoyah && !obdSet) {
+            if (!hasDiplus && !hasVoyah && !hasAdb && !obdSet) {
                 sb.append(host.str(R.string.research_hint_obd2)).append('\n');
             }
         }

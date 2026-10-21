@@ -3461,7 +3461,7 @@ public class MainActivity extends BaseLocalizedActivity {
         selectedSettingsSection = index;
         boolean researchVisible = index == 1 && hasAddedSources();
         boolean commandVisible = com.car2hass.vehicle.CommandVisibility.shouldShow(
-                AppConfig.getChannelAvailability(this), commandChannels(), producerAllowsCommands());
+                AppConfig.getChannelAvailability(this), commandChannels());
         for (int i = 0; i < settingsSections.length; i++) {
             boolean visible = i == index || (i == 5 && researchVisible);
             if (i == 6) visible = visible && commandVisible;
@@ -3505,15 +3505,10 @@ public class MainActivity extends BaseLocalizedActivity {
         return out;
     }
 
-    /** Commands are disabled for the universal (collector) producer. */
-    private boolean producerAllowsCommands() {
-        return !"UNIVERSAL".equals(AppConfig.getVehicleProducer(this));
-    }
-
-    /** Shows the control section only when a command channel is live and allowed. */
+    /** Shows the control section when a command-capable channel is live. */
     private void refreshCommandVisibility() {
         boolean show = com.car2hass.vehicle.CommandVisibility.shouldShow(
-                AppConfig.getChannelAvailability(this), commandChannels(), producerAllowsCommands());
+                AppConfig.getChannelAvailability(this), commandChannels());
         View nav = settingsView.findViewById(R.id.navSettingsCommands);
         if (nav != null) nav.setVisibility(show ? View.VISIBLE : View.GONE);
         if (!show && selectedSettingsSection == 6) selectSettingsSection(0);

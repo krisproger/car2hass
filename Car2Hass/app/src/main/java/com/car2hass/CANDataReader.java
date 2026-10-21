@@ -966,11 +966,20 @@ public class CANDataReader {
         }
 
         // No data at all: if DiPlus looks down, launch it (async, single-flight) for the next cycle.
-        if (!isDiplusAlive()) {
+        boolean alive = isDiplusAlive();
+        lastHttpError = alive ? "no data (getDiPars/getVal empty)" : "not responding (8988)";
+        if (!alive) {
             maybeLaunchDiplus(context);
             LogBuffer.w("CANReader", "diplus not reachable this cycle");
         }
         return null;
+    }
+
+    private static volatile String lastHttpError = "";
+
+    /** Last DiPlus HTTP failure detail (for probe reasons/diagnostics). */
+    public static String lastHttpError() {
+        return lastHttpError;
     }
 
     /** Marks DiPlus as alive from a successful API call (e.g. a command). */

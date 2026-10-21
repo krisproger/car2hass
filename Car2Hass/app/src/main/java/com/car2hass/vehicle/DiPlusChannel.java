@@ -23,24 +23,36 @@ public class DiPlusChannel implements DataChannel {
 
     @Override
     public ChannelResult probe(Context ctx) {
-        // Attempt a real read rather than gating on the ping: the ping can fail
-        // while the DiPlus API works. Retry once, and accept a very recent
-        // successful read as "alive" so a transient probe timeout does not
-        // overwrite a working channel with available=false.
-        List<CANDataItem> items = CANDataReader.readHttpSnapshot(ctx);
+        // DiPlus batch reads need the registry items (diplus names); an empty list
+        // makes diplusGetDiPars return null, so the channel would look dead even
+        // when the API works. Build the same item list the worker path uses.
+        List<CANDataItem> known = new java.util.ArrayList<>();
+        try {
+            RegistryStore reg = RegistryStore.load(ctx);
+            SourceManager sm = new SourceManager(reg,
+                    java.util.Collections.singletonList("diplus"),
+                    com.car2hass.AppConfig.getSelectedProfile(ctx), null);
+            known = sm.buildSignalItems();
+        } catch (Exception e) {
+            LogBuffer.w("DiPlusChannel", "probe items: " + e.getMessage());
+        }
+        List<CANDataItem> items = CANDataReader.readHttpSnapshot(ctx, known);
         if (items == null || items.isEmpty()) {
             try { Thread.sleep(300); } catch (InterruptedException ignored) {}
-            items = CANDataReader.readHttpSnapshot(ctx);
+            items = CANDataReader.readHttpSnapshot(ctx, known);
         }
         if (com.car2hass.AppConfig.isProbeRawEnabled(ctx)) {
-            LogBuffer.i("DiPlusRaw", "probe items=" + (items == null ? -1 : items.size())
+            LogBuffer.i("DiPlusRaw", "probe known=" + known.size()
+                    + " items=" + (items == null ? -1 : items.size())
                     + " lastOkAgeMs=" + (lastOkMs <= 0 ? -1 : System.currentTimeMillis() - lastOkMs));
         }
         if (items == null || items.isEmpty()) {
             if (lastOkMs > 0 && System.currentTimeMillis() - lastOkMs < 90_000L) {
                 return ChannelResult.ok(1);
             }
-            return ChannelResult.dead("DiPlus не отвечает (нет данных с 127.0.0.1:8988)");
+            String detail = com.car2hass.CANDataReader.lastHttpError();
+            return ChannelResult.dead("DiPlus: " + (detail == null || detail.isEmpty()
+                    ? "нет данных с 127.0.0.1:8988" : detail));
         }
         int real = 0;
         for (CANDataItem it : items) {
