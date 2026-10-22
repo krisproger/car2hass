@@ -966,6 +966,16 @@ public class VoyahChannel implements DataChannel {
         }
     }
 
+    /** Public wrapper for diagnostics (extra probes). */
+    public static Class<?> loadDeviceClassPublic(String name) {
+        return loadDeviceClass(name);
+    }
+
+    /** Public wrapper: discover the canbus binder (read-only diagnostics). */
+    public static android.os.IBinder findBinderPublic() {
+        return findBinder();
+    }
+
     /** Loads a vendor class from the service classloader first, then the bootclasspath. */
     private static Class<?> loadDeviceClass(String name) {
         ClassLoader cl = deviceCl;

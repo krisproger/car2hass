@@ -121,6 +121,33 @@
       ]
     },
     {
+      "id": "voyah:icarsignal_getter:getCarKeyStatus",
+      "channel": "voyah",
+      "kind": "icarsignal_getter",
+      "param": "getCarKeyStatus",
+      "canaries": [
+        "vehicle_key_state"
+      ]
+    },
+    {
+      "id": "voyah:icarsignal_getter:getSideLightStatus",
+      "channel": "voyah",
+      "kind": "icarsignal_getter",
+      "param": "getSideLightStatus",
+      "canaries": [
+        "sidelights"
+      ]
+    },
+    {
+      "id": "voyah:icarsignal_getter:getAlarmState",
+      "channel": "voyah",
+      "kind": "icarsignal_getter",
+      "param": "getAlarmState",
+      "canaries": [
+        "alarm_state"
+      ]
+    },
+    {
       "id": "voyah:aircondition_getter:getAirTempInCar",
       "channel": "voyah",
       "kind": "aircondition_getter",

@@ -140,6 +140,8 @@ public final class ResearchController {
                                     RegistryStore.load(a), avail));
                     outcome.report.put("write_probe",
                             com.car2hass.vehicle.VoyahWriteProbe.probe(a));
+                    outcome.report.put("voyah_extra",
+                            com.car2hass.vehicle.VoyahExtraProbe.probe(a));
                     String p2 = com.car2hass.vehicle.ProbeReport.writeFile(a, outcome.report);
                     if (p2 != null) path0 = p2;
                 } catch (Exception e) {
