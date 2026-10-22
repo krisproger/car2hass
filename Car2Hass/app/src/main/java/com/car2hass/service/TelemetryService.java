@@ -411,8 +411,14 @@ public class TelemetryService extends Service {
                     LogBuffer.e("TelemetryService", "queue probe: " + e.getMessage());
                 }
             } else {
-                // 429: the server says "too soon" — wait for the next window, do not queue.
-                LogBuffer.i("TelemetryService", "probe upload deferred (code=" + r.code + ")");
+                // 429: the server rate-limited the report — retry after the window.
+                LogBuffer.i("TelemetryService", "probe upload deferred (code=" + r.code
+                        + "), retry in 5 min");
+                final String p = path;
+                new Thread(() -> {
+                    try { Thread.sleep(5 * 60 * 1000L); } catch (InterruptedException ie) { return; }
+                    if (AppConfig.isProbeUploadEnabled(this) && p != null) maybeUploadReport(p);
+                }, "probe-retry").start();
             }
         }, "probe-upload").start();
     }

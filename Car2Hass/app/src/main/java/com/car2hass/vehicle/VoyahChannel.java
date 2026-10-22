@@ -100,6 +100,7 @@ public class VoyahChannel implements DataChannel {
         m.put("auto_hold", "EPB_PARK_STATUS");
         m.put("total_energy", "ENERGY_CON_SUM_AV");
         m.put("drive_mode", "BCM_DRIVEMODE_CHANGE");
+        m.put("handbrake_state", "EPB_PARK_STATUS");
         m.put("battery_remaining_charge_time", "BMS_REMAIN_CHARGE_TIME");
         m.put("avg_speed", "AVG_SPEED");
         m.put("avg_power", "AVG_POWER");
@@ -146,14 +147,11 @@ public class VoyahChannel implements DataChannel {
         m.put("odometer", "getSecondaryOdometer");       // long, total mileage
         m.put("fuel_consumption_avg", "getComprehensiveFuelConsumption");
         m.put("acc_status", "getAccStatus");
-        m.put("handbrake_state", "getHandBrakeStatus");
-        m.put("vehicle_key_state", "getVehicleKeyState");
         m.put("vehicle_scene_mode", "getVehicleSceneMode");
         m.put("engine_status", "getEngineStatus");
         m.put("brake_fluid_status", "getBrakeFluidStatus");
         m.put("engine_fluid_level", "getEngineFluidStatus");
         m.put("wiper_fluid_level", "getWiperFluidStatus");
-        m.put("alarm_state", "getAlarmData");
         VOYAH_METHODS = java.util.Collections.unmodifiableMap(m);
     }
 
@@ -178,6 +176,9 @@ public class VoyahChannel implements DataChannel {
         Map<String, String> m = new HashMap<>();
         m.put("driver_door", "getLFDoorState");
         m.put("reverse", "getReverseState");
+        m.put("vehicle_key_state", "getCarKeyStatus");
+        m.put("alarm_state", "getAlarmState");
+        m.put("sidelights", "getSideLightStatus");
         VOYAH_SIGNAL_METHODS = java.util.Collections.unmodifiableMap(m);
     }
 
@@ -228,6 +229,8 @@ public class VoyahChannel implements DataChannel {
      * tx 26 is authoritative for speed and the constant is only a fallback.
      */
     private static final Set<String> TX_FIRST_KEYS = Collections.singleton("speed");
+    /** Keys where ICarSignal is authoritative (a vs/method returns -1). */
+    private static final Set<String> SIGNAL_FIRST_KEYS = Collections.singleton("sidelights");
 
     private volatile Object cachedIface;
     private volatile Class<?> cachedIfaceClass;
@@ -587,7 +590,11 @@ public class VoyahChannel implements DataChannel {
             value = readRawTx(key);
             if (value != null) return value;
         }
-        if (iface != null) {
+        if (iface != null && SIGNAL_FIRST_KEYS.contains(key)) {
+            String signal = VOYAH_SIGNAL_METHODS.get(key);
+            if (signal != null) value = accept(key, readSignalValue(signal));
+        }
+        if (value == null && iface != null) {
             String param = VOYAH_PARAMS.get(key);
             if (param != null) {
                 Object raw = queryState(iface, cachedIfaceClass, param);
@@ -787,7 +794,7 @@ public class VoyahChannel implements DataChannel {
             if (asInterface == null) return ProbeResult.unsupported();
             Object v = queryStateStatic(asInterface, iface, vsParam);
             if (v == null) return ProbeResult.error("параметр не читается: " + vsParam);
-            return ProbeResult.fromRaw(stringify(v), false);
+            return sentinelAware(stringify(v));
         } catch (Exception e) {
             return ProbeResult.error(e.getMessage());
         }
@@ -805,7 +812,7 @@ public class VoyahChannel implements DataChannel {
             if (asInterface == null) return ProbeResult.unsupported();
             String v = invokeGetter(iface, asInterface, method);
             if (v == null) return ProbeResult.unsupported();
-            return ProbeResult.fromRaw(v, false);
+            return sentinelAware(v);
         } catch (Exception e) {
             return ProbeResult.error(e.getMessage());
         }
@@ -828,6 +835,15 @@ public class VoyahChannel implements DataChannel {
         } catch (Exception e) {
             return ProbeResult.error(e.getMessage());
         }
+    }
+
+    /** Voyah "unknown" sentinel (-1) must not be reported as a valid value. */
+    private static ProbeResult sentinelAware(String v) {
+        if (v == null) return ProbeResult.unsupported();
+        if ("-1".equals(v) || "-1.0".equals(v)) {
+            return new ProbeResult(ProbeResult.Status.SENTINEL, v);
+        }
+        return ProbeResult.fromRaw(v, false);
     }
 
     /** Reads an ICarSignalService getter for the worker path; raw value or null. */
@@ -854,7 +870,7 @@ public class VoyahChannel implements DataChannel {
             if (asInterface == null) return ProbeResult.unsupported();
             String v = invokeGetter(iface, asInterface, getter);
             if (v == null) return ProbeResult.unsupported();
-            return ProbeResult.fromRaw(v, false);
+            return sentinelAware(v);
         } catch (Exception e) {
             return ProbeResult.error(e.getMessage());
         }

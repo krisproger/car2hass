@@ -280,6 +280,7 @@ VOYAH_PARAMS = {
     "auto_hold": "EPB_PARK_STATUS",
     "total_energy": "ENERGY_CON_SUM_AV",
     "drive_mode": "BCM_DRIVEMODE_CHANGE",
+    "handbrake_state": "EPB_PARK_STATUS",
     "battery_remaining_charge_time": "BMS_REMAIN_CHARGE_TIME",
     "avg_speed": "AVG_SPEED",
     "avg_power": "AVG_POWER",
@@ -320,14 +321,11 @@ VOYAH_METHOD_PARAMS = {
     "odometer": "getSecondaryOdometer",        # long, total mileage
     "fuel_consumption_avg": "getComprehensiveFuelConsumption",
     "acc_status": "getAccStatus",
-    "handbrake_state": "getHandBrakeStatus",
-    "vehicle_key_state": "getVehicleKeyState",
     "vehicle_scene_mode": "getVehicleSceneMode",
     "engine_status": "getEngineStatus",
     "brake_fluid_status": "getBrakeFluidStatus",
     "engine_fluid_level": "getEngineFluidStatus",
     "wiper_fluid_level": "getWiperFluidStatus",
-    "alarm_state": "getAlarmData",
 }
 
 # Voyah climate values reachable only through the separate AirCondition model
@@ -343,7 +341,13 @@ VOYAH_AC_PARAMS = {
 VOYAH_SIGNAL_PARAMS = {
     "driver_door": "getLFDoorState",
     "reverse": "getReverseState",
+    "vehicle_key_state": "getCarKeyStatus",
+    "alarm_state": "getAlarmState",
+    "sidelights": "getSideLightStatus",
 }
+
+# Keys where ICarSignal is authoritative (overrides a vs/method that returns -1).
+VOYAH_SIGNAL_FIRST = {"sidelights"}
 
 # Deep-probe canaries: one entry per (kind, param) with 1..5 sample sensor keys.
 # `kind` matches the runtime method dispatcher (VoyahChannel primitives).
@@ -432,6 +436,10 @@ CHANNELS_PRIORITY = ["system", "dumpsys", "adb", "diplus", "voyah",
 
 def voyah_descriptor(key):
     """Voyah read descriptor for a registry key, or None when unreadable."""
+    if key in VOYAH_SIGNAL_FIRST:
+        first = VOYAH_SIGNAL_PARAMS.get(key)
+        if first:
+            return {"signal": first}
     vs = VOYAH_PARAMS.get(key)
     if vs:
         return {"vs": vs}

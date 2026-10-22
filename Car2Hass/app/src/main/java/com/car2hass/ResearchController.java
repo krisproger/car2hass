@@ -266,7 +266,16 @@ public final class ResearchController {
         new Thread(() -> {
             ProbeUploader.Result r = ProbeUploader.uploadResult(a, path);
             LogBuffer.i("MainActivity", "probe upload: ok=" + r.ok + " code=" + r.code);
-            if (r.ok) AppConfig.setProbeLastUploadMs(a, System.currentTimeMillis());
+            if (r.ok) {
+                AppConfig.setProbeLastUploadMs(a, System.currentTimeMillis());
+            } else if (r.code == 429) {
+                // Rate-limited: keep the report and retry after the server window.
+                LogBuffer.i("ResearchController", "probe upload deferred (429), retry in 5 min");
+                new Thread(() -> {
+                    try { Thread.sleep(5 * 60 * 1000L); } catch (InterruptedException ie) { return; }
+                    if (AppConfig.isProbeUploadEnabled(a)) uploadReport(path);
+                }, "probe-retry").start();
+            }
             final boolean ok = r.ok;
             a.runOnUiThread(() -> TaskNotifier.done(a, title,
                     host.str(ok ? R.string.upload_research_ok : R.string.upload_failed)));

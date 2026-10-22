@@ -2844,7 +2844,7 @@
         "byd_cloud": null,
         "phone": null,
         "voyah": {
-          "vs": "POSITION_LAMP_SWITCH"
+          "signal": "getSideLightStatus"
         }
       },
       "expected_on": [
@@ -5411,7 +5411,7 @@
         "system": null,
         "phone": null,
         "voyah": {
-          "method": "getHandBrakeStatus"
+          "vs": "EPB_PARK_STATUS"
         }
       },
       "expected_on": [
@@ -5436,7 +5436,7 @@
         "system": null,
         "phone": null,
         "voyah": {
-          "method": "getVehicleKeyState"
+          "signal": "getCarKeyStatus"
         }
       },
       "expected_on": [
@@ -5586,7 +5586,7 @@
         "system": null,
         "phone": null,
         "voyah": {
-          "method": "getAlarmData"
+          "signal": "getAlarmState"
         }
       },
       "expected_on": [
