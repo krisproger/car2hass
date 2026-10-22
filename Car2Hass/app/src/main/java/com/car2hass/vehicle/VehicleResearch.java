@@ -406,6 +406,19 @@ public final class VehicleResearch {
         try {
             report = ProbeReport.build(reg, channelAvailability, channelReasons, sensorResults,
                     cmdCallable, scores, selected, version, deviceAnon);
+            if (report != null && "true".equals(appConfigGet(ctx, "isProbeRawEnabled"))) {
+                // Opt-in raw values per sensor/channel for decoding/sentinel checks.
+                JSONObject raw = new JSONObject();
+                for (Map.Entry<String, Map<String, ProbeResult>> e : sensorResults.entrySet()) {
+                    JSONObject per = new JSONObject();
+                    for (Map.Entry<String, ProbeResult> pe : e.getValue().entrySet()) {
+                        ProbeResult pr = pe.getValue();
+                        per.put(pe.getKey(), pr.rawValue == null ? "" : pr.rawValue);
+                    }
+                    raw.put(e.getKey(), per);
+                }
+                report.put("raw_probe", raw);
+            }
             if (ctx != null && report != null) {
                 // Per-report link diagnostics: why an OBD/Voyah channel may be down.
                 // Read via reflection so the plain-java test harness does not need

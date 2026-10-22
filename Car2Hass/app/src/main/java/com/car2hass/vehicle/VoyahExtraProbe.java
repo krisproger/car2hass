@@ -1,203 +1,269 @@
 package com.car2hass.vehicle;
 
 import android.content.Context;
-import android.net.Uri;
+import android.content.pm.ProviderInfo;
 import android.database.Cursor;
+import android.net.Uri;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Best-effort, non-destructive probes for the remaining Voyah access channels
- * described in the firmware research but not yet used:
- *   1) ContentProvider qinggan.capabilities
- *   2) ICanBusService.isSupportFunction
- *   3) ICanBusService addCallback (subscription availability)
- *   4) ICarSignal/AirCondition extra paths
- *   5) AOSP CarPropertyManager (android.car)
- * Never calls any set* method.
+ * Best-effort, non-destructive probes for the Voyah access channels from the
+ * firmware research: capabilities provider, isSupportFunction, addCallback,
+ * AirCondition and AOSP CarPropertyManager. Never calls any set* method.
  */
 public final class VoyahExtraProbe {
-    private static final String[] CAP_URIS = {
-            "content://qinggan.capabilities",
-            "content://com.qinggan.providers.capabilities",
-            "content://com.qinggan.providers.capabilities/capabilities",
-    };
-    private static final String[] CALLBACK_IFACES = {
-            "com.qinggan.canbus.ICanBusCallback",
-            "com.qinggan.canbus.ICanBusServiceCallback",
-            "com.qinggan.canbus.ICanBusService$ICanBusCallback",
-    };
-
     private VoyahExtraProbe() {}
 
     public static JSONObject probe(Context ctx) {
         JSONObject o = new JSONObject();
-        put(o, "capabilities", capabilities(ctx));
-        put(o, "is_support_function", isSupport());
-        put(o, "add_callback", addCallback());
-        put(o, "aircondition", airCondition());
-        put(o, "car_property", carProperty(ctx));
+        set(o, "capabilities", capabilities(ctx));
+        set(o, "is_support_function", isSupport());
+        set(o, "add_callback", addCallback());
+        set(o, "aircondition", airCondition());
+        set(o, "car_property", carProperty(ctx));
         return o;
     }
 
-    private static void put(JSONObject o, String k, JSONObject v) {
+    private static void set(JSONObject o, String k, Object v) {
         try { o.put(k, v); } catch (Exception ignored) {}
     }
 
-    /** 1) Try the exported capabilities ContentProvider. */
     private static JSONObject capabilities(Context ctx) {
         JSONObject r = new JSONObject();
-        for (String u : CAP_URIS) {
+        List<String> uris = new ArrayList<>();
+        uris.add("content://qinggan.capabilities");
+        try {
+            for (ProviderInfo pi : ctx.getPackageManager().queryContentProviders(null, 0, 0)) {
+                String n = (pi.packageName + " " + pi.name).toLowerCase();
+                if ((n.contains("qinggan") || n.contains("capabilit"))
+                        && pi.authority != null && !pi.authority.isEmpty()) {
+                    String u = "content://" + pi.authority;
+                    if (!uris.contains(u)) uris.add(u);
+                }
+            }
+        } catch (Throwable ignored) {}
+        JSONArray tried = new JSONArray();
+        for (String u : uris) {
+            JSONObject t = new JSONObject();
+            set(t, "uri", u);
             try {
                 Cursor c = ctx.getContentResolver().query(Uri.parse(u), null, null, null, null);
-                if (c == null) continue;
-                int rows = c.getCount();
-                JSONArray sample = new JSONArray();
-                String[] cols = c.getColumnNames();
-                int n = 0;
-                while (c.moveToNext() && n < 10) {
-                    JSONObject row = new JSONObject();
-                    for (int i = 0; i < cols.length && i < 8; i++) {
-                        row.put(cols[i], c.getString(i));
+                if (c == null) {
+                    set(t, "ok", false);
+                    set(t, "error", "null cursor");
+                } else {
+                    int rows = c.getCount();
+                    String[] cols = c.getColumnNames();
+                    JSONArray sample = new JSONArray();
+                    int n = 0;
+                    while (c.moveToNext() && n < 10) {
+                        JSONObject row = new JSONObject();
+                        for (int i = 0; i < cols.length && i < 8; i++) set(row, cols[i], c.getString(i));
+                        sample.put(row);
+                        n++;
                     }
-                    sample.put(row);
-                    n++;
+                    c.close();
+                    set(t, "ok", true);
+                    set(t, "rows", rows);
+                    set(t, "columns", new JSONArray(cols));
+                    set(t, "sample", sample);
+                    if (rows > 0) {
+                        set(r, "ok", true);
+                        set(r, "uri", u);
+                        set(r, "rows", rows);
+                        set(r, "columns", new JSONArray(cols));
+                        set(r, "sample", sample);
+                        set(r, "tried", tried);
+                        return r;
+                    }
                 }
-                c.close();
-                r.put("uri", u);
-                r.put("ok", true);
-                r.put("rows", rows);
-                r.put("columns", new JSONArray(cols));
-                r.put("sample", sample);
-                return r;
             } catch (Throwable e) {
-                try {
-                    r.put("uri", u);
-                    r.put("ok", false);
-                    r.put("error", String.valueOf(e.getMessage()));
-                } catch (Exception ignored) {}
+                set(t, "ok", false);
+                set(t, "error", e.getClass().getSimpleName() + ": " + e.getMessage());
             }
+            tried.put(t);
         }
+        set(r, "ok", false);
+        set(r, "tried", tried);
         return r;
     }
 
-    /** 2) Probe isSupportFunction with a few integer arguments. */
     private static JSONObject isSupport() {
         JSONObject r = new JSONObject();
         try {
             Class<?> iface = load("com.qinggan.canbus.ICanBusService");
-            if (iface == null) { r.put("ok", false); r.put("error", "iface absent"); return r; }
+            if (iface == null) { set(r, "ok", false); set(r, "error", "iface absent"); return r; }
             Method m = null;
             for (Method mm : iface.getMethods()) {
                 if ("isSupportFunction".equals(mm.getName())) { m = mm; break; }
             }
-            if (m == null) { r.put("ok", false); r.put("error", "method absent"); return r; }
-            r.put("ok", true);
-            r.put("params", m.getParameterTypes().length);
-            Object asInterface = asInterface(iface);
-            if (asInterface == null) { r.put("error", "no binder"); return r; }
-            JSONArray results = new JSONArray();
+            if (m == null) { set(r, "ok", false); set(r, "error", "method absent"); return r; }
             Class<?>[] pt = m.getParameterTypes();
-            if (pt.length == 1 && (pt[0] == int.class || pt[0] == Integer.class)) {
-                for (int v : new int[]{0, 1, 2, 3, 4}) {
-                    try { results.put(v + "=" + m.invoke(asInterface, v)); }
-                    catch (Throwable e) {
-                        try { results.put(v + "=" + e.getClass().getSimpleName()); } catch (Exception ignored) {}
+            set(r, "ok", true);
+            set(r, "params", pt.length);
+            if (pt.length > 0) set(r, "param_type", pt[0].getName());
+            Object asInterface = asInterface(iface);
+            if (asInterface == null) { set(r, "error", "no binder"); return r; }
+            JSONArray results = new JSONArray();
+            if (pt.length == 1) {
+                Class<?> t = pt[0];
+                if (t == int.class || t == Integer.class) {
+                    for (int v : new int[]{0, 1, 2, 3, 4, 5, 10, 100}) {
+                        invokeResult(m, asInterface, results, "int " + v, v);
                     }
+                } else if (t == String.class || t == CharSequence.class) {
+                    for (String v : new String[]{"speed", "range", "gear", "soc"}) {
+                        invokeResult(m, asInterface, results, "str " + v, v);
+                    }
+                } else {
+                    Object constant = firstStateConstant(t);
+                    if (constant != null) invokeResult(m, asInterface, results, "state " + constant, constant);
                 }
             }
-            r.put("results", results);
+            set(r, "results", results);
         } catch (Throwable e) {
-            try { r.put("ok", false); r.put("error", String.valueOf(e.getMessage())); } catch (Exception ignored) {}
+            set(r, "ok", false);
+            set(r, "error", e.getClass().getSimpleName() + ": " + e.getMessage());
         }
         return r;
     }
 
-    /** 3) Probe whether a callback interface can be registered (no value use yet). */
+    private static void invokeResult(Method m, Object target, JSONArray out, String label, Object arg) {
+        try {
+            out.put(label + "=" + m.invoke(target, arg));
+        } catch (Throwable e) {
+            try { out.put(label + "=" + e.getClass().getSimpleName()); } catch (Exception ignored) {}
+        }
+    }
+
+    private static Object firstStateConstant(Class<?> type) {
+        try {
+            for (Field f : type.getFields()) {
+                if (Modifier.isStatic(f.getModifiers()) && f.getType() == type) {
+                    return f.get(null);
+                }
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
     private static JSONObject addCallback() {
         JSONObject r = new JSONObject();
         try {
             Class<?> iface = load("com.qinggan.canbus.ICanBusService");
-            if (iface == null) { r.put("ok", false); r.put("error", "iface absent"); return r; }
+            if (iface == null) { set(r, "ok", false); set(r, "error", "iface absent"); return r; }
             Object asInterface = asInterface(iface);
-            if (asInterface == null) { r.put("ok", false); r.put("error", "no binder"); return r; }
-            Class<?> cbIface = null;
-            for (String name : CALLBACK_IFACES) {
-                cbIface = load(name);
-                if (cbIface != null && cbIface.isInterface()) break;
-                cbIface = null;
-            }
-            if (cbIface == null) { r.put("ok", false); r.put("error", "callback iface absent"); return r; }
-            final Class<?> ci = cbIface;
-            Object proxy = Proxy.newProxyInstance(ci.getClassLoader(), new Class<?>[]{ci},
-                    (p, method, args) -> {
-                        if (method.getReturnType() == boolean.class) return false;
-                        if (method.getReturnType() == int.class) return 0;
-                        return null;
-                    });
+            if (asInterface == null) { set(r, "ok", false); set(r, "error", "no binder"); return r; }
             Method add = null;
             for (Method mm : iface.getMethods()) {
-                if ("addCallback".equals(mm.getName())) { add = mm; break; }
+                if ("addCallback".equals(mm.getName())
+                        && mm.getParameterTypes().length == 1
+                        && mm.getParameterTypes()[0].isInterface()) {
+                    add = mm;
+                    break;
+                }
             }
-            if (add == null) { r.put("ok", false); r.put("error", "addCallback absent"); return r; }
+            if (add == null) { set(r, "ok", false); set(r, "error", "addCallback(iface) absent"); return r; }
+            final Class<?> ci = add.getParameterTypes()[0];
+            set(r, "callback_iface", ci.getName());
+            Object proxy = Proxy.newProxyInstance(ci.getClassLoader(), new Class<?>[]{ci},
+                    (p, method, args) -> {
+                        Class<?> rt = method.getReturnType();
+                        if (rt == boolean.class) return false;
+                        if (rt == int.class) return 0;
+                        if (rt == long.class) return 0L;
+                        return null;
+                    });
             try {
                 Object res = add.invoke(asInterface, proxy);
-                r.put("ok", true);
-                r.put("result", String.valueOf(res));
-                r.put("callback_iface", ci.getName());
+                set(r, "ok", true);
+                set(r, "result", String.valueOf(res));
             } catch (Throwable e) {
-                try {
-                    r.put("ok", false);
-                    r.put("error", String.valueOf(e.getMessage()));
-                } catch (Exception ignored) {}
+                Throwable c = e.getCause() != null ? e.getCause() : e;
+                set(r, "ok", false);
+                set(r, "error", c.getClass().getSimpleName() + ": " + c.getMessage());
             }
         } catch (Throwable e) {
-            try { r.put("ok", false); r.put("error", String.valueOf(e.getMessage())); } catch (Exception ignored) {}
+            set(r, "ok", false);
+            set(r, "error", e.getClass().getSimpleName() + ": " + e.getMessage());
         }
         return r;
     }
 
-    /** 4) AirCondition alternative access paths. */
     private static JSONObject airCondition() {
         JSONObject r = new JSONObject();
         try {
             Class<?> ac = load("com.qinggan.canbus.AirCondition");
-            if (ac == null) { r.put("class", false); return r; }
-            r.put("class", true);
-            r.put("methods", ac.getMethods().length);
-            JSONArray statics = new JSONArray();
-            for (Method m : ac.getMethods()) {
-                if (java.lang.reflect.Modifier.isStatic(m.getModifiers())) statics.put(m.getName());
+            set(r, "ac_class", ac != null);
+            if (ac != null) set(r, "ac_methods", ac.getMethods().length);
+            Class<?> mgr = load("com.qinggan.canbus.CanBusManager");
+            set(r, "manager_class", mgr != null);
+            if (mgr != null) {
+                JSONArray statics = new JSONArray();
+                for (Method m : mgr.getMethods()) {
+                    if (Modifier.isStatic(m.getModifiers())) statics.put(m.getName());
+                }
+                set(r, "manager_static_methods", statics);
+                for (Method m : mgr.getMethods()) {
+                    if (Modifier.isStatic(m.getModifiers())
+                            && m.getParameterTypes().length == 0
+                            && ac != null && m.getReturnType().isAssignableFrom(ac)) {
+                        try { set(r, "manager_instance", String.valueOf(m.invoke(null))); }
+                        catch (Throwable e) { set(r, "manager_instance_error", e.getClass().getSimpleName()); }
+                        break;
+                    }
+                }
             }
-            r.put("static_methods", statics);
         } catch (Throwable e) {
-            try { r.put("error", String.valueOf(e.getMessage())); } catch (Exception ignored) {}
+            set(r, "error", e.getClass().getSimpleName() + ": " + e.getMessage());
         }
         return r;
     }
 
-    /** 5) AOSP CarPropertyManager via reflection (read-only). */
     private static JSONObject carProperty(Context ctx) {
         JSONObject r = new JSONObject();
         try {
             Class<?> carCls = Class.forName("android.car.Car");
-            Method create = carCls.getMethod("createCar", Context.class);
-            Object car = create.invoke(null, ctx);
-            r.put("car_created", car != null);
+            Object car = carCls.getMethod("createCar", Context.class).invoke(null, ctx);
+            set(r, "car_created", car != null);
             if (car != null) {
-                Method getPm = carCls.getMethod("getCarPropertyManager");
-                Object pm = getPm.invoke(car);
-                r.put("property_manager", pm != null);
-                r.put("perms", new JSONArray(new String[]{
-                        "android.car.permission.CAR_SPEED",
-                        "android.car.permission.CAR_ENERGY"}));
+                Object pm = null;
+                String via = null;
+                try {
+                    pm = carCls.getMethod("getCarManager", String.class).invoke(car, "property");
+                    via = "getCarManager(property)";
+                } catch (Throwable e) {
+                    try {
+                        pm = carCls.getMethod("getCarPropertyManager").invoke(car);
+                        via = "getCarPropertyManager";
+                    } catch (Throwable ignored) {}
+                }
+                set(r, "via", via);
+                set(r, "property_manager", pm != null);
+                if (pm != null) {
+                    JSONArray methods = new JSONArray();
+                    for (Method m : pm.getClass().getMethods()) {
+                        String n = m.getName();
+                        if (n.startsWith("get") && m.getParameterTypes().length >= 1
+                                && m.getParameterTypes()[0] == int.class) {
+                            methods.put(n);
+                        }
+                    }
+                    set(r, "get_methods", methods);
+                }
             }
         } catch (Throwable e) {
-            try { r.put("ok", false); r.put("error", String.valueOf(e.getMessage())); } catch (Exception ignored) {}
+            set(r, "ok", false);
+            set(r, "error", e.getClass().getSimpleName() + ": " + e.getMessage());
         }
         return r;
     }
