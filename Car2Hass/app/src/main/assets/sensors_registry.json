@@ -5317,6 +5317,281 @@
       ]
     },
     {
+      "key": "fuel_consumption_avg",
+      "label_en": "Fuel consumption (average)",
+      "label_ru": "Fuel consumption (average)",
+      "type": "num",
+      "unit": "L/100km",
+      "core": false,
+      "category": "drive",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "method": "getComprehensiveFuelConsumption"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "acc_status",
+      "label_en": "ACC status",
+      "label_ru": "ACC status",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "drive",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "method": "getAccStatus"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "handbrake_state",
+      "label_en": "Handbrake status",
+      "label_ru": "Handbrake status",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "drive",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "method": "getHandBrakeStatus"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "vehicle_key_state",
+      "label_en": "Vehicle key state",
+      "label_ru": "Vehicle key state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "access",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "method": "getVehicleKeyState"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "vehicle_scene_mode",
+      "label_en": "Vehicle scene mode",
+      "label_ru": "Vehicle scene mode",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "drive",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "method": "getVehicleSceneMode"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "engine_status",
+      "label_en": "Engine status",
+      "label_ru": "Engine status",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "drive",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "method": "getEngineStatus"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "brake_fluid_status",
+      "label_en": "Brake fluid status",
+      "label_ru": "Brake fluid status",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "tyres",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "method": "getBrakeFluidStatus"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "engine_fluid_level",
+      "label_en": "Engine fluid level",
+      "label_ru": "Engine fluid level",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "other",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "method": "getEngineFluidStatus"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "wiper_fluid_level",
+      "label_en": "Wiper fluid level",
+      "label_ru": "Wiper fluid level",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "access",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "method": "getWiperFluidStatus"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "alarm_state",
+      "label_en": "Alarm state",
+      "label_ru": "Alarm state",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "sentry",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "method": "getAlarmData"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "reverse",
+      "label_en": "Reverse",
+      "label_ru": "Reverse",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "drive",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "signal": "getReverseState"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
       "key": "app_version",
       "label_en": "App version",
       "label_ru": "Версия приложения",

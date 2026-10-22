@@ -178,6 +178,8 @@
     <string name="settings_research_upload">Отправлять анонимные отчёты</string>
     <string name="settings_research_upload_hint">После исследования отправляет обезличенный отчёт о доступности каналов и сигналов. Без VIN, серийников и геолокации. По умолчанию выключено.</string>
     <string name="settings_research_raw">Собирать сырые данные исследования</string>
+    <string name="settings_research_write_ok">Управление: запись доступна</string>
+    <string name="settings_research_write_denied">Управление: запись требует платформенной подписи/root (недоступно)</string>
     <string name="settings_research_raw_hint">Подробная диагностика каналов для разбора (лог больше). По умолчанию выключено.</string>
     <string name="channel_diplus">DiPlus (HTTP)</string>
     <string name="channel_adb">ADB (service call)</string>

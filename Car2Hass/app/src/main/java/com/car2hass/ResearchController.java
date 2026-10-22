@@ -138,6 +138,8 @@ public final class ResearchController {
                     outcome.report.put("methods",
                             com.car2hass.vehicle.MethodProber.methodsFor(
                                     RegistryStore.load(a), avail));
+                    outcome.report.put("write_probe",
+                            com.car2hass.vehicle.VoyahWriteProbe.probe(a));
                     String p2 = com.car2hass.vehicle.ProbeReport.writeFile(a, outcome.report);
                     if (p2 != null) path0 = p2;
                 } catch (Exception e) {
@@ -201,6 +203,12 @@ public final class ResearchController {
                         if ("ok".equals(ch.optString(c))) okPer.merge(c, 1, Integer::sum);
                     }
                 }
+            }
+            JSONObject wp = outcome.report.optJSONObject("write_probe");
+            if (wp != null) {
+                boolean capable = wp.optBoolean("write_capable", false);
+                sb.append(host.str(capable ? R.string.settings_research_write_ok
+                        : R.string.settings_research_write_denied)).append('\n');
             }
             if (!okPer.isEmpty()) {
                 StringBuilder line = new StringBuilder();

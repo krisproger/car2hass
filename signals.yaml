@@ -2192,6 +2192,117 @@ signals:
   icon: mdi:counter
   device_class: distance
   state_class: total_increasing
+- id: 9211
+  name: Fuel consumption (average)
+  description: Fuel consumption (average)
+  type: num
+  synthetic: true
+  key: fuel_consumption_avg
+  category: drive
+  labels: {}
+  ha_type: sensor
+  unit: L/100km
+  icon: mdi:fuel
+- id: 9212
+  name: ACC status
+  description: ACC status
+  type: enum
+  synthetic: true
+  key: acc_status
+  category: drive
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-key
+- id: 9213
+  name: Handbrake status
+  description: Handbrake status
+  type: enum
+  synthetic: true
+  key: handbrake_state
+  category: drive
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-brake-alert
+- id: 9214
+  name: Vehicle key state
+  description: Vehicle key state
+  type: enum
+  synthetic: true
+  key: vehicle_key_state
+  category: access
+  labels: {}
+  ha_type: sensor
+  icon: mdi:key
+- id: 9215
+  name: Vehicle scene mode
+  description: Vehicle scene mode
+  type: enum
+  synthetic: true
+  key: vehicle_scene_mode
+  category: drive
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-cog
+- id: 9216
+  name: Engine status
+  description: Engine status
+  type: enum
+  synthetic: true
+  key: engine_status
+  category: drive
+  labels: {}
+  ha_type: sensor
+  icon: mdi:engine
+- id: 9217
+  name: Brake fluid status
+  description: Brake fluid status
+  type: enum
+  synthetic: true
+  key: brake_fluid_status
+  category: tyres
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-brake-fluid-level
+- id: 9218
+  name: Engine fluid level
+  description: Engine fluid level
+  type: enum
+  synthetic: true
+  key: engine_fluid_level
+  category: other
+  labels: {}
+  ha_type: sensor
+  icon: mdi:oil-level
+- id: 9219
+  name: Wiper fluid level
+  description: Wiper fluid level
+  type: enum
+  synthetic: true
+  key: wiper_fluid_level
+  category: access
+  labels: {}
+  ha_type: sensor
+  icon: mdi:wiper
+- id: 9220
+  name: Alarm state
+  description: Alarm state
+  type: enum
+  synthetic: true
+  key: alarm_state
+  category: sentry
+  labels: {}
+  ha_type: sensor
+  icon: mdi:alarm-light
+- id: 9221
+  name: Reverse
+  description: Reverse
+  type: enum
+  synthetic: true
+  key: reverse
+  category: drive
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-shift-pattern
 - id: 9133
   name: PM2.5
   description: Cabin PM2.5 particulate level

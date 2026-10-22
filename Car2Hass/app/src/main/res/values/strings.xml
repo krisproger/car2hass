@@ -188,6 +188,8 @@
     <string name="settings_research_upload">Send anonymous reports</string>
     <string name="settings_research_upload_hint">Shares an anonymized channel/signal availability report after research. No VIN, serials or location. Off by default.</string>
     <string name="settings_research_raw">Collect raw probe data</string>
+    <string name="settings_research_write_ok">Control: write API available</string>
+    <string name="settings_research_write_denied">Control: write API requires platform signature/root (not available)</string>
     <string name="settings_research_raw_hint">Verbose channel diagnostics for troubleshooting (larger log). Off by default.</string>
     <string name="channel_diplus">DiPlus (HTTP)</string>
     <string name="channel_adb">ADB (service call)</string>

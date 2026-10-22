@@ -165,6 +165,17 @@ VOYAH_ONLY_SENSORS = [
     ("rear_left_seat_massage", "Rear-left seat massage", "enum", None),
     ("rear_right_seat_massage", "Rear-right seat massage", "enum", None),
     ("odometer", "Odometer", "num", "km"),
+    ("fuel_consumption_avg", "Fuel consumption (average)", "num", "L/100km"),
+    ("acc_status", "ACC status", "enum", None),
+    ("handbrake_state", "Handbrake status", "enum", None),
+    ("vehicle_key_state", "Vehicle key state", "enum", None),
+    ("vehicle_scene_mode", "Vehicle scene mode", "enum", None),
+    ("engine_status", "Engine status", "enum", None),
+    ("brake_fluid_status", "Brake fluid status", "enum", None),
+    ("engine_fluid_level", "Engine fluid level", "enum", None),
+    ("wiper_fluid_level", "Wiper fluid level", "enum", None),
+    ("alarm_state", "Alarm state", "enum", None),
+    ("reverse", "Reverse", "enum", None),
 ]
 
 # Sensors supplied outside the CAN SIGNAL_REGISTRY: app metadata injected by
@@ -307,6 +318,16 @@ VOYAH_METHOD_PARAMS = {
     "outside_temp": "getAmbientTemperature",   # int, °C
     "ambient_temp": "getAmbientTemperature",   # int, °C
     "odometer": "getSecondaryOdometer",        # long, total mileage
+    "fuel_consumption_avg": "getComprehensiveFuelConsumption",
+    "acc_status": "getAccStatus",
+    "handbrake_state": "getHandBrakeStatus",
+    "vehicle_key_state": "getVehicleKeyState",
+    "vehicle_scene_mode": "getVehicleSceneMode",
+    "engine_status": "getEngineStatus",
+    "brake_fluid_status": "getBrakeFluidStatus",
+    "engine_fluid_level": "getEngineFluidStatus",
+    "wiper_fluid_level": "getWiperFluidStatus",
+    "alarm_state": "getAlarmData",
 }
 
 # Voyah climate values reachable only through the separate AirCondition model
@@ -321,6 +342,7 @@ VOYAH_AC_PARAMS = {
 # Sync with VoyahChannel.VOYAH_SIGNAL_METHODS.
 VOYAH_SIGNAL_PARAMS = {
     "driver_door": "getLFDoorState",
+    "reverse": "getReverseState",
 }
 
 # Deep-probe canaries: one entry per (kind, param) with 1..5 sample sensor keys.

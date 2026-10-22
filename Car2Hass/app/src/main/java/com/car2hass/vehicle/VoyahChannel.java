@@ -144,6 +144,16 @@ public class VoyahChannel implements DataChannel {
         m.put("outside_temp", "getAmbientTemperature");  // int, °C
         m.put("ambient_temp", "getAmbientTemperature");  // int, °C
         m.put("odometer", "getSecondaryOdometer");       // long, total mileage
+        m.put("fuel_consumption_avg", "getComprehensiveFuelConsumption");
+        m.put("acc_status", "getAccStatus");
+        m.put("handbrake_state", "getHandBrakeStatus");
+        m.put("vehicle_key_state", "getVehicleKeyState");
+        m.put("vehicle_scene_mode", "getVehicleSceneMode");
+        m.put("engine_status", "getEngineStatus");
+        m.put("brake_fluid_status", "getBrakeFluidStatus");
+        m.put("engine_fluid_level", "getEngineFluidStatus");
+        m.put("wiper_fluid_level", "getWiperFluidStatus");
+        m.put("alarm_state", "getAlarmData");
         VOYAH_METHODS = java.util.Collections.unmodifiableMap(m);
     }
 
@@ -167,6 +177,7 @@ public class VoyahChannel implements DataChannel {
     static {
         Map<String, String> m = new HashMap<>();
         m.put("driver_door", "getLFDoorState");
+        m.put("reverse", "getReverseState");
         VOYAH_SIGNAL_METHODS = java.util.Collections.unmodifiableMap(m);
     }
 
