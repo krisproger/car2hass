@@ -349,6 +349,20 @@ VOYAH_SIGNAL_PARAMS = {
 # Keys where ICarSignal is authoritative (overrides a vs/method that returns -1).
 VOYAH_SIGNAL_FIRST = {"sidelights"}
 
+# Raw ICanBusService read transactions, synced with VoyahChannel.VOYAH_RAW_TX.
+VOYAH_RAW_TX = {
+    "soc": (71, "float"),
+    "speed": (26, "int"),
+    "ambient_temp": (7, "int"),
+    "outside_temp": (7, "int"),
+    "fuel_rate": (15, "int"),
+    "powertrain_mode": (43, "int"),
+}
+
+# Keys whose raw transaction is authoritative for probing (matches the runtime
+# TX_FIRST order for speed; powertrain_mode's VehicleState constant is dead -1).
+VOYAH_TX_FIRST = {"speed", "powertrain_mode"}
+
 # Deep-probe canaries: one entry per (kind, param) with 1..5 sample sensor keys.
 # `kind` matches the runtime method dispatcher (VoyahChannel primitives).
 VOYAH_METHOD_CANARIES = [
@@ -436,6 +450,9 @@ CHANNELS_PRIORITY = ["system", "dumpsys", "adb", "diplus", "voyah",
 
 def voyah_descriptor(key):
     """Voyah read descriptor for a registry key, or None when unreadable."""
+    if key in VOYAH_TX_FIRST and key in VOYAH_RAW_TX:
+        code, kind = VOYAH_RAW_TX[key]
+        return {"tx": "%d:%s" % (code, kind)}
     if key in VOYAH_SIGNAL_FIRST:
         first = VOYAH_SIGNAL_PARAMS.get(key)
         if first:

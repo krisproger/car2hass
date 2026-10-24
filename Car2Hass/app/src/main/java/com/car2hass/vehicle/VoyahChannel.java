@@ -887,7 +887,7 @@ public class VoyahChannel implements DataChannel {
             if (b == null) return ProbeResult.unsupported();
             String raw = transactOnBinder(b, code, isFloat);
             if (raw == null) return ProbeResult.unsupported();
-            return ProbeResult.fromRaw(raw, false);
+            return sentinelAware(raw);
         } catch (Exception e) {
             return ProbeResult.error(e.getMessage());
         }

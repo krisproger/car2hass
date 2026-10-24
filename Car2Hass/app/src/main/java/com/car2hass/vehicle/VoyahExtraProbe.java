@@ -30,6 +30,7 @@ public final class VoyahExtraProbe {
         set(o, "add_callback", addCallback());
         set(o, "aircondition", airCondition());
         set(o, "car_property", carProperty(ctx));
+        set(o, "odometer", odometer());
         return o;
     }
 
@@ -261,6 +262,53 @@ public final class VoyahExtraProbe {
                     set(r, "get_methods", methods);
                 }
             }
+        } catch (Throwable e) {
+            set(r, "ok", false);
+            set(r, "error", e.getClass().getSimpleName() + ": " + e.getMessage());
+        }
+        return r;
+    }
+
+    /**
+     * Tries every read-only no-arg getter whose name mentions odo/mile and lists
+     * odometer/mileage VehicleState constants. getSecondaryOdometer is -1 on the
+     * tested firmware, so this finds an alternative without calling setters.
+     */
+    private static JSONObject odometer() {
+        JSONObject r = new JSONObject();
+        try {
+            Class<?> iface = load("com.qinggan.canbus.ICanBusService");
+            if (iface == null) { set(r, "ok", false); set(r, "error", "iface absent"); return r; }
+            Object svc = asInterface(iface);
+            if (svc == null) { set(r, "ok", false); set(r, "error", "no binder"); return r; }
+            JSONArray getters = new JSONArray();
+            for (Method m : iface.getMethods()) {
+                if (m.getParameterTypes().length != 0) continue;
+                String n = m.getName();
+                String low = n.toLowerCase();
+                if (!(low.contains("odo") || low.contains("mile"))) continue;
+                if (!(n.startsWith("get") || n.startsWith("query"))) continue;
+                JSONObject g = new JSONObject();
+                set(g, "name", n);
+                try {
+                    set(g, "value", String.valueOf(m.invoke(svc)));
+                } catch (Throwable e) {
+                    set(g, "error", e.getClass().getSimpleName() + ": " + e.getMessage());
+                }
+                getters.put(g);
+            }
+            set(r, "ok", true);
+            set(r, "getters", getters);
+            JSONArray consts = new JSONArray();
+            Class<?> state = load("com.qinggan.canbus.VehicleState");
+            if (state != null) {
+                for (Field f : state.getFields()) {
+                    if (!Modifier.isStatic(f.getModifiers())) continue;
+                    String n = f.getName().toUpperCase();
+                    if (n.contains("ODO") || n.contains("MILE")) consts.put(f.getName());
+                }
+            }
+            set(r, "state_constants", consts);
         } catch (Throwable e) {
             set(r, "ok", false);
             set(r, "error", e.getClass().getSimpleName() + ": " + e.getMessage());

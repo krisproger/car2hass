@@ -28,10 +28,19 @@ def test_voyah_descriptors_reference_known_params():
             mapped.append((s["key"], v["vs"]))
             assert v["vs"] in known, f"{s['key']}: {v['vs']} not in VehicleState table"
         else:
-            mapped.append((s["key"], v.get("method") or v.get("signal") or v.get("ac")))
-            assert v.get("method") or v.get("signal") or v.get("ac"), \
+            mapped.append((s["key"], v.get("method") or v.get("signal")
+                           or v.get("ac") or v.get("tx")))
+            assert v.get("method") or v.get("signal") or v.get("ac") or v.get("tx"), \
                 f"{s['key']}: empty voyah descriptor"
     assert mapped, "no voyah mappings generated"
+
+
+def test_voyah_tx_descriptors():
+    """Probing must use the authoritative raw tx for speed/powertrain_mode."""
+    reg = json.load(open(os.path.join(ASSETS, "sensors_registry.json"), encoding="utf-8"))
+    by_key = {s["key"]: s for s in reg["sensors"]}
+    assert by_key["speed"]["channels"]["voyah"] == {"tx": "26:int"}
+    assert by_key["powertrain_mode"]["channels"]["voyah"] == {"tx": "43:int"}
 
 
 def test_voyah_profile_exists():

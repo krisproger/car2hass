@@ -252,7 +252,7 @@
         "byd_cloud": null,
         "phone": null,
         "voyah": {
-          "vs": "GW_ESC_VEHSPD"
+          "tx": "26:int"
         }
       },
       "expected_on": [
@@ -1968,7 +1968,7 @@
         "byd_cloud": null,
         "phone": null,
         "voyah": {
-          "vs": "TravelProgramme"
+          "tx": "43:int"
         }
       },
       "expected_on": [
