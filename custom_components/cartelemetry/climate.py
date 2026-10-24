@@ -1,4 +1,4 @@
-"""Climate platform for diplus2hass — unified vehicle A/C entity."""
+"""Climate platform for CARTelemetry — unified vehicle A/C entity."""
 
 from homeassistant.components.climate import ClimateEntity
 from homeassistant.components.climate.const import (

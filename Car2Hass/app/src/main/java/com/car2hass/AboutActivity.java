@@ -47,7 +47,7 @@ public class AboutActivity extends BaseLocalizedActivity {
 
             // Crypto
             safeSetup("donateUsdtTrc20", () -> setupDonateRow(R.id.donateUsdtTrc20, getString(R.string.donate_usdt_trc20),
-                    "TRvVmtB2ztxBa324JxtfaUMB3oAvKKJ1X5", R.drawable.qr_usdt_trc20));
+                    "TFyRhHUTqixCzNnXLdZXXZoo3UBkJacWJk", R.drawable.qr_usdt_trc20));
             safeSetup("donateBitcoin", () -> setupDonateRow(R.id.donateBitcoin, getString(R.string.donate_bitcoin),
                     "1NhdHQ14JRx9iV3tshqq7Syj7aMaK38uxg", R.drawable.qr_btc));
             safeSetup("donateEthereum", () -> setupDonateRow(R.id.donateEthereum, getString(R.string.donate_ethereum),

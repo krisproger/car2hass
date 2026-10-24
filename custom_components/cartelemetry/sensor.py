@@ -1,4 +1,4 @@
-"""Sensor platform for diplus2hass — numeric vehicle signals."""
+"""Sensor platform for CARTelemetry — numeric vehicle signals."""
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.const import Platform

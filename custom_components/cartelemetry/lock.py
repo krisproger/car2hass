@@ -1,4 +1,4 @@
-"""Lock platform for diplus2hass — vehicle door lock."""
+"""Lock platform for CARTelemetry — vehicle door lock."""
 
 from homeassistant.components.lock import LockEntity
 from homeassistant.helpers.dispatcher import async_dispatcher_connect

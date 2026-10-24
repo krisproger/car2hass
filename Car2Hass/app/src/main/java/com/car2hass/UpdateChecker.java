@@ -6,7 +6,9 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Environment;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.io.File;
 import java.io.InputStream;
@@ -25,6 +27,10 @@ public final class UpdateChecker {
     public static final String VERSION_URL =
             "https://mytechnic.ru/cartelemetry/api/version/index.php";
 
+    /** Fallback source when the project site is unreachable. */
+    public static final String GITHUB_API =
+            "https://api.github.com/repos/krisproger/car2hass";
+
     /** Endpoint URL for a channel; null/"stable" → the plain release endpoint. */
     public static String versionUrl(String channel) {
         if (channel == null || channel.isEmpty() || "stable".equals(channel)) return VERSION_URL;
@@ -38,15 +44,18 @@ public final class UpdateChecker {
         public final long size;
         public final String notesRu;
         public final String notesEn;
+        /** "site" or "github" — where this update was resolved from. */
+        public final String source;
 
         UpdateInfo(String version, String apkUrl, String sha256, long size,
-                   String notesRu, String notesEn) {
+                   String notesRu, String notesEn, String source) {
             this.version = version;
             this.apkUrl = apkUrl;
             this.sha256 = sha256;
             this.size = size;
             this.notesRu = notesRu;
             this.notesEn = notesEn;
+            this.source = source;
         }
 
         /** Notes in the requested language (ru/en), falls back to the other one. */
@@ -72,10 +81,67 @@ public final class UpdateChecker {
                     o.optString("sha256", ""),
                     o.optLong("size", -1L),
                     wn == null ? "" : wn.optString("ru", ""),
-                    wn == null ? "" : wn.optString("en", ""));
+                    wn == null ? "" : wn.optString("en", ""),
+                    "site");
         } catch (Exception e) {
             return null;
         }
+    }
+
+    /**
+     * Parses GitHub Releases JSON (a single release from /releases/latest or an
+     * array from /releases?per_page=). Picks the newest release allowed by the
+     * channel and requires the {@code Car2Hass_v<version>.apk} asset.
+     */
+    public static UpdateInfo parseGithubReleases(String json, String channel) {
+        try {
+            Object root = new JSONTokener(json).nextValue();
+            boolean beta = "beta".equalsIgnoreCase(channel);
+            if (root instanceof JSONArray) {
+                JSONArray arr = (JSONArray) root;
+                for (int i = 0; i < arr.length(); i++) {
+                    JSONObject o = arr.optJSONObject(i);
+                    if (o == null) continue;
+                    UpdateInfo info = fromGithubRelease(o, beta);
+                    // Skip drafts/channel-mismatched/no-APK releases and keep
+                    // looking for an installable one.
+                    if (info != null) return info;
+                }
+                return null;
+            }
+            return root instanceof JSONObject
+                    ? fromGithubRelease((JSONObject) root, beta) : null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private static UpdateInfo fromGithubRelease(JSONObject release, boolean beta) {
+        if (release == null || release.optBoolean("draft", false)) return null;
+        if (!beta && release.optBoolean("prerelease", false)) return null;
+        String tag = release.optString("tag_name", "");
+        String version = tag.startsWith("v") ? tag.substring(1) : tag;
+        if (version.isEmpty()) return null;
+
+        String apkUrl = "";
+        String sha256 = "";
+        long size = -1L;
+        String wanted = "Car2Hass_v" + version + ".apk";
+        JSONArray assets = release.optJSONArray("assets");
+        if (assets != null) {
+            for (int i = 0; i < assets.length(); i++) {
+                JSONObject a = assets.optJSONObject(i);
+                if (a == null || !wanted.equals(a.optString("name", ""))) continue;
+                apkUrl = a.optString("browser_download_url", "");
+                size = a.optLong("size", -1L);
+                String digest = a.optString("digest", "");
+                if (digest.startsWith("sha256:")) sha256 = digest.substring(7);
+                break;
+            }
+        }
+        if (apkUrl.isEmpty()) return null;
+        return new UpdateInfo(version, apkUrl, sha256, size,
+                release.optString("body", ""), "", "github");
     }
 
     /** Component-wise semver comparison: true when remote > local. */

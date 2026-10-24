@@ -1,4 +1,4 @@
-"""Pure business logic for diplus2hass — no Home Assistant imports.
+"""Pure business logic for CARTelemetry — no Home Assistant imports.
 
 Everything in this module is stdlib-only so it can be unit-tested without
 installing Home Assistant. `__init__.py` delegates to these functions.

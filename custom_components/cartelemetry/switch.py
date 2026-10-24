@@ -1,4 +1,4 @@
-"""Switch platform for diplus2hass — paired on/off vehicle commands."""
+"""Switch platform for CARTelemetry — paired on/off vehicle commands."""
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.helpers.dispatcher import async_dispatcher_connect

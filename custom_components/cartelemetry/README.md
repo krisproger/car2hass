@@ -1,238 +1,87 @@
-# DiPlus-to-hass — Home Assistant Custom Integration
+# CARTelemetry — Vehicle Telemetry for Home Assistant
 
-Custom integration for Home Assistant that receives telemetry from the **DiPlus-to-hass Android app** running on a BYD DiLink head unit.
+Home Assistant custom integration (`custom_components/cartelemetry`) for the
+**Car2Hass** Android app and for **any** app that implements the open telemetry
+contract.
 
-The Android app reads vehicle data via the **DiPlus** app on the head unit (mandatory — it will not work without it) and forwards it to this integration via a single REST endpoint.
+The Android app collects data from whatever sources are available on the head
+unit (vehicle ADB services, optional **DiPlus** on BYD DiLink, **OBD-II**
+adapter, **Voyah CANBus**, system sensors) and pushes snapshots to Home
+Assistant. The integration creates sensors, binary sensors, a device tracker
+and control entities.
+
+- Open API: `POST /api/cartelemetry` — any app can send telemetry.
+- Machine-readable spec: <https://mytechnic.ru/cartelemetry/api/spec/>
+- Site and manual: <https://mytechnic.ru/cartelemetry/>
 
 ## Version lines
 
-The integration has its own version line, independent of the Android app:
+`manifest.json` is the single source of truth for the version (the `version`
+field). The integration has its own version line, independent of the app.
 
-- **Stable** — the default HACS install (currently `3.3.11`).
-- **Beta** — published with `prerelease: true`; opt in via the repository
-  **"Pre-release"** switch in HACS (currently `3.3.12-beta.1`).
-
-`manifest.json` is the single source of truth for the current version (see the `version` field).
+- **Stable** — default HACS install (currently `3.5.4`).
+- **Beta** — published as `prerelease: true`; enable the repository
+  **"Pre-release"** switch in HACS (currently `3.5.5-beta.14`).
 
 ## Features
 
-- **132 BYD vehicle signals** exposed as Home Assistant entities:
-  - numeric `sensor` entities (speed, SOC, temperatures, tyre pressure, …)
-  - `binary_sensor` entities (doors, locks, lights, seatbelts, charging, …)
-  - `device_tracker` entity with GPS coordinates
-- Config-flow setup — add the car directly from the HA UI.
-- Multiple cars supported — each vehicle gets its own device.
-- Developer-info service to inspect active cars and signal counts.
-
-## Requirements
-
-- Home Assistant 2024.x or newer.
-- DiPlus-to-hass Android app installed and running on the BYD head unit.
-- Network connectivity between the head unit and Home Assistant.
-- A Long-Lived Access Token created in Home Assistant and configured in the Android app.
+- **265 signals** in the shared registry; the live set depends on the car:
+  DiPlus (BYD) exposes up to 253, Voyah CANBus up to 171, plus ADB, OBD-II and
+  system channels.
+- Numeric `sensor` entities (speed, SOC, temperatures, tyre pressure, …),
+  `binary_sensor` entities (doors, locks, lights, seatbelts, charging, …),
+  `device_tracker` with GPS, and control entities (lock, climate, switches,
+  numbers, selects, buttons, alarm panel).
+- Config-flow setup; multiple cars supported — each vehicle gets its own device.
+- Event-driven rules and geofences are configured in the Android app.
+- Dashboard car card is copied to `www/community/cartelemetry-card/` at startup.
 
 ## Installation
 
-### HACS (recommended, when published)
+### HACS (recommended)
 
-1. Open HACS → Custom repositories.
-2. Add this repository with category **Integration**.
-3. Install **DiPlus-to-hass — BYD Vehicle Telemetry**.
+1. Install [HACS](https://hacs.xyz/).
+2. **HACS → menu ⋮ → Custom repositories** → add
+   `https://github.com/krisproger/car2hass` (category **Integration**).
+3. **HACS → Integrations** → find **CARTelemetry — Vehicle Telemetry** →
+   **Download**.
 4. Restart Home Assistant.
+5. **Settings → Devices & Services → Add integration → CARTelemetry** → enter a
+   car name (latin, no spaces, e.g. `bydsongpro`).
 
 ### Manual
 
-1. Copy the `diplus2hass` folder into your Home Assistant `custom_components/` directory:
+Download `cartelemetry-vX.Y.Z.zip` from the
+[releases](https://github.com/krisproger/car2hass/releases) or the
+[site](https://mytechnic.ru/cartelemetry/download.php?file=integration),
+extract it, and copy the `cartelemetry/` folder to
+`<config>/custom_components/cartelemetry/`. Restart Home Assistant.
 
-   ```bash
-   cp -r custom_components/diplus2hass /config/custom_components/
-   ```
+## Setup
 
-2. Restart Home Assistant.
-3. Go to **Settings → Devices & services → Add integration** and search for **DiPlus-to-hass — BYD Vehicle Telemetry**.
-
-## Configuration
-
-During setup the integration asks only for the **car name**. This name must match the car name configured in the Android app, because incoming telemetry is routed by `car_name`.
-
-After the config entry is created, the integration exposes the REST endpoint `/api/byd_diplus` and creates sensors, binary sensors and a device tracker automatically as soon as the first batch arrives.
-
-## Performance options
-
-Each vehicle has performance options under **Settings → Devices & services →
-CARTelemetry → Configure**:
-
-- **Write full telemetry history** (`history_replay`) — on by default. When the
-  car reconnects after being offline, the integration replays every buffered
-  value into HA history at its original time. Turning it off records only the
-  latest value per signal (much lower load, but history/tracks have gaps).
-- **History write rate** (`replay_rate`, default 500) — upper bound of telemetry
-  state writes per second for this car. The integration shares one token bucket
-  across all entities of a car, so this bounds the load regardless of how many
-  sensors are enabled.
-- **Adaptive backlog handling** (`adaptive_backlog`, on by default) — batches
-  larger than the threshold are treated as an offline backlog.
-- **Backlog threshold** (`backlog_threshold`, default 30 snapshots) — the size
-  above which the backlog mode applies.
-- **Backlog replay mode** (`backlog_replay`, default `throttled`):
-  - `throttled` — keep full history, rate-limited by `replay_rate` (default);
-  - `latest` — keep only the latest value per signal (lightest on the recorder
-    database; offline-period history is a single snapshot instead of a curve).
-
-## Recorder (database) load
-
-The integration cannot force the HA recorder to skip entities; that is controlled
-globally in `configuration.yaml`. High-frequency signals (speed, GPS, RPM, power)
-generate the most rows. To keep the database small while keeping history at a
-reasonable resolution, exclude the fastest entities from the recorder:
-
-```yaml
-recorder:
-  exclude:
-    entity_globs:
-      - sensor.<car_name>_speed
-      - sensor.<car_name>_engine_rpm
-      - sensor.<car_name>_location_speed
-      - device_tracker.<car_name>_location
-```
-
-Replace `<car_name>` with the configured car name and, if needed, tune the list
-to the signals you do not need in history (Live/current values keep updating in
-the UI even when excluded from the recorder).
-
-## How data flows
-
-```
-BYD head unit (DiLink)
-├─ DiPlus app (mandatory)
-└─ DiPlus-to-hass app
-    └─ POST https://<ha>/api/byd_diplus
-        └─ Home Assistant
-            └─ custom_components/diplus2hass
-                ├─ sensor
-                ├─ binary_sensor
-                └─ device_tracker
-```
-
-## REST endpoint
-
-- **URL:** `/api/byd_diplus`
-- **Method:** `POST`
-- **Authentication:** Home Assistant Bearer token (Long-Lived Access Token)
-- **Content-Type:** `application/json`
-
-### Request body
-
-```json
-{
-  "car_name": "byd_car",
-  "vvn": "VVIN1234567890",
-  "firmware": "Di3.0_13.1.22.2510210.1",
-  "batch": [
-    {"key": "speed", "value": 87.5},
-    {"key": "soc", "value": 72},
-    {"key": "driver_door", "value": "open"},
-    {"key": "latitude", "value": 55.7558},
-    {"key": "longitude", "value": 37.6173}
-  ]
-}
-```
-
-`key` values must match the stable keys defined in `const.py`. Unknown keys are ignored.
-
-## Entity overview
-
-### Numeric sensors (excerpt)
-
-| Key | Entity | Unit |
-|---|---|---|
-| `speed` | Speed | km/h |
-| `soc` | Battery SOC | % |
-| `battery_charge` | Battery Charge | % |
-| `outside_temp` | Outside Temperature | °C |
-| `cabin_temp` | Cabin Temperature | °C |
-| `battery_temp_max` / `avg` / `min` | Battery Temperature | °C |
-| `cell_voltage_max` / `min` | Cell Voltage | V |
-| `tyre_pressure_fl` / `fr` / `rl` / `rr` | Tyre Pressure | kPa |
-| `engine_rpm` | Engine RPM | rpm |
-| `front_motor_rpm` / `rear_motor_rpm` | Motor RPM | rpm |
-| `energy_per_100km` | Energy per 100 km | kWh |
-| `total_energy` | Total Energy Consumption | kWh |
-| `total_fuel` | Total Fuel Consumption | L |
-| `fuel_level` | Fuel Level | % |
-| `steering_angle` | Steering Wheel Angle | ° |
-| `distance_to_car_ahead` | Distance to Car Ahead | m |
-| `battery_12v_voltage` | 12V Battery Voltage | V |
-| `traction_battery_voltage` | Traction Battery Voltage | V |
-| `traction_battery_current` | Traction Battery Current | A |
-| `battery_remaining_charge_time` | Remaining Charge Time | min |
-| `avg_speed` | Average Speed | km/h |
-| `avg_power` | Average Power | kW |
-| `energy_recovery_gear` | Energy Recovery Gear | — |
-| `energy_flow` | Energy Flow | kW |
-| `windows_state` | Windows Aggregate State | — |
-| `doors_state` | Doors Aggregate State | — |
-
-Full list: see `NUMERIC_SENSORS` in `const.py`.
-
-### Binary sensors (excerpt)
-
-| Key | Entity class |
-|---|---|
-| `driver_door` | door |
-| `passenger_door` | door |
-| `rear_left_door` / `rear_right_door` | door |
-| `bonnet` | door |
-| `trunk` | door |
-| `driver_door_lock` | lock |
-| `charging_state` | battery_charging |
-| `low_beam` / `high_beam` | light |
-| `left_turn` / `right_turn` / `hazard` | light |
-| `driver_seatbelt` | safety |
-| `auto_hold` | safety |
-| `ac_state` | cold |
-| `power_state` | power |
-
-Full list: see `BINARY_SENSORS` and `BINARY_ON_MAP` in `const.py`.
-
-### Device tracker
-
-GPS latitude/longitude are exposed as a `device_tracker` entity named `<car_name> Location`.
-
-### Diagnostics entity
-
-Signals unique to a car model are exposed as attributes of a single diagnostics
-entity (`<car_name> Diagnostics`) rather than individual entities. Native
-sensors (commands + universal core sensors) remain regular entities.
+1. Create a **Long-Lived Access Token** in your HA profile.
+2. In the Car2Hass app set the HA address, the token and the **same car name**
+   as in the integration (the name is the registry key).
+3. Open the integration page to see entities and the last-seen timestamp.
 
 ## Services
 
-### `diplus2hass.developer_info`
+- `cartelemetry.send_command` — enqueue a vehicle command (`car_name`,
+  `command`, optional `params`); the app executes it on the car.
+- `cartelemetry.developer_info` — summary of configured cars, VIN, firmware,
+  last seen and signal counts.
 
-Creates a persistent notification with a summary of all configured vehicles:
-- car name
-- virtual VIN (`vvn`)
-- firmware version
-- last seen timestamp
-- number of received signals
+## Requirements
 
-Useful for debugging connectivity from the Android app.
+- Home Assistant 2024.1+
+- One data source: the Car2Hass app (BYD/Voyah head unit, phone with OBD-II) or
+  any app implementing the open API contract.
 
-## Signal source
+## Support
 
-The Android app reads signals via the **DiPlus** app installed on the head unit (mandatory — without it the app will not work) and maps them to stable English keys used by this integration.
-
-The single source of truth for the registry is `signals.yaml` in the parent project; `const.py`, `SIGNALS.md` and the Android `SIGNAL_REGISTRY` are generated from it.
-
-## Security
-
-- The endpoint requires HA authentication. Use a dedicated Long-Lived Access Token in the Android app.
-- Prefer HTTPS when exposing Home Assistant to the head unit network.
-- Do not commit HA tokens to this repository.
-
-## Roadmap
-
-- **Rule-based automatic actions:** for example, if the outside temperature is above 25 °C, automatically turn on seat ventilation to 100 % for occupied seats.
+- Manual: <https://mytechnic.ru/cartelemetry/manual/>
+- Issues: <https://github.com/krisproger/car2hass/issues>
+- Telegram: <https://t.me/bydiplus2hass>
 
 ## License
 

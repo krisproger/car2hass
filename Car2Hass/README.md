@@ -29,7 +29,7 @@ BYD ГУ (DiLink)
     └─ MainActivity (UI)
 
 Home Assistant
-└─ custom_components/diplus2hass
+└─ custom_components/cartelemetry
     ├─ REST endpoint /api/byd_diplus
     ├─ sensor
     ├─ binary_sensor
@@ -101,10 +101,10 @@ adb install -r DiPlus-to-hass/build/DiPlus-to-hass.apk
 
 ## Home Assistant
 
-Скопируйте папку `custom_components/diplus2hass` в конфигурационную директорию HA:
+Скопируйте папку `custom_components/cartelemetry` в конфигурационную директорию HA:
 
 ```bash
-cp -r custom_components/diplus2hass /config/custom_components/
+cp -r custom_components/cartelemetry /config/custom_components/
 ```
 
 Перезапустите HA и добавьте интеграцию **DiPlus-to-hass — BYD Vehicle Telemetry** через UI.

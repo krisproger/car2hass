@@ -1,4 +1,4 @@
-"""Device tracker platform for diplus2hass — GPS location."""
+"""Device tracker platform for CARTelemetry — GPS location."""
 
 try:
     from homeassistant.components.device_tracker.TrackerEntity import TrackerEntity

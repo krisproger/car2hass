@@ -33,8 +33,17 @@ public final class UpdateDownloader {
         AppConfig.setUpdateLastCheckMs(ctx, System.currentTimeMillis());
         String url = UpdateChecker.versionUrl(channel);
         LogBuffer.i("UpdateDownloader", "check: GET " + url);
-        String body = httpGet(ctx, url);
-        UpdateChecker.UpdateInfo info = UpdateChecker.parseResponse(body);
+        UpdateChecker.UpdateInfo info;
+        try {
+            info = UpdateChecker.parseResponse(httpGet(ctx, url));
+        } catch (Exception siteError) {
+            // The site is the primary source; fall back to GitHub Releases.
+            LogBuffer.w("UpdateDownloader", "check: site failed ("
+                    + siteError.getClass().getSimpleName() + ": " + siteError.getMessage()
+                    + "), trying GitHub");
+            info = checkGithub(ctx, channel);
+            if (info == null) throw siteError;
+        }
         if (info == null) {
             LogBuffer.i("UpdateDownloader", "check: no release published (channel=" + channel + ")");
             return null;
@@ -54,19 +63,49 @@ public final class UpdateDownloader {
         return info;
     }
 
+    /**
+     * Resolves the latest release from GitHub. Used only when the project site
+     * is unreachable; null when GitHub is also unavailable or the release has
+     * no APK asset.
+     */
+    static UpdateChecker.UpdateInfo checkGithub(Context ctx, String channel) {
+        boolean beta = "beta".equalsIgnoreCase(channel);
+        String url = beta
+                ? UpdateChecker.GITHUB_API + "/releases?per_page=15"
+                : UpdateChecker.GITHUB_API + "/releases/latest";
+        try {
+            String body = httpGet(ctx, url);
+            UpdateChecker.UpdateInfo info =
+                    UpdateChecker.parseGithubReleases(body, beta ? "beta" : "stable");
+            LogBuffer.i("UpdateDownloader", "github check: "
+                    + (info == null ? "no APK release" : info.version) + " url=" + url);
+            return info;
+        } catch (Exception e) {
+            LogBuffer.w("UpdateDownloader", "github check failed: "
+                    + e.getClass().getSimpleName() + ": " + e.getMessage());
+            return null;
+        }
+    }
+
     /** Fetches the latest published release info, regardless of installed version. */
     public static UpdateChecker.UpdateInfo fetchLatest(Context ctx, String channel) throws Exception {
         String url = UpdateChecker.versionUrl(channel);
         LogBuffer.i("UpdateDownloader", "fetchLatest: GET " + url);
-        String body = httpGet(ctx, url);
-        UpdateChecker.UpdateInfo info = UpdateChecker.parseResponse(body);
+        UpdateChecker.UpdateInfo info;
+        try {
+            info = UpdateChecker.parseResponse(httpGet(ctx, url));
+        } catch (Exception siteError) {
+            LogBuffer.w("UpdateDownloader", "fetchLatest: site failed, trying GitHub");
+            info = checkGithub(ctx, channel);
+            if (info == null) throw siteError;
+        }
         LogBuffer.i("UpdateDownloader", "fetchLatest: version="
                 + (info == null ? "none" : info.version)
                 + " size=" + (info == null ? -1 : info.size));
         return info;
     }
 
-    private static String httpGet(Context ctx, String url) throws Exception {
+    static String httpGet(Context ctx, String url) throws Exception {
         try {
             HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection();
             conn.setConnectTimeout(10_000);
@@ -289,6 +328,30 @@ public final class UpdateDownloader {
      */
     public static File download(Context ctx, UpdateChecker.UpdateInfo info,
                                 DownloadProgress progress) throws IOException {
+        try {
+            return downloadOnce(ctx, info, progress);
+        } catch (IOException siteError) {
+            // Site check worked but the APK transfer failed: retry from GitHub
+            // for the same version (only when the info came from the site).
+            if (!"site".equals(info.source)) throw siteError;
+            LogBuffer.w("UpdateDownloader", "download: site failed ("
+                    + siteError.getMessage() + "), trying GitHub");
+            UpdateChecker.UpdateInfo fallback =
+                    checkGithub(ctx, AppConfig.getUpdateChannel(ctx));
+            if (fallback == null || !fallback.version.equals(info.version)
+                    || fallback.apkUrl.isEmpty()) {
+                LogBuffer.w("UpdateDownloader", "download: GitHub fallback unavailable for "
+                        + info.version);
+                throw siteError;
+            }
+            LogBuffer.i("UpdateDownloader", "download: retrying " + fallback.version
+                    + " from GitHub: " + fallback.apkUrl);
+            return downloadOnce(ctx, fallback, progress);
+        }
+    }
+
+    private static File downloadOnce(Context ctx, UpdateChecker.UpdateInfo info,
+                                     DownloadProgress progress) throws IOException {
         File dir = ctx.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
         if (dir == null) dir = ctx.getCacheDir();
         if (!dir.exists() && !dir.mkdirs()) throw new IOException("cannot create " + dir);

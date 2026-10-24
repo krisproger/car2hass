@@ -1,6 +1,6 @@
 """Shared test configuration: make the integration modules importable.
 
-`custom_components/diplus2hass/__init__.py` imports Home Assistant, which is
+`custom_components/cartelemetry/__init__.py` imports Home Assistant, which is
 not installed in the dev environment, so tests import the pure submodules
 (const, core, commands) directly from the integration directory instead of
 through the package.

@@ -5,11 +5,11 @@ __pycache__/
 .pytest_cache/
 
 # Android build outputs
-DiPlus-to-hass/build/
-DiPlus-to-hass/.gradle/
-DiPlus-to-hass/app/build/
-DiPlus-to-hass/libs/
-DiPlus-to-hass/build_counter.txt
+Car2Hass/build/
+Car2Hass/.gradle/
+Car2Hass/app/build/
+Car2Hass/libs/
+Car2Hass/build_counter.txt
 *.apk
 *.apk.idsig
 
@@ -19,7 +19,7 @@ DiPlus-to-hass/build_counter.txt
 *.keystore
 
 # Local configs with credentials
-DiPlus-to-hass/test/config.json
+Car2Hass/test/config.json
 local.properties
 
 # Logs
@@ -37,4 +37,4 @@ Thumbs.db
 site/
 # Caches from test runs
 .pytest_cache/
-DiPlus-to-hass/.pytest_cache/
+Car2Hass/.pytest_cache/

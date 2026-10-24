@@ -2,13 +2,13 @@
 
 ## Русский
 
-### 1. Установите DiPlus на головное устройство
+### 1. Подготовьте источники данных на головном устройстве
 
-Приложение **DiPlus** — обязательный источник данных. Без него Car2Hass работать не будет.
+Car2Hass сам определяет доступные источники: сервисы ADB автомобиля, **Voyah CANBus**, **OBD-II** (Bluetooth) и системные датчики. Для BYD DiLink опционально установите **DiPlus** — он даёт максимум сигналов:
 
 1. Скачайте [diplus.1.3.8-beta18.apk](https://mytechnic.ru/cartelemetry/download.php?file=diplus).
 2. Установите на ГУ (флешка, мессенджер, ADB), запустите и выдайте разрешения.
-3. Проверьте, что DiPlus показывает данные автомобиля.
+3. Убедитесь, что DiPlus показывает данные автомобиля.
 
 ### 2. Установите интеграцию Home Assistant
 
@@ -18,17 +18,17 @@
 
 1. Убедитесь, что в HA установлен [HACS](https://hacs.xyz/).
 2. **HACS → Integrations → меню ⋮ (вверху справа) → Custom repositories**.
-3. В поле Repository вставьте `https://github.com/krisproger/diplustohass`, категория — **Integration** → **Add**.
-4. Найдите в HACS **CARTelemetry — BYD Vehicle Telemetry** и нажмите **Download**.
+3. В поле Repository вставьте `https://github.com/krisproger/car2hass`, категория — **Integration** → **Add**.
+4. Найдите в HACS **CARTelemetry — Vehicle Telemetry** и нажмите **Download**.
 5. Перезапустите Home Assistant.
-6. **Настройки → Устройства и службы → Добавить интеграцию** → **CARTelemetry — BYD Vehicle Telemetry**.
+6. **Настройки → Устройства и службы → Добавить интеграцию** → **CARTelemetry — Vehicle Telemetry**.
 7. Введите имя автомобиля латиницей без пробелов (например, `BYDSongPRO`) — оно станет префиксом сущностей.
 
 Обновления интеграции будут приходить через HACS автоматически.
 
 #### Способ B. Вручную (без HACS)
 
-1. Скачайте [diplus2hass-v2.1.2.zip](https://mytechnic.ru/cartelemetry/download.php?file=integration) и распакуйте.
+1. Скачайте [cartelemetry-v3.5.4.zip](https://mytechnic.ru/cartelemetry/download.php?file=integration) и распакуйте.
 2. Скопируйте папку `custom_components/cartelemetry` в `/config/custom_components/`.
 
     ```bash
@@ -38,7 +38,7 @@
     **При обновлении:** сначала полностью удалите старую папку, затем копируйте новую — перезапись поверх приводит к смешанному набору файлов и ошибкам импорта.
 
 3. Перезапустите Home Assistant.
-4. **Настройки → Устройства и службы → Добавить интеграцию** → **CARTelemetry — BYD Vehicle Telemetry**.
+4. **Настройки → Устройства и службы → Добавить интеграцию** → **CARTelemetry — Vehicle Telemetry**.
 5. Введите имя автомобиля латиницей без пробелов (например, `BYDSongPRO`) — оно станет префиксом сущностей.
 
 ### 3. Создайте Long-Lived Access Token
@@ -47,7 +47,7 @@
 
 ### 4. Установите приложение
 
-1. Скачайте [diplus2hass-v2.1.2.apk](https://mytechnic.ru/cartelemetry/download.php?file=app).
+1. Скачайте [car2hass-v3.5.4.apk](https://mytechnic.ru/cartelemetry/download.php?file=app) или APK из [GitHub Releases](https://github.com/krisproger/car2hass/releases) (включая beta).
 2. Установите на ГУ, при первом запуске выдайте разрешения на геолокацию (в т.ч. фоновую).
 
 ### 5. Привяжите приложение к HA
@@ -76,9 +76,9 @@
 
 ## English
 
-### 1. Install DiPlus on the head unit
+### 1. Prepare data sources on the head unit
 
-The **DiPlus** app is the mandatory data source — Car2Hass will not work without it.
+Car2Hass detects available sources itself: vehicle ADB services, **Voyah CANBus**, **OBD-II** (Bluetooth) and system sensors. For BYD DiLink, optionally install **DiPlus** — it provides the largest signal set:
 
 1. Download [diplus.1.3.8-beta18.apk](https://mytechnic.ru/cartelemetry/download.php?file=diplus).
 2. Install it (USB, messenger, ADB), launch and grant permissions.
@@ -92,17 +92,17 @@ Two methods — via HACS (recommended) or manually.
 
 1. Make sure [HACS](https://hacs.xyz/) is installed in your HA.
 2. **HACS → Integrations → ⋮ menu (top right) → Custom repositories**.
-3. Paste `https://github.com/krisproger/diplustohass` into Repository, choose category **Integration** → **Add**.
-4. Find **CARTelemetry — BYD Vehicle Telemetry** in HACS and click **Download**.
+3. Paste `https://github.com/krisproger/car2hass` into Repository, choose category **Integration** → **Add**.
+4. Find **CARTelemetry — Vehicle Telemetry** in HACS and click **Download**.
 5. Restart Home Assistant.
-6. **Settings → Devices & Services → Add integration** → **CARTelemetry — BYD Vehicle Telemetry**.
+6. **Settings → Devices & Services → Add integration** → **CARTelemetry — Vehicle Telemetry**.
 7. Enter a car name (latin, no spaces — e.g. `BYDSongPRO`); it becomes the entity prefix.
 
 Integration updates will arrive via HACS automatically.
 
 #### Method B. Manually (no HACS)
 
-1. Download [diplus2hass-v2.1.2.zip](https://mytechnic.ru/cartelemetry/download.php?file=integration) and extract it.
+1. Download [cartelemetry-v3.5.4.zip](https://mytechnic.ru/cartelemetry/download.php?file=integration) and extract it.
 2. Copy `custom_components/cartelemetry` into `/config/custom_components/`.
 
     ```bash
@@ -112,7 +112,7 @@ Integration updates will arrive via HACS automatically.
     **When upgrading:** fully delete the old folder first — copying over it leaves a mixed set of files and import errors.
 
 3. Restart Home Assistant.
-4. **Settings → Devices & Services → Add integration** → **CARTelemetry — BYD Vehicle Telemetry**.
+4. **Settings → Devices & Services → Add integration** → **CARTelemetry — Vehicle Telemetry**.
 5. Enter a car name (latin, no spaces — e.g. `BYDSongPRO`); it becomes the entity prefix.
 
 ### 3. Create a Long-Lived Access Token
@@ -121,7 +121,7 @@ HA user profile → **Long-Lived Access Tokens** → create and copy the token (
 
 ### 4. Install the app
 
-1. Download [diplus2hass-v2.1.2.apk](https://mytechnic.ru/cartelemetry/download.php?file=app).
+1. Download [car2hass-v3.5.4.apk](https://mytechnic.ru/cartelemetry/download.php?file=app) or an APK from [GitHub Releases](https://github.com/krisproger/car2hass/releases) (betas included).
 2. Install it and grant location permissions (including background).
 
 ### 5. Link the app to Home Assistant

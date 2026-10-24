@@ -12,7 +12,7 @@ Universal vehicle telemetry platform for **Home Assistant**: the HA integration
   and receive commands. Machine-readable spec: `https://mytechnic.ru/cartelemetry/api/spec/`.
 - **Car2Hass app** — self-starting collector that probes available sources:
   BYD DiPlus (head unit), ADB, system sensors, **OBD-II over Bluetooth** (ELM327),
-  **Voyah CAN** (Qinggan CanBus, 29 parameters), and more.
+  **Voyah CAN** (Qinggan CanBus, 171 parameters), and more.
 - **Auto-detection** — the car brand is chosen by the live channel (DiPlus → BYD,
   Voyah CANBus → Voyah); within the brand a heavy sensor pass scores the profile.
 - **Works on phones too** — plug an OBD2 Bluetooth adapter and get telemetry into HA.
@@ -24,9 +24,11 @@ Universal vehicle telemetry platform for **Home Assistant**: the HA integration
 | **HA integration** | [`custom_components/cartelemetry/`](custom_components/cartelemetry/) |
 | **Android app (Car2Hass)** | [`Car2Hass/`](Car2Hass/) |
 | Manual (MkDocs) | [`mkdocs/`](mkdocs/) |
-| Open API spec | [`docs/cartelemetry/api/spec/`](custom_components/cartelemetry/) (generated) |
+| Open API spec | <https://mytechnic.ru/cartelemetry/api/spec/> (generated) |
 
-APK downloads and the online manual: <https://mytechnic.ru/cartelemetry/>
+APK downloads: [GitHub Releases](https://github.com/krisproger/car2hass/releases)
+(stable + betas with APK assets) and <https://mytechnic.ru/cartelemetry/>.
+Online manual: <https://mytechnic.ru/cartelemetry/manual/>.
 
 ## Installation
 
@@ -40,7 +42,8 @@ APK downloads and the online manual: <https://mytechnic.ru/cartelemetry/>
 5. **Settings → Devices & Services → Add integration → CARTelemetry** → enter a car
    name (latin, no spaces, e.g. `bydsongpro`).
 
-Updates arrive through HACS (the project publishes releases tagged `vX.Y.Z`).
+Updates arrive through HACS (the project publishes releases tagged `vX.Y.Z`;
+betas are `prerelease` — enable **Pre-release** in HACS to use them).
 
 ### Manual (no HACS)
 

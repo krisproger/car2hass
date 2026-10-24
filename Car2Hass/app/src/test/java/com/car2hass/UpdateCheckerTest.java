@@ -4,6 +4,7 @@ public class UpdateCheckerTest {
     public static void main(String[] args) {
         testIsNewer();
         testParseResponse();
+        testParseGithubReleases();
         System.out.println("All UpdateChecker tests passed.");
     }
 
@@ -43,6 +44,49 @@ public class UpdateCheckerTest {
         if (UpdateChecker.parseResponse("{\"ok\":false}") != null)
             throw new AssertionError("ok=false must yield null");
         if (UpdateChecker.parseResponse("not json") != null)
+            throw new AssertionError("garbage must yield null");
+    }
+
+    private static void testParseGithubReleases() {
+        String json = "["
+                + "{\"tag_name\":\"v3.5.5-beta.15\",\"draft\":false,\"prerelease\":true,"
+                + "\"body\":\"beta notes\",\"assets\":[{\"name\":\"Car2Hass_v3.5.5-beta.15.apk\","
+                + "\"browser_download_url\":\"https://github.com/x/beta15.apk\",\"size\":123,"
+                + "\"digest\":\"sha256:abcdef\"}]},"
+                + "{\"tag_name\":\"v3.5.4\",\"draft\":false,\"prerelease\":false,"
+                + "\"body\":\"stable notes\",\"assets\":[{\"name\":\"Car2Hass_v3.5.4.apk\","
+                + "\"browser_download_url\":\"https://github.com/x/stable.apk\",\"size\":456,"
+                + "\"digest\":\"sha256:123456\"}]},"
+                + "{\"tag_name\":\"v3.5.5-beta.16\",\"draft\":true,\"prerelease\":true,"
+                + "\"assets\":[]}"
+                + "]";
+
+        UpdateChecker.UpdateInfo beta = UpdateChecker.parseGithubReleases(json, "beta");
+        check(beta != null, "beta release parsed");
+        if (!"3.5.5-beta.15".equals(beta.version)) throw new AssertionError("beta version=" + beta.version);
+        if (!"github".equals(beta.source)) throw new AssertionError("beta source=" + beta.source);
+        if (!"abcdef".equals(beta.sha256)) throw new AssertionError("beta sha=" + beta.sha256);
+        if (beta.size != 123) throw new AssertionError("beta size=" + beta.size);
+        if (!"beta notes".equals(beta.notes("ru"))) throw new AssertionError("beta notes");
+        if (!"beta notes".equals(beta.notes("en"))) throw new AssertionError("notes fallback");
+
+        UpdateChecker.UpdateInfo stable = UpdateChecker.parseGithubReleases(json, "stable");
+        check(stable != null, "stable release parsed");
+        if (!"3.5.4".equals(stable.version)) throw new AssertionError("stable version=" + stable.version);
+        if (!"123456".equals(stable.sha256)) throw new AssertionError("stable sha=" + stable.sha256);
+
+        // A release without the expected APK asset cannot be installed.
+        String noApk = "{\"tag_name\":\"v9.9.9\",\"draft\":false,\"prerelease\":false,"
+                + "\"assets\":[{\"name\":\"other.apk\",\"browser_download_url\":\"https://x\"}]}";
+        if (UpdateChecker.parseGithubReleases(noApk, "stable") != null)
+            throw new AssertionError("release without APK must be ignored");
+
+        // Stable channel rejects a prerelease single-object payload.
+        String pre = "{\"tag_name\":\"v9.9.9-beta.1\",\"draft\":false,\"prerelease\":true,\"assets\":[]}";
+        if (UpdateChecker.parseGithubReleases(pre, "stable") != null)
+            throw new AssertionError("stable must reject prerelease");
+
+        if (UpdateChecker.parseGithubReleases("not json", "beta") != null)
             throw new AssertionError("garbage must yield null");
     }
 

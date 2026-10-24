@@ -15,7 +15,7 @@
 
 ## Криптовалюта
 
-- **USDT (TRC20):** `TRvVmtB2ztxBa324JxtfaUMB3oAvKKJ1X5`
+- **USDT (TRC20):** `TFyRhHUTqixCzNnXLdZXXZoo3UBkJacWJk`
 - **Bitcoin (BTC):** `1NhdHQ14JRx9iV3tshqq7Syj7aMaK38uxg`
 - **Ethereum (ETH):** `0x4100f28e4c650423eb351fc005c97b8d620d1494`
 

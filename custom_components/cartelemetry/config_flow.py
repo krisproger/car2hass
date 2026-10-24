@@ -1,4 +1,4 @@
-"""Config flow for diplus2hass integration."""
+"""Config flow for CARTelemetry integration."""
 
 import re
 
@@ -39,7 +39,7 @@ def _validate_car_name(car_name: str) -> str | None:
 
 
 class CartelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for diplus2hass."""
+    """Handle a config flow for CARTelemetry."""
 
     VERSION = 1
 
@@ -80,7 +80,7 @@ class CartelemetryConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 
 class OptionsFlow(config_entries.OptionsFlow):
-    """Options flow for diplus2hass."""
+    """Options flow for CARTelemetry."""
 
     async def async_step_init(self, user_input=None):
         errors = {}

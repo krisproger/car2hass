@@ -1,4 +1,4 @@
-"""Select platform for diplus2hass — enum vehicle command setters."""
+"""Select platform for CARTelemetry — enum vehicle command setters."""
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.helpers.dispatcher import async_dispatcher_connect

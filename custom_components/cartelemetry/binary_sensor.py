@@ -1,4 +1,4 @@
-"""Binary sensor platform for diplus2hass — door, seatbelt, light states."""
+"""Binary sensor platform for CARTelemetry — door, seatbelt, light states."""
 
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.const import Platform

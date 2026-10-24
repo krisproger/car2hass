@@ -1,4 +1,4 @@
-"""Button platform for diplus2hass — one-shot vehicle commands."""
+"""Button platform for CARTelemetry — one-shot vehicle commands."""
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.helpers.dispatcher import async_dispatcher_connect

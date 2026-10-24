@@ -11,7 +11,7 @@ import java.util.List;
 
 public class SnapshotQueue {
     // Half of the HA integration's MAX_BATCH_SNAPSHOTS (1000, custom_components/
-    // diplus2hass/__init__.py). Keep the app chunk below that hard limit so a flush
+    // cartelemetry/__init__.py). Keep the app chunk below that hard limit so a flush
     // never gets rejected as "too many snapshots" — keep both values in sync.
     public static final int DEQUEUE_CHUNK_SIZE = 500;
 

@@ -1,4 +1,4 @@
-"""Alarm control panel platform for diplus2hass — sentry mode."""
+"""Alarm control panel platform for CARTelemetry — sentry mode."""
 
 from homeassistant.components.alarm_control_panel import (
     AlarmControlPanelEntity,

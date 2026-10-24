@@ -1,4 +1,4 @@
-"""Number platform for diplus2hass — numeric vehicle command setters."""
+"""Number platform for CARTelemetry — numeric vehicle command setters."""
 
 from homeassistant.components.number import NumberEntity
 from homeassistant.helpers.dispatcher import async_dispatcher_connect

@@ -236,7 +236,7 @@ async def _heartbeat_ping(hass: HomeAssistant, entry_id: str) -> None:
 
 
 async def async_setup_entry(hass: HomeAssistant, entry):
-    """Set up diplus2hass from a config entry."""
+    """Set up CARTelemetry from a config entry."""
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {
         "data": {},
