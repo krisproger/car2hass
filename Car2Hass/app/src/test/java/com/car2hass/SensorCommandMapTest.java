@@ -23,7 +23,7 @@ import java.util.Set;
  * (e.g. {@code close}, {@code on}) instead of the translated sensor state
  * (e.g. {@code closed}, {@code open}).</p>
  *
- * <p>Run from the project root (DiPlus-to-hass) so the asset can be read by
+ * <p>Run from the project root (Car2Hass) so the asset can be read by
  * relative path. No Android runtime dependency.</p>
  */
 public class SensorCommandMapTest {
@@ -116,7 +116,7 @@ public class SensorCommandMapTest {
         File f = new File(MAP_PATH);
         if (!f.exists()) {
             throw new AssertionError("map file not found at " + f.getAbsolutePath()
-                    + " (run from the DiPlus-to-hass project root)");
+                    + " (run from the Car2Hass project root)");
         }
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(

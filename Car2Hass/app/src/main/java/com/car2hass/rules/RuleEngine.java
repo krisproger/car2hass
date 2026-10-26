@@ -39,6 +39,8 @@ public class RuleEngine {
     // change instead of on the whole condition group.
     private final RuleTriggerLogic triggerLogic = new RuleTriggerLogic();
     private final Set<String> firedOncePerSession = new HashSet<>();
+    /** Rules already logged as disabled this session (avoid per-tick spam). */
+    private final Set<String> disabledLogged = new HashSet<>();
     // Rising-edge debounce: rule id → timestamp when its condition first became
     // true in the current true-period. Used by the holdSeconds gate.
     private final java.util.HashMap<String, Long> conditionTrueSince = new java.util.HashMap<>();
@@ -114,6 +116,7 @@ public class RuleEngine {
         triggerLogic.reset();
         conditionTrueSince.clear();
         firedOncePerSession.clear();
+        disabledLogged.clear();
         LogBuffer.i("RuleEngine", "Engine stopped");
     }
 
@@ -122,6 +125,7 @@ public class RuleEngine {
         guard.clear();
         firedOncePerSession.clear();
         conditionTrueSince.clear();
+        disabledLogged.clear();
         // Prune state for deleted rules but keep the rest, so merely editing
         // a rule does not cause it to re-fire as a false rising edge.
         try {
@@ -219,6 +223,16 @@ public class RuleEngine {
 
     private void evaluateRule(Rule rule) {
         if (rule.id == null) return;
+        // Disabled rules must never evaluate conditions, update edge state or
+        // enqueue actions. The evaluator also guards, but skipping early keeps
+        // disabled rules from consuming cooldowns/edges.
+        if (!rule.enabled) {
+            if (disabledLogged.add(rule.id)) {
+                LogBuffer.i("RuleEngine", "Rule '" + rule.name
+                        + "' disabled — skipped | " + RuleDescribe.config(rule));
+            }
+            return;
+        }
 
         long now = System.currentTimeMillis();
 

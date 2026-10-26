@@ -27,7 +27,7 @@ import java.util.Set;
  *
  * <p>No Android runtime dependency: the JSON is read by relative path and fed to
  * {@link NativeCommandMap#parse}; {@link CommandRegistry} is compiled against the
- * test-only {@link R} stub. Run from the project root (DiPlus-to-hass).
+ * test-only {@link R} stub. Run from the project root (Car2Hass).
  */
 public class NativeCommandMapTest {
 
@@ -190,7 +190,7 @@ public class NativeCommandMapTest {
         File f = new File(MAP_PATH);
         if (!f.exists()) {
             throw new AssertionError("map file not found at " + f.getAbsolutePath()
-                    + " (run from the DiPlus-to-hass project root)");
+                    + " (run from the Car2Hass project root)");
         }
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = new BufferedReader(new InputStreamReader(

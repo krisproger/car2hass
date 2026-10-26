@@ -9,7 +9,7 @@ import java.util.List;
  *
  * <p>No Android runtime dependency: {@link NativeCommandMap} is fed the asset
  * JSON by relative path, {@link CommandRegistry} compiles against the test-only
- * {@link R} stub. Run from the project root (DiPlus-to-hass).
+ * {@link R} stub. Run from the project root (Car2Hass).
  */
 public class CommandWriterTest {
 

@@ -30,7 +30,7 @@ Thumbs.db
 logs/
 *.log
 CANMonitor_log*.txt
-DiPlusToHass_log*.txt
+Car2Hass_log*.txt
 
 # Android captures / outputs
 captures/

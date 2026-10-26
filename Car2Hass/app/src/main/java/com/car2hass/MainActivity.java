@@ -457,7 +457,7 @@ public class MainActivity extends BaseLocalizedActivity {
         rulesAdapter = new RulesListAdapter(this, new ArrayList<>(),
                 (rule, enabled) -> {
                     RuleRegistry.upsert(this, rule);
-                    notifyRuleEngineChanged();
+                    markRulesChanged("rule_toggle");
                 },
                 rule -> {
                     showRuleActionsDialog(rule);
@@ -627,7 +627,7 @@ public class MainActivity extends BaseLocalizedActivity {
                 .setPositiveButton(R.string.rules_delete, (d, w) -> {
                     RuleRegistry.delete(this, rule.id);
                     setupRules();
-                    notifyRuleEngineChanged();
+                    markRulesChanged("rule_delete");
                     Toast.makeText(this, getString(R.string.rules_deleted), Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton(R.string.menu_cancel, null)
@@ -778,6 +778,18 @@ public class MainActivity extends BaseLocalizedActivity {
         if (telemetryService != null && telemetryService.getRuleEngine() != null) {
             telemetryService.getRuleEngine().onRulesChanged();
         }
+    }
+
+    /**
+     * Marks rules.json as locally modified (newest-wins cloud sync) and pushes
+     * it. Toggling/deleting a rule must bump the mtime, otherwise the next
+     * app_start sync downloads the older cloud copy and re-enables the rule
+     * (or resurrects a deleted one).
+     */
+    private void markRulesChanged(String reason) {
+        AppConfig.touchCloudFileMtimeMs(this, CloudSettingsPayload.FILE_RULES);
+        CloudSettingsSync.syncAsync(this, reason);
+        notifyRuleEngineChanged();
     }
 
     private void initListeners() {
@@ -5068,6 +5080,8 @@ public class MainActivity extends BaseLocalizedActivity {
                 if (obj != null) importedRules.add(Rule.fromJson(obj));
             }
             RuleRegistry.save(this, importedRules);
+            AppConfig.touchCloudFileMtimeMs(this, CloudSettingsPayload.FILE_RULES);
+            CloudSettingsSync.syncAsync(this, "config_import_rules");
         }
 
         org.json.JSONArray geoArr = cfg.optJSONArray("geofences");

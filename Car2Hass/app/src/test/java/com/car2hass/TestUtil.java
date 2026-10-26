@@ -13,7 +13,7 @@ public final class TestUtil {
 
     private TestUtil() {}
 
-    /** Reads a file relative to the project root (DiPlus-to-hass). */
+    /** Reads a file relative to the project root (Car2Hass). */
     public static String loadMap(String path) throws Exception {
         File f = new File(path);
         if (!f.isFile()) {
