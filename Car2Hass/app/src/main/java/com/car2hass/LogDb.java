@@ -140,6 +140,16 @@ public final class LogDb extends SQLiteOpenHelper implements LogRecordStore {
     }
 
     @Override
+    public void resetSending() {
+        SQLiteDatabase db = getWritableDatabase();
+        android.content.ContentValues cv = new android.content.ContentValues();
+        cv.put("sent", LogFlags.UNSENT);
+        cv.putNull("upload_id");
+        db.update(T_LOG, cv, "sent=?", new String[]{String.valueOf(LogFlags.SENDING)});
+        db.update(T_CRASH, cv, "sent=?", new String[]{String.valueOf(LogFlags.SENDING)});
+    }
+
+    @Override
     public int deleteLogsBefore(long ts) {
         return getWritableDatabase().delete(T_LOG, "ts<?", new String[]{String.valueOf(ts)});
     }

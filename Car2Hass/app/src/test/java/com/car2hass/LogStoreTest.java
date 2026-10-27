@@ -13,6 +13,7 @@ public class LogStoreTest {
         testDedupOnlyResendsUnsent();
         testRetentionPruneFiveDays();
         testVersionPurge();
+        testResetSending();
 
         System.out.println("All LogStore tests passed.");
     }
@@ -78,6 +79,16 @@ public class LogStoreTest {
         LogRetention.apply(store, 2L, "1.0.0", "2.0.0");
         assertEquals(0L, store.countLogs(), "all logs purged on version change");
         assertEquals(0L, store.countCrashes(), "all crashes purged on version change");
+    }
+
+    /** A process killed during send leaves sent=1; startup recovery must make it unsent. */
+    private static void testResetSending() {
+        InMemoryLogStore store = new InMemoryLogStore();
+        long id = store.insertLog(1L, "I", "t", "stuck", "app");
+        store.markSendingLogs(java.util.Collections.singletonList(id), "u1");
+        assertEquals(0, store.unsentLogs(10).size(), "claimed record is not unsent");
+        store.resetSending();
+        assertEquals(1, store.unsentLogs(10).size(), "stale sending record becomes unsent");
     }
 
     private static void assertEquals(long expected, long actual, String what) {
@@ -187,5 +198,11 @@ public class LogStoreTest {
             for (Object[] r : logs) if ((long) r[0] == id) return true;
             return false;
         }
+        @Override public void resetSending() {
+            for (Object[] r : logs) if ((int) r[6] == LogFlags.SENDING) { r[6] = LogFlags.UNSENT; r[7] = null; }
+            for (Object[] r : crashes) if ((int) r[4] == LogFlags.SENDING) { r[4] = LogFlags.UNSENT; r[5] = null; }
+        }
+
+
     }
 }

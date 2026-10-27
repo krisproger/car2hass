@@ -62,8 +62,7 @@ public final class LogSendController {
             try {
                 LogManager lm = LogManager.get();
                 if (lm != null) {
-                    lm.uploadNowBlocking();
-                    sent = lm.unsentLogCount() + lm.unsentCrashCount() == 0;
+                    sent = lm.uploadNowBlocking();
                 }
             } catch (Exception e) {
                 LogBuffer.e("Main", "uploadLogToServer failed: " + e.getMessage());

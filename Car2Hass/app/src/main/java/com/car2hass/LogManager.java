@@ -22,8 +22,10 @@ public final class LogManager {
     private static final String KEY_FIRST_RUN = "first_run_done";
     private static final String KEY_LAST_AUTO_UPLOAD = "last_auto_upload_ms";
     private static final String KEY_LAST_CRASH_UPLOAD = "last_crash_upload_ms";
+    private static final String KEY_LAST_FAILED_UPLOAD = "last_failed_upload_ms";
 
     private static final long FLUSH_INTERVAL_MS = 5000L;
+    private static final long FAILED_RETRY_INTERVAL_MS = 5L * 60 * 1000;
     private static final int BLOCK_SIZE = 20;
     private static final int BATCH_LIMIT = 500;
     private static final int MAX_DRAIN_BATCHES = 20;
@@ -73,6 +75,9 @@ public final class LogManager {
 
     /** Starts the background flusher and runs one-time maintenance. */
     public void start() {
+        try { db.resetSending(); } catch (Exception e) {
+            LogBuffer.e("LogManager", "resetSending: " + e.getMessage());
+        }
         executor.execute(this::runMaintenance);
         executor.scheduleWithFixedDelay(this::flushNow,
                 FLUSH_INTERVAL_MS, FLUSH_INTERVAL_MS, TimeUnit.MILLISECONDS);
@@ -84,6 +89,7 @@ public final class LogManager {
             buffer.flush();
             LogBuffer.flush();
             maybeAutoUpload();
+            maybeRetryFailed();
         } catch (Exception e) {
             LogBuffer.e("LogManager", "flush: " + e.getMessage());
         }
@@ -102,9 +108,10 @@ public final class LogManager {
         });
     }
 
-    /** Blocking variant of {@link #uploadNow()} for the user send action. */
-    public int uploadNowBlocking() {
+    /** Blocking variant for the user send action; true when every unsent record was accepted. */
+    public boolean uploadNowBlocking() {
         try {
+            db.resetSending();
             buffer.flush();
         } catch (Exception e) {
             LogBuffer.e("LogManager", "uploadNowBlocking flush: " + e.getMessage());
@@ -112,19 +119,24 @@ public final class LogManager {
         return uploadDrainBlocking(MAX_DRAIN_BATCHES);
     }
 
-    /** Drains up to {@code maxBatches} batches on the caller thread; returns records attempted. */
-    public int uploadDrainBlocking(int maxBatches) {
-        int attempted = 0;
+    /** Drains up to {@code maxBatches} batches; stops at the first failed batch. */
+    public boolean uploadDrainBlocking(int maxBatches) {
         try {
             for (int i = 0; i < maxBatches; i++) {
-                int n = runUpload();
-                attempted += n;
-                if (n <= 0) break;
+                LogUploadCoordinator.Result r = runUpload();
+                if (!r.ok) {
+                    markFailed();
+                    return false;
+                }
+                if (r.attempted <= 0) break;
             }
+            markSuccess();
+            return unsentLogCount() + unsentCrashCount() == 0;
         } catch (Exception e) {
             LogBuffer.e("LogManager", "uploadDrainBlocking: " + e.getMessage());
+            markFailed();
+            return false;
         }
-        return attempted;
     }
 
     public long unsentLogCount() {
@@ -179,14 +191,34 @@ public final class LogManager {
         runUpload();
     }
 
-    private int runUpload() {
+    private LogUploadCoordinator.Result runUpload() {
         try {
             String preamble = LogExportHelper.buildPreamble(ctx);
             return new LogUploadCoordinator(db, p -> LogUploader.uploadPayload(ctx, p), BATCH_LIMIT, preamble)
                     .uploadOnce();
         } catch (Exception e) {
             LogBuffer.e("LogManager", "upload: " + e.getMessage());
-            return 0;
+            return new LogUploadCoordinator.Result(0, false);
+        }
+    }
+
+    private void maybeRetryFailed() {
+        if (unsentLogCount() + unsentCrashCount() <= 0) return;
+        long now = System.currentTimeMillis();
+        long last = prefs().getLong(KEY_LAST_FAILED_UPLOAD, 0L);
+        if (last <= 0L || now - last < FAILED_RETRY_INTERVAL_MS) return;
+        prefs().edit().putLong(KEY_LAST_FAILED_UPLOAD, now).apply();
+        LogUploadCoordinator.Result r = runUpload();
+        if (r.ok && unsentLogCount() + unsentCrashCount() == 0) markSuccess();
+    }
+
+    private void markFailed() {
+        prefs().edit().putLong(KEY_LAST_FAILED_UPLOAD, System.currentTimeMillis()).apply();
+    }
+
+    private void markSuccess() {
+        if (prefs().getLong(KEY_LAST_FAILED_UPLOAD, 0L) != 0L) {
+            prefs().edit().remove(KEY_LAST_FAILED_UPLOAD).apply();
         }
     }
 

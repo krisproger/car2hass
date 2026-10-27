@@ -31,12 +31,19 @@ public final class LogUploadCoordinator {
         this.preamble = preamble == null ? "" : preamble;
     }
 
-    /** Returns the number of records attempted; 0 when nothing was unsent. */
-    public int uploadOnce() {
+    /** Outcome of one batch: how many records were attempted and whether the server accepted. */
+    public static final class Result {
+        public final int attempted;
+        public final boolean ok;
+        public Result(int attempted, boolean ok) { this.attempted = attempted; this.ok = ok; }
+    }
+
+    /** Sends one batch; attempted=0 when nothing is unsent. */
+    public Result uploadOnce() {
         List<LogRecord> logs = LogUploadPolicy.selectForUpload(
                 store.unsentLogs(batchLimit), LogUploadPolicy.MAX_UPLOAD_BYTES);
         List<CrashRecord> crashes = store.unsentCrashes(batchLimit);
-        if (logs.isEmpty() && crashes.isEmpty()) return 0;
+        if (logs.isEmpty() && crashes.isEmpty()) return new Result(0, true);
 
         String uploadId = "log-" + System.currentTimeMillis();
         store.markSendingLogs(ids(logs), uploadId);
@@ -56,7 +63,7 @@ public final class LogUploadCoordinator {
             store.resetLogs(ids(logs));
             store.resetCrashes(crashIds(crashes));
         }
-        return logs.size() + crashes.size();
+        return new Result(logs.size() + crashes.size(), ok);
     }
 
     private static List<Long> ids(List<LogRecord> logs) {

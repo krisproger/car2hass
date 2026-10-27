@@ -40,6 +40,9 @@ public interface LogRecordStore {
     /** Failed send: resets {@code sent=1} back to {@code sent=0} for retry. */
     void resetCrashes(List<Long> ids);
 
+    /** Startup recovery: rows left in {@code SENDING} by a killed process become UNSENT. */
+    void resetSending();
+
     int deleteLogsBefore(long ts);
 
     void purgeAllLogs();
