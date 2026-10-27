@@ -44,12 +44,8 @@ public final class UploadQueueWorker {
                 awaiting.add(e);
                 continue;
             }
-            if (e.tries == ATTEMPTS_BEFORE_ASK) {
-                // pause before the second batch of attempts
-                try { Thread.sleep(PAUSE_MS); } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                }
-            }
+            // Do not sleep here: this method runs on a shared background worker.
+            // The entry keeps its try counter and is retried on the next flush.
             UploadQueue.update(ctx, e);
         }
 
@@ -76,8 +72,7 @@ public final class UploadQueueWorker {
                 // instead of rebuilding and re-sending the whole journal.
                 LogManager lm = LogManager.get();
                 if (lm == null) return false;
-                lm.uploadNowBlocking();
-                return lm.unsentLogCount() + lm.unsentCrashCount() == 0;
+                return lm.uploadNowBlocking();
             }
             ProbeUploader.Result r = ProbeUploader.uploadResult(ctx, e.path);
             if (r.ok) return true;

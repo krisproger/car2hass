@@ -87,8 +87,17 @@ def _schedule_data_dispatch(hass: HomeAssistant, entry_id: str) -> None:
         store["_dispatch_scheduled"] = False
         store["_dispatch_cancel"] = None
         if DOMAIN in hass.data and entry_id in hass.data[DOMAIN]:
-            async_dispatcher_send(hass, SIGNAL_VEHICLE_DATA_UPDATED)
-            async_dispatcher_send(hass, entry_signal(entry_id))
+            # Each send is isolated: a listener that raises (e.g. a stale
+            # phone-discovery callback after a reload) must not prevent the
+            # per-entry signal from reaching the actual entities.
+            try:
+                async_dispatcher_send(hass, SIGNAL_VEHICLE_DATA_UPDATED)
+            except Exception:
+                _LOGGER.exception("dispatch global signal failed")
+            try:
+                async_dispatcher_send(hass, entry_signal(entry_id))
+            except Exception:
+                _LOGGER.exception("dispatch entry signal failed for %s", entry_id)
 
     store["_dispatch_cancel"] = hass.loop.call_later(
         core.DISPATCH_DEBOUNCE_SEC, _fire

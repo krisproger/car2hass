@@ -64,7 +64,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             for signal_key, cfg in phone_configs
         ]
         if phone_entities:
-            async_add_entities(phone_entities)
+            hass.add_job(async_add_entities, phone_entities)
 
     discover_phone()
     config_entry.async_on_unload(

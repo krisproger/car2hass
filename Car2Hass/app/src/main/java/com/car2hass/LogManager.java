@@ -28,7 +28,7 @@ public final class LogManager {
     private static final long FAILED_RETRY_INTERVAL_MS = 5L * 60 * 1000;
     private static final int BLOCK_SIZE = 20;
     private static final int BATCH_LIMIT = 500;
-    private static final int MAX_DRAIN_BATCHES = 20;
+    private static final int MAX_DRAIN_BATCHES = 50;
 
     private static volatile LogManager instance;
 
@@ -119,19 +119,28 @@ public final class LogManager {
         return uploadDrainBlocking(MAX_DRAIN_BATCHES);
     }
 
-    /** Drains up to {@code maxBatches} batches; stops at the first failed batch. */
+    /** Drains up to {@code maxBatches} batches; stops at the first failed batch.
+     *  Success means "every selected batch was accepted", not "the queue is now
+     *  empty": new log lines arrive while the upload is running and must not turn
+     *  a successful send into an error toast. */
     public boolean uploadDrainBlocking(int maxBatches) {
         try {
+            int sent = 0;
             for (int i = 0; i < maxBatches; i++) {
                 LogUploadCoordinator.Result r = runUpload();
                 if (!r.ok) {
                     markFailed();
+                    LogBuffer.w("LogManager", "upload stopped: batch failed after " + sent + " batch(es)");
                     return false;
                 }
                 if (r.attempted <= 0) break;
+                sent++;
             }
             markSuccess();
-            return unsentLogCount() + unsentCrashCount() == 0;
+            long left = unsentLogCount() + unsentCrashCount();
+            LogBuffer.i("LogManager", "upload finished: batches=" + sent + ", remaining=" + left
+                    + " (new records are sent on the next run)");
+            return true;
         } catch (Exception e) {
             LogBuffer.e("LogManager", "uploadDrainBlocking: " + e.getMessage());
             markFailed();

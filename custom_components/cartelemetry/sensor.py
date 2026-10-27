@@ -63,7 +63,9 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
             for signal_key, cfg in phone_configs
         ]
         if phone_entities:
-            async_add_entities(phone_entities)
+            # Never call async_add_entities from a stale/other loop or thread:
+            # schedule it on the current HA loop instead.
+            hass.add_job(async_add_entities, phone_entities)
 
     discover_phone()
     config_entry.async_on_unload(

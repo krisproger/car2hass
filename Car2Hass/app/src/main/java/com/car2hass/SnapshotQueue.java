@@ -10,10 +10,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SnapshotQueue {
-    // Half of the HA integration's MAX_BATCH_SNAPSHOTS (1000, custom_components/
-    // cartelemetry/__init__.py). Keep the app chunk below that hard limit so a flush
-    // never gets rejected as "too many snapshots" — keep both values in sync.
-    public static final int DEQUEUE_CHUNK_SIZE = 500;
+    // Deliberately much smaller than the HA integration's MAX_BATCH_SNAPSHOTS
+    // (1000): a 500-snapshot offline batch can take longer than the 10s HTTP
+    // timeout on a slow head unit / HA instance and then retry forever
+    // (head-of-line). 100 keeps a single POST small and lets the queue drain
+    // steadily.
+    public static final int DEQUEUE_CHUNK_SIZE = 100;
 
     private static final String DB_NAME = "snapshot_queue.db";
     private static final int DB_VERSION = 4;
