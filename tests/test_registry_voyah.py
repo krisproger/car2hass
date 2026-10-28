@@ -29,8 +29,11 @@ def test_voyah_descriptors_reference_known_params():
             assert v["vs"] in known, f"{s['key']}: {v['vs']} not in VehicleState table"
         else:
             mapped.append((s["key"], v.get("method") or v.get("signal")
-                           or v.get("ac") or v.get("tx")))
-            assert v.get("method") or v.get("signal") or v.get("ac") or v.get("tx"), \
+                           or v.get("ac") or v.get("tx") or v.get("odometer")
+                           or v.get("odometer_range")))
+            assert (v.get("method") or v.get("signal") or v.get("ac")
+                    or v.get("tx") or v.get("odometer")
+                    or v.get("odometer_range")), \
                 f"{s['key']}: empty voyah descriptor"
     assert mapped, "no voyah mappings generated"
 

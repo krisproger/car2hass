@@ -450,6 +450,10 @@ CHANNELS_PRIORITY = ["system", "dumpsys", "adb", "diplus", "voyah",
 
 def voyah_descriptor(key):
     """Voyah read descriptor for a registry key, or None when unreadable."""
+    if key == "odometer":
+        return {"odometer": True}
+    if key == "range":
+        return {"odometer_range": True}
     if key in VOYAH_TX_FIRST and key in VOYAH_RAW_TX:
         code, kind = VOYAH_RAW_TX[key]
         return {"tx": "%d:%s" % (code, kind)}

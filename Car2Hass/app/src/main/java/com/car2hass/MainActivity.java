@@ -4862,43 +4862,16 @@ public class MainActivity extends BaseLocalizedActivity {
 
         final String finalBaseUrl = baseUrl;
         new Thread(() -> {
-            try {
-                URL url = new URL(finalBaseUrl + "/api/");
-                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setRequestMethod("GET");
-                conn.setRequestProperty("Authorization", "Bearer " + token);
-                conn.setConnectTimeout(5000);
-                conn.setReadTimeout(5000);
-                // Surface redirects instead of silently following them (a moved
-                // domain is the most common cause of the intermittent 500/SSL
-                // failures we see in the field).
-                conn.setInstanceFollowRedirects(false);
-
-                int code = conn.getResponseCode();
-                String location = conn.getHeaderField("Location");
-                conn.disconnect();
-
-                runOnUiThread(() -> {
-                    if (code == 200) {
-                        tvTestResult.setTextColor(attrColor(R.attr.carAccentGreen));
-                        tvTestResult.setText(getString(R.string.settings_test_ok, code));
-                        testVehicleEndpoint(finalBaseUrl, token);
-                        HassClient.requestFlushNow(MainActivity.this, null);
-                    } else if (code >= 300 && code < 400) {
-                        tvTestResult.setTextColor(attrColor(R.attr.carAccentYellow));
-                        String where = location != null && !location.isEmpty() ? " → " + location : "";
-                        tvTestResult.setText(getString(R.string.settings_test_redirect, code) + where);
-                    } else {
-                        tvTestResult.setTextColor(attrColor(R.attr.carAccentRed));
-                        tvTestResult.setText(getString(R.string.settings_test_error, "HTTP " + code));
-                    }
-                });
-            } catch (Exception e) {
-                runOnUiThread(() -> {
-                    tvTestResult.setTextColor(attrColor(R.attr.carAccentRed));
-                    tvTestResult.setText(diagnoseConnectionError(e));
-                });
-            }
+            HaDiagnostics.Result result = HaDiagnostics.run(finalBaseUrl, token);
+            runOnUiThread(() -> {
+                tvTestResult.setTextColor(attrColor(result.httpOk
+                        ? R.attr.carAccentGreen : R.attr.carAccentRed));
+                tvTestResult.setText(result.report);
+                if (result.httpOk) {
+                    testVehicleEndpoint(finalBaseUrl, token);
+                    HassClient.requestFlushNow(MainActivity.this, null);
+                }
+            });
         }).start();
     }
 

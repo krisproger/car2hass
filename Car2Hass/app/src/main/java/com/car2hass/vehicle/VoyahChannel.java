@@ -612,6 +612,20 @@ public class VoyahChannel implements DataChannel {
                 String ac = VOYAH_AC_METHODS.get(key);
                 if (ac != null) value = accept(key, readAirConditionValue(cachedIfaceClass, iface, ac));
             }
+            // getSecondaryOdometer returns -1 on the tested firmware; the
+            // getOdometer() Odometer object still exposes the real values.
+            if (value == null && "odometer".equals(key)) {
+                value = accept(key, readOdometerObject(cachedIfaceClass, iface,
+                        "mTotalTravelingMileage"));
+            }
+            if (value == null && "range".equals(key)) {
+                value = accept(key, readOdometerObject(cachedIfaceClass, iface,
+                        "mCanTravelMileage_real"));
+                if (value == null) {
+                    value = accept(key, readOdometerObject(cachedIfaceClass, iface,
+                            "mEVCruisingRange_real"));
+                }
+            }
         }
         if (value == null) value = readRawTx(key);
         return value;
@@ -671,6 +685,75 @@ public class VoyahChannel implements DataChannel {
             return true;
         } catch (NoSuchMethodException e) {
             return false;
+        }
+    }
+
+    private static String readOdometerObject(Class<?> ifaceClass, Object iface, String field) {
+        Object o = invokeGetterObject(ifaceClass, iface, "getOdometer");
+        return extractOdometerField(o, field);
+    }
+
+    /** Extracts a numeric field from the Odometer object (getter, field or toString). */
+    static String extractOdometerField(Object o, String field) {
+        if (o == null || field == null || field.isEmpty()) return null;
+        String getter = "get" + field.substring(0, 1).toUpperCase() + field.substring(1);
+        try {
+            Method m = o.getClass().getMethod(getter);
+            Object v = m.invoke(o);
+            if (v instanceof Number) return normalizeOdometer(((Number) v).doubleValue());
+        } catch (Exception ignored) {
+        }
+        try {
+            Field f = o.getClass().getDeclaredField(field);
+            f.setAccessible(true);
+            Object v = f.get(o);
+            if (v instanceof Number) return normalizeOdometer(((Number) v).doubleValue());
+        } catch (Exception ignored) {
+        }
+        try {
+            java.util.regex.Matcher m = java.util.regex.Pattern
+                    .compile(java.util.regex.Pattern.quote(field) + "=([-0-9.]+)")
+                    .matcher(String.valueOf(o));
+            if (m.find()) return normalizeOdometer(Double.parseDouble(m.group(1)));
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+
+    private static String normalizeOdometer(double d) {
+        if (Double.isNaN(d) || Double.isInfinite(d) || d < 0) return null;
+        if (d == Math.rint(d)) return String.valueOf((long) d);
+        return String.valueOf(d);
+    }
+
+    /** Probe: odometer from getOdometer().mTotalTravelingMileage. */
+    public static ProbeResult readOdometerParam() {
+        try {
+            Class<?> iface = loadDeviceClass(IFACE_CLASS);
+            if (iface == null) return ProbeResult.unsupported();
+            Object svc = stubAsInterface(iface, findBinder());
+            if (svc == null) return ProbeResult.unsupported();
+            String v = readOdometerObject(iface, svc, "mTotalTravelingMileage");
+            if (v == null) return ProbeResult.unsupported();
+            return sentinelAware(v);
+        } catch (Exception e) {
+            return ProbeResult.error(e.getMessage());
+        }
+    }
+
+    /** Probe: range from getOdometer() (total, then EV fallback). */
+    public static ProbeResult readOdometerRangeParam() {
+        try {
+            Class<?> iface = loadDeviceClass(IFACE_CLASS);
+            if (iface == null) return ProbeResult.unsupported();
+            Object svc = stubAsInterface(iface, findBinder());
+            if (svc == null) return ProbeResult.unsupported();
+            String v = readOdometerObject(iface, svc, "mCanTravelMileage_real");
+            if (v == null) v = readOdometerObject(iface, svc, "mEVCruisingRange_real");
+            if (v == null) return ProbeResult.unsupported();
+            return sentinelAware(v);
+        } catch (Exception e) {
+            return ProbeResult.error(e.getMessage());
         }
     }
 
