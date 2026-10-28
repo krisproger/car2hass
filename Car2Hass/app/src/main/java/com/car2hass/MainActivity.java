@@ -868,6 +868,10 @@ public class MainActivity extends BaseLocalizedActivity {
             try {
                 final byte[] logBytes = LogExportHelper.buildLogBytes(this, takeResearchPath());
                 final Uri uri = LogExportHelper.saveLogToDownloads(this, logBytes);
+                if (uri != null) {
+                    LogManager lm = LogManager.get();
+                    if (lm != null) lm.purgeAfterExport();
+                }
                 handler.post(() -> {
                     String message = uri != null
                             ? getString(R.string.log_saved, logBytes.length)

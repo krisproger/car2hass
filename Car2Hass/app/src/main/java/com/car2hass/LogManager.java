@@ -148,6 +148,19 @@ public final class LogManager {
         }
     }
 
+    /** Manual file export succeeded: the DB copy is no longer needed. */
+    public void purgeAfterExport() {
+        executor.execute(() -> {
+            try {
+                db.purgeAllLogs();
+                db.purgeAllCrashes();
+                LogBuffer.i("LogManager", "DB logs purged after file export");
+            } catch (Exception e) {
+                LogBuffer.e("LogManager", "purgeAfterExport: " + e.getMessage());
+            }
+        });
+    }
+
     public long unsentLogCount() {
         try { return db.countLogs(); } catch (Exception e) { return 0; }
     }

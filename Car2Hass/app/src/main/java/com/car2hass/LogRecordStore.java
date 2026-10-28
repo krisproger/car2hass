@@ -45,6 +45,17 @@ public interface LogRecordStore {
 
     int deleteLogsBefore(long ts);
 
+    int deleteCrashesBefore(long ts);
+
+    /** Legacy rows (schema v1) have no version; attribute them to this version. */
+    void assignVersionToNull(String version);
+
+    /** Delete logs whose recorded app version is not in the keep set (or null). */
+    void deleteLogsNotInVersions(java.util.Set<String> keep);
+
+    /** Delete crashes whose recorded app version is not in the keep set (or null). */
+    void deleteCrashesNotInVersions(java.util.Set<String> keep);
+
     void purgeAllLogs();
 
     void purgeAllCrashes();

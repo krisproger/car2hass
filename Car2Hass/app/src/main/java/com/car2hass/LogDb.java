@@ -18,13 +18,15 @@ import java.util.List;
 public final class LogDb extends SQLiteOpenHelper implements LogRecordStore {
 
     private static final String DB_NAME = "car2hass_logs.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
 
     private static final String T_LOG = "log_records";
     private static final String T_CRASH = "crash_records";
+    private final String appVersion;
 
     public LogDb(Context ctx) {
         super(ctx, DB_NAME, null, DB_VERSION);
+        this.appVersion = AppInfo.getVersionName(ctx);
     }
 
     @Override
@@ -37,7 +39,8 @@ public final class LogDb extends SQLiteOpenHelper implements LogRecordStore {
                 + "msg TEXT,"
                 + "sent INTEGER DEFAULT 0,"
                 + "upload_id TEXT,"
-                + "source TEXT)");
+                + "source TEXT,"
+                + "version TEXT)");
         db.execSQL("CREATE INDEX idx_log_sent_ts ON " + T_LOG + " (sent, ts)");
         db.execSQL("CREATE TABLE " + T_CRASH + " ("
                 + "id INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -45,15 +48,19 @@ public final class LogDb extends SQLiteOpenHelper implements LogRecordStore {
                 + "stacktrace TEXT,"
                 + "log_snapshot TEXT,"
                 + "sent INTEGER DEFAULT 0,"
-                + "upload_id TEXT)");
+                + "upload_id TEXT,"
+                + "version TEXT)");
         db.execSQL("CREATE INDEX idx_crash_sent_ts ON " + T_CRASH + " (sent, ts)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + T_LOG);
-        db.execSQL("DROP TABLE IF EXISTS " + T_CRASH);
-        onCreate(db);
+        // Never drop user logs on upgrade. v2 adds the app-version column used
+        // by retention (keep current + previous, delete older).
+        if (oldVersion < 2) {
+            db.execSQL("ALTER TABLE " + T_LOG + " ADD COLUMN version TEXT");
+            db.execSQL("ALTER TABLE " + T_CRASH + " ADD COLUMN version TEXT");
+        }
     }
 
     @Override
@@ -65,6 +72,7 @@ public final class LogDb extends SQLiteOpenHelper implements LogRecordStore {
         cv.put("msg", msg);
         cv.put("sent", LogFlags.UNSENT);
         cv.put("source", source);
+        cv.put("version", appVersion);
         return getWritableDatabase().insert(T_LOG, null, cv);
     }
 
@@ -75,6 +83,7 @@ public final class LogDb extends SQLiteOpenHelper implements LogRecordStore {
         cv.put("stacktrace", stacktrace);
         cv.put("log_snapshot", logSnapshot);
         cv.put("sent", LogFlags.UNSENT);
+        cv.put("version", appVersion);
         return getWritableDatabase().insert(T_CRASH, null, cv);
     }
 
@@ -152,6 +161,41 @@ public final class LogDb extends SQLiteOpenHelper implements LogRecordStore {
     @Override
     public int deleteLogsBefore(long ts) {
         return getWritableDatabase().delete(T_LOG, "ts<?", new String[]{String.valueOf(ts)});
+    }
+
+    @Override
+    public int deleteCrashesBefore(long ts) {
+        return getWritableDatabase().delete(T_CRASH, "ts<?", new String[]{String.valueOf(ts)});
+    }
+
+    @Override
+    public void assignVersionToNull(String version) {
+        SQLiteDatabase db = getWritableDatabase();
+        android.content.ContentValues cv = new android.content.ContentValues();
+        cv.put("version", version);
+        db.update(T_LOG, cv, "version IS NULL OR version=''", null);
+        db.update(T_CRASH, cv, "version IS NULL OR version=''", null);
+    }
+
+    @Override
+    public void deleteLogsNotInVersions(java.util.Set<String> keep) {
+        deleteNotInVersions(T_LOG, keep);
+    }
+
+    @Override
+    public void deleteCrashesNotInVersions(java.util.Set<String> keep) {
+        deleteNotInVersions(T_CRASH, keep);
+    }
+
+    private void deleteNotInVersions(String table, java.util.Set<String> keep) {
+        if (keep == null || keep.isEmpty()) {
+            getWritableDatabase().delete(table, null, null);
+            return;
+        }
+        StringBuilder where = new StringBuilder("version IS NULL OR version='' OR version NOT IN (");
+        for (int i = 0; i < keep.size(); i++) where.append(i == 0 ? "?" : ",?");
+        where.append(')');
+        getWritableDatabase().delete(table, where.toString(), keep.toArray(new String[0]));
     }
 
     @Override

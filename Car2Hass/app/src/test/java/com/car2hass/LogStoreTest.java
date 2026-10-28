@@ -12,7 +12,8 @@ public class LogStoreTest {
         testFlagLifecycle();
         testDedupOnlyResendsUnsent();
         testRetentionPruneFiveDays();
-        testVersionPurge();
+        testVersionRetention();
+        testLegacyVersionAssigned();
         testResetSending();
 
         System.out.println("All LogStore tests passed.");
@@ -68,17 +69,34 @@ public class LogStoreTest {
         assertEquals("fresh", left.get(0).msg, "the fresh log survives");
     }
 
-    /** A new app version purges every previous record. */
-    private static void testVersionPurge() {
+    /** Upgrade keeps current + previous version, deletes older ones. */
+    private static void testVersionRetention() {
         InMemoryLogStore store = new InMemoryLogStore();
-        store.insertLog(1L, "I", "t", "old-version-log", "app");
-        store.insertCrash(1L, "boom", "snapshot");
-        assertEquals(1L, store.countLogs(), "one log before purge");
-        assertEquals(1L, store.countCrashes(), "one crash before purge");
+        store.version = "0.9.0";
+        store.insertLog(1L, "I", "t", "old", "app");
+        store.insertCrash(1L, "old-boom", "snapshot");
+        store.version = "1.0.0";
+        store.insertLog(2L, "I", "t", "prev", "app");
+        store.insertCrash(2L, "prev-boom", "snapshot");
+        store.version = "2.0.0";
+        store.insertLog(3L, "I", "t", "current", "app");
+        store.insertCrash(3L, "current-boom", "snapshot");
 
+        LogRetention.apply(store, 4L, "1.0.0", "2.0.0");
+        assertEquals(2L, store.countLogs(), "current and previous logs kept");
+        assertEquals(2L, store.countCrashes(), "current and previous crashes kept");
+        List<LogRecord> left = store.unsentLogs(10);
+        assertEquals("prev", left.get(0).msg, "previous version survives");
+        assertEquals("current", left.get(1).msg, "current version survives");
+    }
+
+    /** Legacy (schema v1) rows without a version are attributed to previous. */
+    private static void testLegacyVersionAssigned() {
+        InMemoryLogStore store = new InMemoryLogStore();
+        store.version = null;
+        store.insertLog(1L, "I", "t", "legacy", "app");
         LogRetention.apply(store, 2L, "1.0.0", "2.0.0");
-        assertEquals(0L, store.countLogs(), "all logs purged on version change");
-        assertEquals(0L, store.countCrashes(), "all crashes purged on version change");
+        assertEquals(1L, store.countLogs(), "legacy row kept as previous-version");
     }
 
     /** A process killed during send leaves sent=1; startup recovery must make it unsent. */
@@ -104,14 +122,15 @@ public class LogStoreTest {
         private final List<Object[]> logs = new ArrayList<>();
         private final List<Object[]> crashes = new ArrayList<>();
         private long nextId = 1;
+        String version = "1.0.0";
 
         @Override public long insertLog(long ts, String level, String tag, String msg, String source) {
-            logs.add(new Object[]{nextId, ts, level, tag, msg, source, LogFlags.UNSENT, null});
+            logs.add(new Object[]{nextId, ts, level, tag, msg, source, LogFlags.UNSENT, null, version});
             return nextId++;
         }
 
         @Override public long insertCrash(long ts, String stacktrace, String logSnapshot) {
-            crashes.add(new Object[]{nextId, ts, stacktrace, logSnapshot, LogFlags.UNSENT, null});
+            crashes.add(new Object[]{nextId, ts, stacktrace, logSnapshot, LogFlags.UNSENT, null, version});
             return nextId++;
         }
 
@@ -167,6 +186,25 @@ public class LogStoreTest {
             int before = logs.size();
             logs.removeIf(r -> (long) r[1] < ts);
             return before - logs.size();
+        }
+
+        @Override public int deleteCrashesBefore(long ts) {
+            int before = crashes.size();
+            crashes.removeIf(r -> (long) r[1] < ts);
+            return before - crashes.size();
+        }
+
+        @Override public void assignVersionToNull(String v) {
+            for (Object[] r : logs) if (r[8] == null || "".equals(r[8])) r[8] = v;
+            for (Object[] r : crashes) if (r[6] == null || "".equals(r[6])) r[6] = v;
+        }
+
+        @Override public void deleteLogsNotInVersions(java.util.Set<String> keep) {
+            logs.removeIf(r -> r[8] == null || !keep.contains((String) r[8]));
+        }
+
+        @Override public void deleteCrashesNotInVersions(java.util.Set<String> keep) {
+            crashes.removeIf(r -> r[6] == null || !keep.contains((String) r[6]));
         }
 
         @Override public void purgeAllLogs() { logs.clear(); }

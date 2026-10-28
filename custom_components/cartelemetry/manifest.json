@@ -1,7 +1,7 @@
 {
   "domain": "cartelemetry",
   "name": "CARTelemetry — Vehicle Telemetry",
-  "version": "3.5.5-beta.19",
+  "version": "3.5.5-beta.20",
   "requirements": [],
   "dependencies": [],
   "codeowners": [
