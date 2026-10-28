@@ -140,6 +140,9 @@ public class RuleEngine {
             LogBuffer.w("RuleEngine", "onRulesChanged prune error: " + e.getMessage());
         }
         LogBuffer.i("RuleEngine", "Rules changed — state pruned");
+        // Re-log every rule's enabled flag: cloud sync can re-enable a rule and
+        // this is the only place where that change becomes visible.
+        logLoadedRules();
     }
 
     private void loadPreviousConditions() {
@@ -366,7 +369,8 @@ public class RuleEngine {
                         + "' | " + RuleDescribe.config(rule));
                 continue;
             }
-            LogBuffer.i("RuleEngine", "Rule '" + rule.name + "' " + (fireBranch ? "action" : "else") + ": " + chineseCmd);
+            LogBuffer.i("RuleEngine", "Rule '" + rule.name + "' id=" + rule.id + " "
+                    + (fireBranch ? "action" : "else") + ": " + chineseCmd);
             // Route through the serial command queue (native/diplus fallback +
             // status verification) instead of a fire-and-forget DiPlus send.
             com.car2hass.CommandQueue.enqueue(appContext, action.commandId,

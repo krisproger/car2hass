@@ -51,10 +51,36 @@ public final class CommandQueue {
     public static void enqueue(Context ctx, String commandId, String value,
                                CommandExecutor.Source source, Callback callback) {
         if (ctx == null || commandId == null) return;
+        // Audit window commands with the caller stack: a "disabled rule fired"
+        // report must be provable from the device log alone. The stack identifies
+        // UI preset, HA poller, RuleEngine or any unexpected worker.
+        if (commandId.startsWith("window") || "windows_close_all".equals(commandId)
+                || "windows_vent".equals(commandId)) {
+            LogBuffer.i("CommandQueue", "enqueue [" + source + "] " + commandId
+                    + "=" + value + " thread=" + Thread.currentThread().getName()
+                    + " stack=" + callerStack());
+        }
         QUEUE.offer(new Task(ctx, commandId, value, source, callback));
         if (STARTED.compareAndSet(false, true)) {
             PROCESSOR.execute(CommandQueue::run);
         }
+    }
+
+    /** Short caller stack (4 frames) for the window-command audit. */
+    private static String callerStack() {
+        StackTraceElement[] st = new Throwable().getStackTrace();
+        StringBuilder sb = new StringBuilder();
+        int n = 0;
+        for (StackTraceElement e : st) {
+            String c = e.getClassName();
+            if (c.equals(CommandQueue.class.getName())) continue;
+            if (sb.length() > 0) sb.append(" <- ");
+            sb.append(c.substring(c.lastIndexOf('.') + 1))
+              .append('.').append(e.getMethodName())
+              .append(':').append(e.getLineNumber());
+            if (++n >= 4) break;
+        }
+        return sb.toString();
     }
 
     private static void run() {

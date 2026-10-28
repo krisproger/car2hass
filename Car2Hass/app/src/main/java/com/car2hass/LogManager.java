@@ -28,7 +28,7 @@ public final class LogManager {
     private static final long FAILED_RETRY_INTERVAL_MS = 5L * 60 * 1000;
     private static final int BLOCK_SIZE = 20;
     private static final int BATCH_LIMIT = 500;
-    private static final int MAX_DRAIN_BATCHES = 50;
+    private static final int MAX_DRAIN_BATCHES = 1000;
 
     private static volatile LogManager instance;
 
