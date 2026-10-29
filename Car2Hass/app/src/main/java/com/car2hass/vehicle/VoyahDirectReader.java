@@ -54,12 +54,6 @@ public final class VoyahDirectReader {
         if ("battery_12v_voltage".equals(key)) {
             return s.batteryValid ? String.format(Locale.US, "%.1f", s.batteryVolts) : null;
         }
-        if ("odometer".equals(key)) {
-            return s.odometerValid ? String.valueOf(Math.round(s.odometerTotal)) : null;
-        }
-        if ("range".equals(key)) {
-            return s.odometerValid ? String.valueOf(Math.round(s.range)) : null;
-        }
         VoyahDirectCodec.Doors d = VoyahDirectCodec.doors(s.doors);
         if (!d.valid) return null;
         switch (key) {
@@ -86,7 +80,7 @@ public final class VoyahDirectReader {
         int[] doors = readInts(TX_DOORS);
         float[] fuel = readFuel();
         int[] battery = readInts(TX_BATTERY);
-        float[] odo = readFloats(TX_ODOMETER);
+        int[] odo = readInts(TX_ODOMETER);
         VoyahDirectCodec.Fuel f = fuel == null ? new VoyahDirectCodec.Fuel(false, 0f)
                 : VoyahDirectCodec.fuel((int) fuel[0], (int) fuel[1], fuel[2], (int) fuel[3]);
         VoyahDirectCodec.Battery b = battery == null ? new VoyahDirectCodec.Battery(false, 0f)
@@ -117,7 +111,7 @@ public final class VoyahDirectReader {
             int[] doors = readInts(TX_DOORS);
             float[] fuel = readFuel();
             int[] battery = readInts(TX_BATTERY);
-            float[] odo = readFloats(TX_ODOMETER);
+            int[] odo = readInts(TX_ODOMETER);
             if (doors != null) o.put("door_raw", new org.json.JSONArray(doors));
             if (fuel != null) {
                 org.json.JSONArray a = new org.json.JSONArray();
@@ -129,11 +123,7 @@ public final class VoyahDirectReader {
             if (bcm != null && bcm.rawValue != null) {
                 o.put("input_volt_for_bcm", bcm.rawValue);
             }
-            if (odo != null) {
-                org.json.JSONArray a = new org.json.JSONArray();
-                for (float v : odo) a.put(v);
-                o.put("odometer_raw", a);
-            }
+            if (odo != null) o.put("odometer_raw", new org.json.JSONArray(odo));
             o.put("can_box_version", canBoxVersion());
         } catch (Exception e) {
             try { o.put("error", e.getMessage()); } catch (Exception ignored) {}
@@ -169,23 +159,6 @@ public final class VoyahDirectReader {
             float pct = reply.readFloat();
             int shortage = reply.dataAvail() >= 4 ? reply.readInt() : 0;
             return new float[]{capacity, remain, pct, shortage};
-        } catch (Exception e) {
-            return null;
-        } finally {
-            reply.recycle();
-        }
-    }
-
-    private static float[] readFloats(int tx) {
-        Parcel reply = call(tx);
-        if (reply == null) return null;
-        try {
-            reply.readException();
-            if (reply.readInt() == 0) return null;
-            int count = Math.min(6, reply.dataAvail() / 4);
-            float[] out = new float[count];
-            for (int i = 0; i < count; i++) out[i] = reply.readFloat();
-            return out.length < 6 ? null : out;
         } catch (Exception e) {
             return null;
         } finally {

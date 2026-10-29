@@ -51,18 +51,12 @@ public final class VoyahDirectCodec {
     }
 
     public static Doors doors(int[] raw) {
-        if (raw == null) return Doors.invalid();
-        if (raw.length == 6) {
-            boolean sideValid = raw[1] >= 0 && raw[2] >= 0 && raw[4] >= 0 && raw[5] >= 0;
-            return new Doors(sideValid, raw[3] >= 0, raw[0] > 0,
-                    raw[1] > 0, raw[2] > 0, raw[4] > 0, raw[5] > 0, raw[3] > 0);
-        }
-        if (raw.length == 10) {
-            boolean sideValid = raw[1] >= 0 && raw[3] >= 0 && raw[6] >= 0 && raw[8] >= 0;
-            return new Doors(sideValid, raw[5] >= 0, raw[0] > 0,
-                    raw[1] > 0, raw[3] > 0, raw[6] > 0, raw[8] > 0, raw[5] > 0);
-        }
-        return Doors.invalid();
+        if (raw == null || raw.length < 6) return Doors.invalid();
+        // H97X sends the six door fields first (bonnet, FL, FR, loadSpace, RL, RR)
+        // and appends lock/aux fields; the first six are the door states.
+        boolean sideValid = raw[1] >= 0 && raw[2] >= 0 && raw[4] >= 0 && raw[5] >= 0;
+        return new Doors(sideValid, raw[3] >= 0, raw[0] > 0,
+                raw[1] > 0, raw[2] > 0, raw[4] > 0, raw[5] > 0, raw[3] > 0);
     }
 
     public static Fuel fuel(int capacity, int remain, float percent, int shortage, float... rest) {
@@ -81,14 +75,14 @@ public final class VoyahDirectCodec {
         return new Battery(true, volts);
     }
 
-    public static Odometer odometer(float[] raw) {
-        if (raw == null || raw.length < 6) return new Odometer(false, 0f, 0f, 0f);
-        float total = raw[5];
+    public static Odometer odometer(int[] raw) {
+        if (raw == null || raw.length < 3) return new Odometer(false, 0f, 0f, 0f);
         float canTravel = raw[0];
-        float evRange = raw[1];
-        boolean valid = Float.isFinite(total) && total > 0f
-                && Float.isFinite(canTravel) && canTravel >= 0f
-                && Float.isFinite(evRange) && evRange >= 0f;
+        float total = raw[1];
+        float evRange = raw[2];
+        boolean valid = total > 0 && total < 10_000_000
+                && canTravel >= 0 && canTravel < 100_000
+                && evRange >= 0 && evRange < 10_000;
         return new Odometer(valid, total, canTravel, evRange);
     }
 }

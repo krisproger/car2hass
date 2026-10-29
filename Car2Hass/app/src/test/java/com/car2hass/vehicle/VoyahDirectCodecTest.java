@@ -9,13 +9,16 @@ public final class VoyahDirectCodecTest {
         VoyahDirectCodec.Doors trunk = VoyahDirectCodec.doors(new int[]{0, 0, 0, 1, 0, 0});
         check(trunk.valid && trunk.trunk && trunk.trunkValid, "6-field trunk");
 
-        VoyahDirectCodec.Doors ten = VoyahDirectCodec.doors(
-                new int[]{0, 0, 0, 1, 0, 0, 0, 0, 0, 0});
-        check(ten.valid && ten.frontRight, "10-field FR");
+        VoyahDirectCodec.Doors h97Driver = VoyahDirectCodec.doors(
+                new int[]{0, 1, 0, -1, 0, 0, 1, -1, -1, -1});
+        check(h97Driver.valid && h97Driver.frontLeft, "H97X driver open");
+        check(!h97Driver.frontRight && !h97Driver.rearLeft && !h97Driver.rearRight,
+                "H97X other doors closed");
 
-        VoyahDirectCodec.Doors tenTrunk = VoyahDirectCodec.doors(
-                new int[]{0, 0, 0, 0, 0, 1, 0, 0, 0, 0});
-        check(tenTrunk.valid && tenTrunk.trunk, "10-field trunk");
+        VoyahDirectCodec.Doors h97Closed = VoyahDirectCodec.doors(
+                new int[]{0, 0, 0, -1, 0, 0, 1, -1, -1, -1});
+        check(h97Closed.valid && !h97Closed.frontLeft && !h97Closed.frontRight,
+                "H97X all closed");
 
         check(!VoyahDirectCodec.doors(new int[]{0, 0}).valid, "bad door length");
 
@@ -29,10 +32,10 @@ public final class VoyahDirectCodecTest {
         check(!VoyahDirectCodec.battery(0, -1).valid, "battery sentinel");
 
         VoyahDirectCodec.Odometer odo = VoyahDirectCodec.odometer(
-                new float[]{880f, 55f, 0f, 0f, 0f, 34662f});
-        check(odo.valid && Math.abs(odo.total - 34662f) < 0.1f, "odometer total");
-        check(Math.abs(odo.canTravel - 880f) < 0.1f, "odometer range");
-        check(Math.abs(odo.evRange - 55f) < 0.1f, "EV range");
+                new int[]{632, 34672, 50, 65535, 1, 0});
+        check(odo.valid && odo.total == 34672, "odometer total");
+        check(odo.canTravel == 632, "odometer range");
+        check(odo.evRange == 50, "EV range");
 
         System.out.println("All VoyahDirectCodec tests passed.");
     }

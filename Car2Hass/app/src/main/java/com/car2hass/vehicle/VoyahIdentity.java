@@ -11,7 +11,8 @@ public final class VoyahIdentity {
                                  boolean userConfirmed) {
         if (!service) return State.NOT_VOYAH;
         if (!odometer) return State.OTHER_QINGGAN;
-        if (userConfirmed || marker(canBox) || marker(carType)) return State.CONFIRMED;
+        if (userConfirmed || marker(canBox) || marker(carType)
+                || (vehicleType != null && vehicleType == 134)) return State.CONFIRMED;
         return State.UNCONFIRMED;
     }
 
