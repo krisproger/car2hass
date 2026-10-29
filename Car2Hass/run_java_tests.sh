@@ -419,6 +419,18 @@ javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/vehicle/VoyahValueDecod
 echo "=== Compiling VoyahValueDecoderTest ==="
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/VoyahValueDecoderTest.java"
 
+echo "=== Compiling VoyahDirectCodec (pure, no Android dep) ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/vehicle/VoyahDirectCodec.java"
+
+echo "=== Compiling VoyahDirectCodecTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/VoyahDirectCodecTest.java"
+
+echo "=== Compiling VoyahIdentity (pure, no Android dep) ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/vehicle/VoyahIdentity.java"
+
+echo "=== Compiling VoyahIdentityTest ==="
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/vehicle/VoyahIdentityTest.java"
+
 echo "=== Compiling VehicleProfile ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/VehicleProducer.java" "$SRC/com/car2hass/vehicle/VehicleProfile.java"
 
@@ -495,8 +507,11 @@ javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 "
 echo "=== Compiling MethodProbeCoreTest ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/MethodProbeCoreTest.java"
 
-echo "=== Compiling VoyahChannel (Android deps already in \$OUT) ==="
-javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/VoyahChannel.java"
+echo "=== Compiling VoyahChannel + direct/identity (Android deps) ==="
+javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 \
+  "$SRC/com/car2hass/vehicle/VoyahChannel.java" \
+  "$SRC/com/car2hass/vehicle/VoyahDirectReader.java" \
+  "$SRC/com/car2hass/vehicle/VoyahIdentityProbe.java"
 
 echo "=== Compiling MethodProber (org.json + VoyahChannel) ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/MethodProber.java"
@@ -692,6 +707,12 @@ java -cp "$OUT" com.car2hass.vehicle.VoyahReadPolicyTest
 
 echo "=== Running VoyahValueDecoderTest ==="
 java -cp "$OUT" com.car2hass.vehicle.VoyahValueDecoderTest
+
+echo "=== Running VoyahDirectCodecTest ==="
+java -cp "$OUT" com.car2hass.vehicle.VoyahDirectCodecTest
+
+echo "=== Running VoyahIdentityTest ==="
+java -cp "$OUT" com.car2hass.vehicle.VoyahIdentityTest
 
 echo "=== Running VehicleProfileTest ==="
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.vehicle.VehicleProfileTest

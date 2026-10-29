@@ -33,7 +33,7 @@ def test_voyah_descriptors_reference_known_params():
                            or v.get("odometer_range")))
             assert (v.get("method") or v.get("signal") or v.get("ac")
                     or v.get("tx") or v.get("odometer")
-                    or v.get("odometer_range")), \
+                    or v.get("odometer_range") or v.get("direct")), \
                 f"{s['key']}: empty voyah descriptor"
     assert mapped, "no voyah mappings generated"
 
@@ -44,6 +44,15 @@ def test_voyah_tx_descriptors():
     by_key = {s["key"]: s for s in reg["sensors"]}
     assert by_key["speed"]["channels"]["voyah"] == {"tx": "26:int"}
     assert by_key["powertrain_mode"]["channels"]["voyah"] == {"tx": "43:int"}
+
+
+def test_voyah_direct_descriptors():
+    reg = json.load(open(os.path.join(ASSETS, "sensors_registry.json"), encoding="utf-8"))
+    by_key = {s["key"]: s for s in reg["sensors"]}
+    assert by_key["passenger_door"]["channels"]["voyah"] == {"direct": "door_front_right"}
+    assert by_key["trunk"]["channels"]["voyah"] == {"direct": "door_trunk"}
+    assert by_key["fuel_level"]["channels"]["voyah"] == {"direct": "fuel_percent"}
+    assert by_key["battery_12v_voltage"]["channels"]["voyah"] == {"direct": "battery_12v"}
 
 
 def test_voyah_profile_exists():

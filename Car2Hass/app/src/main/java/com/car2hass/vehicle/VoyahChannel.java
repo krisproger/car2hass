@@ -400,6 +400,7 @@ public class VoyahChannel implements DataChannel {
     public List<CANDataItem> read(Context ctx, List<CANDataItem> knownItems) {
         List<CANDataItem> out = new ArrayList<>();
         if (knownItems == null) return out;
+        VoyahDirectReader.setEnabled(VoyahIdentityProbe.isConfirmed(ctx));
         // A failed probe is retried after a cooldown instead of latching forever:
         // the CAN service may not be ready during early boot of the head unit.
         long now = System.currentTimeMillis();
@@ -584,6 +585,8 @@ public class VoyahChannel implements DataChannel {
      * Decoding happens in {@link VoyahValueDecoder}, not here.
      */
     private String readRaw(String key) {
+        String direct = VoyahDirectReader.valueFor(key);
+        if (direct != null) return direct;
         String value = null;
         Object iface = cachedIface;
         if (TX_FIRST_KEYS.contains(key)) {

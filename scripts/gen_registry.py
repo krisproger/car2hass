@@ -349,6 +349,18 @@ VOYAH_SIGNAL_PARAMS = {
 # Keys where ICarSignal is authoritative (overrides a vs/method that returns -1).
 VOYAH_SIGNAL_FIRST = {"sidelights"}
 
+# Read-only values from the direct ICanBusService Binder snapshots.
+# Sync with VoyahDirectReader.valueFor().
+VOYAH_DIRECT_PARAMS = {
+    "driver_door": "door_front_left",
+    "passenger_door": "door_front_right",
+    "rear_left_door": "door_rear_left",
+    "rear_right_door": "door_rear_right",
+    "trunk": "door_trunk",
+    "fuel_level": "fuel_percent",
+    "battery_12v_voltage": "battery_12v",
+}
+
 # Raw ICanBusService read transactions, synced with VoyahChannel.VOYAH_RAW_TX.
 VOYAH_RAW_TX = {
     "soc": (71, "float"),
@@ -461,6 +473,9 @@ def voyah_descriptor(key):
         first = VOYAH_SIGNAL_PARAMS.get(key)
         if first:
             return {"signal": first}
+    direct = VOYAH_DIRECT_PARAMS.get(key)
+    if direct:
+        return {"direct": direct}
     vs = VOYAH_PARAMS.get(key)
     if vs:
         return {"vs": vs}
@@ -570,7 +585,8 @@ def build_methods():
 
 def build_profiles(sensor_keys):
     voyah_keys = sorted(set(VOYAH_PARAMS) | set(VOYAH_METHOD_PARAMS)
-                        | set(VOYAH_AC_PARAMS) | set(VOYAH_SIGNAL_PARAMS))
+                        | set(VOYAH_AC_PARAMS) | set(VOYAH_SIGNAL_PARAMS)
+                        | set(VOYAH_DIRECT_PARAMS))
     return [
         {"id": "byd_generic", "label": "BYD (generic)", "key_channel": "diplus",
          "expected_sensors": list(sensor_keys), "base_channels": ["diplus", "adb"]},
