@@ -103,6 +103,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private TextView tvQueueBytes, tvLastSend, tvLastAttempt;
     private Button obdButton;
     private boolean firstLaunchResearch = false;
+    private final FirstRunFlow firstRunFlow = new FirstRunFlow();
     private Button btnSendLog;
     private android.widget.ProgressBar pbSendLog;
     private LogSendController logSendController;
@@ -3220,11 +3221,17 @@ public class MainActivity extends BaseLocalizedActivity {
     private void handleFirstRunOfVersion() {
         String current = AppInfo.getVersionString(this);
         String seen = AppConfig.getFirstRunVersion(this);
-        if (current == null || current.equals(seen)) return;
+        if (!firstRunFlow.begin(current, seen)) return;
         AppConfig.setFirstRunVersion(this, current);
-        LogBuffer.i("Main", "First run of version " + current + " — auto-start settings + About");
-        openAutoStartSettings(this);
-        showAboutDialog();
+        LogBuffer.i("Main", "First run of version " + current + " — About first, then auto-start");
+        try {
+            showAboutDialog(() -> {
+                if (firstRunFlow.takePendingAutoStart()) openAutoStartSettings(this);
+            });
+        } catch (Exception e) {
+            LogBuffer.e("Main", "first-run About failed: " + e.getMessage());
+            if (firstRunFlow.takePendingAutoStart()) openAutoStartSettings(this);
+        }
     }
 
     @Override
@@ -4382,6 +4389,11 @@ public class MainActivity extends BaseLocalizedActivity {
         return 0xFFFFFFFF;
     }
     private void showAboutDialog() {
+        showAboutDialog(null);
+    }
+
+    /** Shows About; the optional action runs after the dialog is dismissed. */
+    private void showAboutDialog(Runnable afterDismiss) {
         View content = getLayoutInflater().inflate(R.layout.activity_about, null, false);
         try {
             ((TextView) content.findViewById(R.id.tvVersion))
@@ -4390,11 +4402,13 @@ public class MainActivity extends BaseLocalizedActivity {
         } catch (Exception e) {
             LogBuffer.e("Main", "setupAboutContent: " + e.getMessage());
         }
-        new AlertDialog.Builder(this)
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setView(content)
                 .setNegativeButton(R.string.about_whatsnew, (d, w) -> showWhatsNewDialog())
                 .setPositiveButton(android.R.string.ok, null)
-                .show();
+                .create();
+        if (afterDismiss != null) dialog.setOnDismissListener(d -> afterDismiss.run());
+        dialog.show();
     }
 
     private void setupAboutContent(View root) {

@@ -358,10 +358,14 @@ public class TelemetryService extends Service {
                 List<DataChannel> channels;
                 if (full) {
                     try {
-                        channels = com.car2hass.vehicle.ChannelCatalog.createAll(RegistryStore.load(this));
+                        channels = com.car2hass.vehicle.ResearchChannelPolicy.filterAuto(
+                                com.car2hass.vehicle.ChannelCatalog.createAll(RegistryStore.load(this)),
+                                AppConfig.getSelectedProfile(this),
+                                AppConfig.getChannelAvailability(this));
                     } catch (Exception e) {
                         channels = buildEnabledResearchChannels();
                     }
+                    if (channels.isEmpty()) channels = buildEnabledResearchChannels();
                 } else {
                     channels = buildEnabledResearchChannels();
                 }
@@ -443,7 +447,10 @@ public class TelemetryService extends Service {
 
     /** Channels probed automatically: the user-enabled set (system always on). */
     private List<DataChannel> buildEnabledResearchChannels() {
-        List<DataChannel> channels = com.car2hass.vehicle.ChannelCatalog.createFor(userEnabledChannelIds());
+        List<DataChannel> channels = com.car2hass.vehicle.ResearchChannelPolicy.filterAuto(
+                com.car2hass.vehicle.ChannelCatalog.createFor(userEnabledChannelIds()),
+                AppConfig.getSelectedProfile(this),
+                AppConfig.getChannelAvailability(this));
         if (channels.isEmpty()) channels.add(new com.car2hass.vehicle.DiPlusChannel());
         return channels;
     }
