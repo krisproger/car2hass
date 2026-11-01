@@ -277,6 +277,15 @@ public final class ResearchController {
                     try { Thread.sleep(5 * 60 * 1000L); } catch (InterruptedException ie) { return; }
                     if (AppConfig.isProbeUploadEnabled(a)) uploadReport(path);
                 }, "probe-retry").start();
+            } else if (ProbeUploadPolicy.isRetryableCode(r.code)) {
+                try {
+                    UploadQueue.enqueue(a, UploadQueue.KIND_PROBE,
+                            AppInfo.getVersionString(a),
+                            com.car2hass.vehicle.DeviceAnon.fromContext(a), "", path);
+                    LogBuffer.i("ResearchController", "probe upload queued (code=" + r.code + ")");
+                } catch (Exception e) {
+                    LogBuffer.e("ResearchController", "probe queue: " + e.getMessage());
+                }
             }
             final boolean ok = r.ok;
             a.runOnUiThread(() -> TaskNotifier.done(a, title,

@@ -52,7 +52,7 @@ public final class LogUploader {
                 body.put("chunk_index", i);
                 body.put("chunk_total", total);
                 body.put("chunk_upload_id", chunkId);
-                if (!post(body.toString())) return false;
+                if (!postWithRetry(body.toString())) return false;
             }
             return true;
         } catch (Exception e) {
@@ -126,7 +126,7 @@ public final class LogUploader {
                 java.util.concurrent.Executors.newFixedThreadPool(MAX_PARALLEL_CHUNKS);
         try {
             java.util.List<java.util.concurrent.Future<Boolean>> futures = new java.util.ArrayList<>();
-            for (String b : bodies) futures.add(pool.submit(() -> post(b)));
+            for (String b : bodies) futures.add(pool.submit(() -> postWithRetry(b)));
             boolean all = true;
             for (java.util.concurrent.Future<Boolean> f : futures) {
                 try { all = Boolean.TRUE.equals(f.get()) && all; }
@@ -138,13 +138,46 @@ public final class LogUploader {
         }
     }
 
-    private static boolean post(String jsonBody) {
+    private static final class PostResult {
+        final int code;
+        final boolean ok;
+        PostResult(int code, boolean ok) { this.code = code; this.ok = ok; }
+    }
+
+    /** Posts one accepted body, retrying transport/5xx failures with the same id. */
+    private static boolean postWithRetry(String jsonBody) {
+        String uploadId = "";
+        try {
+            org.json.JSONObject o = new org.json.JSONObject(jsonBody);
+            uploadId = o.optString("upload_id", o.optString("chunk_upload_id", ""));
+        } catch (Exception ignored) {
+        }
+        for (int attempt = 1; attempt <= UploadRetryPolicy.MAX_ATTEMPTS; attempt++) {
+            long started = System.currentTimeMillis();
+            PostResult r = postOnce(jsonBody, uploadId, attempt);
+            long elapsed = System.currentTimeMillis() - started;
+            LogBuffer.i("LogUploader", "upload " + uploadId + " attempt=" + attempt
+                    + " code=" + r.code + " ms=" + elapsed + " ok=" + r.ok);
+            if (r.ok) return true;
+            if (!UploadRetryPolicy.shouldRetry(r.code)
+                    || attempt >= UploadRetryPolicy.MAX_ATTEMPTS) return false;
+            try {
+                Thread.sleep(UploadRetryPolicy.backoffMs(attempt));
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+        return false;
+    }
+
+    private static PostResult postOnce(String jsonBody, String uploadId, int attempt) {
         HttpURLConnection conn = null;
         try {
             URL u = new URL(AppApi.LOG_INTAKE);
             if (NetSafety.isPrivateHost(u.getHost())) {
                 LogBuffer.e("LogUploader", "post: private host blocked " + u.getHost());
-                return false;
+                return new PostResult(0, false);
             }
             conn = (HttpURLConnection) u.openConnection();
             conn.setRequestMethod("POST");
@@ -153,21 +186,28 @@ public final class LogUploader {
             conn.setDoOutput(true);
             conn.setRequestProperty("Content-Type", "application/json; charset=utf-8");
             conn.setRequestProperty("X-Cartelemetry-Token", AppApi.TOKEN);
+            conn.setRequestProperty("X-Upload-Id", uploadId == null ? "" : uploadId);
             try (OutputStream os = conn.getOutputStream()) {
                 os.write(jsonBody.getBytes(StandardCharsets.UTF_8));
             }
             int code = conn.getResponseCode();
-            LogBuffer.i("LogUploader", "POST " + AppApi.LOG_INTAKE + " -> HTTP " + code
-                    + " bytes=" + jsonBody.length());
-            if (code < 200 || code >= 300) {
-                LogBuffer.w("LogUploader", "HTTP " + code + " body=" + readBody(conn));
-                return false;
+            String body = readBody(conn);
+            boolean ok = code >= 200 && code < 300;
+            if (ok && body != null && !body.isEmpty()) {
+                try {
+                    org.json.JSONObject response = new org.json.JSONObject(body);
+                    if (response.has("ok")) ok = response.optBoolean("ok", true);
+                } catch (Exception ignored) {
+                }
             }
-            return true;
+            if (!ok) {
+                LogBuffer.w("LogUploader", "HTTP " + code + " body=" + body);
+            }
+            return new PostResult(code, ok);
         } catch (Exception e) {
             LogBuffer.e("LogUploader", "post: " + e.getMessage()
                     + " body=" + (conn == null ? "" : readBody(conn)));
-            return false;
+            return new PostResult(0, false);
         } finally {
             if (conn != null) conn.disconnect();
         }
