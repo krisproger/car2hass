@@ -15,9 +15,9 @@ public class VoyahValueDecoderTest {
         eq(VoyahValueDecoder.decode("drive_mode", "2"), "comfort", "drive 2");
         eq(VoyahValueDecoder.decode("drive_mode", "3"), "sport", "drive 3");
         eq(VoyahValueDecoder.decode("drive_mode", "4"), "offroad", "drive 4");
-        eq(VoyahValueDecoder.decode("drive_mode", "5"), "snow", "drive 5");
-        eq(VoyahValueDecoder.decode("drive_mode", "6"), "custom", "drive 6");
-        eq(VoyahValueDecoder.decode("drive_mode", "0"), "0", "drive unknown passthrough");
+        eq(VoyahValueDecoder.decode("drive_mode", "5"), "individual", "drive 5");
+        eq(VoyahValueDecoder.decode("drive_mode", "6"), "snow", "drive 6");
+        eq(VoyahValueDecoder.decode("drive_mode", "0"), "normal", "drive 0");
         eq(VoyahValueDecoder.decode("drive_mode", "-"), "-", "drive non-numeric passthrough");
 
         // DOOR_POSITION_*: only the four enum values are mapped; out-of-range

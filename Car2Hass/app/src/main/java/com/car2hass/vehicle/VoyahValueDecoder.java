@@ -44,12 +44,13 @@ public final class VoyahValueDecoder {
         Integer v = parseInt(raw);
         if (v == null) return raw;
         switch (v) {
+            case 0: return "normal";
             case 1: return "eco";
             case 2: return "comfort";
             case 3: return "sport";
             case 4: return "offroad";
-            case 5: return "snow";
-            case 6: return "custom";
+            case 5: return "individual";
+            case 6: return "snow";
             default: return raw;
         }
     }

@@ -867,7 +867,11 @@ signals:
   labels:
     0: NORMAL
     1: ECO
-    2: SPORT
+    2: COMFORT
+    3: SPORT
+    4: OFFROAD
+    5: INDIVIDUAL
+    6: SNOW
   ha_type: sensor
   icon: mdi:car-settings
 - id: 69

@@ -13,6 +13,7 @@ public final class VoyahDirectProbe {
         try {
             o.put("identity", VoyahIdentityProbe.probe(ctx));
             o.put("direct", VoyahDirectReader.probe());
+            o.put("extended", VoyahExtendedProbe.probe());
         } catch (Exception e) {
             try {
                 o.put("error", e.getMessage());

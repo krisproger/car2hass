@@ -47,7 +47,7 @@ DEFAULT_BACKLOG_THRESHOLD = 30
 CONF_BACKLOG_REPLAY = "backlog_replay"
 DEFAULT_BACKLOG_REPLAY = "throttled"
 
-INTEGRATION_VERSION = "3.5.6-beta.4"
+INTEGRATION_VERSION = "3.5.6-beta.5"
 
 # Wire protocol version reported by /api/cartelemetry/info. Bump only on
 # breaking changes; the Android app compares it against MIN_API_VERSION.
@@ -1510,7 +1510,11 @@ ENUM_LABELS = {
     "drive_mode": {
         "0": "NORMAL",
         "1": "ECO",
-        "2": "SPORT",
+        "2": "COMFORT",
+        "3": "SPORT",
+        "4": "OFFROAD",
+        "5": "INDIVIDUAL",
+        "6": "SNOW",
     },
     "passenger_seatbelt_warning": {
         "0": "—",
