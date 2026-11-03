@@ -1820,8 +1820,7 @@ public class TelemetryService extends Service {
         knownItems.add(item);
     }
 
-    private static final String[] DERIVED_WINDOW_KEYS =
-            {"window_fl", "window_fr", "window_rl", "window_rr", "sunroof", "sunshade"};
+    private static final String[] DERIVED_WINDOW_KEYS = DerivedAggregates.WINDOW_KEYS;
     /** Skip derived-aggregate inputs whose source has not updated within this window. */
     private static final long DERIVED_STALE_MS = 60_000L;
     private static final String[] DERIVED_DOOR_KEYS =

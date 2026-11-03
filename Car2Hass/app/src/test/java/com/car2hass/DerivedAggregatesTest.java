@@ -11,6 +11,7 @@ public class DerivedAggregatesTest {
         testMissingUnknown();
         testEmptyInput();
         testRestoredIgnored();
+        testWindowKeysExcludeSunroofAndSunshade();
 
         System.out.println("All DerivedAggregates tests passed.");
     }
@@ -58,6 +59,16 @@ public class DerivedAggregatesTest {
         store.put("driver_door_lock", "unlocked", ValueStore.SOURCE_RESTORED);
         store.put("passenger_door_lock", "locked", "channel");
         assertTrue(DerivedAggregates.doorsAllLocked(store), "restored unlocked ignored");
+    }
+
+    private static void testWindowKeysExcludeSunroofAndSunshade() {
+        java.util.List<String> keys = java.util.Arrays.asList(DerivedAggregates.WINDOW_KEYS);
+        assertTrue(keys.contains("window_fl"), "window_fl");
+        assertTrue(keys.contains("window_fr"), "window_fr");
+        assertTrue(keys.contains("window_rl"), "window_rl");
+        assertTrue(keys.contains("window_rr"), "window_rr");
+        assertFalse(keys.contains("sunroof"), "sunroof excluded");
+        assertFalse(keys.contains("sunshade"), "sunshade excluded");
     }
 
     private static void assertTrue(boolean value, String what) {

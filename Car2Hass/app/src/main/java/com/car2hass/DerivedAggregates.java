@@ -6,6 +6,11 @@ import java.util.Locale;
 
 public final class DerivedAggregates {
 
+    /** Door windows counted by "all windows"; sunroof/sunshade are separate sensors. */
+    public static final String[] WINDOW_KEYS = {
+            "window_fl", "window_fr", "window_rl", "window_rr"
+    };
+
     public static final String[] DOOR_LOCK_KEYS = {
             "driver_door_lock", "passenger_door_lock",
             "rear_left_door_lock", "rear_right_door_lock"
