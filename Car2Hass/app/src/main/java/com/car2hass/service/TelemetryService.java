@@ -349,7 +349,9 @@ public class TelemetryService extends Service {
                 com.car2hass.vehicle.ResearchEnvironment.memoryMb();
                 int runs = AppConfig.incRunsCount(this);
                 boolean hasReport = AppConfig.getProbeReportPath(this) != null;
-                boolean full = !hasReport || (runs % 3 == 0);
+                // Full automatic scans are expensive; only bootstrap when there
+                // is no report. Manual research remains always full.
+                boolean full = com.car2hass.ProbeSchedulePolicy.shouldFullResearch(hasReport);
                 // Automatic research is scoped to the channels the user enabled;
                 // other channels are only probed from the manual research button.
                 // A FULL scan, however, probes every channel: its report replaces

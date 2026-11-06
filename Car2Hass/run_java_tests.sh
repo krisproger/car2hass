@@ -448,6 +448,10 @@ echo "=== Compiling UploadRetryPolicy ==="
 javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/UploadRetryPolicy.java"
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/UploadRetryPolicyTest.java"
 
+echo "=== Compiling ProbeSchedulePolicy ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/ProbeSchedulePolicy.java"
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/ProbeSchedulePolicyTest.java"
+
 echo "=== Compiling ResearchChannelPolicy ==="
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$SRC/com/car2hass/vehicle/ResearchChannelPolicy.java"
 javac -d "$OUT" -classpath "$OUT:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/vehicle/ResearchChannelPolicyTest.java"
@@ -737,6 +741,9 @@ java -cp "$OUT" com.car2hass.FirstRunFlowTest
 
 echo "=== Running UploadRetryPolicyTest ==="
 java -cp "$OUT" com.car2hass.UploadRetryPolicyTest
+
+echo "=== Running ProbeSchedulePolicyTest ==="
+java -cp "$OUT" com.car2hass.ProbeSchedulePolicyTest
 
 echo "=== Running ResearchChannelPolicyTest ==="
 java -cp "$OUT:$ANDROID_JAR" com.car2hass.vehicle.ResearchChannelPolicyTest
