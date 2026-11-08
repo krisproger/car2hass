@@ -337,9 +337,8 @@ public class TelemetryService extends Service {
     }
 
     /**
-     * Auto-triggers the vehicle probe: full research on first launch (no saved
-     * report) or every 3rd launch; a light channel-availability check otherwise.
-     * Runs on a background thread so it never blocks the telemetry cycle.
+     * Auto-triggers a light channel-availability check. Full research is
+     * manual-only. Runs on a background thread so it never blocks telemetry.
      */
     private void maybeRunProbe() {
         new Thread(() -> {
@@ -349,8 +348,7 @@ public class TelemetryService extends Service {
                 com.car2hass.vehicle.ResearchEnvironment.memoryMb();
                 int runs = AppConfig.incRunsCount(this);
                 boolean hasReport = AppConfig.getProbeReportPath(this) != null;
-                // Full automatic scans are expensive; only bootstrap when there
-                // is no report. Manual research remains always full.
+                // Full automatic scans are manual-only; never bootstrap here.
                 boolean full = com.car2hass.ProbeSchedulePolicy.shouldFullResearch(hasReport);
                 // Automatic research is scoped to the channels the user enabled;
                 // other channels are only probed from the manual research button.
