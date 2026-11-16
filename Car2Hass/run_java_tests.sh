@@ -448,6 +448,37 @@ echo "=== Compiling UploadRetryPolicy ==="
 javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/UploadRetryPolicy.java"
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/UploadRetryPolicyTest.java"
 
+echo "=== Compiling HaAddress ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/HaAddress.java"
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/HaAddressTest.java"
+
+echo "=== Compiling HaEndpointConfig ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/HaEndpointConfig.java" "$SRC/com/car2hass/EndpointMigration.java"
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/HaEndpointConfigTest.java" "$TEST/com/car2hass/EndpointMigrationTest.java"
+
+echo "=== Compiling IntegrationInfo ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR:$ANDROID_JAR" -source 17 -target 17 "$TEST/com/car2hass/AppConfig.java" "$SRC/com/car2hass/IntegrationInfo.java"
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/IntegrationInfoTest.java"
+
+echo "=== Compiling CommandPollClassifier ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/CommandPollClassifier.java"
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/CommandPollClassifierTest.java"
+
+echo "=== Compiling HaWorkerPolicy ==="
+javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/HaWorkerPolicy.java"
+javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/HaWorkerPolicyTest.java"
+
+echo "=== Compiling EndpointRouter ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/HaEndpointConfig.java" "$SRC/com/car2hass/EndpointRouter.java"
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/EndpointRouterTest.java"
+
+echo "=== Compiling HaCommandUrls ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/HaAddress.java" "$SRC/com/car2hass/HaEndpointConfig.java" "$SRC/com/car2hass/HaCommandUrls.java"
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/HaCommandUrlsTest.java"
+
+echo "=== Compiling CloudSettingsPayloadMulti ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/CloudSettingsPayloadMultiTest.java"
+
 echo "=== Compiling ProbeSchedulePolicy ==="
 javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/ProbeSchedulePolicy.java"
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/ProbeSchedulePolicyTest.java"
@@ -741,6 +772,33 @@ java -cp "$OUT" com.car2hass.FirstRunFlowTest
 
 echo "=== Running UploadRetryPolicyTest ==="
 java -cp "$OUT" com.car2hass.UploadRetryPolicyTest
+
+echo "=== Running HaAddressTest ==="
+java -cp "$OUT" com.car2hass.HaAddressTest
+
+echo "=== Running HaEndpointConfigTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.HaEndpointConfigTest
+
+echo "=== Running EndpointMigrationTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.EndpointMigrationTest
+
+echo "=== Running IntegrationInfoTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.IntegrationInfoTest
+
+echo "=== Running CommandPollClassifierTest ==="
+java -cp "$OUT" com.car2hass.CommandPollClassifierTest
+
+echo "=== Running HaWorkerPolicyTest ==="
+java -cp "$OUT" com.car2hass.HaWorkerPolicyTest
+
+echo "=== Running EndpointRouterTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.EndpointRouterTest
+
+echo "=== Running HaCommandUrlsTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.HaCommandUrlsTest
+
+echo "=== Running CloudSettingsPayloadMultiTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.CloudSettingsPayloadMultiTest
 
 echo "=== Running ProbeSchedulePolicyTest ==="
 java -cp "$OUT" com.car2hass.ProbeSchedulePolicyTest

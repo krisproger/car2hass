@@ -997,4 +997,22 @@
     <string name="settings_research_show_report">Показать отчёт</string>
     <string name="update_install">Установить обновление</string>
     <string name="settings_cloud_status_session_unavailable">Сессия облака недоступна — войдите заново</string>
+    <string name="settings_servers_empty">Серверы Home Assistant не настроены</string>
+    <string name="settings_servers_summary">Серверы: %1$d (%2$d активны)</string>
+    <string name="settings_configure_servers">Настроить серверы</string>
+    <string name="endpoints_title">Серверы Home Assistant</string>
+    <string name="endpoint_add">Добавить сервер</string>
+    <string name="endpoint_name">Название</string>
+    <string name="endpoint_address">Адрес</string>
+    <string name="endpoint_address_hint">192.168.1.10:8123 или https://xxxx.ui.nabu.casa</string>
+    <string name="endpoint_token">Токен длительного действия</string>
+    <string name="endpoint_car_name">Имя автомобиля</string>
+    <string name="endpoint_enabled">Отправлять телеметрию</string>
+    <string name="endpoint_commands">Разрешить команды</string>
+    <string name="endpoint_test">Проверить</string>
+    <string name="endpoint_edit">Изменить</string>
+    <string name="endpoint_delete">Удалить</string>
+    <string name="endpoint_delete_confirm">Удалить сервер и его очередь телеметрии?</string>
+    <string name="endpoint_invalid_address">Неверный адрес или порт</string>
+    <string name="endpoint_missing_token">Нужен токен</string>
 </resources>

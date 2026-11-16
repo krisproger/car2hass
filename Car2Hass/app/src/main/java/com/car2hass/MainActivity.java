@@ -202,6 +202,7 @@ public class MainActivity extends BaseLocalizedActivity {
     private Switch switchDebugCompare;
     private TextView tvTestResult;
     private TextView tvPresetVersion;
+    private TextView tvServersSummary;
 
     // Cloud sync UI
     private CloudSettingsController cloudSettingsController;
@@ -346,7 +347,6 @@ public class MainActivity extends BaseLocalizedActivity {
             initListeners();
             requestAllRuntimePermissions();
 
-            HassClient.init(this);
             ConfigLoader.applyBundledPresets(this);
 
             safeCall("setupBottomNavigation", this::setupBottomNavigation);
@@ -973,6 +973,7 @@ public class MainActivity extends BaseLocalizedActivity {
             checkSelectAll.setOnCheckedChangeListener(sendToHaListener);
         }
         setupRules();
+        updateServersSummary();
         if (selectedSettingsSection == 3 && geofenceSettingsController != null) {
             geofenceSettingsController.render();
         }
@@ -3078,19 +3079,10 @@ public class MainActivity extends BaseLocalizedActivity {
         sendToHaListener = new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-                if (isChecked && AppConfig.getHassHost(MainActivity.this).trim().isEmpty()) {
+                if (isChecked && EndpointStore.list(MainActivity.this).isEmpty()) {
                     Toast.makeText(MainActivity.this, R.string.settings_enter_host, Toast.LENGTH_SHORT).show();
                 }
-                AppConfig.save(getApplicationContext(),
-                        AppConfig.getHassHost(MainActivity.this),
-                        AppConfig.getHassPort(MainActivity.this),
-                        AppConfig.getHassToken(MainActivity.this),
-                        AppConfig.getCarName(MainActivity.this),
-                        isChecked,
-                        AppConfig.isHassHttps(MainActivity.this),
-                        AppConfig.isBootAutoStartEnabled(MainActivity.this),
-                        AppConfig.isCarControlEnabled(MainActivity.this),
-                        AppConfig.isDetailedLogEnabled(MainActivity.this));
+                AppConfig.saveHassEnabled(MainActivity.this, isChecked);
                 LogBuffer.i("Main", "Master 'Send to HA' set to " + isChecked);
             }
         };
@@ -3318,12 +3310,10 @@ public class MainActivity extends BaseLocalizedActivity {
     // ─── Settings tab ───
 
     private void setupSettings() {
-        editHost = settingsView.findViewById(R.id.editHost);
-        editPort = settingsView.findViewById(R.id.editPort);
-        editToken = settingsView.findViewById(R.id.editToken);
         editCarName = settingsView.findViewById(R.id.editCarName);
         switchEnabled = settingsView.findViewById(R.id.switchEnabled);
-        switchHttps = settingsView.findViewById(R.id.switchHttps);
+        switchHttps = null;
+        tvServersSummary = settingsView.findViewById(R.id.tvServersSummary);
         switchBootAutoStart = settingsView.findViewById(R.id.switchBootAutoStart);
         switchCarControl = settingsView.findViewById(R.id.switchCarControl);
         spinnerFileLogMode = settingsView.findViewById(R.id.spinnerFileLogMode);
@@ -3336,14 +3326,15 @@ public class MainActivity extends BaseLocalizedActivity {
         tvTestResult = settingsView.findViewById(R.id.tvTestResult);
         tvPresetVersion = settingsView.findViewById(R.id.tvPresetVersion);
         tvIntegrationUpdateHint = settingsView.findViewById(R.id.tvIntegrationUpdateHint);
-        TextView tvHttpWarning = settingsView.findViewById(R.id.tvHttpWarning);
+        if (tvIntegrationUpdateHint != null) tvIntegrationUpdateHint.setVisibility(View.GONE);
+        TextView tvHttpWarning = null;
         tvQueueBytes = settingsView.findViewById(R.id.tvQueueBytes);
         tvLastSend = settingsView.findViewById(R.id.tvLastSend);
         tvLastAttempt = settingsView.findViewById(R.id.tvLastAttempt);
 
         loadConfig();
 
-        if (tvHttpWarning != null) {
+        if (tvHttpWarning != null && switchHttps != null) {
             tvHttpWarning.setVisibility(switchHttps.isChecked() ? View.GONE : View.VISIBLE);
         }
 
@@ -3364,9 +3355,12 @@ public class MainActivity extends BaseLocalizedActivity {
         });
         AppConfig.migratePhoneChannel(this);
 
-        settingsView.findViewById(R.id.btnTest).setOnClickListener(v -> testConnection());
+        settingsView.findViewById(R.id.btnTest).setOnClickListener(v -> openEndpoints());
+        settingsView.findViewById(R.id.btnConfigureServers).setOnClickListener(v -> openEndpoints());
         settingsView.findViewById(R.id.btnFlushQueue).setOnClickListener(v -> {
-            HassClient.requestFlushNow(this, (success, msg) -> runOnUiThread(() -> {
+            TelemetryService svc = getTelemetryService();
+            if (svc == null) return;
+            svc.requestFlushNow((success, msg) -> runOnUiThread(() -> {
                 android.widget.Toast.makeText(this,
                         getString(success ? R.string.settings_flush_done : R.string.settings_flush_failed),
                         android.widget.Toast.LENGTH_SHORT).show();
@@ -3394,14 +3388,6 @@ public class MainActivity extends BaseLocalizedActivity {
         settingsView.findViewById(R.id.btnLanguage).setOnClickListener(v -> showLanguageDialog());
         settingsView.findViewById(R.id.btnRefreshPresets).setOnClickListener(v -> refreshPresets());
         updatePresetVersionLabel();
-
-        settingsView.findViewById(R.id.btnTokenHelp).setOnClickListener(v ->
-            new AlertDialog.Builder(this)
-                .setTitle(R.string.settings_token_help_title)
-                .setMessage(R.string.settings_token_help_text)
-                .setPositiveButton(android.R.string.ok, null)
-                .show()
-        );
 
         setupSettingsSections();
         setupVehicleCard();
@@ -4590,13 +4576,7 @@ public class MainActivity extends BaseLocalizedActivity {
     };
 
     private void attachAutoSaveListeners(TextView tvHttpWarning) {
-        editHost.addTextChangedListener(autoSaveWatcher);
-        editPort.addTextChangedListener(autoSaveWatcher);
-        editToken.addTextChangedListener(autoSaveWatcher);
-        editCarName.addTextChangedListener(autoSaveWatcher);
-        editHost.setOnFocusChangeListener((v, hasFocus) -> {
-            if (!hasFocus) warnIfHostEmpty();
-        });
+        if (editCarName != null) editCarName.addTextChangedListener(autoSaveWatcher);
 
         CompoundButton.OnCheckedChangeListener listener = (buttonView, isChecked) -> {
             if (buttonView == switchEnabled && isChecked) {
@@ -4608,7 +4588,7 @@ public class MainActivity extends BaseLocalizedActivity {
             scheduleSave();
         };
         switchEnabled.setOnCheckedChangeListener(listener);
-        switchHttps.setOnCheckedChangeListener(listener);
+        if (switchHttps != null) switchHttps.setOnCheckedChangeListener(listener);
         switchBootAutoStart.setOnCheckedChangeListener(listener);
         switchCarControl.setOnCheckedChangeListener(listener);
         switchBackgroundMode.setOnCheckedChangeListener(listener);
@@ -4630,9 +4610,6 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void warnIfHostEmpty() {
-        if (editHost != null && editHost.getText().toString().trim().isEmpty()) {
-            Toast.makeText(this, R.string.settings_enter_host, Toast.LENGTH_SHORT).show();
-        }
     }
 
     private void scheduleSave() {
@@ -4642,28 +4619,16 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void doSave() {
-        String host = editHost.getText().toString().trim();
-        String portStr = editPort.getText().toString().trim();
-        int port;
-        if (portStr.isEmpty()) {
-            port = switchHttps.isChecked() ? 443 : 8123;
-        } else {
-            try {
-                port = Integer.parseInt(portStr);
-            } catch (NumberFormatException e) {
-                port = switchHttps.isChecked() ? 443 : 8123;
-            }
-        }
-        String token = editToken.getText().toString().trim();
-        String carName = editCarName.getText().toString().trim();
+        String carName = editCarName != null ? editCarName.getText().toString().trim() : AppConfig.getCarName(this);
         if (carName.isEmpty() && CANDataReader.sVin != null && !CANDataReader.sVin.isEmpty() && !"---".equals(CANDataReader.sVin)) {
             carName = CANDataReader.sVin;
-            editCarName.removeTextChangedListener(autoSaveWatcher);
-            editCarName.setText(carName);
-            editCarName.addTextChangedListener(autoSaveWatcher);
+            if (editCarName != null) {
+                editCarName.removeTextChangedListener(autoSaveWatcher);
+                editCarName.setText(carName);
+                editCarName.addTextChangedListener(autoSaveWatcher);
+            }
         }
         boolean enabled = switchEnabled.isChecked();
-        boolean https = switchHttps.isChecked();
         boolean bootAutoStart = switchBootAutoStart.isChecked();
         boolean carControl = switchCarControl.isChecked();
         int fileLogMode = spinnerFileLogMode.getSelectedItemPosition();
@@ -4683,7 +4648,9 @@ public class MainActivity extends BaseLocalizedActivity {
             queueMaxDays = 7;
         }
 
-        AppConfig.save(this, host, port, token, carName, enabled, https, bootAutoStart, carControl, detailedLog);
+        AppConfig.saveHassEnabled(this, enabled);
+        AppConfig.saveCarName(this, carName);
+        AppConfig.saveCarControlEnabled(this, carControl);
         AppConfig.saveFileLogMode(this, fileLogMode);
         AppConfig.touchCloudFileMtimeMs(this, CloudSettingsPayload.FILE_SETTINGS);
         CloudSettingsSync.syncAsync(this, "settings");
@@ -4704,22 +4671,38 @@ public class MainActivity extends BaseLocalizedActivity {
                 editMake != null ? editMake.getText().toString().trim() : "",
                 editYear != null ? editYear.getText().toString().trim() : "");
 
-        if (haSettingsChanged(host, port, token, enabled, https, carControl)) {
+        if (carControl != savedCarControl) {
             restartTelemetryService();
         }
-
-        savedHost = host;
-        savedPort = port;
-        savedToken = token;
         savedEnabled = enabled;
-        savedHttps = https;
         savedCarControl = carControl;
+        updateServersSummary();
     }
 
     private boolean haSettingsChanged(String host, int port, String token,
                                        boolean enabled, boolean https, boolean carControl) {
         return !host.equals(savedHost) || port != savedPort || !token.equals(savedToken)
                 || enabled != savedEnabled || https != savedHttps || carControl != savedCarControl;
+    }
+
+    private void openEndpoints() {
+        startActivity(new android.content.Intent(this, EndpointsActivity.class));
+    }
+
+    private void updateServersSummary() {
+        if (tvServersSummary == null) return;
+        java.util.List<com.car2hass.HaEndpointConfig> endpoints =
+                com.car2hass.EndpointStore.list(this);
+        int active = 0;
+        for (com.car2hass.HaEndpointConfig e : endpoints) {
+            if (e.enabled) active++;
+        }
+        if (endpoints.isEmpty()) {
+            tvServersSummary.setText(R.string.settings_servers_empty);
+        } else {
+            tvServersSummary.setText(getString(R.string.settings_servers_summary,
+                    endpoints.size(), active));
+        }
     }
 
     private void restartTelemetryService() {
@@ -4770,12 +4753,8 @@ public class MainActivity extends BaseLocalizedActivity {
         savedHttps = AppConfig.isHassHttps(this);
         savedCarControl = AppConfig.isCarControlEnabled(this);
 
-        editHost.setText(savedHost);
-        editPort.setText(String.valueOf(savedPort));
-        editToken.setText(savedToken);
-        editCarName.setText(AppConfig.getCarName(this));
+        if (editCarName != null) editCarName.setText(AppConfig.getCarName(this));
         switchEnabled.setChecked(savedEnabled);
-        switchHttps.setChecked(savedHttps);
         switchBootAutoStart.setChecked(AppConfig.isBootAutoStartEnabled(this));
         switchCarControl.setChecked(savedCarControl);
         spinnerFileLogMode.setSelection(AppConfig.getFileLogMode(this));
@@ -4805,6 +4784,7 @@ public class MainActivity extends BaseLocalizedActivity {
 
 
     private String getBaseUrl() {
+        if (editHost == null) return "";
         String host = editHost.getText().toString().trim();
         int port;
         try {
@@ -4861,6 +4841,7 @@ public class MainActivity extends BaseLocalizedActivity {
     }
 
     private void testConnection() {
+        if (editHost == null || editToken == null) return;
         String token = editToken.getText().toString().trim();
         String baseUrl = getBaseUrl();
         String host = editHost.getText().toString().trim();
@@ -4883,7 +4864,8 @@ public class MainActivity extends BaseLocalizedActivity {
                 tvTestResult.setText(result.report);
                 if (result.httpOk) {
                     testVehicleEndpoint(finalBaseUrl, token);
-                    HassClient.requestFlushNow(MainActivity.this, null);
+                    TelemetryService svc = getTelemetryService();
+                    if (svc != null) svc.requestFlushNow(null);
                 }
             });
         }).start();
@@ -4910,7 +4892,7 @@ public class MainActivity extends BaseLocalizedActivity {
      * compatible; shown when it is missing or too old.
      */
     private void refreshIntegrationUpdateHint() {
-        if (tvIntegrationUpdateHint == null) return;
+        if (tvIntegrationUpdateHint == null || editHost == null || editToken == null) return;
         String token = editToken.getText().toString().trim();
         String host = editHost.getText().toString().trim();
         if (host.isEmpty() || token.isEmpty()) {

@@ -835,10 +835,15 @@ class VehicleInfoView(HomeAssistantView):
 
     async def get(self, request):
         """Return version + capabilities for the Android app."""
+        hass = request.app["hass"]
+        loaded = DOMAIN in hass.data and any(
+            not str(key).startswith("_") for key in hass.data.get(DOMAIN, {})
+        )
         return self.json({
             "status": "ok",
             "integration_version": INTEGRATION_VERSION,
             "api_version": API_VERSION,
+            "loaded": loaded,
             "capabilities": {"batch": True, "commands": True},
         })
 

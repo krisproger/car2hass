@@ -96,3 +96,10 @@ def test_command_entities_skip_noop_writes():
                  "lock.py", "climate.py", "alarm_control_panel.py"):
         source = (INTEGRATION / name).read_text(encoding="utf-8")
         assert "before !=" in source, name
+
+
+def test_info_view_reports_loaded_state():
+    source = INIT.read_text(encoding="utf-8")
+    block = source.split("class VehicleInfoView", 1)[1]
+    assert '"loaded": loaded' in block
+    assert 'DOMAIN in hass.data' in block

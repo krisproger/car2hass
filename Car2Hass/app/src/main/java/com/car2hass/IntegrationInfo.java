@@ -41,11 +41,24 @@ public class IntegrationInfo {
     public final String integrationVersion;
     public final int apiVersion;
     public final boolean commandsSupported;
+    public final boolean loaded;
 
-    IntegrationInfo(String integrationVersion, int apiVersion, boolean commandsSupported) {
+    IntegrationInfo(String integrationVersion, int apiVersion,
+                    boolean commandsSupported, boolean loaded) {
         this.integrationVersion = integrationVersion;
         this.apiVersion = apiVersion;
         this.commandsSupported = commandsSupported;
+        this.loaded = loaded;
+    }
+
+    static IntegrationInfo fromJson(String json) throws Exception {
+        JSONObject obj = new JSONObject(json);
+        JSONObject caps = obj.optJSONObject("capabilities");
+        return new IntegrationInfo(
+                obj.optString("integration_version", ""),
+                obj.optInt("api_version", -1),
+                caps == null || caps.optBoolean("commands", true),
+                obj.optBoolean("loaded", true));
     }
 
     /** True when the reported api_version satisfies {@link #MIN_API_VERSION}. */
@@ -82,15 +95,11 @@ public class IntegrationInfo {
             }
             br.close();
 
-            JSONObject obj = new JSONObject(sb.toString());
-            String version = obj.optString("integration_version", "");
-            int api = obj.optInt("api_version", -1);
-            if (api >= 0) {
-                reportedApiVersion = api;
+            IntegrationInfo info = fromJson(sb.toString());
+            if (info.apiVersion >= 0) {
+                reportedApiVersion = info.apiVersion;
             }
-            JSONObject caps = obj.optJSONObject("capabilities");
-            boolean commands = caps == null || caps.optBoolean("commands", true);
-            return new IntegrationInfo(version, api, commands);
+            return info;
         } catch (Exception e) {
             return null;
         } finally {

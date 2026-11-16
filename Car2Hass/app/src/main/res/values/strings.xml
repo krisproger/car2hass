@@ -1004,4 +1004,22 @@
     <string name="settings_research_show_report">Show report</string>
     <string name="update_install">Install update</string>
     <string name="settings_cloud_status_session_unavailable">Cloud session unavailable — sign in again</string>
+    <string name="settings_servers_empty">No Home Assistant servers configured</string>
+    <string name="settings_servers_summary">Servers: %1$d (%2$d active)</string>
+    <string name="settings_configure_servers">Configure servers</string>
+    <string name="endpoints_title">Home Assistant servers</string>
+    <string name="endpoint_add">Add server</string>
+    <string name="endpoint_name">Name</string>
+    <string name="endpoint_address">Address</string>
+    <string name="endpoint_address_hint">192.168.1.10:8123 or https://xxxx.ui.nabu.casa</string>
+    <string name="endpoint_token">Long-lived token</string>
+    <string name="endpoint_car_name">Car name</string>
+    <string name="endpoint_enabled">Send telemetry</string>
+    <string name="endpoint_commands">Allow commands</string>
+    <string name="endpoint_test">Test</string>
+    <string name="endpoint_edit">Edit</string>
+    <string name="endpoint_delete">Delete</string>
+    <string name="endpoint_delete_confirm">Delete this server and its queued telemetry?</string>
+    <string name="endpoint_invalid_address">Invalid address or port</string>
+    <string name="endpoint_missing_token">Token is required</string>
 </resources>

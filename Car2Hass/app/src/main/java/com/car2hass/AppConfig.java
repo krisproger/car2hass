@@ -556,6 +556,40 @@ public class AppConfig {
     public static void saveCarControlEnabled(Context ctx, boolean enabled) {
         prefs(ctx).edit().putBoolean(KEY_CAR_CONTROL_ENABLED, enabled).apply();
     }
+    public static void saveBootAutoStartEnabled(Context ctx, boolean enabled) {
+        prefs(ctx).edit().putBoolean(KEY_BOOT_AUTO_START, enabled).apply();
+    }
+    public static void saveHassEnabled(Context ctx, boolean enabled) {
+        prefs(ctx).edit().putBoolean(KEY_ENABLED, enabled).apply();
+    }
+
+    public static void saveCarName(Context ctx, String carName) {
+        String value = carName == null ? "" : carName;
+        prefs(ctx).edit().putString(KEY_CAR_NAME, value).apply();
+        cachedCarName = value;
+    }
+    /** Mirror the primary endpoint into legacy keys without touching global masters. */
+    public static void mirrorLegacyPrimaryEndpoint(Context ctx, String host, int port,
+                                                   String carName, boolean enabled,
+                                                   boolean https) {
+        prefs(ctx).edit()
+                .putString(KEY_HOST, host)
+                .putString(KEY_PORT, String.valueOf(port))
+                .putString(KEY_CAR_NAME, carName)
+                .putBoolean(KEY_ENABLED, enabled)
+                .putBoolean(KEY_HTTPS, https)
+                .apply();
+        cachedCarName = carName;
+    }
+
+    public static void clearLegacyPrimaryEndpoint(Context ctx) {
+        prefs(ctx).edit()
+                .remove(KEY_HOST)
+                .remove(KEY_PORT)
+                .remove(KEY_ENABLED)
+                .remove(KEY_HTTPS)
+                .apply();
+    }
 
     public static void saveDetailedLogEnabled(Context ctx, boolean enabled) {
         prefs(ctx).edit().putBoolean(KEY_DETAILED_LOG_ENABLED, enabled).apply();

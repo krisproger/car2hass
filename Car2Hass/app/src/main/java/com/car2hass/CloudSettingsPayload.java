@@ -38,6 +38,15 @@ public final class CloudSettingsPayload {
             cfg.put("queue_max_mb", AppConfig.getQueueMaxMb(ctx));
             cfg.put("queue_max_days", AppConfig.getQueueMaxDays(ctx));
             cfg.put("disabled_signals", new JSONArray(AppConfig.getDisabledSignals(ctx)));
+            JSONArray endpoints = new JSONArray();
+            for (HaEndpointConfig endpoint : EndpointStore.list(ctx)) {
+                JSONObject o = endpoint.toJson();
+                if (includeSecret) {
+                    o.put("token", new SecureStorage(ctx).getEndpointToken(endpoint.id));
+                }
+                endpoints.put(o);
+            }
+            cfg.put("hass_endpoints", endpoints);
         } catch (Exception e) {
             LogBuffer.e("CloudSettingsPayload", "coreSettings: " + e.getMessage());
         }
@@ -83,7 +92,43 @@ public final class CloudSettingsPayload {
                 : (cfg.optBoolean("detailed_log_enabled", AppConfig.isDetailedLogEnabled(ctx))
                     ? AppConfig.FILE_LOG_DETAILED : AppConfig.FILE_LOG_BASIC);
         boolean detailedLog = fileLogMode == AppConfig.FILE_LOG_DETAILED;
-        AppConfig.save(ctx, host, port, token, carName, enabled, https, bootAutoStart, carControl, detailedLog);
+        JSONArray endpoints = cfg.optJSONArray("hass_endpoints");
+        if (endpoints != null) {
+            List<HaEndpointConfig> list = new ArrayList<>();
+            for (int i = 0; i < endpoints.length(); i++) {
+                JSONObject o = endpoints.optJSONObject(i);
+                if (o == null) continue;
+                try {
+                    HaEndpointConfig endpoint = HaEndpointConfig.fromJson(o);
+                    String endpointToken = o.optString("token", "");
+                    String existingToken = new SecureStorage(ctx).getEndpointToken(endpoint.id);
+                    if (!endpointToken.isEmpty()) {
+                        new SecureStorage(ctx).saveEndpointToken(endpoint.id, endpointToken);
+                    } else if (existingToken.isEmpty()) {
+                        endpoint = new HaEndpointConfig(endpoint.id, endpoint.name,
+                                endpoint.address, endpoint.https, endpoint.carName,
+                                false, endpoint.commandsEnabled);
+                    }
+                    list.add(endpoint);
+                } catch (Exception e) {
+                    LogBuffer.w("CloudSettingsPayload", "bad endpoint: " + e.getMessage());
+                }
+            }
+            EndpointStore.save(ctx, list);
+        } else {
+            HaEndpointConfig legacy = EndpointMigration.fromLegacy(
+                    host, port, https, enabled, carControl, carName);
+            if (legacy != null) {
+                if (!token.isEmpty()) {
+                    new SecureStorage(ctx).saveEndpointToken("primary", token);
+                }
+                EndpointStore.save(ctx, java.util.Collections.singletonList(legacy));
+            }
+        }
+        AppConfig.saveHassEnabled(ctx, enabled);
+        AppConfig.saveBootAutoStartEnabled(ctx, bootAutoStart);
+        AppConfig.saveCarControlEnabled(ctx, carControl);
+        AppConfig.saveCarName(ctx, carName);
         AppConfig.saveFileLogMode(ctx, fileLogMode);
         AppConfig.saveQueueEnabled(ctx, cfg.optBoolean("queue_enabled", AppConfig.isQueueEnabled(ctx)));
         AppConfig.saveQueueMaxMb(ctx, cfg.optInt("queue_max_mb", AppConfig.getQueueMaxMb(ctx)));

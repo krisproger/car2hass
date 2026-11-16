@@ -97,6 +97,24 @@ public class SecureStorage {
     public void clearToken() {
         clearSecret(KEY_TOKEN, KEY_IV, PLAIN_FALLBACK_KEY);
     }
+    /** Encrypt and store one endpoint's HA access token. */
+    public void saveEndpointToken(String id, String token) {
+        String base = "hass_endpoint_" + id;
+        saveSecret(base + "_encrypted", base + "_iv", base + "_plain",
+                token != null ? token : "");
+    }
+
+    /** Retrieve and decrypt one endpoint's HA access token. */
+    public String getEndpointToken(String id) {
+        String base = "hass_endpoint_" + id;
+        return getSecret(base + "_encrypted", base + "_iv", base + "_plain");
+    }
+
+    /** Clear one endpoint's HA access token. */
+    public void clearEndpointToken(String id) {
+        String base = "hass_endpoint_" + id;
+        clearSecret(base + "_encrypted", base + "_iv", base + "_plain");
+    }
 
     /** Encrypt and store the cloud (mytechnic.ru) access token. */
     public void saveCloudToken(String token) {

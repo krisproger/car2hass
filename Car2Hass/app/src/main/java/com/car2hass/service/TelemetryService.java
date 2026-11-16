@@ -38,7 +38,6 @@ import com.car2hass.BuildConfig;
 import com.car2hass.CANDataItem;
 import com.car2hass.CANDataReader;
 import com.car2hass.CloudSyncClient;
-import com.car2hass.CommandPoller;
 import com.car2hass.DerivedAggregates;
 import com.car2hass.ProbeUploader;
 import com.car2hass.ProbeUploadPolicy;
@@ -103,9 +102,6 @@ public class TelemetryService extends Service {
     private ExecutorService flushExecutor;
     private ExecutorService snapshotExecutor;
     private final AtomicBoolean running = new AtomicBoolean(false);
-    /** Throttle for repeated "HA flush failed" warnings (one per 5 min). */
-    private volatile long lastHassFlushLogMs = 0L;
-
     /** Throttle for the periodic memory diagnostic line (one per minute). */
     private volatile long lastMemLogMs = 0L;
 
@@ -113,7 +109,7 @@ public class TelemetryService extends Service {
     private LocationListener locationListener;
     private ConnectivityManager.NetworkCallback networkCallback;
     private TelemetryCallback callback;
-    private CommandPoller commandPoller;
+    private com.car2hass.EndpointManager endpointManager;
     private RuleEngine ruleEngine;
     /** Shared signal store (new architecture): workers write here, tab/snapshot read. */
     public final com.car2hass.vehicle.ValueStore valueStore =
@@ -137,6 +133,10 @@ public class TelemetryService extends Service {
     public java.util.List<com.car2hass.vehicle.ChannelWorkerStatus> channelStatuses() {
         com.car2hass.vehicle.ChannelWorkerRegistry reg = workerRegistry;
         return reg == null ? java.util.Collections.emptyList() : reg.statuses();
+    }
+
+    public void requestFlushNow(com.car2hass.HassClient.FlushCallback callback) {
+        if (endpointManager != null) endpointManager.requestFlushNow(callback);
     }
 
     /** Number of live worker threads (running channels). */
@@ -255,6 +255,8 @@ public class TelemetryService extends Service {
             if (isDerivedSourceKey(key)) refreshDerivedSensors();
         });
         SensorValueHistory.ensureLoaded(AppConfig.getSensorValueHistoryJson(this));
+        endpointManager = new com.car2hass.EndpointManager(this);
+        endpointManager.reconcile();
     }
 
     @Override
@@ -303,7 +305,7 @@ public class TelemetryService extends Service {
             } catch (Exception ignored) {}
             startSnapshotTicker();
             registerNetworkCallback();
-            startCommandPoller();
+            if (endpointManager != null) endpointManager.reconcile();
             if (ruleEngine != null) ruleEngine.start();
             mainHandler.postDelayed(autoLogDumpRunnable, AUTO_LOG_DUMP_DELAY_MS);
             LogBuffer.i("TelemetryService", "Scheduled auto log dump in " + AUTO_LOG_DUMP_DELAY_MS + " ms");
@@ -625,7 +627,7 @@ public class TelemetryService extends Service {
         mainHandler.removeCallbacks(autoLogDumpRunnable);
         stopLocationUpdates();
         unregisterNetworkCallback();
-        stopCommandPoller();
+        if (endpointManager != null) endpointManager.stop();
         if (ruleEngine != null) ruleEngine.stop();
         // Persist any unsaved sensor-value history before shutdown.
         if (SensorValueHistory.isDirty()) {
@@ -743,37 +745,6 @@ public class TelemetryService extends Service {
         }
     }
 
-    private void startCommandPoller() {
-        try {
-            if (!AppConfig.isCarControlEnabled(this)) {
-                LogBuffer.i("TelemetryService", "Car control from HA is disabled — not starting command poller");
-                return;
-            }
-            if (commandPoller == null) {
-                commandPoller = new CommandPoller(this);
-                LogBuffer.i("TelemetryService", "CommandPoller instance created");
-            }
-            commandPoller.start();
-            LogBuffer.i("TelemetryService", "Command poller started");
-        } catch (Exception e) {
-            LogBuffer.e("TelemetryService", "startCommandPoller failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-        }
-    }
-
-    private void stopCommandPoller() {
-        if (commandPoller != null) {
-            try {
-                commandPoller.stop();
-                LogBuffer.i("TelemetryService", "Command poller stopped");
-            } catch (Exception e) {
-                LogBuffer.e("TelemetryService", "stopCommandPoller failed: " + e.getClass().getSimpleName() + ": " + e.getMessage());
-            }
-            commandPoller = null;
-        } else {
-            LogBuffer.d("TelemetryService", "stopCommandPoller: no poller running");
-        }
-    }
-
     private void startTelemetryLoop() {
         telemetryExecutor.execute(() -> {
             while (running.get()) {
@@ -798,23 +769,8 @@ public class TelemetryService extends Service {
         });
     }
 
-    private final java.util.concurrent.atomic.AtomicBoolean integrationInfoQueried =
-            new java.util.concurrent.atomic.AtomicBoolean(false);
-
     /** Queries the integration api_version once per process when HA is configured. */
-    private void ensureIntegrationInfoOnce() {
-        if (!integrationInfoQueried.compareAndSet(false, true)) return;
-        if (!AppConfig.isHassEnabled(this) || !AppConfig.isHassConfigured(this)) return;
-        final String base = (AppConfig.isHassHttps(this) ? "https" : "http") + "://"
-                + AppConfig.getHassHost(this) + ":" + AppConfig.getHassPort(this);
-        final String token = AppConfig.getHassToken(this);
-        new Thread(() -> com.car2hass.IntegrationInfo.query(this, base, token),
-                "integration-info").start();
-    }
-
     private void startFlushLoop() {
-        com.car2hass.IntegrationInfo.load(this);
-        ensureIntegrationInfoOnce();
         flushExecutor.execute(() -> {
             while (running.get()) {
                 try {
@@ -823,23 +779,8 @@ public class TelemetryService extends Service {
                     break;
                 }
                 if (!running.get()) break;
-                if (AppConfig.isHassEnabled(this) && AppConfig.isHassConfigured(this)) {
-                    HassClient.flush(this, (success, msg) -> {
-                        if (!success) {
-                            // "flush in progress"/"backed off" are normal; repeated
-                            // HTTP failures are throttled to one line per 5 min so a
-                            // misconfigured/unreachable HA cannot flood the log.
-                            if ("flush in progress".equals(msg) || "backed off".equals(msg)) {
-                                LogBuffer.d("TelemetryService", "HA flush skipped: " + msg);
-                            } else {
-                                long nowMs = System.currentTimeMillis();
-                                if (nowMs - lastHassFlushLogMs > 300_000L) {
-                                    lastHassFlushLogMs = nowMs;
-                                    LogBuffer.w("TelemetryService", "HA flush failed: " + msg);
-                                }
-                            }
-                        }
-                    });
+                if (AppConfig.isHassEnabled(this) && endpointManager != null) {
+                    endpointManager.flushAll();
                 }
                 if (AppConfig.isCloudSyncEnabled(this)) {
                     CloudSyncClient.flushAsync(this);
@@ -863,8 +804,8 @@ public class TelemetryService extends Service {
                     LogBuffer.i("TelemetryService", "memory: heap "
                             + (rt.totalMemory() - rt.freeMemory()) / 1048576 + "MB / max "
                             + rt.maxMemory() / 1048576 + "MB, HA queue "
-                            + com.car2hass.SnapshotQueue.getCount(this)
-                            + ", buffer " + com.car2hass.HassClient.getBufferSize());
+                            + (endpointManager != null ? endpointManager.queueCount() : 0)
+                            + ", buffer " + (endpointManager != null ? endpointManager.bufferCount() : 0));
                 }
                 // Persist last-known values periodically (not only on exit) so a
                 // kill/restart can still restore the previous session immediately.
@@ -1179,7 +1120,7 @@ public class TelemetryService extends Service {
             // epoch seconds so HA can attribute the location to the real
             // measurement moment instead of the snapshot collection time.
             long fixTimeSec = hasValidLocation() ? lastLocTime / 1000 : 0;
-            HassClient.collectSnapshot(this, lastLat, lastLon, lastAccuracy, fixTimeSec, sig.toString());
+            endpointManager.collectSnapshot(lastLat, lastLon, lastAccuracy, fixTimeSec, sig.toString());
             // Same assembled snapshot also feeds the site track (unified set).
             if (AppConfig.isCloudSyncEnabled(this)) {
                 java.util.Map<String, Object> cloudSensors = new java.util.LinkedHashMap<>();
@@ -1351,7 +1292,7 @@ public class TelemetryService extends Service {
             LogBuffer.e("TelemetryService", "snapshot build: " + e.getMessage());
         }
         SnapshotStore.Loc l = snapshotStore.getLocation();
-        HassClient.collectSnapshot(this, l.lat, l.lon, l.accuracy,
+        endpointManager.collectSnapshot(l.lat, l.lon, l.accuracy,
                 l.timeMs > 0 ? l.timeMs / 1000 : 0, sig.toString());
         if (AppConfig.isCloudSyncEnabled(this) && !cloudSensors.isEmpty()) {
             CloudSyncClient.collectSnapshot(this, cloudSensors, l.lat, l.lon);
@@ -1657,7 +1598,7 @@ public class TelemetryService extends Service {
                         return;
                     }
                     lastNetworkFlushMs = now;
-                    if (hass) HassClient.onNetworkAvailable(TelemetryService.this);
+                    if (hass && endpointManager != null) endpointManager.onNetworkAvailable();
                     if (cloud) CloudSyncClient.onNetworkAvailable(TelemetryService.this);
                 }
             };

@@ -8,19 +8,18 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class SnapshotQueue {
-    // Deliberately much smaller than the HA integration's MAX_BATCH_SNAPSHOTS
-    // (1000): a 500-snapshot offline batch can take longer than the 10s HTTP
-    // timeout on a slow head unit / HA instance and then retry forever
-    // (head-of-line). 100 keeps a single POST small and lets the queue drain
-    // steadily.
     public static final int DEQUEUE_CHUNK_SIZE = 100;
+    private static final String PRIMARY = "primary";
 
     private static final String DB_NAME = "snapshot_queue.db";
-    private static final int DB_VERSION = 4;
+    private static final int DB_VERSION = 5;
     private static final String TABLE = "queue";
     private static final String COL_ID = "id";
+    private static final String COL_ENDPOINT = "endpoint_id";
     private static final String COL_TS = "ts";
     private static final String COL_LAT = "lat";
     private static final String COL_LON = "lon";
@@ -39,9 +38,53 @@ public class SnapshotQueue {
         return dbHelper;
     }
 
-    public static void enqueue(Context ctx, HassClient.Snapshot snap) {
+    public static void enqueue(Context ctx, String endpointId, HassClient.Snapshot snap) {
         SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
+        ContentValues cv = values(endpointId, snap);
+        db.insert(TABLE, null, cv);
+    }
+
+    public static void enqueue(Context ctx, HassClient.Snapshot snap) {
+        enqueue(ctx, PRIMARY, snap);
+    }
+
+    public static void enqueueAll(Context ctx, String endpointId,
+                                  List<HassClient.Snapshot> snapshots) {
+        enqueueAll(ctx, endpointId, snapshots, AppConfig.getQueueMaxMb(ctx));
+    }
+
+    public static void enqueueAll(Context ctx, String endpointId,
+                                  List<HassClient.Snapshot> snapshots, int maxMb) {
+        if (snapshots == null || snapshots.isEmpty()) return;
+        if (!AppConfig.isQueueEnabled(ctx)) {
+            LogBuffer.i("SnapshotQueue", "Queue disabled, discarding " + snapshots.size() + " snapshots");
+            return;
+        }
+        compact(ctx, endpointId, 2 * 3600, 60);
+        evictByAge(ctx, endpointId, AppConfig.getQueueMaxDays(ctx));
+        evictBySize(ctx, endpointId, maxMb);
+
+        SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
+        db.beginTransaction();
+        try {
+            for (HassClient.Snapshot snap : snapshots) {
+                db.insert(TABLE, null, values(endpointId, snap));
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+        LogBuffer.i("SnapshotQueue", "Enqueued " + snapshots.size() + " snapshots for "
+                + endpointId + " (total: " + getCount(ctx, endpointId) + ")");
+    }
+
+    public static void enqueueAll(Context ctx, List<HassClient.Snapshot> snapshots) {
+        enqueueAll(ctx, PRIMARY, snapshots);
+    }
+
+    private static ContentValues values(String endpointId, HassClient.Snapshot snap) {
         ContentValues cv = new ContentValues();
+        cv.put(COL_ENDPOINT, safeId(endpointId));
         cv.put(COL_TS, snap.timestamp);
         cv.put(COL_LAT, snap.lat);
         cv.put(COL_LON, snap.lon);
@@ -50,61 +93,18 @@ public class SnapshotQueue {
         cv.put(COL_SIGNALS, snap.signalJson);
         cv.put(COL_DISABLED, snap.disabledJson == null ? "" : snap.disabledJson);
         cv.put(COL_CREATED, System.currentTimeMillis());
-        db.insert(TABLE, null, cv);
+        return cv;
     }
 
-    public static void enqueueAll(Context ctx, List<HassClient.Snapshot> snapshots) {
-        if (snapshots == null || snapshots.isEmpty()) return;
-        if (!AppConfig.isQueueEnabled(ctx)) {
-            LogBuffer.i("SnapshotQueue", "Queue disabled, discarding " + snapshots.size() + " snapshots");
-            return;
-        }
-        compact(ctx, 2 * 3600, 60);
-        evictByAge(ctx, AppConfig.getQueueMaxDays(ctx));
-        evictBySize(ctx, AppConfig.getQueueMaxMb(ctx));
-
-        SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
-        db.beginTransaction();
-        try {
-            for (HassClient.Snapshot snap : snapshots) {
-                ContentValues cv = new ContentValues();
-                cv.put(COL_TS, snap.timestamp);
-                cv.put(COL_LAT, snap.lat);
-                cv.put(COL_LON, snap.lon);
-                cv.put(COL_ACCURACY, snap.accuracy);
-                cv.put(COL_FIX_TS, snap.fixTimeSec);
-                cv.put(COL_SIGNALS, snap.signalJson);
-        cv.put(COL_DISABLED, snap.disabledJson == null ? "" : snap.disabledJson);
-                cv.put(COL_CREATED, System.currentTimeMillis());
-                db.insert(TABLE, null, cv);
-            }
-            db.setTransactionSuccessful();
-        } finally {
-            db.endTransaction();
-        }
-        LogBuffer.i("SnapshotQueue", "Enqueued " + snapshots.size() + " snapshots (total: " + getCount(ctx) + ")");
-    }
-
-    /**
-     * Read the oldest {@code limit} queued snapshots WITHOUT deleting them.
-     * Deletion happens only after a confirmed successful send (see
-     * {@link #deleteUpTo}). This fixes two data-loss bugs:
-     * - snapshots inserted between the SELECT and DELETE were destroyed unread;
-     * - a process kill between dequeue and re-enqueue-on-error lost the whole batch.
-     * Returns each snapshot with its database id set (via {@link HassClient.Snapshot#queueId}).
-     */
-    public static List<HassClient.Snapshot> dequeueChunk(Context ctx, int limit) {
+    public static List<HassClient.Snapshot> dequeueChunk(Context ctx, String endpointId, int limit) {
         if (limit <= 0) return new ArrayList<>();
         List<HassClient.Snapshot> result = new ArrayList<>();
         SQLiteDatabase db = getHelper(ctx).getReadableDatabase();
         Cursor cursor = db.rawQuery(
             "SELECT id, ts, lat, lon, accuracy, fix_ts, signals, disabled FROM " + TABLE
-                    + " ORDER BY id ASC LIMIT ?",
-            new String[]{String.valueOf(limit)});
+                    + " WHERE " + COL_ENDPOINT + "=? ORDER BY id ASC LIMIT ?",
+            new String[]{safeId(endpointId), String.valueOf(limit)});
         try {
-            // Resolve columns by name so a SELECT/read index drift can never happen
-            // again (a previous build read index 7 while the SELECT listed 7 columns,
-            // throwing on every non-empty queue and permanently blocking offline sync).
             int iId = cursor.getColumnIndexOrThrow(COL_ID);
             int iTs = cursor.getColumnIndexOrThrow(COL_TS);
             int iLat = cursor.getColumnIndexOrThrow(COL_LAT);
@@ -119,14 +119,8 @@ public class SnapshotQueue {
                 float accuracy = cursor.isNull(iAcc) ? 0 : cursor.getFloat(iAcc);
                 long fixTimeSec = cursor.isNull(iFix) ? 0 : cursor.getLong(iFix);
                 HassClient.Snapshot snap = new HassClient.Snapshot(
-                    cursor.getLong(iTs),
-                    lat,
-                    lon,
-                    accuracy,
-                    fixTimeSec,
-                    cursor.getString(iSig),
-                    cursor.isNull(iDis) ? "" : cursor.getString(iDis)
-                );
+                    cursor.getLong(iTs), lat, lon, accuracy, fixTimeSec,
+                    cursor.getString(iSig), cursor.isNull(iDis) ? "" : cursor.getString(iDis));
                 snap.queueId = cursor.getLong(iId);
                 result.add(snap);
             }
@@ -134,28 +128,67 @@ public class SnapshotQueue {
             cursor.close();
         }
         if (!result.isEmpty()) {
-            LogBuffer.i("SnapshotQueue", "Dequeued " + result.size() + " snapshots for flush (kept in queue until confirmed)");
+            LogBuffer.i("SnapshotQueue", "Dequeued " + result.size() + " snapshots for "
+                    + endpointId + " (kept until confirmed)");
         }
         return result;
     }
 
-    /**
-     * Delete all queued rows with id &lt;= maxId — called after a confirmed send.
-     * Single DELETE is atomic; ids below the watermark can never be sent again.
-     */
-    public static void deleteUpTo(Context ctx, long maxId) {
+    public static List<HassClient.Snapshot> dequeueChunk(Context ctx, int limit) {
+        return dequeueChunk(ctx, PRIMARY, limit);
+    }
+
+    public static void deleteUpTo(Context ctx, String endpointId, long maxId) {
         SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
-        int deleted = db.delete(TABLE, COL_ID + " <= ?", new String[]{String.valueOf(maxId)});
+        int deleted = db.delete(TABLE, COL_ENDPOINT + "=? AND " + COL_ID + " <= ?",
+                new String[]{safeId(endpointId), String.valueOf(maxId)});
         if (deleted > 0) {
-            LogBuffer.i("SnapshotQueue", "Confirmed " + deleted + " snapshots sent, removed from queue");
+            LogBuffer.i("SnapshotQueue", "Confirmed " + deleted + " snapshots sent for "
+                    + endpointId + ", removed from queue");
         }
     }
 
+    public static void deleteUpTo(Context ctx, long maxId) {
+        deleteUpTo(ctx, PRIMARY, maxId);
+    }
+
+    public static int getCount(Context ctx, String endpointId) {
+        SQLiteDatabase db = getHelper(ctx).getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE + " WHERE "
+                + COL_ENDPOINT + "=?", new String[]{safeId(endpointId)});
+        try {
+            if (cursor.moveToFirst()) return cursor.getInt(0);
+        } finally {
+            cursor.close();
+        }
+        return 0;
+    }
+
     public static int getCount(Context ctx) {
+        return getCount(ctx, PRIMARY);
+    }
+
+    public static int getCountAll(Context ctx) {
         SQLiteDatabase db = getHelper(ctx).getReadableDatabase();
         Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + TABLE, null);
         try {
             if (cursor.moveToFirst()) return cursor.getInt(0);
+        } finally {
+            cursor.close();
+        }
+        return 0;
+    }
+
+    public static long getApproximateSize(Context ctx, String endpointId) {
+        SQLiteDatabase db = getHelper(ctx).getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT SUM(LENGTH(signals)), COUNT(*) FROM " + TABLE
+                + " WHERE " + COL_ENDPOINT + "=?", new String[]{safeId(endpointId)});
+        try {
+            if (cursor.moveToFirst()) {
+                long signalsLen = cursor.isNull(0) ? 0 : cursor.getLong(0);
+                long count = cursor.getLong(1);
+                return signalsLen + count * 200;
+            }
         } finally {
             cursor.close();
         }
@@ -177,62 +210,68 @@ public class SnapshotQueue {
         return 0;
     }
 
-    private static volatile long lastCompactMs = 0;
+    private static final Map<String, Long> lastCompactMs = new ConcurrentHashMap<>();
 
-    /**
-     * Offline backlog compaction: keep full resolution for the last
-     * {@code fullWindowSec}, but beyond that keep at most one snapshot per
-     * {@code bucketSec} (latest per bucket). Bounds a 24 h outage to ~8.5k rows
-     * instead of 86k without losing the GPS track. Runs at most every 5 min.
-     */
-    public static void compact(Context ctx, long fullWindowSec, long bucketSec) {
+    public static void compact(Context ctx, String endpointId, long fullWindowSec, long bucketSec) {
         long now = System.currentTimeMillis();
-        if (now - lastCompactMs < 300_000L) return;
-        lastCompactMs = now;
+        String id = safeId(endpointId);
+        Long last = lastCompactMs.get(id);
+        if (last != null && now - last < 300_000L) return;
+        lastCompactMs.put(id, now);
         long cutoff = now / 1000L - fullWindowSec;
         try {
             SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
             int deleted = db.delete(TABLE,
-                    COL_TS + " < ? AND " + COL_ID + " NOT IN (SELECT MAX(" + COL_ID + ") FROM "
-                            + TABLE + " WHERE " + COL_TS + " < ? GROUP BY (" + COL_TS + " / ?))",
-                    new String[]{String.valueOf(cutoff), String.valueOf(cutoff),
-                            String.valueOf(bucketSec)});
+                    COL_ENDPOINT + "=? AND " + COL_TS + " < ? AND " + COL_ID
+                            + " NOT IN (SELECT MAX(" + COL_ID + ") FROM " + TABLE
+                            + " WHERE " + COL_ENDPOINT + "=? AND " + COL_TS
+                            + " < ? GROUP BY (" + COL_TS + " / ?))",
+                    new String[]{id, String.valueOf(cutoff), id,
+                            String.valueOf(cutoff), String.valueOf(bucketSec)});
             if (deleted > 0) {
-                LogBuffer.i("SnapshotQueue", "Compacted " + deleted + " old snapshots (1/"
-                        + bucketSec + "s beyond " + fullWindowSec + "s)");
+                LogBuffer.i("SnapshotQueue", "Compacted " + deleted + " old snapshots for "
+                        + id + " (1/" + bucketSec + "s beyond " + fullWindowSec + "s)");
             }
         } catch (Exception e) {
             LogBuffer.w("SnapshotQueue", "compact: " + e.getMessage());
         }
     }
 
-    public static void evictByAge(Context ctx, int maxDays) {
+    public static void compact(Context ctx, long fullWindowSec, long bucketSec) {
+        compact(ctx, PRIMARY, fullWindowSec, bucketSec);
+    }
+
+    public static void evictByAge(Context ctx, String endpointId, int maxDays) {
         if (maxDays <= 0) return;
         SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
         long cutoff = System.currentTimeMillis() - (long) maxDays * 86400000L;
-        int deleted = db.delete(TABLE, COL_CREATED + " < ?", new String[]{String.valueOf(cutoff)});
+        int deleted = db.delete(TABLE, COL_ENDPOINT + "=? AND " + COL_CREATED + " < ?",
+                new String[]{safeId(endpointId), String.valueOf(cutoff)});
         if (deleted > 0) {
-            LogBuffer.i("SnapshotQueue", "Evicted " + deleted + " old snapshots (age > " + maxDays + " days)");
+            LogBuffer.i("SnapshotQueue", "Evicted " + deleted + " old snapshots for "
+                    + endpointId + " (age > " + maxDays + " days)");
         }
     }
 
-    public static void evictBySize(Context ctx, int maxMb) {
+    public static void evictByAge(Context ctx, int maxDays) {
+        evictByAge(ctx, PRIMARY, maxDays);
+    }
+
+    public static void evictBySize(Context ctx, String endpointId, int maxMb) {
         if (maxMb <= 0) return;
         long maxBytes = (long) maxMb * 1048576L;
-        long currentBytes = getApproximateSize(ctx);
+        String id = safeId(endpointId);
+        long currentBytes = getApproximateSize(ctx, id);
         if (currentBytes <= maxBytes) return;
 
-        // Single pass: walk rows oldest-first accumulating each row's footprint and
-        // remember the id where the accumulated size covers the overflow. Then one
-        // DELETE removes everything up to that id. Old code called getApproximateSize()
-        // (a full SUM(LENGTH(signals)) scan) once per 100 deleted rows — O(n^2).
         SQLiteDatabase db = getHelper(ctx).getReadableDatabase();
         long toFree = currentBytes - maxBytes;
         long acc = 0;
         long cutoffId = -1;
         Cursor cursor = db.rawQuery(
-            "SELECT id, LENGTH(signals) + 200 AS row_bytes FROM " + TABLE + " ORDER BY id ASC",
-            null);
+            "SELECT id, LENGTH(signals) + 200 AS row_bytes FROM " + TABLE
+                    + " WHERE " + COL_ENDPOINT + "=? ORDER BY id ASC",
+            new String[]{id});
         try {
             while (cursor.moveToNext()) {
                 acc += cursor.getLong(1);
@@ -243,18 +282,40 @@ public class SnapshotQueue {
             cursor.close();
         }
         if (cutoffId < 0) return;
-        int totalDeleted = db.delete(TABLE, COL_ID + " <= ?", new String[]{String.valueOf(cutoffId)});
+        int totalDeleted = db.delete(TABLE, COL_ENDPOINT + "=? AND " + COL_ID + " <= ?",
+                new String[]{id, String.valueOf(cutoffId)});
         if (totalDeleted > 0) {
-            LogBuffer.i("SnapshotQueue", "Evicted " + totalDeleted + " oldest snapshots to stay under " + maxMb + " MB");
+            LogBuffer.i("SnapshotQueue", "Evicted " + totalDeleted + " oldest snapshots for "
+                    + id + " to stay under " + maxMb + " MB");
+        }
+    }
+
+    public static void evictBySize(Context ctx, int maxMb) {
+        evictBySize(ctx, PRIMARY, maxMb);
+    }
+
+    public static void clear(Context ctx, String endpointId) {
+        SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
+        int deleted = db.delete(TABLE, COL_ENDPOINT + "=?", new String[]{safeId(endpointId)});
+        if (deleted > 0) {
+            LogBuffer.i("SnapshotQueue", "Cleared " + deleted + " snapshots for " + endpointId);
         }
     }
 
     public static void clear(Context ctx) {
+        clearAll(ctx);
+    }
+
+    public static void clearAll(Context ctx) {
         SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
         int deleted = db.delete(TABLE, null, null);
         if (deleted > 0) {
             LogBuffer.i("SnapshotQueue", "Cleared " + deleted + " snapshots from queue");
         }
+    }
+
+    private static String safeId(String endpointId) {
+        return endpointId == null || endpointId.isEmpty() ? PRIMARY : endpointId;
     }
 
     private static class QueueDbHelper extends SQLiteOpenHelper {
@@ -266,6 +327,7 @@ public class SnapshotQueue {
         public void onCreate(SQLiteDatabase db) {
             db.execSQL("CREATE TABLE " + TABLE + " (" +
                 COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                COL_ENDPOINT + " TEXT NOT NULL DEFAULT '', " +
                 COL_TS + " INTEGER NOT NULL, " +
                 COL_LAT + " REAL, " +
                 COL_LON + " REAL, " +
@@ -276,11 +338,12 @@ public class SnapshotQueue {
                 COL_DISABLED + " TEXT" +
                 ")");
             db.execSQL("CREATE INDEX idx_queue_created ON " + TABLE + "(" + COL_CREATED + ")");
+            db.execSQL("CREATE INDEX idx_queue_endpoint_id ON " + TABLE + "(" + COL_ENDPOINT + ", id)");
+            db.execSQL("CREATE INDEX idx_queue_endpoint_created ON " + TABLE + "(" + COL_ENDPOINT + ", created)");
         }
 
         @Override
         public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-            // Incremental migrations only — never drop user data here.
             if (oldVersion < 2) {
                 db.execSQL("CREATE INDEX IF NOT EXISTS idx_queue_created ON " + TABLE + "(" + COL_CREATED + ")");
             }
@@ -290,6 +353,16 @@ public class SnapshotQueue {
             }
             if (oldVersion < 4) {
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN " + COL_DISABLED + " TEXT");
+            }
+            if (oldVersion < 5) {
+                db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN " + COL_ENDPOINT +
+                        " TEXT NOT NULL DEFAULT ''");
+                db.execSQL("UPDATE " + TABLE + " SET " + COL_ENDPOINT + "='primary' WHERE "
+                        + COL_ENDPOINT + "=''");
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_queue_endpoint_id ON " + TABLE +
+                        "(" + COL_ENDPOINT + ", id)");
+                db.execSQL("CREATE INDEX IF NOT EXISTS idx_queue_endpoint_created ON " + TABLE +
+                        "(" + COL_ENDPOINT + ", created)");
             }
         }
     }
