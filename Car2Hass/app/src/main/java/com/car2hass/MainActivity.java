@@ -3527,7 +3527,8 @@ public class MainActivity extends BaseLocalizedActivity {
     /** Shows the control section when a command-capable channel is live. */
     private void refreshCommandVisibility() {
         boolean show = com.car2hass.vehicle.CommandVisibility.shouldShow(
-                AppConfig.getChannelAvailability(this), commandChannels());
+                AppConfig.getChannelAvailability(this), commandChannels())
+                || hasConfiguredCommandChannel();
         View nav = settingsView.findViewById(R.id.navSettingsCommands);
         if (nav != null) nav.setVisibility(show ? View.VISIBLE : View.GONE);
         if (!show && selectedSettingsSection == 6) selectSettingsSection(0);
