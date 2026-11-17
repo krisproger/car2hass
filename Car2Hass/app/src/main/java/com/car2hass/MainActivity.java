@@ -3470,7 +3470,8 @@ public class MainActivity extends BaseLocalizedActivity {
         selectedSettingsSection = index;
         boolean researchVisible = index == 1 && hasAddedSources();
         boolean commandVisible = com.car2hass.vehicle.CommandVisibility.shouldShow(
-                AppConfig.getChannelAvailability(this), commandChannels());
+                AppConfig.getChannelAvailability(this), commandChannels())
+                || hasConfiguredCommandChannel();
         for (int i = 0; i < settingsSections.length; i++) {
             boolean visible = i == index || (i == 5 && researchVisible);
             if (i == 6) visible = visible && commandVisible;
@@ -3500,6 +3501,15 @@ public class MainActivity extends BaseLocalizedActivity {
     private boolean hasAddedSources() {
         for (String id : AppConfig.getAddedSources(this)) {
             if (id != null && !id.isEmpty() && !"system".equals(id)) return true;
+        }
+        return false;
+    }
+
+    /** Keep the command test tab reachable when a command channel is configured
+     *  but the last light probe was transiently negative. */
+    private boolean hasConfiguredCommandChannel() {
+        for (String id : AppConfig.getActiveChannels(this)) {
+            if ("diplus".equals(id) || "adb".equals(id)) return true;
         }
         return false;
     }

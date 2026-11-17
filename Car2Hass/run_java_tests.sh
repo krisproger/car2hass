@@ -479,6 +479,10 @@ javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car
 echo "=== Compiling CloudSettingsPayloadMulti ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/CloudSettingsPayloadMultiTest.java"
 
+echo "=== Compiling HaPayloadJson ==="
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$SRC/com/car2hass/HassClient.java" "$SRC/com/car2hass/DeltaSnapshotBuilder.java" "$SRC/com/car2hass/HaPayloadJson.java"
+javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 "$TEST/com/car2hass/HaPayloadJsonTest.java"
+
 echo "=== Compiling ProbeSchedulePolicy ==="
 javac -d "$OUT" -source 17 -target 17 "$SRC/com/car2hass/ProbeSchedulePolicy.java"
 javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 "$TEST/com/car2hass/ProbeSchedulePolicyTest.java"
@@ -799,6 +803,9 @@ java -cp "$OUT:$JSON_JAR" com.car2hass.HaCommandUrlsTest
 
 echo "=== Running CloudSettingsPayloadMultiTest ==="
 java -cp "$OUT:$JSON_JAR" com.car2hass.CloudSettingsPayloadMultiTest
+
+echo "=== Running HaPayloadJsonTest ==="
+java -cp "$OUT:$JSON_JAR" com.car2hass.HaPayloadJsonTest
 
 echo "=== Running ProbeSchedulePolicyTest ==="
 java -cp "$OUT" com.car2hass.ProbeSchedulePolicyTest

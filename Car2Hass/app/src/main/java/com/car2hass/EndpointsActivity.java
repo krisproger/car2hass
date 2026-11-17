@@ -38,6 +38,12 @@ public final class EndpointsActivity extends Activity {
         root.addView(add, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
 
+        Button testAll = new Button(this);
+        testAll.setText(R.string.endpoint_test_all);
+        testAll.setOnClickListener(v -> testAllEndpoints());
+        root.addView(testAll, new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+
         ListView list = new ListView(this);
         adapter = new ArrayAdapter<HaEndpointConfig>(this, android.R.layout.simple_list_item_1, endpoints) {
             @Override
@@ -155,6 +161,29 @@ public final class EndpointsActivity extends Activity {
                 })
                 .setNegativeButton(android.R.string.cancel, null)
                 .show();
+    }
+
+    private void testAllEndpoints() {
+        List<HaEndpointConfig> snapshot = new ArrayList<>(endpoints);
+        new Thread(() -> {
+            StringBuilder sb = new StringBuilder();
+            for (HaEndpointConfig endpoint : snapshot) {
+                String token = new SecureStorage(this).getEndpointToken(endpoint.id);
+                String baseUrl = endpoint.haAddress().baseUrl();
+                HaDiagnostics.Result diag = HaDiagnostics.run(baseUrl, token);
+                IntegrationInfo info = IntegrationInfo.query(baseUrl, token);
+                sb.append(endpoint.name).append(": ")
+                        .append(diag.httpOk ? "OK" : "FAIL")
+                        .append(" loaded=")
+                        .append(info == null ? "?" : String.valueOf(info.loaded))
+                        .append('\n');
+            }
+            runOnUiThread(() -> new AlertDialog.Builder(this)
+                    .setTitle(R.string.endpoint_test_all)
+                    .setMessage(sb.toString())
+                    .setPositiveButton(android.R.string.ok, null)
+                    .show());
+        }, "endpoint-test-all").start();
     }
 
     private void testEndpoint(HaEndpointConfig endpoint) {

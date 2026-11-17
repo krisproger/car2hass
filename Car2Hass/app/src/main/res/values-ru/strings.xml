@@ -1015,4 +1015,5 @@
     <string name="endpoint_delete_confirm">Удалить сервер и его очередь телеметрии?</string>
     <string name="endpoint_invalid_address">Неверный адрес или порт</string>
     <string name="endpoint_missing_token">Нужен токен</string>
+    <string name="endpoint_test_all">Проверить все серверы</string>
 </resources>

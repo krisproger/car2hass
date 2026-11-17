@@ -1022,4 +1022,5 @@
     <string name="endpoint_delete_confirm">Delete this server and its queued telemetry?</string>
     <string name="endpoint_invalid_address">Invalid address or port</string>
     <string name="endpoint_missing_token">Token is required</string>
+    <string name="endpoint_test_all">Test all servers</string>
 </resources>

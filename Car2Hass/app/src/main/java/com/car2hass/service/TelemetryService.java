@@ -439,8 +439,12 @@ public class TelemetryService extends Service {
         AppConfig.updateActiveChannels(this,
                 com.car2hass.vehicle.ResearchUiModel.unionActive(
                         AppConfig.getActiveChannels(this), alive));
+        // Only promote live channels. A failed light check must not overwrite a
+        // previously live command channel with false (that hides the command UI).
         java.util.Map<String, Boolean> avail = new java.util.LinkedHashMap<>();
-        for (DataChannel ch : channels) avail.put(ch.id(), alive.contains(ch.id()));
+        for (DataChannel ch : channels) {
+            if (alive.contains(ch.id())) avail.put(ch.id(), true);
+        }
         AppConfig.saveChannelAvailability(this, avail);
         // A live channel becomes visible in the settings source list so the user
         // can enable it; it is never auto-enabled.

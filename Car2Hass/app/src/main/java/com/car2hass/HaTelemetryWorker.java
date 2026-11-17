@@ -251,7 +251,7 @@ public final class HaTelemetryWorker {
                         nextLastFullSendMs = System.currentTimeMillis();
                         forceFull = false;
                     }
-                    batchJson.put(wireSnapshot(snap, res));
+                    HaPayloadJson.addSnapshot(batchJson, snap, res);
                 }
                 payload.put("batch", batchJson);
                 long maxTs = 0;
@@ -321,24 +321,6 @@ public final class HaTelemetryWorker {
             }
         }
         return DeltaSnapshotBuilder.build(full, previous, keyChannel, forceFull);
-    }
-
-    private HassClient.Snapshot wireSnapshot(HassClient.Snapshot snap,
-                                             DeltaSnapshotBuilder.Result res) throws Exception {
-        String chJson = "";
-        if (res.delta && !res.channels.isEmpty()) {
-            JSONObject ch = new JSONObject();
-            for (Map.Entry<String, List<String>> e : res.channels.entrySet()) {
-                JSONArray arr = new JSONArray();
-                for (String key : e.getValue()) arr.put(key);
-                ch.put(e.getKey(), arr);
-            }
-            chJson = ch.toString();
-        }
-        return new HassClient.Snapshot(snap.timestamp, snap.lat, snap.lon,
-                snap.accuracy, snap.fixTimeSec,
-                new JSONObject(res.signals).toString(), snap.disabledJson,
-                res.delta, chJson);
     }
 
     private String tag() {
