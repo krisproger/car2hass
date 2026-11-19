@@ -205,7 +205,9 @@ javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 \
 
 echo "=== Compiling log payload codec test ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 \
-  "$TEST/com/car2hass/LogPayloadCodecTest.java"
+  "$TEST/com/car2hass/LogStoreTest.java" \
+  "$TEST/com/car2hass/LogPayloadCodecTest.java" \
+  "$TEST/com/car2hass/LogUploadMessageTest.java"
 
 echo "=== Compiling log store core tests ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 \
@@ -220,6 +222,7 @@ java -cp "$OUT" com.car2hass.LogBatchBufferTest
 java -cp "$OUT" com.car2hass.LogStoreTest
 java -cp "$OUT:$JSON_JAR" com.car2hass.GzipCodecTest
 java -cp "$OUT:$JSON_JAR" com.car2hass.LogPayloadCodecTest
+java -cp "$OUT:$JSON_JAR" com.car2hass.LogUploadMessageTest
 java -cp "$OUT" com.car2hass.DownloadsCleanupTest
 java -cp "$OUT" com.car2hass.LogUploadPolicyTest
 

@@ -312,14 +312,16 @@ public class RuleEngine {
         if (outcome.firstEvaluation || (trigger != null && trigger.firstEvaluation)) {
             savePreviousConditions();
             LogBuffer.i("RuleEngine", "Rule '" + rule.name + "': first evaluation recorded ("
-                    + groupResult + "), no edge | " + RuleDescribe.config(rule));
+                    + groupResult + "), no edge, conditions=" + describeEvaluation(group)
+                    + " | " + RuleDescribe.config(rule));
             return;
         }
         boolean prevCondition = outcome.previousCondition;
         if (outcome.stateChanged && !holdPending) {
             savePreviousConditions();
             LogBuffer.d("RuleEngine", "Rule '" + rule.name + "': condition "
-                + prevCondition + "→" + groupResult + " | " + RuleDescribe.config(rule));
+                + prevCondition + "→" + groupResult + " conditions=" + describeEvaluation(group)
+                + " | " + RuleDescribe.config(rule));
         }
 
         // Cooldown is shared by both branches: the clock is the most recent

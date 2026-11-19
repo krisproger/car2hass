@@ -38,10 +38,16 @@ public final class LogPayloadCodec {
 
     public static LogUploadPayload build(String uploadId, List<LogRecord> logs,
                                          List<CrashRecord> crashes, String preamble) {
+        return build(uploadId, logs, crashes, preamble, "");
+    }
+
+    public static LogUploadPayload build(String uploadId, List<LogRecord> logs,
+                                         List<CrashRecord> crashes, String preamble,
+                                         String message) {
         String json = buildJson(logs, crashes, preamble);
         byte[] gz = GzipCodec.compress(json.getBytes(StandardCharsets.UTF_8));
         int count = (logs == null ? 0 : logs.size()) + (crashes == null ? 0 : crashes.size());
-        return new LogUploadPayload(uploadId, gz, count);
+        return new LogUploadPayload(uploadId, gz, count, message);
     }
 
     public static String buildJson(List<LogRecord> logs, List<CrashRecord> crashes) {

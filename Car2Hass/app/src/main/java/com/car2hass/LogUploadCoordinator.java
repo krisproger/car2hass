@@ -19,16 +19,23 @@ public final class LogUploadCoordinator {
     private final Sender sender;
     private final int batchLimit;
     private final String preamble;
+    private final String message;
 
     public LogUploadCoordinator(LogRecordStore store, Sender sender, int batchLimit) {
-        this(store, sender, batchLimit, "");
+        this(store, sender, batchLimit, "", "");
     }
 
     public LogUploadCoordinator(LogRecordStore store, Sender sender, int batchLimit, String preamble) {
+        this(store, sender, batchLimit, preamble, "");
+    }
+
+    public LogUploadCoordinator(LogRecordStore store, Sender sender, int batchLimit,
+                                String preamble, String message) {
         this.store = store;
         this.sender = sender;
         this.batchLimit = Math.max(1, batchLimit);
         this.preamble = preamble == null ? "" : preamble;
+        this.message = message == null ? "" : message;
     }
 
     /** Outcome of one batch: how many records were attempted and whether the server accepted. */
@@ -49,7 +56,7 @@ public final class LogUploadCoordinator {
         store.markSendingLogs(ids(logs), uploadId);
         store.markSendingCrashes(crashIds(crashes), uploadId);
 
-        LogUploadPayload payload = LogPayloadCodec.build(uploadId, logs, crashes, preamble);
+        LogUploadPayload payload = LogPayloadCodec.build(uploadId, logs, crashes, preamble, message);
         boolean ok;
         try {
             ok = sender.send(payload);

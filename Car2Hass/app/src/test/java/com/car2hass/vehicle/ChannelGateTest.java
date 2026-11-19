@@ -12,12 +12,13 @@ public class ChannelGateTest {
         List<String> a = ChannelGate.resolve(Arrays.asList("voyah", "diplus"), Collections.emptyMap(), true);
         if (!a.equals(Arrays.asList("system", "voyah", "diplus"))) throw new AssertionError("fail-open: " + a);
 
-        // Known-dead channel is dropped; known-alive kept.
+        // A probe-marked-dead channel is retried: otherwise a transient
+        // failure would freeze telemetry until the next manual research.
         Map<String, Boolean> av = new HashMap<>();
         av.put("voyah", false);
         av.put("diplus", true);
         List<String> b = ChannelGate.resolve(Arrays.asList("voyah", "diplus"), av, true);
-        if (!b.equals(Arrays.asList("system", "diplus"))) throw new AssertionError("gate: " + b);
+        if (!b.equals(Arrays.asList("system", "voyah", "diplus"))) throw new AssertionError("gate must keep dead channels for retry: " + b);
 
         // system deduped; obd dropped when disabled.
         List<String> c = ChannelGate.resolve(Arrays.asList("system", "obd"), Collections.emptyMap(), false);

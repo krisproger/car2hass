@@ -2936,7 +2936,7 @@ public class MainActivity extends BaseLocalizedActivity {
             try { return displayRegistry().category(key); } catch (Exception e) { return "other"; }
         };
         List<String> catOrder = java.util.Arrays.asList(
-                "drive", "battery", "climate", "access", "lights", "tyres",
+                "drive", "engine", "battery", "climate", "access", "lights", "tyres",
                 "safety", "sentry", "media", "location", "device", "phone", "other");
         List<TelemetryExpandableAdapter.Group> groups = new ArrayList<>();
         addGroup(groups, "active", R.string.telemetry_group_active, active, catOf, catOrder, expandedCats);

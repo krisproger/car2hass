@@ -1,7 +1,7 @@
 # diplus — полный каталог сигналов (`/api/getVal?name=`)
 
 Источник: `com.van.diplus.cmd.s` (конструктор), декомпиляция diplus 1.3.8-beta18.
-Всего **253** сигналов. Ключ `name` — китайская строка (единственное латинское имя — `SOC`).
+Всего **265** сигналов. Ключ `name` — китайская строка (единственное латинское имя — `SOC`).
 
 - **ID** — внутренний индекс в реестре (`SparseArray`), для справки; в HTTP-запросе не используется.
 - **Тип**: *num* — числовое значение; *enum* — при `status=true` возвращает текстовую метку, при `status=false` — числовой индекс.
@@ -18,12 +18,10 @@ GET http://127.0.0.1:8988/api/getVal?name=车速&status=true   →  {"success":t
 | 1 | `电源状态` | Power state | enum | 0=off, 1=on, 2=driving |
 | 2 | `车速` | Speed (km/h) | num |  |
 | 4 | `档位` | Gear | enum | 0=—, 1=P, 2=R, 3=N, 4=D, 5=M, 6=S |
-| 5 | `发动机转速` | Engine RPM | num |  |
 | 6 | `刹车深度` | Brake pedal depth | num |  |
 | 7 | `加速踏板深度` | Accelerator pedal depth | num |  |
 | 8 | `前电机转速` | Front motor RPM | num |  |
 | 9 | `后电机转速` | Rear motor RPM | num |  |
-| 10 | `发动机功率` | Engine power | num |  |
 | 11 | `前电机扭矩` | Front motor torque | num |  |
 | 30 | `方向盘转角` | Steering wheel angle | num |  |
 | 31 | `方向盘转速` | Steering wheel rate | num |  |
@@ -32,7 +30,7 @@ GET http://127.0.0.1:8988/api/getVal?name=车速&status=true   →  {"success":t
 | 38 | `左侧线距离` | Left lane distance | num |  |
 | 50 | `巡航开关` | Cruise switch | num |  |
 | 67 | `整车工作模式` | Powertrain work mode | enum | 0=stop, 1=EV, 2=forced EV, 3=HEV |
-| 68 | `整车运行模式` | Drive mode | enum | 0=NORMAL, 1=ECO, 2=SPORT |
+| 68 | `整车运行模式` | Drive mode | enum | 0=NORMAL, 1=ECO, 2=COMFORT, 3=SPORT, 4=OFFROAD, 5=INDIVIDUAL, 6=SNOW |
 | 78 | `风量档位` | Fan speed level | num |  |
 | 88 | `自动驻车` | Auto hold | enum | 0=disabled, 1=pending, 2=active, 3=state3 |
 | 89 | `ACC巡航状态` | ACC cruise state | enum | 0=disabled, 1=cancelled, 2=pending, 3=active, 4=state4, 5=auto-start |
@@ -41,10 +39,19 @@ GET http://127.0.0.1:8988/api/getVal?name=车速&status=true   →  {"success":t
 | 1010 | `晃动幅度` | Sway magnitude | num |  |
 | 1011 | `振动幅度` | Vibration magnitude | num |  |
 | 1101 | `无线ADB开关` | Wireless ADB switch | enum | 0=off, 1=on |
-| 30001 | `发动机负荷` | Engine load | num |  |
 | 30003 | `空气质量流量` | MAF air flow | num |  |
 | 30006 | `燃油消耗率` | Fuel consumption rate | num |  |
 | 40007 | `方向盘加热` | Steering wheel heating | enum |  |
+
+## Двигатель / Engine
+
+| ID | Ключ (`name`) | Значение | Тип | Метки enum |
+|---:|---|---|---|---|
+| 5 | `发动机转速` | Engine RPM | num |  |
+| 10 | `发动机功率` | Engine power | num |  |
+| 108 | `发动机水温` | Engine coolant temp | num |  |
+| 30001 | `发动机负荷` | Engine load | num |  |
+| 30005 | `机油温度` | Engine oil temperature | num |  |
 
 ## Батарея и зарядка / Battery & charging
 
@@ -80,10 +87,8 @@ GET http://127.0.0.1:8988/api/getVal?name=车速&status=true   →  {"success":t
 | 77 | `空调状态` | A/C state | enum | 0=off, 1=on |
 | 79 | `空调循环方式` | A/C recirculation | enum | 0=fresh, 1=recirc |
 | 80 | `空调出风模式` | A/C airflow mode | enum | 0=—, 1=face, 2=face+feet, 3=feet, 4=feet+defrost, 5=defrost, 6=face+feet+defrost, 7=face+defrost |
-| 108 | `发动机水温` | Engine coolant temp | num |  |
 | 30002 | `进气温度` | Intake air temperature | num |  |
 | 30004 | `环境温度` | Ambient temperature | num |  |
-| 30005 | `机油温度` | Engine oil temperature | num |  |
 | 40001 | `主驾座椅加热` | Driver seat heating | enum |  |
 | 40002 | `副驾座椅加热` | Passenger seat heating | enum |  |
 | 40003 | `主驾座椅通风` | Driver seat ventilation | enum |  |

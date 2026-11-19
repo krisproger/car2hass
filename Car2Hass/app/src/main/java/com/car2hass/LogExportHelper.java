@@ -169,6 +169,12 @@ public class LogExportHelper {
         lines.add("OBD device: " + AppConfig.getObdBtName(context)
                 + " (" + AppConfig.getObdBtAddress(context) + ")");
         lines.add("RuleEngine: " + ruleCount(context) + " rule(s) loaded");
+        try {
+            for (com.car2hass.rules.Rule r : com.car2hass.rules.RuleRegistry.load(context)) {
+                lines.add("Rule: " + com.car2hass.rules.RuleDescribe.config(r));
+            }
+        } catch (Exception ignored) {
+        }
         return LogPreamble.diagnosticsBlock(lines.toArray(new String[0]));
     }
 

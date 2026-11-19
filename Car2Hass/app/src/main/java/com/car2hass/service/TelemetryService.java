@@ -933,9 +933,9 @@ public class TelemetryService extends Service {
     }
 
     /**
-     * Channel ids whose worker must run: user-enabled intersected with the last
-     * probe's liveness. A channel with no probe entry is kept (fail-open); a
-     * channel marked dead is not polled until a later probe says otherwise.
+     * Channel ids whose worker must run. Probe availability is advisory only:
+     * keeping a transiently "dead" channel out of the worker set froze telemetry
+     * until a manual research run. Workers retry on their own cadence.
      */
     private List<String> enabledChannelIds() {
         List<String> gated = com.car2hass.vehicle.ChannelGate.resolve(

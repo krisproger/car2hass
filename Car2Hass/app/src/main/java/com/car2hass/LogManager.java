@@ -110,13 +110,18 @@ public final class LogManager {
 
     /** Blocking variant for the user send action; true when every unsent record was accepted. */
     public boolean uploadNowBlocking() {
+        return uploadNowBlocking("");
+    }
+
+    /** Manual send variant carrying the user's note to the server metadata. */
+    public boolean uploadNowBlocking(String message) {
         try {
             db.resetSending();
             buffer.flush();
         } catch (Exception e) {
             LogBuffer.e("LogManager", "uploadNowBlocking flush: " + e.getMessage());
         }
-        return uploadDrainBlocking(MAX_DRAIN_BATCHES);
+        return uploadDrainBlocking(MAX_DRAIN_BATCHES, message);
     }
 
     /** Drains up to {@code maxBatches} batches; stops at the first failed batch.
@@ -124,10 +129,14 @@ public final class LogManager {
      *  empty": new log lines arrive while the upload is running and must not turn
      *  a successful send into an error toast. */
     public boolean uploadDrainBlocking(int maxBatches) {
+        return uploadDrainBlocking(maxBatches, "");
+    }
+
+    public boolean uploadDrainBlocking(int maxBatches, String message) {
         try {
             int sent = 0;
             for (int i = 0; i < maxBatches; i++) {
-                LogUploadCoordinator.Result r = runUpload();
+                LogUploadCoordinator.Result r = runUpload(message);
                 if (!r.ok) {
                     markFailed();
                     LogBuffer.w("LogManager", "upload stopped: batch failed after " + sent + " batch(es)");
@@ -214,10 +223,16 @@ public final class LogManager {
     }
 
     private LogUploadCoordinator.Result runUpload() {
+        return runUpload("");
+    }
+
+    private LogUploadCoordinator.Result runUpload(String message) {
         try {
+            String note = message == null ? "" : message.trim();
             String preamble = LogExportHelper.buildPreamble(ctx);
-            return new LogUploadCoordinator(db, p -> LogUploader.uploadPayload(ctx, p), BATCH_LIMIT, preamble)
-                    .uploadOnce();
+            if (!note.isEmpty()) preamble += "--- User note ---\n" + note + "\n";
+            return new LogUploadCoordinator(db, p -> LogUploader.uploadPayload(ctx, p),
+                    BATCH_LIMIT, preamble, note).uploadOnce();
         } catch (Exception e) {
             LogBuffer.e("LogManager", "upload: " + e.getMessage());
             return new LogUploadCoordinator.Result(0, false);

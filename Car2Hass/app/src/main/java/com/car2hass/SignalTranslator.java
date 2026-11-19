@@ -140,7 +140,7 @@ public class SignalTranslator {
         ENUM_LABELS.put("right_turn", "0:off,1:on");
         ENUM_LABELS.put("driver_door_lock", "0:—,1:unlocked,2:locked");
         ENUM_LABELS.put("powertrain_mode", "0:stop,1:EV,2:forced EV,3:HEV");
-        ENUM_LABELS.put("drive_mode", "0:NORMAL,1:ECO,2:SPORT");
+        ENUM_LABELS.put("drive_mode", "0:NORMAL,1:ECO,2:COMFORT,3:SPORT,4:OFFROAD,5:INDIVIDUAL,6:SNOW");
         ENUM_LABELS.put("passenger_seatbelt_warning", "0:—,1:alarm,2:normal");
         ENUM_LABELS.put("seatbelt_2nd_left", "0:unbuckled,1:buckled,2:invalid");
         ENUM_LABELS.put("seatbelt_2nd_right", "0:unbuckled,1:buckled,2:invalid");

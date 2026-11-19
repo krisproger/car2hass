@@ -230,6 +230,7 @@
     <string name="channel_voyah">Voyah CANBus</string>
     <string name="channel_phone">Phone (device sensors)</string>
     <string name="sensor_category_drive">Drive</string>
+    <string name="sensor_category_engine">Engine</string>
     <string name="sensor_category_battery">Battery &amp; charging</string>
     <string name="sensor_category_climate">Climate</string>
     <string name="sensor_category_access">Doors, windows, locks</string>

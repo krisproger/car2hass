@@ -335,7 +335,7 @@
       "type": "num",
       "unit": null,
       "core": true,
-      "category": "drive",
+      "category": "engine",
       "channels": {
         "diplus": {
           "name": "发动机转速"
@@ -467,7 +467,7 @@
       "type": "num",
       "unit": null,
       "core": false,
-      "category": "drive",
+      "category": "engine",
       "channels": {
         "diplus": {
           "name": "发动机功率"
@@ -3057,7 +3057,7 @@
       "type": "num",
       "unit": null,
       "core": false,
-      "category": "climate",
+      "category": "engine",
       "channels": {
         "diplus": {
           "name": "发动机水温"
@@ -3801,7 +3801,7 @@
       "type": "num",
       "unit": null,
       "core": false,
-      "category": "drive",
+      "category": "engine",
       "channels": {
         "diplus": {
           "name": "发动机负荷"
@@ -3909,7 +3909,7 @@
       "type": "num",
       "unit": null,
       "core": false,
-      "category": "climate",
+      "category": "engine",
       "channels": {
         "diplus": {
           "name": "机油温度"
@@ -5491,7 +5491,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
-      "category": "drive",
+      "category": "engine",
       "channels": {
         "diplus": null,
         "adb": null,
@@ -5541,7 +5541,7 @@
       "type": "enum",
       "unit": null,
       "core": false,
-      "category": "other",
+      "category": "engine",
       "channels": {
         "diplus": null,
         "adb": null,

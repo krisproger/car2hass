@@ -222,6 +222,7 @@
     <string name="channel_voyah">Voyah CANBus</string>
     <string name="channel_phone">Телефон (сенсоры устройства)</string>
     <string name="sensor_category_drive">Движение</string>
+    <string name="sensor_category_engine">Двигатель</string>
     <string name="sensor_category_battery">Батарея и зарядка</string>
     <string name="sensor_category_climate">Климат</string>
     <string name="sensor_category_access">Двери, окна, замки</string>

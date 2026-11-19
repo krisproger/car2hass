@@ -18,7 +18,7 @@ def _load():
 def test_taxonomy_closed_and_ordered():
     m = _load()
     assert [k for k, _, _ in m.CATEGORIES] == [
-        "drive", "battery", "climate", "access", "lights", "tyres",
+        "drive", "engine", "battery", "climate", "access", "lights", "tyres",
         "safety", "sentry", "media", "location", "device", "phone", "other"]
     for key, en, ru in m.CATEGORIES:
         assert en and ru

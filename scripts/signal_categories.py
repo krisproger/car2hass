@@ -3,6 +3,7 @@
 
 CATEGORIES = [
     ("drive", "Drive", "Движение"),
+    ("engine", "Engine", "Двигатель"),
     ("battery", "Battery & charging", "Батарея и зарядка"),
     ("climate", "Climate", "Климат"),
     ("access", "Doors, windows, locks", "Двери, окна, замки"),
@@ -72,6 +73,8 @@ def category_for(key):
         return "safety"
     if key.startswith(("sentry_", "parked_")):
         return "sentry"
+    if key.startswith("engine_"):
+        return "engine"
     if "seat_heat" in key or "seat_vent" in key or "seat_massage" in key \
             or key.startswith("ac_") or "temp" in key:
         return "climate"

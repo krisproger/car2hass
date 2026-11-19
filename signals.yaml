@@ -158,7 +158,7 @@ signals:
   description: Engine RPM
   type: num
   key: engine_rpm
-  category: drive
+  category: engine
   labels: {}
   ha_type: sensor
   unit: rpm
@@ -213,7 +213,7 @@ signals:
   description: Engine power
   type: num
   key: engine_power
-  category: drive
+  category: engine
   labels: {}
   ha_type: sensor
   unit: kW
@@ -1390,7 +1390,7 @@ signals:
   description: Engine coolant temp
   type: num
   key: engine_coolant_temp
-  category: climate
+  category: engine
   labels: {}
   ha_type: sensor
   unit: °C
@@ -2253,7 +2253,7 @@ signals:
   type: enum
   synthetic: true
   key: engine_status
-  category: drive
+  category: engine
   labels: {}
   ha_type: sensor
   icon: mdi:engine
@@ -2273,7 +2273,7 @@ signals:
   type: enum
   synthetic: true
   key: engine_fluid_level
-  category: other
+  category: engine
   labels: {}
   ha_type: sensor
   icon: mdi:oil-level
@@ -2477,7 +2477,7 @@ signals:
   description: Engine load
   type: num
   key: engine_load
-  category: drive
+  category: engine
   labels: {}
   ha_type: sensor
   unit: '%'
@@ -2521,7 +2521,7 @@ signals:
   description: Engine oil temperature
   type: num
   key: engine_oil_temp
-  category: climate
+  category: engine
   labels: {}
   ha_type: sensor
   unit: °C

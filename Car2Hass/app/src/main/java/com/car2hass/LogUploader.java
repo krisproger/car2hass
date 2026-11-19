@@ -83,7 +83,7 @@ public final class LogUploader {
                 JSONObject body = new JSONObject();
                 body.put("device_anon_id", anonId == null ? "" : anonId);
                 body.put("app_version", AppInfo.getVersionString(ctx));
-                body.put("message", "");
+                body.put("message", payload.message == null ? "" : payload.message);
                 body.put("upload_id", payload.uploadId);
                 body.put("chunk_index", i);
                 body.put("chunk_total", total);

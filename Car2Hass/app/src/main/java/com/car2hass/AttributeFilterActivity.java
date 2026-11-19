@@ -63,7 +63,7 @@ public class AttributeFilterActivity extends BaseLocalizedActivity {
             catch (Exception ex) { categoryOf.put(e.key, "other"); }
         }
         List<String> order = java.util.Arrays.asList(
-                "drive", "battery", "climate", "access", "lights", "tyres",
+                "drive", "engine", "battery", "climate", "access", "lights", "tyres",
                 "safety", "sentry", "media", "location", "device", "phone", "other");
         List<SignalEntry> grouped = new ArrayList<>();
         for (String cat : order) {
