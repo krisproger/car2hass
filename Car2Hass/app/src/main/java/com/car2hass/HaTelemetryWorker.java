@@ -46,6 +46,8 @@ public final class HaTelemetryWorker {
     private volatile boolean forceFullNext = true;
     private volatile long lastFullSendMs = 0L;
     private volatile IntegrationInfo integrationInfo;
+    private volatile long lastSuccessMs;
+    private volatile String lastError = "";
 
     public HaTelemetryWorker(Context ctx, HaEndpointConfig endpoint, int queueMaxMb) {
         this.ctx = ctx.getApplicationContext();
@@ -64,6 +66,28 @@ public final class HaTelemetryWorker {
 
     public int queueMaxMb() {
         return queueMaxMb;
+    }
+
+    public EndpointStatus status() {
+        IntegrationInfo info = integrationInfo;
+        return new EndpointStatus(endpointId, endpoint.enabled, true,
+                lastAttemptMs, lastSuccessMs, lastError, currentBackoffMs,
+                getQueueCount(), getBufferSize(),
+                info == null ? "" : info.integrationVersion,
+                info != null && info.loaded);
+    }
+
+    private void noteAttempt() {
+        lastAttemptMs = System.currentTimeMillis();
+    }
+
+    private void noteSuccess() {
+        lastSuccessMs = System.currentTimeMillis();
+        lastError = "";
+    }
+
+    private void noteFailure(String message) {
+        lastError = message == null ? "error" : message;
     }
 
     public boolean matches(HaEndpointConfig other) {
@@ -211,12 +235,14 @@ public final class HaTelemetryWorker {
     private void sendBatch(List<HassClient.Snapshot> batch, HassClient.FlushCallback callback) {
         String token = new SecureStorage(ctx).getEndpointToken(endpointId);
         if (endpoint.carName.isEmpty() || token.isEmpty()) {
+            noteFailure("config incomplete");
             SendHistory.recordAttempt(ctx, "config incomplete");
             result(callback, false, "config incomplete");
             return;
         }
         HaAddress address = endpoint.haAddress();
         if (!address.https && !NetSafety.isPrivateHost(address.host)) {
+            noteFailure("insecure_http_blocked");
             SendHistory.recordAttempt(ctx, "insecure_http_blocked");
             LogBuffer.w(tag(), "Refusing cleartext HTTP to public host '" + address.host + "'");
             result(callback, false, "insecure_http_blocked");
@@ -224,6 +250,7 @@ public final class HaTelemetryWorker {
         }
         SEND_EXECUTOR.submit(() -> {
             HttpURLConnection conn = null;
+            noteAttempt();
             try {
                 JSONObject payload = new JSONObject();
                 payload.put("car_name", endpoint.carName);
@@ -287,6 +314,9 @@ public final class HaTelemetryWorker {
                     lastSent = nextLastSent;
                     lastFullSendMs = nextLastFullSendMs;
                     forceFullNext = false;
+                    noteSuccess();
+                } else {
+                    noteFailure("HTTP " + code + (errBody.isEmpty() ? "" : ": " + errBody));
                 }
                 LogBuffer.i(tag(), "Flush " + batch.size() + " snapshots -> HTTP " + code
                         + (errBody.isEmpty() ? "" : " body=" + errBody)
@@ -294,6 +324,7 @@ public final class HaTelemetryWorker {
                 SendHistory.recordAttempt(ctx, "HTTP " + code);
                 result(callback, success, "HTTP " + code);
             } catch (Exception e) {
+                noteFailure(e.getMessage());
                 LogBuffer.e(tag(), "Send error: " + e.getMessage()
                         + " (backoff=" + currentBackoffMs + "ms)");
                 SendHistory.recordAttempt(ctx, e.getMessage());

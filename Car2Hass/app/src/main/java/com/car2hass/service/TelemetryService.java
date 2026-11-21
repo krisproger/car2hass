@@ -139,6 +139,12 @@ public class TelemetryService extends Service {
         if (endpointManager != null) endpointManager.requestFlushNow(callback);
     }
 
+    /** Live per-server connection status for the servers settings screen. */
+    public java.util.List<com.car2hass.EndpointStatus> endpointStatuses() {
+        return endpointManager != null
+                ? endpointManager.statuses() : java.util.Collections.emptyList();
+    }
+
     /** Number of live worker threads (running channels). */
     public int liveWorkerThreadCount() {
         com.car2hass.vehicle.ChannelWorkerRegistry reg = workerRegistry;

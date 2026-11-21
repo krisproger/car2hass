@@ -121,4 +121,19 @@ public final class EndpointManager {
     public synchronized List<HaTelemetryWorker> workers() {
         return new java.util.ArrayList<>(workers.values());
     }
+
+    /** Live status per configured endpoint, including disabled/idle ones. */
+    public synchronized List<EndpointStatus> statuses() {
+        List<EndpointStatus> out = new java.util.ArrayList<>();
+        for (HaEndpointConfig endpoint : EndpointStore.list(ctx)) {
+            HaTelemetryWorker worker = workers.get(endpoint.id);
+            if (worker != null) {
+                out.add(worker.status());
+            } else {
+                out.add(new EndpointStatus(endpoint.id, endpoint.enabled, false,
+                        0, 0, "", 0, SnapshotQueue.getCount(ctx, endpoint.id), 0, "", false));
+            }
+        }
+        return out;
+    }
 }

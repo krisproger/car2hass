@@ -3,6 +3,8 @@ package com.car2hass;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.text.InputType;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,11 +19,25 @@ import android.widget.Toast;
 
 import com.car2hass.service.TelemetryService;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public final class EndpointsActivity extends Activity {
     private final List<HaEndpointConfig> endpoints = new ArrayList<>();
+    private final Map<String, EndpointStatus> statuses = new LinkedHashMap<>();
+    private final Handler refreshHandler = new Handler(Looper.getMainLooper());
+    private final Runnable refreshStatuses = new Runnable() {
+        @Override
+        public void run() {
+            loadStatuses();
+            refreshHandler.postDelayed(this, 5000L);
+        }
+    };
     private ArrayAdapter<HaEndpointConfig> adapter;
 
     @Override
@@ -55,7 +71,7 @@ public final class EndpointsActivity extends Activity {
                 view.setText(endpoint.name + "\n"
                         + endpoint.haAddress().baseUrl() + " · "
                         + endpoint.carName + " · " + state + " · " + commands
-                        + " · queue " + SnapshotQueue.getCount(EndpointsActivity.this, endpoint.id));
+                        + "\n" + statusLine(endpoint));
                 view.setTextSize(14);
                 view.setPadding(dp(8), dp(8), dp(8), dp(8));
                 return view;
@@ -72,12 +88,58 @@ public final class EndpointsActivity extends Activity {
     protected void onResume() {
         super.onResume();
         reload();
+        refreshHandler.removeCallbacks(refreshStatuses);
+        refreshHandler.postDelayed(refreshStatuses, 5000L);
+    }
+
+    @Override
+    protected void onPause() {
+        refreshHandler.removeCallbacks(refreshStatuses);
+        super.onPause();
     }
 
     private void reload() {
         endpoints.clear();
         endpoints.addAll(EndpointStore.list(this));
+        loadStatuses();
+    }
+
+    private void loadStatuses() {
+        statuses.clear();
+        TelemetryService service = MainActivity.getTelemetryService();
+        if (service != null) {
+            for (EndpointStatus status : service.endpointStatuses()) {
+                statuses.put(status.endpointId, status);
+            }
+        }
         if (adapter != null) adapter.notifyDataSetChanged();
+    }
+
+    private String statusLine(HaEndpointConfig endpoint) {
+        EndpointStatus status = statuses.get(endpoint.id);
+        if (status == null) return getString(R.string.endpoint_status_no_service);
+        if (!endpoint.enabled) return getString(R.string.endpoint_status_disabled);
+        if (status.connected()) {
+            String integration = status.integrationVersion.isEmpty()
+                    ? "" : " · HA " + status.integrationVersion;
+            return getString(R.string.endpoint_status_ok, formatTime(status.lastSuccessMs),
+                    integration, status.queueCount);
+        }
+        if (status.failed()) {
+            String error = status.lastError;
+            if (error.length() > 90) error = error.substring(0, 90) + "…";
+            if (status.backoffMs > 0) {
+                return getString(R.string.endpoint_status_error_retry, error,
+                        status.backoffMs / 1000, status.queueCount);
+            }
+            return getString(R.string.endpoint_status_error, error, status.queueCount);
+        }
+        return getString(R.string.endpoint_status_waiting, status.queueCount);
+    }
+
+    private String formatTime(long ms) {
+        if (ms <= 0) return "—";
+        return new SimpleDateFormat("HH:mm", Locale.US).format(new Date(ms));
     }
 
     private void actions(HaEndpointConfig endpoint) {

@@ -1009,6 +1009,12 @@
     <string name="settings_servers_summary">Servers: %1$d (%2$d active)</string>
     <string name="settings_configure_servers">Configure servers</string>
     <string name="endpoints_title">Home Assistant servers</string>
+    <string name="endpoint_status_ok">● Connected · %1$s%2$s · queue %3$d</string>
+    <string name="endpoint_status_waiting">● Waiting for first send · queue %1$d</string>
+    <string name="endpoint_status_error">● Error: %1$s · queue %2$d</string>
+    <string name="endpoint_status_error_retry">● Error: %1$s · retry in %2$ds · queue %3$d</string>
+    <string name="endpoint_status_disabled">● Disabled</string>
+    <string name="endpoint_status_no_service">● Telemetry service is not running</string>
     <string name="endpoint_add">Add server</string>
     <string name="endpoint_name">Name</string>
     <string name="endpoint_address">Address</string>
