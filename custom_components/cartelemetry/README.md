@@ -21,7 +21,7 @@ field). The integration has its own version line, independent of the app.
 
 - **Stable** — default HACS install (currently `3.5.4`).
 - **Beta** — published as `prerelease: true`; enable the repository
-  **"Pre-release"** switch in HACS (currently `3.6.0-beta.1`).
+  **"Pre-release"** switch in HACS (currently `3.6.0-beta.2`).
 
 ## Features
 

@@ -16,8 +16,9 @@ public class SnapshotQueue {
     private static final String PRIMARY = "primary";
 
     private static final String DB_NAME = "snapshot_queue.db";
-    private static final int DB_VERSION = 5;
+    private static final int DB_VERSION = 6;
     private static final String TABLE = "queue";
+    private static final String DEAD_TABLE = "dead_letter";
     private static final String COL_ID = "id";
     private static final String COL_ENDPOINT = "endpoint_id";
     private static final String COL_TS = "ts";
@@ -28,6 +29,8 @@ public class SnapshotQueue {
     private static final String COL_SIGNALS = "signals";
     private static final String COL_CREATED = "created";
     private static final String COL_DISABLED = "disabled";
+    private static final String COL_PAYLOAD = "payload";
+    private static final String COL_REASON = "reason";
 
     private static QueueDbHelper dbHelper = null;
 
@@ -166,6 +169,59 @@ public class SnapshotQueue {
 
     public static int getCount(Context ctx) {
         return getCount(ctx, PRIMARY);
+    }
+
+    /** Persist a batch the server refused to apply (e.g. out_of_order). */
+    public static void deadLetter(Context ctx, String endpointId,
+                                  HassClient.Snapshot snapshot, String reason) {
+        if (snapshot == null) return;
+        try {
+            SQLiteDatabase db = getHelper(ctx).getWritableDatabase();
+            pruneDeadLetters(db, endpointId);
+            ContentValues cv = new ContentValues();
+            cv.put(COL_ENDPOINT, safeId(endpointId));
+            cv.put(COL_TS, snapshot.timestamp);
+            cv.put(COL_PAYLOAD, snapshot.toJson().toString());
+            cv.put(COL_REASON, reason == null ? "" : reason);
+            cv.put(COL_CREATED, System.currentTimeMillis());
+            db.insert(DEAD_TABLE, null, cv);
+            LogBuffer.w("SnapshotQueue", "Dead-lettered snapshot " + snapshot.timestamp
+                    + " for " + endpointId + ": " + reason);
+        } catch (Exception e) {
+            LogBuffer.e("SnapshotQueue", "deadLetter: " + e.getMessage());
+        }
+    }
+
+    public static int getDeadLetterCount(Context ctx, String endpointId) {
+        SQLiteDatabase db = getHelper(ctx).getReadableDatabase();
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + DEAD_TABLE + " WHERE "
+                + COL_ENDPOINT + "=?", new String[]{safeId(endpointId)});
+        try {
+            if (cursor.moveToFirst()) return cursor.getInt(0);
+        } finally {
+            cursor.close();
+        }
+        return 0;
+    }
+
+    private static void pruneDeadLetters(SQLiteDatabase db, String endpointId) {
+        long cutoff = System.currentTimeMillis() - 7L * 24 * 3600 * 1000;
+        db.delete(DEAD_TABLE, COL_ENDPOINT + "=? AND " + COL_CREATED + " < ?",
+                new String[]{safeId(endpointId), String.valueOf(cutoff)});
+        Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + DEAD_TABLE + " WHERE "
+                + COL_ENDPOINT + "=?", new String[]{safeId(endpointId)});
+        int count;
+        try {
+            count = cursor.moveToFirst() ? cursor.getInt(0) : 0;
+        } finally {
+            cursor.close();
+        }
+        if (count > 100) {
+            db.execSQL("DELETE FROM " + DEAD_TABLE + " WHERE " + COL_ENDPOINT + "=? AND "
+                            + COL_ID + " IN (SELECT " + COL_ID + " FROM " + DEAD_TABLE
+                            + " WHERE " + COL_ENDPOINT + "=? ORDER BY " + COL_ID + " ASC LIMIT ?)",
+                    new Object[]{safeId(endpointId), safeId(endpointId), count - 100});
+        }
     }
 
     public static int getCountAll(Context ctx) {
@@ -340,6 +396,20 @@ public class SnapshotQueue {
             db.execSQL("CREATE INDEX idx_queue_created ON " + TABLE + "(" + COL_CREATED + ")");
             db.execSQL("CREATE INDEX idx_queue_endpoint_id ON " + TABLE + "(" + COL_ENDPOINT + ", id)");
             db.execSQL("CREATE INDEX idx_queue_endpoint_created ON " + TABLE + "(" + COL_ENDPOINT + ", created)");
+            createDeadLetterTable(db);
+        }
+
+        private void createDeadLetterTable(SQLiteDatabase db) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS " + DEAD_TABLE + " (" +
+                COL_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " +
+                COL_ENDPOINT + " TEXT NOT NULL DEFAULT '', " +
+                COL_TS + " INTEGER NOT NULL, " +
+                COL_PAYLOAD + " TEXT NOT NULL, " +
+                COL_REASON + " TEXT NOT NULL DEFAULT '', " +
+                COL_CREATED + " INTEGER NOT NULL" +
+                ")");
+            db.execSQL("CREATE INDEX IF NOT EXISTS idx_dead_endpoint_id ON " + DEAD_TABLE
+                    + "(" + COL_ENDPOINT + ", " + COL_ID + ")");
         }
 
         @Override
@@ -353,6 +423,9 @@ public class SnapshotQueue {
             }
             if (oldVersion < 4) {
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN " + COL_DISABLED + " TEXT");
+            }
+            if (oldVersion < 6) {
+                createDeadLetterTable(db);
             }
             if (oldVersion < 5) {
                 db.execSQL("ALTER TABLE " + TABLE + " ADD COLUMN " + COL_ENDPOINT +

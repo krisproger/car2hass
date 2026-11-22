@@ -49,6 +49,10 @@ public final class HaTelemetryWorker {
     private volatile long lastSuccessMs;
     private volatile String lastError = "";
 
+    private interface BatchCallback {
+        void onResult(boolean success, boolean deadLettered, String message);
+    }
+
     public HaTelemetryWorker(Context ctx, HaEndpointConfig endpoint, int queueMaxMb) {
         this.ctx = ctx.getApplicationContext();
         this.endpoint = endpoint;
@@ -72,7 +76,7 @@ public final class HaTelemetryWorker {
         IntegrationInfo info = integrationInfo;
         return new EndpointStatus(endpointId, endpoint.enabled, true,
                 lastAttemptMs, lastSuccessMs, lastError, currentBackoffMs,
-                getQueueCount(), getBufferSize(),
+                getQueueCount(), getBufferSize(), getDeadLetterCount(),
                 info == null ? "" : info.integrationVersion,
                 info != null && info.loaded);
     }
@@ -167,20 +171,21 @@ public final class HaTelemetryWorker {
         });
 
         queryIntegrationInfoOnce();
-        sendBatch(batch, (success, msg) -> {
+        sendBatch(batch, (success, deadLettered, msg) -> {
             flushInProgress.set(false);
             if (success) {
                 currentBackoffMs = MIN_BACKOFF_MS;
-                long maxQueuedId = -1;
-                for (HassClient.Snapshot snap : batch) {
-                    if (snap.queueId > maxQueuedId) maxQueuedId = snap.queueId;
-                }
-                if (maxQueuedId >= 0) {
-                    SnapshotQueue.deleteUpTo(ctx, endpointId, maxQueuedId);
-                }
+                deleteSentQueue(batch);
                 int bytes = batch.size() * 200;
                 for (HassClient.Snapshot snap : batch) bytes += snap.signalJson.length();
                 SendHistory.record(ctx, bytes, batch.size());
+            } else if (deadLettered) {
+                // The server explicitly refused these snapshots (out-of-order).
+                // Move them out of the retry queue; retrying the same timestamps
+                // would be an endless loop. Keep them for inspection.
+                currentBackoffMs = MIN_BACKOFF_MS;
+                deleteSentQueue(batch);
+                forceFullNext = true;
             } else {
                 currentBackoffMs = HaWorkerPolicy.nextBackoff(currentBackoffMs);
                 forceFullNext = true;
@@ -196,6 +201,21 @@ public final class HaTelemetryWorker {
             }
             result(callback, success, msg);
         });
+    }
+
+    private void deleteSentQueue(List<HassClient.Snapshot> batch) {
+        long maxQueuedId = -1;
+        for (HassClient.Snapshot snap : batch) {
+            if (snap.queueId > maxQueuedId) maxQueuedId = snap.queueId;
+        }
+        if (maxQueuedId >= 0) {
+            SnapshotQueue.deleteUpTo(ctx, endpointId, maxQueuedId);
+        }
+    }
+
+    /** Force the next snapshot to carry the full signal map (HA restart/heartbeat). */
+    public void requestFullSync() {
+        forceFullNext = true;
     }
 
     public void requestFlushNow(HassClient.FlushCallback callback) {
@@ -221,6 +241,10 @@ public final class HaTelemetryWorker {
         return SnapshotQueue.getCount(ctx, endpointId);
     }
 
+    public int getDeadLetterCount() {
+        return SnapshotQueue.getDeadLetterCount(ctx, endpointId);
+    }
+
     private void queryIntegrationInfoOnce() {
         if (!integrationInfoQueried.compareAndSet(false, true)) return;
         String token = new SecureStorage(ctx).getEndpointToken(endpointId);
@@ -232,12 +256,12 @@ public final class HaTelemetryWorker {
         }
     }
 
-    private void sendBatch(List<HassClient.Snapshot> batch, HassClient.FlushCallback callback) {
+    private void sendBatch(List<HassClient.Snapshot> batch, BatchCallback callback) {
         String token = new SecureStorage(ctx).getEndpointToken(endpointId);
         if (endpoint.carName.isEmpty() || token.isEmpty()) {
             noteFailure("config incomplete");
             SendHistory.recordAttempt(ctx, "config incomplete");
-            result(callback, false, "config incomplete");
+            callback.onResult(false, false, "config incomplete");
             return;
         }
         HaAddress address = endpoint.haAddress();
@@ -245,7 +269,7 @@ public final class HaTelemetryWorker {
             noteFailure("insecure_http_blocked");
             SendHistory.recordAttempt(ctx, "insecure_http_blocked");
             LogBuffer.w(tag(), "Refusing cleartext HTTP to public host '" + address.host + "'");
-            result(callback, false, "insecure_http_blocked");
+            callback.onResult(false, false, "insecure_http_blocked");
             return;
         }
         SEND_EXECUTOR.submit(() -> {
@@ -299,40 +323,60 @@ public final class HaTelemetryWorker {
                     os.write(payload.toString().getBytes("UTF-8"));
                 }
                 int code = conn.getResponseCode();
-                boolean success = code == 200 || code == 201 || code == 202;
-                String errBody = "";
-                if (!success) {
-                    try (InputStream es = conn.getErrorStream()) {
-                        if (es != null) {
-                            byte[] b = new byte[2048];
-                            int n = es.read(b);
-                            if (n > 0) errBody = new String(b, 0, n, "UTF-8");
-                        }
-                    } catch (Exception ignored) {}
-                }
+                String body = readResponseBody(conn);
+                HaResponse response = HaResponse.parse(code, body);
+                boolean success = response.ok();
+                boolean deadLettered = response.dropped;
                 if (success) {
                     lastSent = nextLastSent;
                     lastFullSendMs = nextLastFullSendMs;
                     forceFullNext = false;
                     noteSuccess();
+                } else if (deadLettered) {
+                    noteFailure("dropped: " + response.reason);
+                    for (HassClient.Snapshot snap : batch) {
+                        SnapshotQueue.deadLetter(ctx, endpointId, snap, response.reason);
+                    }
                 } else {
-                    noteFailure("HTTP " + code + (errBody.isEmpty() ? "" : ": " + errBody));
+                    noteFailure(response.reason.isEmpty()
+                            ? "HTTP " + code : "HTTP " + code + ": " + response.reason);
                 }
                 LogBuffer.i(tag(), "Flush " + batch.size() + " snapshots -> HTTP " + code
-                        + (errBody.isEmpty() ? "" : " body=" + errBody)
+                        + " accepted=" + (success ? "yes" : "no")
+                        + (deadLettered ? " dropped=" + response.reason : "")
+                        + (success ? " signals=" + response.signals : "")
+                        + (body.isEmpty() ? "" : " body=" + ProbeUploader.truncate(body))
                         + " (backoff=" + currentBackoffMs + "ms)");
-                SendHistory.recordAttempt(ctx, "HTTP " + code);
-                result(callback, success, "HTTP " + code);
+                SendHistory.recordAttempt(ctx, success ? "HTTP " + code
+                        : deadLettered ? "dropped:" + response.reason
+                        : "HTTP " + code + " " + response.reason);
+                callback.onResult(success, deadLettered,
+                        success ? "HTTP " + code : (deadLettered ? "dropped:" + response.reason
+                                : "HTTP " + code + " " + response.reason));
             } catch (Exception e) {
                 noteFailure(e.getMessage());
                 LogBuffer.e(tag(), "Send error: " + e.getMessage()
                         + " (backoff=" + currentBackoffMs + "ms)");
                 SendHistory.recordAttempt(ctx, e.getMessage());
-                result(callback, false, e.getMessage());
+                callback.onResult(false, false, e.getMessage());
             } finally {
                 if (conn != null) conn.disconnect();
             }
         });
+    }
+
+    private static String readResponseBody(HttpURLConnection conn) {
+        if (conn == null) return "";
+        try {
+            InputStream is = conn.getErrorStream();
+            if (is == null) is = conn.getInputStream();
+            if (is == null) return "";
+            byte[] b = new byte[4096];
+            int n = is.read(b);
+            return n > 0 ? new String(b, 0, n, "UTF-8") : "";
+        } catch (Exception e) {
+            return "";
+        }
     }
 
     private DeltaSnapshotBuilder.Result buildDelta(HassClient.Snapshot snap,

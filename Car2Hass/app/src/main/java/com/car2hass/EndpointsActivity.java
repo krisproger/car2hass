@@ -119,22 +119,28 @@ public final class EndpointsActivity extends Activity {
         EndpointStatus status = statuses.get(endpoint.id);
         if (status == null) return getString(R.string.endpoint_status_no_service);
         if (!endpoint.enabled) return getString(R.string.endpoint_status_disabled);
+        String line;
         if (status.connected()) {
             String integration = status.integrationVersion.isEmpty()
                     ? "" : " · HA " + status.integrationVersion;
-            return getString(R.string.endpoint_status_ok, formatTime(status.lastSuccessMs),
+            line = getString(R.string.endpoint_status_ok, formatTime(status.lastSuccessMs),
                     integration, status.queueCount);
-        }
-        if (status.failed()) {
+        } else if (status.failed()) {
             String error = status.lastError;
             if (error.length() > 90) error = error.substring(0, 90) + "…";
             if (status.backoffMs > 0) {
-                return getString(R.string.endpoint_status_error_retry, error,
+                line = getString(R.string.endpoint_status_error_retry, error,
                         status.backoffMs / 1000, status.queueCount);
+            } else {
+                line = getString(R.string.endpoint_status_error, error, status.queueCount);
             }
-            return getString(R.string.endpoint_status_error, error, status.queueCount);
+        } else {
+            line = getString(R.string.endpoint_status_waiting, status.queueCount);
         }
-        return getString(R.string.endpoint_status_waiting, status.queueCount);
+        if (status.deadLetterCount > 0) {
+            line += getString(R.string.endpoint_status_dead, status.deadLetterCount);
+        }
+        return line;
     }
 
     private String formatTime(long ms) {

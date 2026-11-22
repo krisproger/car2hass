@@ -34,6 +34,8 @@ public final class CloudSyncClient {
     private static final String TAG = "CloudSyncClient";
 
     private static final long FLUSH_INTERVAL_MS = 30000;
+    private static final long HEARTBEAT_MS = 5L * 60 * 1000;
+    private static volatile long lastHeartbeatMs;
     private static final int FLUSH_THRESHOLD = 20;
     private static final int MAX_RESPONSE_BYTES = 4096;
     private static final long EXPIRY_SKEW_MS = 60000;
@@ -200,14 +202,22 @@ public final class CloudSyncClient {
             double clat = lat == null ? Double.NaN : lat;
             double clon = lon == null ? Double.NaN : lon;
             String sig = s.toString();
-            long tsSec = System.currentTimeMillis() / 1000;
-            if (SnapshotDedup.isDuplicate(SnapshotDedup.Channel.CLOUD, clat, clon, sig)) {
+            long now = System.currentTimeMillis();
+            long tsSec = now / 1000;
+            boolean duplicate = SnapshotDedup.isDuplicate(
+                    SnapshotDedup.Channel.CLOUD, clat, clon, sig);
+            boolean heartbeat = duplicate && (lastHeartbeatMs == 0
+                    || now - lastHeartbeatMs >= HEARTBEAT_MS);
+            if (duplicate && !heartbeat) {
                 LogBuffer.d(TAG, "snapshot skipped (stationary, unchanged)");
                 return;
             }
+            if (heartbeat) {
+                LogBuffer.d(TAG, "heartbeat snapshot (stationary)");
+            }
+            lastHeartbeatMs = now;
             SnapshotDedup.keep(SnapshotDedup.Channel.CLOUD, clat, clon, tsSec, sig);
             buffer.add(CloudBatchBuffer.buildSnapshot(tsSec, s, lat, lon));
-            long now = System.currentTimeMillis();
             if (buffer.size() >= FLUSH_THRESHOLD || now - lastFlushAttemptMs >= FLUSH_INTERVAL_MS) {
                 flushAsync(ctx.getApplicationContext());
             }
@@ -298,19 +308,29 @@ public final class CloudSyncClient {
 
                 HttpResult r = authorizedPost(ctx, "/api/telemetry",
                         CloudBatchBuffer.buildPayload(carName, batch));
-                if (r != null && r.code == 200) {
+                CloudResponse response = CloudResponse.parse(
+                        r == null ? 0 : r.code, r == null ? "" : r.body);
+                if (response.ok && response.accepted >= batch.length()) {
                     if (maxQueuedId >= 0) CloudSnapshotQueue.deleteUpTo(ctx, maxQueuedId);
                     persist(ctx, ramRest);
                     AppConfig.setCloudLastSyncMs(ctx, System.currentTimeMillis());
                     AppConfig.setCloudLastStatus(ctx, "ok");
                     currentFlushBackoffMs = MIN_FLUSH_BACKOFF_MS;
-                    LogBuffer.i(TAG, "Cloud sync OK: " + batch.length() + " snapshots");
+                    LogBuffer.i(TAG, "Cloud sync OK: " + batch.length() + " snapshots"
+                            + " accepted=" + response.accepted);
                 } else {
+                    // Never drop a batch on an ambiguous 200: accepted=0 means
+                    // the server skipped all timestamps, and partial acceptance
+                    // must be retried as a whole (duplicates are harmless).
                     persist(ctx, ram);
                     int code = r == null ? 0 : r.code;
-                    AppConfig.setCloudLastStatus(ctx, "http_" + code);
+                    String status = response.ok
+                            ? (response.accepted == 0 ? "accepted_0" : "partial")
+                            : "http_" + code;
+                    AppConfig.setCloudLastStatus(ctx, status);
                     currentFlushBackoffMs = Math.min(currentFlushBackoffMs * 2, MAX_FLUSH_BACKOFF_MS);
-                    LogBuffer.w(TAG, "Cloud sync failed: HTTP " + code
+                    LogBuffer.w(TAG, "Cloud sync failed: " + status
+                            + " accepted=" + response.accepted
                             + (r != null && r.body != null && !r.body.isEmpty()
                                     ? " body=" + ProbeUploader.truncate(r.body) : "")
                             + " — retry in " + currentFlushBackoffMs + " ms");

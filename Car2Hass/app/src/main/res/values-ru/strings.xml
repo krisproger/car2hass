@@ -1008,6 +1008,7 @@
     <string name="endpoint_status_error_retry">● Ошибка: %1$s · повтор через %2$d с · очередь %3$d</string>
     <string name="endpoint_status_disabled">● Отключён</string>
     <string name="endpoint_status_no_service">● Служба телеметрии не запущена</string>
+    <string name="endpoint_status_dead"> · отложено %1$d</string>
     <string name="endpoint_add">Добавить сервер</string>
     <string name="endpoint_name">Название</string>
     <string name="endpoint_address">Адрес</string>

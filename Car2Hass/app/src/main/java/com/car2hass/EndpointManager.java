@@ -11,7 +11,9 @@ import java.util.Map;
 import java.util.Set;
 
 public final class EndpointManager {
+    private static final long HEARTBEAT_MS = 5L * 60 * 1000;
     private final Context ctx;
+    private volatile long lastHeartbeatMs;
     private final Map<String, HaTelemetryWorker> workers = new LinkedHashMap<>();
     private final Map<String, HaCommandPoller> pollers = new LinkedHashMap<>();
 
@@ -81,11 +83,22 @@ public final class EndpointManager {
             for (String key : disabled) arr.put(key);
             disabledJson = arr.toString();
         }
-        long tsSec = System.currentTimeMillis() / 1000;
-        if (SnapshotDedup.isDuplicate(SnapshotDedup.Channel.HA, lat, lon, signalJson)) {
+        long now = System.currentTimeMillis();
+        long tsSec = now / 1000;
+        boolean duplicate = SnapshotDedup.isDuplicate(SnapshotDedup.Channel.HA, lat, lon, signalJson);
+        boolean heartbeat = duplicate && (lastHeartbeatMs == 0
+                || now - lastHeartbeatMs >= HEARTBEAT_MS);
+        if (duplicate && !heartbeat) {
             LogBuffer.d("EndpointManager", "snapshot skipped (stationary, unchanged)");
             return;
         }
+        if (heartbeat) {
+            for (HaTelemetryWorker worker : workers.values()) {
+                worker.requestFullSync();
+            }
+            LogBuffer.d("EndpointManager", "heartbeat full snapshot (stationary)");
+        }
+        lastHeartbeatMs = now;
         SnapshotDedup.keep(SnapshotDedup.Channel.HA, lat, lon, tsSec, signalJson);
         HassClient.Snapshot snap = new HassClient.Snapshot(
                 tsSec, lat, lon, accuracy, fixTimeSec, signalJson, disabledJson);
@@ -131,7 +144,8 @@ public final class EndpointManager {
                 out.add(worker.status());
             } else {
                 out.add(new EndpointStatus(endpoint.id, endpoint.enabled, false,
-                        0, 0, "", 0, SnapshotQueue.getCount(ctx, endpoint.id), 0, "", false));
+                        0, 0, "", 0, SnapshotQueue.getCount(ctx, endpoint.id), 0,
+                        SnapshotQueue.getDeadLetterCount(ctx, endpoint.id), "", false));
             }
         }
         return out;

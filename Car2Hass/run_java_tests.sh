@@ -201,13 +201,16 @@ javac -d "$OUT" -classpath "$OUT" -source 17 -target 17 \
 echo "=== Compiling log payload codec + coordinator (org.json) ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 \
   "$SRC/com/car2hass/LogPayloadCodec.java" \
-  "$SRC/com/car2hass/LogUploadCoordinator.java"
+  "$SRC/com/car2hass/LogUploadCoordinator.java" \
+  "$SRC/com/car2hass/HaResponse.java" \
+  "$SRC/com/car2hass/CloudResponse.java"
 
 echo "=== Compiling log payload codec test ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 \
   "$TEST/com/car2hass/LogStoreTest.java" \
   "$TEST/com/car2hass/LogPayloadCodecTest.java" \
-  "$TEST/com/car2hass/LogUploadMessageTest.java"
+  "$TEST/com/car2hass/LogUploadMessageTest.java" \
+  "$TEST/com/car2hass/TelemetryResponseTest.java"
 
 echo "=== Compiling log store core tests ==="
 javac -d "$OUT" -classpath "$OUT:$JSON_JAR" -source 17 -target 17 \
@@ -223,6 +226,7 @@ java -cp "$OUT" com.car2hass.LogStoreTest
 java -cp "$OUT:$JSON_JAR" com.car2hass.GzipCodecTest
 java -cp "$OUT:$JSON_JAR" com.car2hass.LogPayloadCodecTest
 java -cp "$OUT:$JSON_JAR" com.car2hass.LogUploadMessageTest
+java -cp "$OUT:$JSON_JAR" com.car2hass.TelemetryResponseTest
 java -cp "$OUT" com.car2hass.DownloadsCleanupTest
 java -cp "$OUT" com.car2hass.LogUploadPolicyTest
 

@@ -1015,6 +1015,7 @@
     <string name="endpoint_status_error_retry">● Error: %1$s · retry in %2$ds · queue %3$d</string>
     <string name="endpoint_status_disabled">● Disabled</string>
     <string name="endpoint_status_no_service">● Telemetry service is not running</string>
+    <string name="endpoint_status_dead"> · dead-letter %1$d</string>
     <string name="endpoint_add">Add server</string>
     <string name="endpoint_name">Name</string>
     <string name="endpoint_address">Address</string>
