@@ -20,22 +20,29 @@ public final class LogUploadCoordinator {
     private final int batchLimit;
     private final String preamble;
     private final String message;
+    private final long maxBytes;
 
     public LogUploadCoordinator(LogRecordStore store, Sender sender, int batchLimit) {
-        this(store, sender, batchLimit, "", "");
+        this(store, sender, batchLimit, "", "", LogUploadPolicy.MAX_UPLOAD_BYTES);
     }
 
     public LogUploadCoordinator(LogRecordStore store, Sender sender, int batchLimit, String preamble) {
-        this(store, sender, batchLimit, preamble, "");
+        this(store, sender, batchLimit, preamble, "", LogUploadPolicy.MAX_UPLOAD_BYTES);
     }
 
     public LogUploadCoordinator(LogRecordStore store, Sender sender, int batchLimit,
                                 String preamble, String message) {
+        this(store, sender, batchLimit, preamble, message, LogUploadPolicy.MAX_UPLOAD_BYTES);
+    }
+
+    public LogUploadCoordinator(LogRecordStore store, Sender sender, int batchLimit,
+                                String preamble, String message, long maxBytes) {
         this.store = store;
         this.sender = sender;
         this.batchLimit = Math.max(1, batchLimit);
         this.preamble = preamble == null ? "" : preamble;
         this.message = message == null ? "" : message;
+        this.maxBytes = Math.max(1L, maxBytes);
     }
 
     /** Outcome of one batch: how many records were attempted and whether the server accepted. */
@@ -48,7 +55,7 @@ public final class LogUploadCoordinator {
     /** Sends one batch; attempted=0 when nothing is unsent. */
     public Result uploadOnce() {
         List<LogRecord> logs = LogUploadPolicy.selectForUpload(
-                store.unsentLogs(batchLimit), LogUploadPolicy.MAX_UPLOAD_BYTES);
+                store.unsentLogs(batchLimit), maxBytes);
         List<CrashRecord> crashes = store.unsentCrashes(batchLimit);
         if (logs.isEmpty() && crashes.isEmpty()) return new Result(0, true);
 

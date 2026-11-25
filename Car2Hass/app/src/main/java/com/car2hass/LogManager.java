@@ -29,6 +29,9 @@ public final class LogManager {
     private static final int BLOCK_SIZE = 20;
     private static final int BATCH_LIMIT = 500;
     private static final int MAX_DRAIN_BATCHES = 1000;
+    /** Manual send uses one large payload so one action creates one server log. */
+    private static final int MANUAL_BATCH_LIMIT = 100000;
+    private static final long MANUAL_MAX_BYTES = 32L * 1024 * 1024;
 
     private static volatile LogManager instance;
 
@@ -121,7 +124,35 @@ public final class LogManager {
         } catch (Exception e) {
             LogBuffer.e("LogManager", "uploadNowBlocking flush: " + e.getMessage());
         }
-        return uploadDrainBlocking(MAX_DRAIN_BATCHES, message);
+        return uploadManualBlocking(message);
+    }
+
+    /** One user action -> one large compressed upload (server can chunk it). */
+    private boolean uploadManualBlocking(String message) {
+        try {
+            int sent = 0;
+            boolean first = true;
+            for (int i = 0; i < MAX_DRAIN_BATCHES; i++) {
+                String note = first ? message : "";
+                LogUploadCoordinator.Result r = runUpload(note, MANUAL_BATCH_LIMIT, MANUAL_MAX_BYTES);
+                if (!r.ok) {
+                    markFailed();
+                    LogBuffer.w("LogManager", "manual upload stopped after " + sent + " batch(es)");
+                    return false;
+                }
+                if (r.attempted <= 0) break;
+                first = false;
+                sent++;
+            }
+            markSuccess();
+            LogBuffer.i("LogManager", "manual upload finished: batches=" + sent
+                    + ", remaining=" + (unsentLogCount() + unsentCrashCount()));
+            return true;
+        } catch (Exception e) {
+            LogBuffer.e("LogManager", "uploadManualBlocking: " + e.getMessage());
+            markFailed();
+            return false;
+        }
     }
 
     /** Drains up to {@code maxBatches} batches; stops at the first failed batch.
@@ -227,12 +258,16 @@ public final class LogManager {
     }
 
     private LogUploadCoordinator.Result runUpload(String message) {
+        return runUpload(message, BATCH_LIMIT, LogUploadPolicy.MAX_UPLOAD_BYTES);
+    }
+
+    private LogUploadCoordinator.Result runUpload(String message, int batchLimit, long maxBytes) {
         try {
             String note = message == null ? "" : message.trim();
             String preamble = LogExportHelper.buildPreamble(ctx);
             if (!note.isEmpty()) preamble += "--- User note ---\n" + note + "\n";
             return new LogUploadCoordinator(db, p -> LogUploader.uploadPayload(ctx, p),
-                    BATCH_LIMIT, preamble, note).uploadOnce();
+                    batchLimit, preamble, note, maxBytes).uploadOnce();
         } catch (Exception e) {
             LogBuffer.e("LogManager", "upload: " + e.getMessage());
             return new LogUploadCoordinator.Result(0, false);
@@ -246,7 +281,17 @@ public final class LogManager {
         if (last <= 0L || now - last < FAILED_RETRY_INTERVAL_MS) return;
         prefs().edit().putLong(KEY_LAST_FAILED_UPLOAD, now).apply();
         LogUploadCoordinator.Result r = runUpload();
-        if (r.ok && unsentLogCount() + unsentCrashCount() == 0) markSuccess();
+        if (r.ok) {
+            if (unsentLogCount() + unsentCrashCount() == 0) {
+                markSuccess();
+            } else {
+                // A successful retry must not keep re-running every 5 minutes
+                // while a large historical backlog remains. The next user send
+                // or the daily safety-net upload will continue it.
+                prefs().edit().remove(KEY_LAST_FAILED_UPLOAD).apply();
+                LogBuffer.i("LogManager", "retry succeeded; remaining backlog left for next send");
+            }
+        }
     }
 
     private void markFailed() {
