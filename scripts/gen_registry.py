@@ -176,6 +176,30 @@ VOYAH_ONLY_SENSORS = [
     ("wiper_fluid_level", "Wiper fluid level", "enum", None),
     ("alarm_state", "Alarm state", "enum", None),
     ("reverse", "Reverse", "enum", None),
+    ("baro_pressure", "Barometric pressure", "num", "hPa"),
+    ("charge_pile_auth_state", "Charge pile auth state", "enum", None),
+    ("plug_connect_state", "Plug connection state", "enum", None),
+    ("discharge_connect_state", "Discharge connection state", "enum", None),
+    ("obc_discharge_switch", "OBC discharge switch", "enum", None),
+    ("bms_vehicle_mode", "BMS vehicle mode", "enum", None),
+    ("bms_soc_status", "BMS SOC status", "enum", None),
+    ("energy_flow_level", "Energy flow level", "num", "%"),
+    ("dms_weary_level", "DMS fatigue level", "num", None),
+    ("dms_distract_level", "DMS distraction level", "num", None),
+    ("tsr_speed_limit", "TSR speed limit", "num", "km/h"),
+    ("fcw_status", "FCW status", "enum", None),
+    ("aeb_status", "AEB status", "enum", None),
+    ("apa_avm_state", "APA/AVM state", "enum", None),
+    ("sunroof_position", "Sunroof position", "num", "%"),
+    ("sunshade_position", "Sunshade position", "num", "%"),
+    ("main_board_temp", "Main board temperature", "num", "°C"),
+    ("driver_seat_massage_level", "Driver massage level", "num", None),
+    ("passenger_seat_massage_level", "Passenger massage level", "num", None),
+    ("rear_left_seat_massage_level", "Rear-left massage level", "num", None),
+    ("rear_right_seat_massage_level", "Rear-right massage level", "num", None),
+    ("door_unlock_mode", "Door unlock mode", "enum", None),
+    ("tailgate_lock_enable", "Tailgate lock enable", "enum", None),
+    ("ambient_light_switch", "Ambient light switch", "enum", None),
 ]
 
 # Sensors supplied outside the CAN SIGNAL_REGISTRY: app metadata injected by
@@ -310,6 +334,30 @@ VOYAH_PARAMS = {
     "passenger_seat_massage": "FRONT_SEAT_MASS_SWITCH_RIGHT",
     "rear_left_seat_massage": "REAR_SEAT_MASS_SWITCH_LEFT",
     "rear_right_seat_massage": "REAR_SEAT_MASS_SWITCH_RIGHT",
+    "baro_pressure": "BARO_PRESSURE",
+    "charge_pile_auth_state": "CHARGE_PILE_AUTH_STS",
+    "plug_connect_state": "PLUG_CONNECT_STS",
+    "discharge_connect_state": "DISCHARG_CONNECT_STS",
+    "obc_discharge_switch": "OBC_DISCHARGE_SWITCH",
+    "bms_vehicle_mode": "BMS_VEH_MODE",
+    "bms_soc_status": "BMS_BATT_SOC_STATUS",
+    "energy_flow_level": "ENERGY_FLOW_LEVEL",
+    "dms_weary_level": "DMS_WEARY_LEVEL_STS",
+    "dms_distract_level": "DMS_DISTRACT_LEVEL_STS",
+    "tsr_speed_limit": "TSR_SPEED_LIMIT",
+    "fcw_status": "FCW_STATUS",
+    "aeb_status": "AEB_STATUS",
+    "apa_avm_state": "APA_AVM_STS",
+    "sunroof_position": "BCM_SUNROOF_POSITION",
+    "sunshade_position": "BCM_SUNSHADE_POSITION",
+    "main_board_temp": "MAIN_BOARD_TEMP",
+    "driver_seat_massage_level": "FRONT_SEAT_MASS_INTEN_LEFT",
+    "passenger_seat_massage_level": "FRONT_SEAT_MASS_INTEN_RIGHT",
+    "rear_left_seat_massage_level": "REAR_SEAT_MASS_INTEN_LEFT",
+    "rear_right_seat_massage_level": "REAR_SEAT_MASS_INTEN_RIGHT",
+    "door_unlock_mode": "DOOR_UNLOCK_MODE",
+    "tailgate_lock_enable": "TAILGATEDOORLOCK_ENABLE_SWITCH",
+    "ambient_light_switch": "VEHICLE_AMBIENT_LIGHT_SWITCH",
 }
 
 # Voyah read-only sensors exposed by no-argument ICanBusService getters rather
@@ -323,6 +371,11 @@ VOYAH_METHOD_PARAMS = {
     "acc_status": "getAccStatus",
     "vehicle_scene_mode": "getVehicleSceneMode",
     "engine_status": "getEngineStatus",
+    "engine_rpm": "getEngineSpeed",
+    "engine_coolant_temp": "getEngineTemperature",
+    "fuel_rate": "getInstantFuelConsumption",
+    "rain_amount": "getRainfallLevel",
+    "handbrake_state": "getHandBrakeStatus",
     "brake_fluid_status": "getBrakeFluidStatus",
     "engine_fluid_level": "getEngineFluidStatus",
     "wiper_fluid_level": "getWiperFluidStatus",
@@ -334,6 +387,13 @@ VOYAH_METHOD_PARAMS = {
 # Sync with VoyahChannel.VOYAH_AC_METHODS.
 VOYAH_AC_PARAMS = {
     "cabin_temp": "getAirTempInCar",
+    "outside_temp": "getAirTempOutCar",
+    "ambient_temp": "getAirTempOutCar",
+    "fan_speed": "getAirWindSpeed",
+    "ac_recirculation": "getAirCirculationStatus",
+    "ac_airflow_mode": "getAirFrontMode",
+    "ac_state": "getAirACStatus",
+    "pm25": "getAirPm2_5",
 }
 
 # Voyah keys reachable through the separate ICarSignalService getters.
@@ -476,18 +536,23 @@ def voyah_descriptor(key):
     direct = VOYAH_DIRECT_PARAMS.get(key)
     if direct:
         return {"direct": direct}
-    vs = VOYAH_PARAMS.get(key)
-    if vs:
-        return {"vs": vs}
+    # Prefer a callable getter for probing: VehicleState constants on some
+    # firmwares are dead (-1) while the getter still returns a value.
     method = VOYAH_METHOD_PARAMS.get(key)
     if method:
         return {"method": method}
-    signal = VOYAH_SIGNAL_PARAMS.get(key)
-    if signal:
-        return {"signal": signal}
     ac = VOYAH_AC_PARAMS.get(key)
     if ac:
         return {"ac": ac}
+    vs = VOYAH_PARAMS.get(key)
+    if vs:
+        return {"vs": vs}
+    signal = VOYAH_SIGNAL_PARAMS.get(key)
+    if signal:
+        return {"signal": signal}
+    tx = VOYAH_RAW_TX.get(key)
+    if tx:
+        return {"tx": "%d:%s" % tx}
     return None
 
 

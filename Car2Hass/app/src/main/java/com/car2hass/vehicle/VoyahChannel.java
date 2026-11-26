@@ -130,6 +130,30 @@ public class VoyahChannel implements DataChannel {
         m.put("passenger_seat_massage", "FRONT_SEAT_MASS_SWITCH_RIGHT");
         m.put("rear_left_seat_massage", "REAR_SEAT_MASS_SWITCH_LEFT");
         m.put("rear_right_seat_massage", "REAR_SEAT_MASS_SWITCH_RIGHT");
+        m.put("baro_pressure", "BARO_PRESSURE");
+        m.put("charge_pile_auth_state", "CHARGE_PILE_AUTH_STS");
+        m.put("plug_connect_state", "PLUG_CONNECT_STS");
+        m.put("discharge_connect_state", "DISCHARG_CONNECT_STS");
+        m.put("obc_discharge_switch", "OBC_DISCHARGE_SWITCH");
+        m.put("bms_vehicle_mode", "BMS_VEH_MODE");
+        m.put("bms_soc_status", "BMS_BATT_SOC_STATUS");
+        m.put("energy_flow_level", "ENERGY_FLOW_LEVEL");
+        m.put("dms_weary_level", "DMS_WEARY_LEVEL_STS");
+        m.put("dms_distract_level", "DMS_DISTRACT_LEVEL_STS");
+        m.put("tsr_speed_limit", "TSR_SPEED_LIMIT");
+        m.put("fcw_status", "FCW_STATUS");
+        m.put("aeb_status", "AEB_STATUS");
+        m.put("apa_avm_state", "APA_AVM_STS");
+        m.put("sunroof_position", "BCM_SUNROOF_POSITION");
+        m.put("sunshade_position", "BCM_SUNSHADE_POSITION");
+        m.put("main_board_temp", "MAIN_BOARD_TEMP");
+        m.put("driver_seat_massage_level", "FRONT_SEAT_MASS_INTEN_LEFT");
+        m.put("passenger_seat_massage_level", "FRONT_SEAT_MASS_INTEN_RIGHT");
+        m.put("rear_left_seat_massage_level", "REAR_SEAT_MASS_INTEN_LEFT");
+        m.put("rear_right_seat_massage_level", "REAR_SEAT_MASS_INTEN_RIGHT");
+        m.put("door_unlock_mode", "DOOR_UNLOCK_MODE");
+        m.put("tailgate_lock_enable", "TAILGATEDOORLOCK_ENABLE_SWITCH");
+        m.put("ambient_light_switch", "VEHICLE_AMBIENT_LIGHT_SWITCH");
         VOYAH_PARAMS = java.util.Collections.unmodifiableMap(m);
     }
 
@@ -149,6 +173,11 @@ public class VoyahChannel implements DataChannel {
         m.put("acc_status", "getAccStatus");
         m.put("vehicle_scene_mode", "getVehicleSceneMode");
         m.put("engine_status", "getEngineStatus");
+        m.put("engine_rpm", "getEngineSpeed");
+        m.put("engine_coolant_temp", "getEngineTemperature");
+        m.put("fuel_rate", "getInstantFuelConsumption");
+        m.put("rain_amount", "getRainfallLevel");
+        m.put("handbrake_state", "getHandBrakeStatus");
         m.put("brake_fluid_status", "getBrakeFluidStatus");
         m.put("engine_fluid_level", "getEngineFluidStatus");
         m.put("wiper_fluid_level", "getWiperFluidStatus");
@@ -167,6 +196,13 @@ public class VoyahChannel implements DataChannel {
     static {
         Map<String, String> m = new HashMap<>();
         m.put("cabin_temp", "getAirTempInCar");
+        m.put("outside_temp", "getAirTempOutCar");
+        m.put("ambient_temp", "getAirTempOutCar");
+        m.put("fan_speed", "getAirWindSpeed");
+        m.put("ac_recirculation", "getAirCirculationStatus");
+        m.put("ac_airflow_mode", "getAirFrontMode");
+        m.put("ac_state", "getAirACStatus");
+        m.put("pm25", "getAirPm2_5");
         VOYAH_AC_METHODS = java.util.Collections.unmodifiableMap(m);
     }
 

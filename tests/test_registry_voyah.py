@@ -125,6 +125,22 @@ def test_voyah_temperature_descriptors():
     assert "voyah_generic" in by_key["cabin_temp"]["expected_on"]
 
 
+def test_voyah_new_method_mappings():
+    """Getters found in the firmware research must be exposed by the registry."""
+    reg = json.load(open(os.path.join(ASSETS, "sensors_registry.json"), encoding="utf-8"))
+    by_key = {s["key"]: s for s in reg["sensors"]}
+    assert by_key["engine_rpm"]["channels"]["voyah"] == {"method": "getEngineSpeed"}
+    assert by_key["engine_coolant_temp"]["channels"]["voyah"] == {"method": "getEngineTemperature"}
+    assert by_key["fuel_rate"]["channels"]["voyah"] == {"method": "getInstantFuelConsumption"}
+    assert by_key["rain_amount"]["channels"]["voyah"] == {"method": "getRainfallLevel"}
+    assert by_key["handbrake_state"]["channels"]["voyah"] == {"method": "getHandBrakeStatus"}
+    assert by_key["fan_speed"]["channels"]["voyah"] == {"ac": "getAirWindSpeed"}
+    assert by_key["ac_recirculation"]["channels"]["voyah"] == {"ac": "getAirCirculationStatus"}
+    assert by_key["ac_airflow_mode"]["channels"]["voyah"] == {"ac": "getAirFrontMode"}
+    assert by_key["ac_state"]["channels"]["voyah"] == {"ac": "getAirACStatus"}
+    assert by_key["pm25"]["channels"]["voyah"] == {"ac": "getAirPm2_5"}
+
+
 def test_voyah_corrected_mappings():
     """The issue #84 corrections must stay in place (status params, not control)."""
     gen = _gen_registry_params()

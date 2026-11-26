@@ -3240,3 +3240,261 @@ signals:
   icon: mdi:gauge
   device_class: pressure
   state_class: measurement
+- id: 9230
+  name: 大气压力
+  description: Barometric pressure
+  type: num
+  synthetic: true
+  key: baro_pressure
+  category: climate
+  labels: {}
+  ha_type: sensor
+  unit: hPa
+  icon: mdi:gauge
+  state_class: measurement
+- id: 9231
+  name: 充电桩认证状态
+  description: Charge pile auth state
+  type: enum
+  synthetic: true
+  key: charge_pile_auth_state
+  category: battery
+  labels: {}
+  ha_type: sensor
+  icon: mdi:ev-station
+- id: 9232
+  name: 充电枪连接状态
+  description: Plug connection state
+  type: enum
+  synthetic: true
+  key: plug_connect_state
+  category: battery
+  labels: {}
+  ha_type: sensor
+  icon: mdi:ev-plug-type2
+- id: 9233
+  name: 放电连接状态
+  description: Discharge connection state
+  type: enum
+  synthetic: true
+  key: discharge_connect_state
+  category: battery
+  labels: {}
+  ha_type: sensor
+  icon: mdi:battery-arrow-down
+- id: 9234
+  name: OBC放电开关
+  description: OBC discharge switch
+  type: enum
+  synthetic: true
+  key: obc_discharge_switch
+  category: battery
+  labels: {}
+  ha_type: sensor
+  icon: mdi:power-plug
+- id: 9235
+  name: BMS режим автомобиля
+  description: BMS vehicle mode
+  type: enum
+  synthetic: true
+  key: bms_vehicle_mode
+  category: battery
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-battery
+- id: 9236
+  name: Статус SOC BMS
+  description: BMS SOC status
+  type: enum
+  synthetic: true
+  key: bms_soc_status
+  category: battery
+  labels: {}
+  ha_type: sensor
+  icon: mdi:battery-heart-variant
+- id: 9237
+  name: Уровень потока энергии
+  description: Energy flow level
+  type: num
+  synthetic: true
+  key: energy_flow_level
+  category: battery
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:transmission-tower
+  state_class: measurement
+- id: 9238
+  name: Уровень усталости DMS
+  description: DMS fatigue level
+  type: num
+  synthetic: true
+  key: dms_weary_level
+  category: safety
+  labels: {}
+  ha_type: sensor
+  icon: mdi:sleep
+  state_class: measurement
+- id: 9239
+  name: Уровень отвлечения DMS
+  description: DMS distraction level
+  type: num
+  synthetic: true
+  key: dms_distract_level
+  category: safety
+  labels: {}
+  ha_type: sensor
+  icon: mdi:eye-off
+  state_class: measurement
+- id: 9240
+  name: Ограничение скорости TSR
+  description: TSR speed limit
+  type: num
+  synthetic: true
+  key: tsr_speed_limit
+  category: safety
+  labels: {}
+  ha_type: sensor
+  unit: km/h
+  icon: mdi:speedometer
+  state_class: measurement
+- id: 9241
+  name: Статус FCW
+  description: FCW status
+  type: enum
+  synthetic: true
+  key: fcw_status
+  category: safety
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-brake-alert
+- id: 9242
+  name: Статус AEB
+  description: AEB status
+  type: enum
+  synthetic: true
+  key: aeb_status
+  category: safety
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-brake-alert
+- id: 9243
+  name: Состояние APA/AVM
+  description: APA/AVM state
+  type: enum
+  synthetic: true
+  key: apa_avm_state
+  category: safety
+  labels: {}
+  ha_type: sensor
+  icon: mdi:parking
+- id: 9244
+  name: Позиция люка
+  description: Sunroof position
+  type: num
+  synthetic: true
+  key: sunroof_position
+  category: access
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:window-open
+  state_class: measurement
+- id: 9245
+  name: Позиция шторки
+  description: Sunshade position
+  type: num
+  synthetic: true
+  key: sunshade_position
+  category: access
+  labels: {}
+  ha_type: sensor
+  unit: '%'
+  icon: mdi:window-closed
+  state_class: measurement
+- id: 9246
+  name: Температура основной платы
+  description: Main board temperature
+  type: num
+  synthetic: true
+  key: main_board_temp
+  category: device
+  labels: {}
+  ha_type: sensor
+  unit: °C
+  icon: mdi:thermometer
+  state_class: measurement
+- id: 9247
+  name: Уровень массажа водителя
+  description: Driver massage level
+  type: num
+  synthetic: true
+  key: driver_seat_massage_level
+  category: climate
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat
+  state_class: measurement
+- id: 9248
+  name: Уровень массажа пассажира
+  description: Passenger massage level
+  type: num
+  synthetic: true
+  key: passenger_seat_massage_level
+  category: climate
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat
+  state_class: measurement
+- id: 9249
+  name: Уровень массажа сзади слева
+  description: Rear-left massage level
+  type: num
+  synthetic: true
+  key: rear_left_seat_massage_level
+  category: climate
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat
+  state_class: measurement
+- id: 9250
+  name: Уровень массажа сзади справа
+  description: Rear-right massage level
+  type: num
+  synthetic: true
+  key: rear_right_seat_massage_level
+  category: climate
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-seat
+  state_class: measurement
+- id: 9251
+  name: Режим разблокировки дверей
+  description: Door unlock mode
+  type: enum
+  synthetic: true
+  key: door_unlock_mode
+  category: access
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-door-lock
+- id: 9252
+  name: Разрешение замка багажника
+  description: Tailgate lock enable
+  type: enum
+  synthetic: true
+  key: tailgate_lock_enable
+  category: access
+  labels: {}
+  ha_type: sensor
+  icon: mdi:car-back
+- id: 9253
+  name: Выключатель подсветки
+  description: Ambient light switch
+  type: enum
+  synthetic: true
+  key: ambient_light_switch
+  category: lights
+  labels: {}
+  ha_type: sensor
+  icon: mdi:lightbulb

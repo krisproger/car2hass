@@ -348,10 +348,14 @@
         },
         "diplus_push": null,
         "byd_cloud": null,
-        "phone": null
+        "phone": null,
+        "voyah": {
+          "method": "getEngineSpeed"
+        }
       },
       "expected_on": [
-        "byd_generic"
+        "byd_generic",
+        "voyah_generic"
       ]
     },
     {
@@ -2236,7 +2240,7 @@
         "byd_cloud": null,
         "phone": null,
         "voyah": {
-          "vs": "AC_CLIMATE_SW_REQ"
+          "ac": "getAirACStatus"
         }
       },
       "expected_on": [
@@ -2268,10 +2272,14 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
-        "phone": null
+        "phone": null,
+        "voyah": {
+          "ac": "getAirWindSpeed"
+        }
       },
       "expected_on": [
-        "byd_generic"
+        "byd_generic",
+        "voyah_generic"
       ]
     },
     {
@@ -2298,10 +2306,14 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
-        "phone": null
+        "phone": null,
+        "voyah": {
+          "ac": "getAirCirculationStatus"
+        }
       },
       "expected_on": [
-        "byd_generic"
+        "byd_generic",
+        "voyah_generic"
       ]
     },
     {
@@ -2322,10 +2334,14 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
-        "phone": null
+        "phone": null,
+        "voyah": {
+          "ac": "getAirFrontMode"
+        }
       },
       "expected_on": [
-        "byd_generic"
+        "byd_generic",
+        "voyah_generic"
       ]
     },
     {
@@ -3072,7 +3088,7 @@
         "byd_cloud": null,
         "phone": null,
         "voyah": {
-          "vs": "ENG_COOLANT_TEMP"
+          "method": "getEngineTemperature"
         }
       },
       "expected_on": [
@@ -3150,10 +3166,14 @@
         "obd": null,
         "diplus_push": null,
         "byd_cloud": null,
-        "phone": null
+        "phone": null,
+        "voyah": {
+          "method": "getRainfallLevel"
+        }
       },
       "expected_on": [
-        "byd_generic"
+        "byd_generic",
+        "voyah_generic"
       ]
     },
     {
@@ -3948,10 +3968,14 @@
         },
         "diplus_push": null,
         "byd_cloud": null,
-        "phone": null
+        "phone": null,
+        "voyah": {
+          "method": "getInstantFuelConsumption"
+        }
       },
       "expected_on": [
-        "byd_generic"
+        "byd_generic",
+        "voyah_generic"
       ]
     },
     {
@@ -4977,7 +5001,7 @@
         "system": null,
         "phone": null,
         "voyah": {
-          "vs": "PM25_STS"
+          "ac": "getAirPm2_5"
         }
       },
       "expected_on": [
@@ -5427,7 +5451,7 @@
         "system": null,
         "phone": null,
         "voyah": {
-          "vs": "EPB_PARK_STATUS"
+          "method": "getHandBrakeStatus"
         }
       },
       "expected_on": [
@@ -5628,6 +5652,606 @@
         "phone": null,
         "voyah": {
           "signal": "getReverseState"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "baro_pressure",
+      "label_en": "Barometric pressure",
+      "label_ru": "Атмосферное давление",
+      "type": "num",
+      "unit": "hPa",
+      "core": false,
+      "category": "climate",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "BARO_PRESSURE"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "charge_pile_auth_state",
+      "label_en": "Charge pile auth state",
+      "label_ru": "Авторизация зарядной станции",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "battery",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "CHARGE_PILE_AUTH_STS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "plug_connect_state",
+      "label_en": "Plug connection state",
+      "label_ru": "Подключение зарядного пистолета",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "battery",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "PLUG_CONNECT_STS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "discharge_connect_state",
+      "label_en": "Discharge connection state",
+      "label_ru": "Подключение разряда",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "battery",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "DISCHARG_CONNECT_STS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "obc_discharge_switch",
+      "label_en": "OBC discharge switch",
+      "label_ru": "Разряд OBC",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "battery",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "OBC_DISCHARGE_SWITCH"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "bms_vehicle_mode",
+      "label_en": "BMS vehicle mode",
+      "label_ru": "Режим BMS",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "battery",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "BMS_VEH_MODE"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "bms_soc_status",
+      "label_en": "BMS SOC status",
+      "label_ru": "Статус SOC BMS",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "battery",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "BMS_BATT_SOC_STATUS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "energy_flow_level",
+      "label_en": "Energy flow level",
+      "label_ru": "Уровень потока энергии",
+      "type": "num",
+      "unit": "%",
+      "core": false,
+      "category": "battery",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "ENERGY_FLOW_LEVEL"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "dms_weary_level",
+      "label_en": "DMS fatigue level",
+      "label_ru": "Уровень усталости DMS",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "category": "safety",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "DMS_WEARY_LEVEL_STS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "dms_distract_level",
+      "label_en": "DMS distraction level",
+      "label_ru": "Уровень отвлечения DMS",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "category": "safety",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "DMS_DISTRACT_LEVEL_STS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "tsr_speed_limit",
+      "label_en": "TSR speed limit",
+      "label_ru": "Ограничение скорости TSR",
+      "type": "num",
+      "unit": "km/h",
+      "core": false,
+      "category": "safety",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "TSR_SPEED_LIMIT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "fcw_status",
+      "label_en": "FCW status",
+      "label_ru": "Статус FCW",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "safety",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "FCW_STATUS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "aeb_status",
+      "label_en": "AEB status",
+      "label_ru": "Статус AEB",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "safety",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "AEB_STATUS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "apa_avm_state",
+      "label_en": "APA/AVM state",
+      "label_ru": "Состояние APA/AVM",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "safety",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "APA_AVM_STS"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "sunroof_position",
+      "label_en": "Sunroof position",
+      "label_ru": "Позиция люка",
+      "type": "num",
+      "unit": "%",
+      "core": false,
+      "category": "access",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "BCM_SUNROOF_POSITION"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "sunshade_position",
+      "label_en": "Sunshade position",
+      "label_ru": "Позиция шторки",
+      "type": "num",
+      "unit": "%",
+      "core": false,
+      "category": "access",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "BCM_SUNSHADE_POSITION"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "main_board_temp",
+      "label_en": "Main board temperature",
+      "label_ru": "Температура основной платы",
+      "type": "num",
+      "unit": "°C",
+      "core": false,
+      "category": "device",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "MAIN_BOARD_TEMP"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "driver_seat_massage_level",
+      "label_en": "Driver massage level",
+      "label_ru": "Уровень массажа водителя",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "category": "climate",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "FRONT_SEAT_MASS_INTEN_LEFT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "passenger_seat_massage_level",
+      "label_en": "Passenger massage level",
+      "label_ru": "Уровень массажа пассажира",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "category": "climate",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "FRONT_SEAT_MASS_INTEN_RIGHT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "rear_left_seat_massage_level",
+      "label_en": "Rear-left massage level",
+      "label_ru": "Уровень массажа сзади слева",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "category": "climate",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "REAR_SEAT_MASS_INTEN_LEFT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "rear_right_seat_massage_level",
+      "label_en": "Rear-right massage level",
+      "label_ru": "Уровень массажа сзади справа",
+      "type": "num",
+      "unit": null,
+      "core": false,
+      "category": "climate",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "REAR_SEAT_MASS_INTEN_RIGHT"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "door_unlock_mode",
+      "label_en": "Door unlock mode",
+      "label_ru": "Режим разблокировки дверей",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "access",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "DOOR_UNLOCK_MODE"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "tailgate_lock_enable",
+      "label_en": "Tailgate lock enable",
+      "label_ru": "Разрешение замка багажника",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "access",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "TAILGATEDOORLOCK_ENABLE_SWITCH"
+        }
+      },
+      "expected_on": [
+        "voyah_generic"
+      ]
+    },
+    {
+      "key": "ambient_light_switch",
+      "label_en": "Ambient light switch",
+      "label_ru": "Выключатель подсветки",
+      "type": "enum",
+      "unit": null,
+      "core": false,
+      "category": "lights",
+      "channels": {
+        "diplus": null,
+        "adb": null,
+        "dumpsys": null,
+        "obd": null,
+        "diplus_push": null,
+        "byd_cloud": null,
+        "system": null,
+        "phone": null,
+        "voyah": {
+          "vs": "VEHICLE_AMBIENT_LIGHT_SWITCH"
         }
       },
       "expected_on": [

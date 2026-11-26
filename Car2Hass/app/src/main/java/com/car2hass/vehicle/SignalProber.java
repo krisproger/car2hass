@@ -44,6 +44,7 @@ public final class SignalProber implements VehicleResearch.SensorProbe {
             } else if ("voyah".equals(channel)) {
                 if (ch.has("odometer")) return VoyahChannel.readOdometerParam();
                 if (ch.has("odometer_range")) return VoyahChannel.readOdometerRangeParam();
+                if (ch.has("direct")) return VoyahDirectReader.probeValue(sensorKey);
                 String vs = ch.optString("vs");
                 if (!vs.isEmpty()) return VoyahChannel.readSingleParam(vs);
                 String method = ch.optString("method");

@@ -46,6 +46,18 @@ public final class VoyahDirectReader {
 
     public static String valueFor(String key) {
         if (!enabled) return null;
+        return valueForUnlocked(key);
+    }
+
+    /** Probe path: reads even before the identity gate is confirmed. */
+    public static ProbeResult probeValue(String key) {
+        String value = valueForUnlocked(key);
+        return value == null
+                ? ProbeResult.unsupported()
+                : new ProbeResult(ProbeResult.Status.OK, value);
+    }
+
+    private static String valueForUnlocked(String key) {
         Snapshot s = snapshot();
         if (s == null) return null;
         if ("fuel_level".equals(key)) {
